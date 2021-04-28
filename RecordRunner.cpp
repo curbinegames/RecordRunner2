@@ -705,32 +705,38 @@ int play2(int n, int o) {
 	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
 	wchar_t waterFN[255] = L"picture/waternormal.png";
 	wchar_t GT1[255];
-	wchar_t GT2[] = L"#MUSIC:";
-	wchar_t GT3[] = L"#BPM:";
-	wchar_t GT4[] = L"#NOTEOFFSET:";
-	wchar_t GT5[] = L"#SKY:";
-	wchar_t GT6[] = L"#FIELD:";
-	wchar_t GT7[] = L"#WATER:";
-	wchar_t GT8[] = L"#TITLE:";
-	wchar_t GT9[] = L"#LEVEL:";
-	wchar_t GT10[] = L"#ITEM:";
-	wchar_t GT11[] = L"#FALL:";
-	wchar_t GT12[] = L"#MAP:";
-	wchar_t GT13[] = L"#END";
-	wchar_t GT14[] = L"#SPEED";
+	//wchar_t GT2[] = L"#MUSIC:";
+	//wchar_t GT3[] = L"#BPM:";
+	//wchar_t GT4[] = L"#NOTEOFFSET:";
+	//wchar_t GT5[] = L"#SKY:";
+	//wchar_t GT6[] = L"#FIELD:";
+	//wchar_t GT7[] = L"#WATER:";
+	//wchar_t GT8[] = L"#TITLE:";
+	//wchar_t GT9[] = L"#LEVEL:";
+	//wchar_t GT10[] = L"#ITEM:";
+	//wchar_t GT11[] = L"#FALL:";
+	//wchar_t GT12[] = L"#MAP:";
+	//wchar_t GT13[] = L"#END";
+	//wchar_t GT14[] = L"#SPEED";
 	wchar_t GT15[255];
-	wchar_t GT16[] = L"#CHARA";
-	wchar_t GT17[] = L"#MOVE";
-	wchar_t GT18[] = L"#XMOV";
-	wchar_t GT19[] = L"#GMOVE";
-	wchar_t GT20[] = L"#XLOCK";
-	wchar_t GT21[] = L"#YLOCK";
-	wchar_t GT22[] = L"#FALL";
-	wchar_t GT23[] = L"#VIEW:";
+	//wchar_t GT16[] = L"#CHARA";
+	//wchar_t GT17[] = L"#MOVE";
+	//wchar_t GT18[] = L"#XMOV";
+	//wchar_t GT19[] = L"#GMOVE";
+	//wchar_t GT20[] = L"#XLOCK";
+	//wchar_t GT21[] = L"#YLOCK";
+	//wchar_t GT22[] = L"#FALL";
+	//wchar_t GT23[] = L"#VIEW:";
 	wchar_t GT24[] = L"picture/";
 	wchar_t GT25[6][8] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
-	wchar_t GT26[] = L"#E.TITLE:";
-	wchar_t GT27[] = L"#CARROW";
+	//wchar_t GT26[] = L"#E.TITLE:";
+	//wchar_t GT27[] = L"#CARROW";
+	wchar_t RecordCode[23][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
+		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
+		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
+		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
+		L"#VIEW:",L"#E.TITLE:",L"#CARROW"
+	};
 	unsigned int Cr, Crb;
 	Cr = GetColor(255, 255, 255);
 	Crb = GetColor(0, 0, 0);
@@ -753,46 +759,46 @@ int play2(int n, int o) {
 	while (FileRead_eof(songdata) == 0) {
 		FileRead_gets(GT1, 256, songdata);
 		//音楽ファイルを読み込む
-		if (strands(GT1, GT2)) {
+		if (strands(GT1, RecordCode[0])) {
 			strmods(GT1, 7);
 			strcats(mp3FN, GT1);
 		}
 		//BPMを読み込む
-		else if (strands(GT1, GT3)) bpmG = bpm = SETbpm(GT1);
+		else if (strands(GT1, RecordCode[1])) bpmG = bpm = SETbpm(GT1);
 		//ノートのオフセットを読み込む
-		else if (strands(GT1, GT4)) timer[0] = timer[1] = timer[2] = noteoff = SEToffset(GT1, system[1]);
+		else if (strands(GT1, RecordCode[2])) timer[0] = timer[1] = timer[2] = noteoff = SEToffset(GT1, system[1]);
 		//空の背景を読み込む
-		else if (strands(GT1, GT5)) {
+		else if (strands(GT1, RecordCode[3])) {
 			strcopy(GT24, skyFN, 1);
 			strmods(GT1, 5);
 			strcats(skyFN, GT1);
 		}
 		//地面の画像を読み込む
-		else if (strands(GT1, GT6)) {
+		else if (strands(GT1, RecordCode[4])) {
 			strcopy(GT24, groundFN, 1);
 			strmods(GT1, 7);
 			strcats(groundFN, GT1);
 		}
 		//水中の画像を読み込む
-		else if (strands(GT1, GT7)) {
+		else if (strands(GT1, RecordCode[5])) {
 			strcopy(GT24, waterFN, 1);
 			strmods(GT1, 7);
 			strcats(waterFN, GT1);
 		}
 		//曲名を読み込む
-		else if (strands(GT1, GT8)) {
+		else if (strands(GT1, RecordCode[6])) {
 			strmods(GT1, 7);
 			if (system[4] == 0 || songN[0] == L'\0')strcopy(GT1, songN, 1);
 		}
 		//英語
-		else if (strands(GT1, GT26)) {
+		else if (strands(GT1, RecordCode[21])) {
 			strmods(GT1, 7);
 			if (system[4] == 1 || songN[0] == L'\0')strcopy(GT1, songN, 1);
 		}
 		//レベルを読み込む
-		else if (strands(GT1, GT9)) Lv = SETLv(GT1);
+		else if (strands(GT1, RecordCode[7])) Lv = SETLv(GT1);
 		//アイテムを読み込む
-		else if (strands(GT1, GT10)) {
+		else if (strands(GT1, RecordCode[8])) {
 			strmods(GT1, 6);
 			strcopy(dataE, GT15, 1);
 			stradds(GT15, L'/');
@@ -800,17 +806,17 @@ int play2(int n, int o) {
 			item[itemN++] = LoadGraph(GT15);
 		}
 		//落ち物背景指定
-		else if (strands(GT1, GT11)) {
+		else if (strands(GT1, RecordCode[9])) {
 			strmods(GT1, 6);
 			fall[0][0] = strsans(GT1);
 			fall[0][1] = 0;
 		}
 		//譜面を読み込む
-		else if (strands(GT1, GT12)) {
-			while (FileRead_eof(songdata) == 0 && strands(GT1, GT13) == 0) {
+		else if (strands(GT1, RecordCode[10])) {
+			while (FileRead_eof(songdata) == 0 && strands(GT1, RecordCode[11]) == 0) {
 				FileRead_gets(GT1, 256, songdata);
 				//横ノーツ速度変化
-				if (strands(GT1, GT14)) {
+				if (strands(GT1, RecordCode[12])) {
 					G[0] = maxs(mins(GT1[6] - 49, 0), 4);
 					strmods(GT1, 8);
 					speedt[G[0]][speedN[G[0]]][1] = strsans2(GT1);
@@ -825,9 +831,9 @@ int play2(int n, int o) {
 					speedN[G[0]]++;
 				}
 				//BPM変化
-				else if (strands(GT1, GT3)) bpmG = SETbpm(GT1);
+				else if (strands(GT1, RecordCode[1])) bpmG = SETbpm(GT1);
 				//キャラグラ変化
-				else if (strands(GT1, GT16)) {
+				else if (strands(GT1, RecordCode[13])) {
 					G[0] = GT1[6] - 49;
 					strmods(GT1, 8);
 					chamo[G[0]][chamoN[G[0]]][0] = maxs(mins(strsans(GT1), 0), 2);
@@ -835,7 +841,7 @@ int play2(int n, int o) {
 					chamoN[G[0]]++;
 				}
 				//縦移動
-				else if (strands(GT1, GT17)) {
+				else if (strands(GT1, RecordCode[14])) {
 					G[0] = maxs(mins(GT1[8] - 49, 0), 4);
 					switch (GT1[5]) {
 					case('l'):
@@ -904,7 +910,7 @@ int play2(int n, int o) {
 					YmoveN[G[0]]++;
 				}
 				//横移動
-				else if (strands(GT1, GT18)) {
+				else if (strands(GT1, RecordCode[15])) {
 					G[0] = maxs(mins(GT1[8] - 49, 0), 2);
 					switch (GT1[5]) {
 					case('l'):
@@ -973,7 +979,7 @@ int play2(int n, int o) {
 					XmoveN[G[0]]++;
 				}
 				//GMOVE
-				else if (strands(GT1, GT19)) {
+				else if (strands(GT1, RecordCode[16])) {
 					G[0] = 3;
 					switch (GT1[6]) {
 					case('l'):
@@ -1042,28 +1048,28 @@ int play2(int n, int o) {
 					YmoveN[G[0]]++;
 				}
 				//横ロック
-				else if (strands(GT1, GT20)) {
+				else if (strands(GT1, RecordCode[17])) {
 					strmods(GT1, 7);
 					lock[0][0][lockN[0]] = lock[0][0][lockN[0] - 1] * -1;
 					lock[0][1][lockN[0]] = shifttime(strsans(GT1), bpmG, timer[0]);
 					lockN[0]++;
 				}
 				//縦ロック
-				else if (strands(GT1, GT21)) {
+				else if (strands(GT1, RecordCode[18])) {
 					strmods(GT1, 7);
 					lock[1][0][lockN[1]] = lock[1][0][lockN[1] - 1] * -1;
 					lock[1][1][lockN[1]] = shifttime(strsans(GT1), bpmG, timer[0]);
 					lockN[1]++;
 				}
 				//キャラ向き変化
-				else if (strands(GT1, GT27)) {
+				else if (strands(GT1, RecordCode[22])) {
 					strmods(GT1, 8);
 					carrow[0][carrowN] = carrow[0][carrowN - 1] * -1;
 					carrow[1][carrowN] = shifttime(strsans(GT1), bpmG, timer[0]);
 					carrowN++;
 				}
 				//落ち物背景切り替え
-				else if (strands(GT1, GT22)) {
+				else if (strands(GT1, RecordCode[19])) {
 					strmods(GT1, 6);
 					fall[fallN][0] = strsans(GT1);
 					strnex(GT1);
@@ -1071,7 +1077,7 @@ int play2(int n, int o) {
 					fallN++;
 				}
 				//音符表示時間
-				else if (strands(GT1, GT23)) {
+				else if (strands(GT1, RecordCode[20])) {
 					strmods(GT1, 6);
 					viewT[0][viewTN] = shifttime(strsans(GT1), bpmG, timer[0]);
 					strnex(GT1);
@@ -1079,7 +1085,7 @@ int play2(int n, int o) {
 					viewTN++;
 				}
 				//終わり
-				else if (strands(GT1, GT13)) {
+				else if (strands(GT1, RecordCode[11])) {
 					break;
 				}
 				//これ以外

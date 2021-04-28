@@ -5,12 +5,15 @@ RecordRunner2.vcxproj.user
 
 *.bmp
 *.dat
+*.db
+*.ipch
 *.jpg
 *.ogg
 *.MP3
 *.mp3
 *.png
 *.sln
+*.suo
 *.txt
 *.wav
 *.xcf
