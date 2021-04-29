@@ -586,6 +586,7 @@ int play2(int n, int o) {
 	int holdr = 0;
 	int holdG = 0;
 	int combo = 0;
+	int LaneTrack[3] = { -100,-100,-100 };
 	int Mcombo = 0;
 	int Dscore[3] = { 0,0,0 }; //距離に当たる部分[加点用,加点保存用,距離保存用]
 	int judghcount[4] = { 0,0,0,0 };
@@ -705,6 +706,15 @@ int play2(int n, int o) {
 	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
 	wchar_t waterFN[255] = L"picture/waternormal.png";
 	wchar_t GT1[255];
+	wchar_t GT15[255];
+	wchar_t GT24[] = L"picture/";
+	wchar_t GT25[6][8] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
+	wchar_t RecordCode[23][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
+		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
+		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
+		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
+		L"#VIEW:",L"#E.TITLE:",L"#CARROW"
+	};
 	//wchar_t GT2[] = L"#MUSIC:";
 	//wchar_t GT3[] = L"#BPM:";
 	//wchar_t GT4[] = L"#NOTEOFFSET:";
@@ -718,7 +728,6 @@ int play2(int n, int o) {
 	//wchar_t GT12[] = L"#MAP:";
 	//wchar_t GT13[] = L"#END";
 	//wchar_t GT14[] = L"#SPEED";
-	wchar_t GT15[255];
 	//wchar_t GT16[] = L"#CHARA";
 	//wchar_t GT17[] = L"#MOVE";
 	//wchar_t GT18[] = L"#XMOV";
@@ -727,16 +736,8 @@ int play2(int n, int o) {
 	//wchar_t GT21[] = L"#YLOCK";
 	//wchar_t GT22[] = L"#FALL";
 	//wchar_t GT23[] = L"#VIEW:";
-	wchar_t GT24[] = L"picture/";
-	wchar_t GT25[6][8] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
 	//wchar_t GT26[] = L"#E.TITLE:";
 	//wchar_t GT27[] = L"#CARROW";
-	wchar_t RecordCode[23][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
-		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
-		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
-		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
-		L"#VIEW:",L"#E.TITLE:",L"#CARROW"
-	};
 	unsigned int Cr, Crb;
 	Cr = GetColor(255, 255, 255);
 	Crb = GetColor(0, 0, 0);
@@ -1644,6 +1645,12 @@ int play2(int n, int o) {
 		if (key[KEY_INPUT_G] == 0) holdG = 0;
 		else if (key[KEY_INPUT_G] == 1) holdG++;
 		if (GetWindowUserCloseFlag(TRUE)) return 5;
+		//キャッチ判定に使う数値を計算
+		if (holdu == 0 && holdd == 0 || holdu > 0 && holdd > 0) { LaneTrack[1] = Ntime; }
+		else if (holdu > 0 && holdd == 0) { LaneTrack[0] = Ntime; }
+		else if (holdu == 0 && holdd > 0) { LaneTrack[2] = Ntime; }
+		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[0]); }
+		else { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[2]); }
 		//ヒット
 		if (holda == 1 || holdb == 1) charahit = GetNowCount();
 		if (charahit + 750 < GetNowCount()) charahit = 0;
@@ -1752,7 +1759,7 @@ int play2(int n, int o) {
 				}
 			}
 			//キャッチノーツ(justのみ)
-			else if (i[0] == charaput && object[i[0]][1][objectN[i[0]]] == 2 && judgh <= 6) {
+			else if (LaneTrack[i[0]] + 100 >= object[i[0]][0][objectN[i[0]]] && object[i[0]][1][objectN[i[0]]] == 2 && judgh <= 0) {
 				judghname[i[0]][0] = 1;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 2;
@@ -2070,7 +2077,7 @@ int play2(int n, int o) {
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.0f", 60000.0 / notzero(G[0]));
-		//DrawFormatString(20, 100, Cr, L"car: %d", carrow[0][carrowN]);
+		//for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"LaneTrack%d: %d", i[0], LaneTrack[i[0]]); }
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
