@@ -19,13 +19,14 @@ int play2(int n, int o) {
 	int judghname[3][3]{ 0,0,0,0,0,0,0,0,0 };
 	int holda = 0;
 	int holdb = 0;
+	int holdc = 0;
 	int holdu = 0;
 	int holdd = 0;
 	int holdl = 0;
 	int holdr = 0;
 	int holdG = 0;
 	int combo = 0;
-	int LaneTrack[3] = { -100,-100,-100 };
+	int LaneTrack[3] = { -150,-150,-150 };
 	int Mcombo = 0;
 	int Dscore[3] = { 0,0,0 }; //距離に当たる部分[加点用,加点保存用,距離保存用]
 	int judghcount[4] = { 0,0,0,0 };
@@ -1073,6 +1074,8 @@ int play2(int n, int o) {
 		else if (key[KEY_INPUT_Z] == 1) holda++;
 		if (key[KEY_INPUT_X] == 0) holdb = 0;
 		else if (key[KEY_INPUT_X] == 1) holdb++;
+		if (key[KEY_INPUT_C] == 0) holdc = 0;
+		else if (key[KEY_INPUT_C] == 1) holdc++;
 		if (key[KEY_INPUT_UP] == 0) holdu = 0;
 		else if (key[KEY_INPUT_UP] == 1) holdu++;
 		if (key[KEY_INPUT_LEFT] == 0) holdl = 0;
@@ -1091,7 +1094,7 @@ int play2(int n, int o) {
 		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[0]); }
 		else { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[2]); }
 		//ヒット
-		if (holda == 1 || holdb == 1) charahit = GetNowCount();
+		if (holda == 1 || holdb == 1 || holdc == 1) charahit = GetNowCount();
 		if (charahit + 750 < GetNowCount()) charahit = 0;
 		//音符表示
 		for (i[0] = 0; i[0] < 2; i[0]++) if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0) lockN[i[0]]++;
@@ -1147,58 +1150,75 @@ int play2(int n, int o) {
 				}
 			}
 		}
-		//判定
-		G[1] = 0;
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
-			//ヒットノーツ
-			if ((holda == 1 || holdb == 1) && G[1] == 0 && object[i[0]][1][objectN[i[0]]] == 1 && judgh <= 125 && judgh >= -100 &&
-				(object[i[0]][0][objectN[i[0]]] <= object[0][0][objectN[0]]) &&
-				(object[i[0]][0][objectN[i[0]]] <= object[1][0][objectN[1]]) &&
-				(object[i[0]][0][objectN[i[0]]] <= object[2][0][objectN[2]])) {
-				judghname[i[0]][1] = GetNowCount();
-				judghname[i[0]][2] = 1;
-				objectN[i[0]]++;
-				G[1] = 1;
-				gap[gapa[1] % 30] = judgh;
-				gapa[0] += judgh;
-				gapa[2] += judgh * judgh;
-				gapa[1]++;
-				//just
-				if (judgh <= 40 && judgh >= -40) {
-					judghname[i[0]][0] = 1;
-					combo++;
-					judghcount[0]++;
-					life += 2;
-					Dscore[0] += 2;
-					PlaySoundMem(attack, DX_PLAYTYPE_BACK);
-				}
-				//good
-				else if (judgh <= 70 && judgh >= -70) {
-					judghname[i[0]][0] = 2;
-					combo++;
-					judghcount[1]++;
-					life++;
-					Dscore[0]++;
-					PlaySoundMem(attack, DX_PLAYTYPE_BACK);
-				}
-				//safe
-				else if (judgh <= 100 && judgh >= -100) {
-					judghname[i[0]][0] = 3;
-					judghcount[2]++;
-					life++;
-					PlaySoundMem(attack, DX_PLAYTYPE_BACK);
-				}
-				//fastmiss
-				else if (judgh <= 125) {
-					judghname[i[0]][0] = 4;
-					combo = 0;
-					judghcount[3]++;
-					life -= 20;
+		//判定、ヒットノーツ
+		G[0] = 0;//押したボタンの数
+		G[1] = -1;//一番近いヒットノーツ[-1:ヒットノーツがない、0:上レーン、1:中レーン、2:下レーン]
+		G[2] = 200;//押したタイミングとノーツのタイミングのずれ
+		if (holda == 1) { G[0]++; }
+		if (holdb == 1) { G[0]++; }
+		if (holdc == 1) { G[0]++; }
+		while (G[0] > 0) {
+			for (i[0] = 0; i[0] < 3; i[0]++) {
+				G[2] = object[i[0]][0][objectN[i[0]]] - Ntime;
+				if (object[i[0]][1][objectN[i[0]]] == 1 && G[2] <= 125 && G[2] >= -100) {
+					G[1] = i[0];
+					break;
 				}
 			}
+			if (G[1] == -1) { break; }
+			for (i[0] = G[1] + 1; i[0] < 3; i[0]++) {
+				G[2] = object[i[0]][0][objectN[i[0]]] - Ntime;
+				if (object[i[0]][1][objectN[i[0]]] == 1 && G[2] <= 125 && G[2] >= -100 &&
+				object[i[0]][0][objectN[i[0]]] <= object[G[1]][0][objectN[0]]) {
+				G[1] = i[0];
+				}
+			}
+			G[2] = object[G[1]][0][objectN[G[1]]] - Ntime;
+			judghname[G[1]][1] = GetNowCount();
+			judghname[G[1]][2] = 1;
+			objectN[G[1]]++;
+			gap[gapa[1] % 30] = G[2];
+			gapa[0] += G[2];
+			gapa[2] += G[2] * G[2];
+			gapa[1]++;
+			//just
+			if (G[2] <= 40 && G[2] >= -40) {
+				judghname[G[1]][0] = 1;
+				combo++;
+				judghcount[0]++;
+				life += 2;
+				Dscore[0] += 2;
+				PlaySoundMem(attack, DX_PLAYTYPE_BACK);
+			}
+			//good
+			else if (G[2] <= 70 && G[2] >= -70) {
+				judghname[G[1]][0] = 2;
+				combo++;
+				judghcount[1]++;
+				life++;
+				Dscore[0]++;
+				PlaySoundMem(attack, DX_PLAYTYPE_BACK);
+			}
+			//safe
+			else if (G[2] <= 100 && G[2] >= -100) {
+				judghname[G[1]][0] = 3;
+				judghcount[2]++;
+				life++;
+				PlaySoundMem(attack, DX_PLAYTYPE_BACK);
+			}
+			//fastmiss
+			else if (G[2] <= 125) {
+				judghname[G[1]][0] = 4;
+				combo = 0;
+				judghcount[3]++;
+				life -= 20;
+			}
+			G[0]--;
+		}
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
 			//キャッチノーツ(justのみ)
-			else if (LaneTrack[i[0]] + 100 >= object[i[0]][0][objectN[i[0]]] && object[i[0]][1][objectN[i[0]]] == 2 && judgh <= 0) {
+			if (LaneTrack[i[0]] + 100 >= object[i[0]][0][objectN[i[0]]] && object[i[0]][1][objectN[i[0]]] == 2 && judgh <= 0) {
 				judghname[i[0]][0] = 1;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 2;
@@ -1516,7 +1536,7 @@ int play2(int n, int o) {
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.0f", 60000.0 / notzero(G[0]));
-		//for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"LaneTrack%d: %d", i[0], LaneTrack[i[0]]); }
+		for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"LaneTrack%d: %d", i[0], LaneTrack[i[0]]); }
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
