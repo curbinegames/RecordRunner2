@@ -1,16 +1,6 @@
 #include "DxLib.h"
 #include "sancur.h"
-#include "strcats.h"
-#include "strmods.h"
-#include "strsans.h"
-#include "strands.h"
-#include "strcopy.h"
 #include "strcur.h"
-#include "abss.h"
-#include "max.h"
-#include "min.h"
-#include "notzero.h"
-#include "pals.h"
 #include "playing.h"
 /* next = 0 = タイトル
 	= 1 = メニュー

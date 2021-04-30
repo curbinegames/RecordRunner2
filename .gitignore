@@ -2,6 +2,7 @@
 RecordRunner2.vcxproj
 RecordRunner2.vcxproj.filters
 RecordRunner2.vcxproj.user
+.vs/RecordRunner4/v15/Browse.VC.opendb
 
 *.bmp
 *.dat
