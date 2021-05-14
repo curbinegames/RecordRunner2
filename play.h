@@ -811,7 +811,7 @@ int play2(int n, int o) {
 	int coleimg[5];
 	int effimg[7][5];
 	int Rchaimg;
-	int musicmp3, attack, catchs, arrow;
+	int musicmp3, attack, catchs, arrow, bomb;
 	judghimg = LoadGraph(L"picture/Marker.png");
 	hitimg = LoadGraph(L"picture/hit.png");
 	hitcimg = LoadGraph(L"picture/hitc.png");
@@ -894,11 +894,13 @@ int play2(int n, int o) {
 		attack = LoadSoundMem(L"sound/attack.mp3");
 		catchs = LoadSoundMem(L"sound/catch.mp3");
 		arrow = LoadSoundMem(L"sound/arrow.ogg");
+		bomb = LoadSoundMem(L"sound/bomb.wav");
 	}
 	else {
 		attack = LoadSoundMem(L"sound/non.wav");
 		catchs = LoadSoundMem(L"sound/non.wav");
 		arrow = LoadSoundMem(L"sound/non.wav");
+		bomb = LoadSoundMem(L"sound/non.wav");
 	}
 	//ゲーム開始前の下準備
 	notes = notzero(notes);
@@ -1416,6 +1418,7 @@ int play2(int n, int o) {
 				combo = 0;
 				judghcount[3]++;
 				life -= 20;
+				PlaySoundMem(bomb, DX_PLAYTYPE_BACK);
 			}
 			else if (object[i[0]][1][objectN[i[0]]] == 7 && judgh < -40) {
 				judghname[i[0]][0] = 1;
@@ -1536,7 +1539,7 @@ int play2(int n, int o) {
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.0f", 60000.0 / notzero(G[0]));
-		for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"LaneTrack%d: %d", i[0], LaneTrack[i[0]]); }
+		//for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"LaneTrack%d: %d", i[0], LaneTrack[i[0]]); }
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い

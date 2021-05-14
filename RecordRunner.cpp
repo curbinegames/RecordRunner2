@@ -24,8 +24,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetDrawScreen(DX_SCREEN_BACK);
 	int next = 0, now = -1, bgm[2], mnom[7] = { 0,1,0,1,1,0,0 };
 	int G[2];
-	unsigned int Cr;
-	Cr = GetColor(255, 255, 255);
+	unsigned int Cr = GetColor(255, 255, 255);
 	bgm[0] = LoadSoundMem(L"song/no.mp3");
 	bgm[1] = LoadSoundMem(L"song/Letfs_be_happy.mp3");
 	//ƒQ[ƒ€I—¹(next‚ª5‚Ì‚Æ‚«)‚Ü‚Å‚ÌŠÔAˆ—‚ğŒJ‚è•Ô‚·

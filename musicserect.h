@@ -5,7 +5,8 @@ int musicserect(int *p1) {
 	Cr[3] = GetColor(0, 0, 0);
 	int songT, musicT, picsong, e, i, n = 0, UD = 1, LR = 1, key = 1, next = 99, startC = -250, XstartC = -250, previewC = 0, moveC = 250, XmoveC = 250, command[2] = { 0,1 }, rimit[64], level[64][6], Hscore[64][6];
 	int G[2];
-	double diskr = 0, rate[10], preview[64][6][2];
+	double diskr = 0, rate[10];
+	int preview[64][6][2];
 	wchar_t songname[64][6][256], artist[64][6][256], songM[64][6][256], jacketP[64][6][256], mapT[255], GT2[255], GT4[255], GT11[255], GT18[255];
 	wchar_t GT[] = { L"record/" };
 	wchar_t GT3[6][8] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
@@ -112,10 +113,10 @@ int musicserect(int *p1) {
 				//プレビュー時間を読み込む
 				if (strands(GT4, GT9)) {
 					strmods(GT4, 9);
-					preview[n][i][0] = strsans(GT4) * 44100.0 / 1000;
+					preview[n][i][0] = double(strsans(GT4)) / 1000 * 44100.0;
 					while (GT4[0] >= '0'&&GT4[0] <= '9') strmods(GT4, 1);
 					strmods(GT4, 1);
-					preview[n][i][1] = strsans(GT4) * 44100.0 / 1000;
+					preview[n][i][1] = double(strsans(GT4)) / 1000 * 44100.0;
 				}
 				//ジャケット写真を読み込む
 				if (strands(GT4, GT10)) {
