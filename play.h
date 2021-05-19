@@ -1090,6 +1090,7 @@ int play2(int n, int o) {
 		else if (key[KEY_INPUT_G] == 1) holdG++;
 		if (GetWindowUserCloseFlag(TRUE)) return 5;
 		//キャッチ判定に使う数値を計算
+		LaneTrack[charaput] = Ntime;
 		if (holdu == 0 && holdd == 0 || holdu > 0 && holdd > 0) { LaneTrack[1] = Ntime; }
 		else if (holdu > 0 && holdd == 0) { LaneTrack[0] = Ntime; }
 		else if (holdu == 0 && holdd > 0) { LaneTrack[2] = Ntime; }
