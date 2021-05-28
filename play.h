@@ -21,7 +21,6 @@ int play2(int n, int o) {
 	int system[5] = { 0,0,0,2,0 };
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
-	int songdata = 0;
 	int Ntime = 0;
 	int judghname[3][3]{ 0,0,0,0,0,0,0,0,0 };
 	int holda = 0;
@@ -49,82 +48,23 @@ int play2(int n, int o) {
 	int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
 	short int itemN = 0; //↑の番号
 	int chamo[3][99][2]; //キャラの[0:上,1:中,2:下]の[0:グラフィック,1:切り替え時間]
-	chamo[0][0][0] = 0;
-	chamo[0][0][1] = 0;
-	chamo[1][0][0] = 1;
-	chamo[1][0][1] = 0;
-	chamo[2][0][0] = 1;
-	chamo[2][0][1] = 0;
 	short int chamoN[3] = { 0,0,0 }; //↑の番号
 	int fall[99][2]; //落ち物背景の[0:番号,1:時間]
-	fall[0][0] = 0;
-	fall[0][1] = -1;
 	short int fallN = 0; //↑の番号
 	int Ymove[5][999][4]; //[上, 中, 下, (地面), (水中)]レーン縦移動の[0:開始時間,1:位置,2:終了時間,3:種類]
-	Ymove[0][0][0] = 0;
-	Ymove[0][0][1] = 300;
-	Ymove[0][0][2] = 0;
-	Ymove[0][0][3] = 1;
-	Ymove[1][0][0] = 0;
-	Ymove[1][0][1] = 350;
-	Ymove[1][0][2] = 0;
-	Ymove[1][0][3] = 1;
-	Ymove[2][0][0] = 0;
-	Ymove[2][0][1] = 400;
-	Ymove[2][0][2] = 0;
-	Ymove[2][0][3] = 1;
-	Ymove[3][0][0] = 0;
-	Ymove[3][0][1] = 350;
-	Ymove[3][0][2] = 0;
-	Ymove[3][0][3] = 1;
-	Ymove[4][0][0] = 0;
-	Ymove[4][0][1] = 600;
-	Ymove[4][0][2] = 0;
-	Ymove[4][0][3] = 1;
 	short int YmoveN[5] = { 0,0,0,0,0 }; //↑の番号
 	short int YmoveN2[3] = { 0,0,0 };
 	int Xmove[3][999][4]; //[上, 中, 下]レーン横移動の[0:開始時間,1:位置,2:終了時間,3:種類]
-	Xmove[0][0][0] = 0;
-	Xmove[0][0][1] = 150;
-	Xmove[0][0][2] = 0;
-	Xmove[0][0][3] = 1;
-	Xmove[1][0][0] = 0;
-	Xmove[1][0][1] = 150;
-	Xmove[1][0][2] = 0;
-	Xmove[1][0][3] = 1;
-	Xmove[2][0][0] = 0;
-	Xmove[2][0][1] = 150;
-	Xmove[2][0][2] = 0;
-	Xmove[2][0][3] = 1;
 	short int XmoveN[3] = { 0,0,0 }; //↑の番号
-	short int XmoveN2[3] = { 0,0,0 };
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
-	lock[0][0][0] = -1;
-	lock[0][1][0] = 0;
-	lock[1][0][0] = 1;
-	lock[1][1][0] = 0;
 	short int lockN[2] = { 0,0 }; //↑の番号
 	int carrow[2][99];
-	carrow[0][0] = 1;
-	carrow[1][0] = 0;
 	short int carrowN = 0;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
-	viewT[0][0] = 0;
-	viewT[1][0] = 3000;
 	short int viewTN = 0;
 	int object[3][5][999]; //[上,中,下]レーンの音符の[時間,種類,(使ってない),縦位置,横位置]
-	object[0][3][0] = 300;
-	object[1][3][0] = 350;
-	object[2][3][0] = 400;
 	short int objectN[3] = { 0,0,0 }; //↑の番号
 	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
-	difkey[0][2] = 0;
-	difkey[1][2] = 0;
-	difkey[1][3] = 0;
-	difkey[2][3] = -1;
-	difkey[3][3] = -2;
-	difkey[4][3] = 0;
-	difkey[5][3] = -1;
 	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
 	int ddifG[2] = { 1,1 };//0=今いる区間番号(1～25),1=最大値
 	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
@@ -132,21 +72,10 @@ int play2(int n, int o) {
 	double rate, bpm = 120, bpmG = 120;
 	double timer[3]; //[上, 中, 下]レーンの時間
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
-	speedt[0][0][0] = 0;
-	speedt[0][0][1] = 1;
-	speedt[1][0][0] = 0;
-	speedt[1][0][1] = 1;
-	speedt[2][0][0] = 0;
-	speedt[2][0][1] = 1;
-	speedt[3][0][0] = 0;
-	speedt[3][0][1] = 1;
-	speedt[4][0][0] = 0;
-	speedt[4][0][1] = 1;
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
 	char key[256];
 	wchar_t songN[255];
 	wchar_t songNE[255];
-	songN[0] = L'\0';
 	wchar_t fileN[255];
 	wchar_t dataE[255] = L"record/";
 	wchar_t RRS[255]; //PC用譜面データの保存場所
@@ -155,16 +84,7 @@ int play2(int n, int o) {
 	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
 	wchar_t waterFN[255] = L"picture/waternormal.png";
 	wchar_t GT1[255];
-	wchar_t GT15[255];
-	wchar_t GT24[] = L"picture/";
-	wchar_t GT25[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	wchar_t RecordCode[23][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
-		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
-		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
-		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
-		L"#VIEW:",L"#E.TITLE:",L"#CARROW"
-	};
 	unsigned int Cr, Crb;
 	Cr = GetColor(255, 255, 255);
 	Crb = GetColor(0, 0, 0);

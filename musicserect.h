@@ -10,7 +10,6 @@ int musicserect(int *p1) {
 	wchar_t songname[64][6][256], artist[64][6][256], songM[64][6][256], jacketP[64][6][256], mapT[255], GT2[255], GT4[255], GT11[255], GT18[255];
 	wchar_t GT[] = { L"record/" };
 	wchar_t GT3[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
-	wchar_t GT4[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	wchar_t GT5[] = { L"#TITLE:" };
 	wchar_t GT5E[] = { L"#E.TITLE:" };
 	wchar_t GT6[] = { L"#ARTIST:" };
@@ -28,6 +27,7 @@ int musicserect(int *p1) {
 	wchar_t GT19[] = { L"/" };
 	wchar_t GT20[] = { L"#MAP:" };
 	wchar_t GT21[255] = L"record/";
+	wchar_t GT22[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	wchar_t playingsong[255] = { L"NULL" };
 	wchar_t viewingjacket[255] = { L"NULL" };
 	int bar[7], difbar[6], difC[5][2], detail, back, disk, help, select, jacketpic, previewM;
