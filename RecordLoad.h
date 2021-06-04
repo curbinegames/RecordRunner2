@@ -153,7 +153,7 @@ void RecordLoad(int n, int o) {
 		//BPMを読み込む
 		else if (strands(GT1, RecordCode[1])) bpmG = bpm = SETbpm(GT1);
 		//ノートのオフセットを読み込む
-		else if (strands(GT1, RecordCode[2])) timer[0] = timer[1] = timer[2] = noteoff = SEToffset(GT1, system[1]);
+		else if (strands(GT1, RecordCode[2])) timer[0] = timer[1] = timer[2] = noteoff = SEToffset(GT1);
 		//空の背景を読み込む
 		else if (strands(GT1, RecordCode[3])) {
 			strcopy(GT24, skyFN, 1);

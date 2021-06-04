@@ -3,9 +3,9 @@ double SETbpm(wchar_t *p1) {
 	return strsans2(p1);
 }
 
-int SEToffset(wchar_t *p1, int a) {
+int SEToffset(wchar_t *p1) {
 	strmods(p1, 12);
-	return strsans(p1) + a * 5;
+	return strsans(p1);
 }
 
 int SETLv(wchar_t *p1) {

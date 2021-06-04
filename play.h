@@ -1,5 +1,6 @@
 #include "playing.h"
 #include "RecordLoad.h"
+#include "fontcur.h"
 
 int play2(int n, int o) {
 	/*---用語定義-----
@@ -15,6 +16,7 @@ int play2(int n, int o) {
 	short int bgf[2] = { 0,0 }; //落ち物背景の[0:横位置,1:縦位置]
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
 	short int drop = 0;
+	short int rank = 0;
 	int judgh = 0; //ノーツの時間距離
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[10], songT;
@@ -892,7 +894,7 @@ int play2(int n, int o) {
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.0f", 60000.0 / notzero(G[0]));
-		//for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"LaneTrack%d: %d", i[0], LaneTrack[i[0]]); }
+		//for (i[0] = 0; i[0] < 1; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"%d", system[1] * 5); }
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
@@ -909,7 +911,7 @@ int play2(int n, int o) {
 			break;
 		}
 		WaitTimer(5);
-		Ntime = GetNowCount() - Stime;
+		Ntime = GetNowCount() - Stime + system[1] * 5;
 		ScreenFlip();
 	}
 	int	read[7] = { 0,0,0,0,0,0,0 };
@@ -919,6 +921,12 @@ int play2(int n, int o) {
 	wchar_t save[255] = L"score/";
 	wchar_t save2[255] = L".dat";
 	score2[3] = score2[0] + score2[1] - score2[2];
+	if (score2[3] >= 98000) rank = 0;
+	else if (score2[3] >= 95000) rank = 1;
+	else if (score2[3] >= 90000) rank = 2;
+	else if (score2[3] >= 85000) rank = 3;
+	else if (score2[3] >= 80000) rank = 4;
+	else rank = 5;
 	//セーブ処理
 	strcats(save, fileN);
 	strcats(save, save2);
@@ -1019,23 +1027,42 @@ int play2(int n, int o) {
 		DrawGraph(0, 0, resultimg, TRUE);
 		DrawGraph(460, 20, difberimg, TRUE);
 		DrawString(100, 13, songN, Cr);
-		DrawFormatString(150, 60, Cr, L"%d", judghcount[0]);
-		DrawFormatString(150, 100, Cr, L"%d", judghcount[1]);
-		DrawFormatString(150, 140, Cr, L"%d", judghcount[2]);
-		DrawFormatString(150, 180, Cr, L"%d", judghcount[3]);
-		DrawFormatString(180, 220, Cr, L"%d", Mcombo);
-		DrawFormatString(280, 220, Cr, L"%d", notes);
-		DrawFormatString(450, 90, Cr, L"%d", score2[3]);
-		DrawFormatString(450, 170, Cr, L"%.2f", acc);
+		DrawCurFont(judghcount[0], 140, 52, 30, 4);
+		DrawCurFont(judghcount[1], 140, 93, 30, 2);
+		DrawCurFont(judghcount[2], 140, 134, 30, 3);
+		DrawCurFont(judghcount[3], 140, 175, 30, 1);
+		DrawCurFont(Mcombo, 155, 215, 30, 4);
+		DrawCurFont(notes, 265, 215, 30, 5);
+		switch (rank) {
+		case 0:
+			DrawCurFont(score2[3], 310, 75, 55, 6);
+			DrawCurFont(acc, 430, 150, 30, 6, 2);
+			break;
+		case 1:
+			DrawCurFont(score2[3], 310, 75, 55, 4);
+			DrawCurFont(acc, 430, 150, 30, 4, 2);
+			break;
+		case 2:
+			DrawCurFont(score2[3], 310, 75, 55, 2);
+			DrawCurFont(acc, 430, 150, 30, 2, 2);
+			break;
+		case 3:
+			DrawCurFont(score2[3], 310, 75, 55, 3);
+			DrawCurFont(acc, 430, 150, 30, 3, 2);
+			break;
+		case 4:
+			DrawCurFont(score2[3], 310, 75, 55, 5);
+			DrawCurFont(acc, 430, 150, 30, 5, 2);
+			break;
+		case 5:
+			DrawCurFont(score2[3], 310, 75, 55, 1);
+			DrawCurFont(acc, 430, 150, 30, 1, 2);
+			break;
+		}
 		if (gapa[1] == 0) gapa[1] = 1;
-		DrawFormatString(510, 210, Cr, L"%2d", gapa[0] / gapa[1]);
-		DrawFormatString(510, 235, Cr, L"%2d", gapa[2] / gapa[1] - gapa[0] * gapa[0] / gapa[1] / gapa[1]);
-		if (score2[3] >= 98000) DrawGraph(95, 280, rankimg[0], TRUE);
-		else if (score2[3] >= 95000) DrawGraph(140, 260, rankimg[1], TRUE);
-		else if (score2[3] >= 90000) DrawGraph(140, 260, rankimg[2], TRUE);
-		else if (score2[3] >= 85000) DrawGraph(140, 260, rankimg[3], TRUE);
-		else if (score2[3] >= 80000) DrawGraph(140, 260, rankimg[4], TRUE);
-		else DrawGraph(140, 260, rankimg[5], TRUE);
+		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
+		DrawCurFont(gapa[2] / gapa[1] - gapa[0] * gapa[0] / gapa[1] / gapa[1], 500, 230, 20, 0);
+		DrawGraph(140, 260, rankimg[rank], TRUE);
 		if (drop == 1) DrawGraph(5, 420, coleimg[0], TRUE);
 		if (drop == 0 && judghcount[3] > 0) DrawGraph(5, 420, coleimg[1], TRUE);
 		if (judghcount[3] == 0 && judghcount[2] > 0) DrawGraph(5, 420, coleimg[2], TRUE);
