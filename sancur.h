@@ -47,3 +47,9 @@ int abss(int a, int b) {
 	}
 	return a;
 }
+//a‚ğ0‚©‚çb‚Åƒ‹[ƒv‚³‚¹‚é
+int NumLoop(int a, int b) {
+	while (a < 0) { a += b; }
+	while (a > b) { a -= b; }
+	return a;
+}

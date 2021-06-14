@@ -573,6 +573,7 @@ void RecordLoad(int n, int o) {
 	┣間隔が150ms以上の時は変動なし
 	┣間隔が150ms以下75ms以上の時は得点("間隔"/(-75)+3)倍(1～2倍)
 	┗間隔が75ms以下の時は得点2倍
+	間隔が20ms以下のhitノーツは同時押し扱い、1.2倍
 	arrowひっかけは2.5倍
 	2個前と違うキーの時は得点1.2倍(全キー対象)
 	arrowキーは得点1.2倍
@@ -593,7 +594,14 @@ void RecordLoad(int n, int o) {
 			break;
 		}
 		if (G[0] == -1) break;
-		for (i[0] = 0; i[0] < 3; i[0]++) if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] > object[i[0]][0][objectN[i[0]]] && object[i[0]][0][objectN[i[0]]] >= 0) G[0] = i[0];
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] > object[i[0]][0][objectN[i[0]]] && object[i[0]][0][objectN[i[0]]] >= 0){
+				G[0] = i[0];
+			}
+			else if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] == object[i[0]][0][objectN[i[0]]] && object[G[0]][1][objectN[G[0]]] == 2 && object[i[0]][1][objectN[i[0]]] != 2 && object[i[0]][0][objectN[i[0]]] >= 0) {
+				G[0] = i[0];
+			}
+		}
 		//ddifの計算
 		//old
 		while (object[G[0]][0][objectN[G[0]]] >= (Etime - noteoff) / 25 * ddifG[0] + noteoff) {
@@ -606,7 +614,16 @@ void RecordLoad(int n, int o) {
 			ddifG[0]++;
 		}
 		difkey[difkey[1][3]][0] = object[G[0]][1][objectN[G[0]]];
-		if (difkey[difkey[1][3]][0] == 2) {
+		difkey[difkey[1][3]][1] = object[G[0]][0][objectN[G[0]]];
+		//hitノーツ補間
+		if (difkey[difkey[1][3]][0] == 1) {
+			if (difkey[difkey[2][3]][0] == 1 && difkey[difkey[2][3]][1] - 20 < difkey[difkey[2][3]][1]) {
+				objectN[G[0]]++;
+				continue;
+			}
+		}
+		//catchノーツ補間
+		else if (difkey[difkey[1][3]][0] == 2) {
 			if (G[0] != 1) difkey[difkey[1][3]][0] = G[0] / 2 + 3;
 			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
 				objectN[G[0]]++;
@@ -632,6 +649,7 @@ void RecordLoad(int n, int o) {
 				continue;
 			}
 		}
+		//bombノーツ補間
 		else if (difkey[difkey[1][3]][0] == 7) {
 			if (G[0] != 0)difkey[difkey[1][3]][0] = G[0] + 7;
 			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
@@ -666,7 +684,6 @@ void RecordLoad(int n, int o) {
 				continue;
 			}
 		}
-		difkey[difkey[1][3]][1] = object[G[0]][0][objectN[G[0]]];
 		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
 			G[1] = difkey[difkey[1][3]][1] - difkey[difkey[2][3]][1];
 			if (G[1] == 0)G[1] = 1;
@@ -736,6 +753,7 @@ void RecordLoad(int n, int o) {
 	G[1] = difkey[6][3];//最終難易度
 	fwrite(&G, sizeof(int), 2, fp);
 	fwrite(&ddif, sizeof(int), 25, fp);//各区間難易度データ
+	fwrite(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 	fclose(fp);
 	return;
 }
