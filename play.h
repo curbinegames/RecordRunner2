@@ -74,6 +74,7 @@ int play2(int n, int o) {
 	double rate, bpm = 120, bpmG = 120;
 	double timer[3]; //[上, 中, 下]レーンの時間
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
+	double DifRate; //譜面定数
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
 	char key[256];
 	wchar_t songN[255];
@@ -257,6 +258,25 @@ int play2(int n, int o) {
 	}
 	//ゲーム開始前の下準備
 	notes = notzero(notes);
+	GD[0] = difkey[4][3] / 100.0 - Lv;//mdifと難易度表記の差
+	if (Lv == 0) {
+		DifRate = 0;
+	}
+	else if (2 <= GD[0]) {
+		DifRate = Lv + 0.9;
+	}
+	else if (0 <= GD[0] && GD[0] < 2) {
+		DifRate = Lv + 0.2 * GD[0] + 0.5;
+	}
+	else if (-1 <= GD[0] && GD[0] < 0) {
+		DifRate = Lv + 0.5 * GD[0] + 0.5;
+	}
+	else if (-2 <= GD[0] && GD[0] < 1) {
+		DifRate = Lv * (GD[0] + 2);
+	}
+	else {
+		DifRate = 0;
+	}
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK);
 	WaitTimer(10);
 	int Stime = GetNowCount();
@@ -873,6 +893,7 @@ int play2(int n, int o) {
 			for (i[0] = 0; i[0] <= 23; i[0]++) DrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24, -ddif[i[0]] * 34 / notzero(ddifG[1]) + 72, (G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24, -ddif[i[0] + 1] * 34 / notzero(ddifG[1]) + 72, Cr);
 			DrawFormatString(490, 80, Cr, L"mdif:%.2f", difkey[4][3] / 100.0);
 			DrawFormatString(490, 100, Cr, L"ldif:%.2f", difkey[6][3] / 100.0);
+			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
 		}
 		//スコアバー隠し表示
 		DrawGraph(0, 0, sbbarimg, TRUE);
@@ -968,24 +989,24 @@ int play2(int n, int o) {
 	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"wb");
 	fwrite(&chap, sizeof(int), 3, fp);
 	fclose(fp);
-	//レート計算(level0なら0固定)"レベル" - "miss数" x "レベル" x 0.03(下限=0)
-	if (Lv == 0) rate = 0;
+	//レート計算(level0なら0固定)"譜面定数" - "miss数" x "譜面定数" x 0.03(下限=0)
+	if (DifRate == 0) rate = 0;
 	else if (judghcount[3] > 0) {
-		rate = Lv - judghcount[3] * Lv*0.03;
+		rate = DifRate - judghcount[3] * DifRate*0.03;
 		rate = mins(rate, 0);
 	}
-	//NO MISS,"レベル" + 1 - "safe数" x 0.05(下限="レベル")
+	//NO MISS,"譜面定数" + 1 - "safe数" x 0.05(下限="譜面定数")
 	else if (judghcount[3] == 0 && judghcount[2] > 0) {
-		rate = Lv + 1 - judghcount[2] * 0.05;
-		rate = mins(rate, Lv);
+		rate = DifRate + 1 - judghcount[2] * 0.05;
+		rate = mins(rate, DifRate);
 	}
-	//FULL COMBO,"レベル" + 2 - "good数" x 0.01(下限="レベル" + 1)
+	//FULL COMBO,"譜面定数" + 2 - "good数" x 0.01(下限="譜面定数" + 1)
 	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) {
-		rate = Lv + 2 - judghcount[1] * 0.01;
-		rate = mins(rate, Lv + 1);
+		rate = DifRate + 2 - judghcount[1] * 0.01;
+		rate = mins(rate, DifRate + 1);
 	}
-	//PERFECT, "レベル" + 2
-	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] == 0) rate = Lv + 2;
+	//PERFECT, "譜面定数" + 2
+	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] == 0) rate = DifRate + 2;
 	//レート保存
 	G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"rb");
 	if (G[0] == 0) {
