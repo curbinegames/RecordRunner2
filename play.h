@@ -17,6 +17,7 @@ int play2(int n, int o) {
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
 	short int drop = 0;
 	short int rank = 0;
+	short int Clear = 0;
 	int judgh = 0; //ノーツの時間距離
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[10], songT;
@@ -36,7 +37,7 @@ int play2(int n, int o) {
 	int combo = 0;
 	int LaneTrack[3] = { -150,-150,-150 };
 	int Mcombo = 0;
-	int Dscore[3] = { 0,0,0 }; //距離に当たる部分[加点用,加点保存用,距離保存用]
+	int Dscore[4] = { 0,0,0,0 }; //距離に当たる部分[加点用,加点保存用,距離保存用,実点数]
 	int judghcount[4] = { 0,0,0,0 };
 	int life = 500;
 	int gap[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//gap = 判定ずれ
@@ -886,6 +887,7 @@ int play2(int n, int o) {
 			GD[0] = G[0] / 100000.0;
 			DrawFormatString(180, 45, Cr, L"%.3fkm", GD[0] + Dscore[1] / 1000.0);
 		}
+		Dscore[3] = GD[0] * 1000 + Dscore[1];
 		//部分難易度表示
 		if (holdG >= 1) {
 			G[0] = ddif[0] * 20 / notzero(ddifG[1]) + 155;
@@ -937,33 +939,53 @@ int play2(int n, int o) {
 		ScreenFlip();
 	}
 	int	read[7] = { 0,0,0,0,0,0,0 };
+	double ReadAcc[7] = { 0,0,0,0,0,0,0 };
+	int	Readdis[7] = { 0,0,0,0,0,0,0 };
+	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
+	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
 	int chap[3] = { 0,0,0 };
 	double readR[10];
+	double acc = (judghcount[0] * 10000 + judghcount[1] * 9500 + judghcount[2] * 5500) / (notes*100.0);
 	wchar_t savec[10][255];
 	wchar_t save[255] = L"score/";
 	wchar_t save2[255] = L".dat";
 	score2[3] = score2[0] + score2[1] - score2[2];
+	//ランク判定
 	if (score2[3] >= 98000) rank = 0;
 	else if (score2[3] >= 95000) rank = 1;
 	else if (score2[3] >= 90000) rank = 2;
 	else if (score2[3] >= 85000) rank = 3;
 	else if (score2[3] >= 80000) rank = 4;
 	else rank = 5;
-	//セーブ処理
+	//クリアレート判定
+	if (drop == 1) { Clear = 1; }
+	else if (drop == 0 && judghcount[3] > 0) { Clear = 2; }
+	else if (drop == 0 && judghcount[3] == 0 && judghcount[2] > 0) { Clear = 3; }
+	else if (drop == 0 && judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) { Clear = 4; }
+	else Clear = 5;
 	strcats(save, fileN);
 	strcats(save, save2);
-	//ハイスコア保存
-	G[0] = _wfopen_s(&fp, save, L"rb");
+	G[0] = _wfopen_s(&fp, save, L"rb"); //記録読み込み
 	if (G[0] == 0) {
 		fread(&read, sizeof(read), 6, fp);
+		fread(&ReadAcc, sizeof(ReadAcc), 6, fp);
+		fread(&Readdis, sizeof(Readdis), 6, fp);
+		fread(&ReadRank, sizeof(ReadRank), 6, fp);
+		fread(&ReadClear, sizeof(ReadClear), 6, fp);
 		fclose(fp);
 	}
-	if (read[o] < score2[3]) {
-		read[o] = score2[3];
-		G[0] = _wfopen_s(&fp, save, L"wb");
-		fwrite(&read, sizeof(int), 6, fp);
-		fclose(fp);
-	}
+	if (read[o] < score2[3]) { read[o] = score2[3]; } //ハイスコア保存
+	if (ReadAcc[o] < acc) { ReadAcc[o] = acc; } //ACC保存
+	if (Readdis[o] < Dscore[3]) { Readdis[o] = Dscore[3]; } //最長走行距離保存
+	if (ReadRank[o] > rank || ReadRank[o] < 0) { ReadRank[o] = rank; } //ランク保存
+	if (ReadClear[o] < Clear) { ReadClear[o] = Clear; } //クリアレート保存
+	G[0] = _wfopen_s(&fp, save, L"wb");
+	fwrite(&read, sizeof(int), 6, fp);
+	fwrite(&ReadAcc, sizeof(double), 6, fp);
+	fwrite(&Readdis, sizeof(int), 6, fp);
+	fwrite(&ReadRank, sizeof(int), 6, fp);
+	fwrite(&ReadClear, sizeof(int), 6, fp);
+	fclose(fp);
 	//プレイ回数保存
 	G[0] = _wfopen_s(&fp, L"save/data.dat", L"rb");
 	if (G[0] == 0) {
@@ -1043,9 +1065,7 @@ int play2(int n, int o) {
 	//リザルト画面
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	while (1) {
-		double acc;
 		ClearDrawScreen();
-		acc = (judghcount[0] * 10000 + judghcount[1] * 9500 + judghcount[2] * 5500) / (notes*100.0);
 		DrawGraph(0, 0, resultimg, TRUE);
 		DrawGraph(460, 20, difberimg, TRUE);
 		DrawString(100, 13, songN, Cr);
@@ -1085,11 +1105,7 @@ int play2(int n, int o) {
 		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
 		DrawCurFont(gapa[2] / gapa[1] - gapa[0] * gapa[0] / gapa[1] / gapa[1], 500, 230, 20, 0);
 		DrawGraph(140, 260, rankimg[rank], TRUE);
-		if (drop == 1) DrawGraph(5, 420, coleimg[0], TRUE);
-		if (drop == 0 && judghcount[3] > 0) DrawGraph(5, 420, coleimg[1], TRUE);
-		if (judghcount[3] == 0 && judghcount[2] > 0) DrawGraph(5, 420, coleimg[2], TRUE);
-		if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) DrawGraph(5, 420, coleimg[3], TRUE);
-		if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] == 0) DrawGraph(5, 420, coleimg[4], TRUE);
+		DrawGraph(5, 420, coleimg[Clear - 1], TRUE);
 		DrawGraph(336, 252, Rchaimg, TRUE);
 		ScreenFlip();
 		//エンターが押された

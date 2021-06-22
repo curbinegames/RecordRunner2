@@ -3,9 +3,11 @@ int musicserect(int *p1) {
 	unsigned int Cr[7];
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
 	Cr[3] = GetColor(0, 0, 0);
-	int songT, musicT, picsong, e, i, n = 0, UD = 1, LR = 1, key = 1, next = 99, startC = -250, XstartC = -250, previewC = 0, moveC = 250, XmoveC = 250, command[2] = { 0,1 }, rimit[64], level[64][6], Hscore[64][6];
+	int songT, musicT, picsong, e, i, n = 0, UD = 1, LR = 1, key = 1, next = 99, startC = -250, XstartC = -250, previewC = 0, moveC = 250, XmoveC = 250, command[2] = { 0,1 }, rimit[64], level[64][6], Hscore[64][6], Hdis[64][6];
+	int ClearRank[64][6];//0=EX, 1=S, 2=A, 3=B, 4=C, 5=D, 6=not play
+	int ClearRate[64][6];//0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
 	int G[2];
-	double diskr = 0, rate[10];
+	double diskr = 0, rate[10], Hacc[64][6];
 	int preview[64][6][2];
 	wchar_t songname[64][6][256], artist[64][6][256], songM[64][6][256], jacketP[64][6][256], mapT[255], GT2[255], GT4[255], GT11[255], GT18[255];
 	wchar_t GT[] = { L"record/" };
@@ -30,7 +32,7 @@ int musicserect(int *p1) {
 	wchar_t GT22[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	wchar_t playingsong[255] = { L"NULL" };
 	wchar_t viewingjacket[255] = { L"NULL" };
-	int bar[7], difbar[6], difC[5][2], detail, back, disk, help, select, jacketpic, previewM;
+	int bar[7], difbar[6], difC[5][2], CRatepic[5], CRankpic[6], detail, back, disk, help, select, jacketpic, previewM;
 	bar[0] = bar[1] = bar[2] = bar[4] = bar[5] = bar[6] = LoadGraph(L"picture/songbarB.png");
 	bar[3] = LoadGraph(L"picture/songbarY.png");
 	difbar[0] = LoadGraph(L"picture/difauto.png");
@@ -48,6 +50,17 @@ int musicserect(int *p1) {
 	difC[3][1] = LoadGraph(L"picture/dif3B.png");
 	difC[4][0] = LoadGraph(L"picture/dif4S.png");
 	difC[4][1] = LoadGraph(L"picture/dif4B.png");
+	CRatepic[0] = LoadGraph(L"picture/MarkD.png");
+	CRatepic[1] = LoadGraph(L"picture/MarkC.png");
+	CRatepic[2] = LoadGraph(L"picture/MarkNM.png");
+	CRatepic[3] = LoadGraph(L"picture/MarkFC.png");
+	CRatepic[4] = LoadGraph(L"picture/MarkP.png");
+	CRankpic[0] = LoadGraph(L"picture/MiniEX.png");
+	CRankpic[1] = LoadGraph(L"picture/MiniS.png");
+	CRankpic[2] = LoadGraph(L"picture/MiniA.png");
+	CRankpic[3] = LoadGraph(L"picture/MiniB.png");
+	CRankpic[4] = LoadGraph(L"picture/MiniC.png");
+	CRankpic[5] = LoadGraph(L"picture/MiniD.png");
 	detail = LoadGraph(L"picture/detail.png");
 	back = LoadGraph(L"picture/MSback.png");
 	disk = LoadGraph(L"picture/disk.png");
@@ -135,11 +148,21 @@ int musicserect(int *p1) {
 		strcats(GT11, GT2);
 		strcats(GT11, GT13);
 		e = _wfopen_s(&fp, GT11, L"rb");
+		for (i = 0; i < 6; i++) {
+			Hscore[n][i] = 0;
+			Hacc[n][i] = 0;
+			Hdis[n][i] = 0;
+			ClearRank[n][i] = 6;
+			ClearRate[n][i] = 0;
+		}
 		if (e == 0) {
-			fread(&Hscore[n], sizeof(Hscore[n]), 6, fp);
+			fread(&Hscore[n], sizeof(int), 6, fp);
+			fread(&Hacc[n], sizeof(double), 6, fp);
+			fread(&Hdis[n], sizeof(int), 6, fp);
+			fread(&ClearRank[n], sizeof(int), 6, fp);
+			fread(&ClearRate[n], sizeof(int), 6, fp);
 			fclose(fp);
 		}
-		for (i = 0; i < 6; i++) if (Hscore[n][i] < 0) Hscore[n][i] = 0;
 		if (Hscore[n][5] > 0) rimit[n] = 4;
 		FileRead_close(musicT);
 		n++;
@@ -174,7 +197,14 @@ int musicserect(int *p1) {
 			DrawGraph((UD*moveC*moveC + 62500 * i - 375000) / 3125, (6 * UD*moveC*moveC + 375000 * i - 531250) / 3125, bar[i], TRUE);
 			DrawString((UD*moveC*moveC + 62500 * i - 93750) / 3125, (6 * UD*moveC*moveC + 375000 * i - 468750) / 3125, songname[picsong][command[1]], Cr[i]);
 			DrawString((UD*moveC*moveC + 62500 * i - 93750) / 3125, (6 * UD*moveC*moveC + 375000 * i - 406250) / 3125, artist[picsong][command[1]], Cr[i]);
-			DrawFormatString((UD*moveC*moveC + 62500 * i + 62500) / 3125, (6 * UD*moveC*moveC + 375000 * i - 312500) / 3125, Cr[i], L"HIGHSCORE:%d", Hscore[picsong][command[1]]);
+			if (1 <= ClearRate[picsong][command[1]]) {
+				DrawGraph((UD*moveC*moveC + 62500 * i - 375000) / 3125 + 275, (6 * UD*moveC*moveC + 375000 * i - 531250) / 3125 + 40, CRatepic[ClearRate[picsong][command[1]] - 1], TRUE);
+			}
+			if (0 <= ClearRank[picsong][command[1]] && ClearRank[picsong][command[1]] <= 5) {
+				DrawGraph((UD*moveC*moveC + 62500 * i - 375000) / 3125 + 275, (6 * UD*moveC*moveC + 375000 * i - 531250) / 3125 + 40, CRankpic[ClearRank[picsong][command[1]]], TRUE);
+			}
+			DrawFormatString((UD*moveC*moveC + 62500 * i + 62500) / 3125, (6 * UD*moveC*moveC + 375000 * i - 312500) / 3125, Cr[i], L"ClearRank:%d", ClearRank[picsong][command[1]]);
+			DrawFormatString((UD*moveC*moveC + 62500 * i + 62500) / 3125, (6 * UD*moveC*moveC + 375000 * i - 312500) / 3125 + 20, Cr[i], L"ClearRate:%d", ClearRate[picsong][command[1]]);
 			picsong++;
 			if (picsong > n) picsong -= n + 1;
 		}
@@ -197,7 +227,10 @@ int musicserect(int *p1) {
 		}
 		//詳細を表示する
 		DrawGraph(316, 370, detail, TRUE);
-		DrawFormatString(500, 390, Cr[3], L"LEVEL:%d", level[command[0]][command[1]]);
+		DrawFormatString(500, 380, Cr[3], L"LEVEL:%d", level[command[0]][command[1]]);
+		DrawFormatString(340, 410, Cr[3], L"HighSCORE:%d", Hscore[command[0]][command[1]]);
+		DrawFormatString(500, 410, Cr[3], L"HighACC:%.2f%%", Hacc[command[0]][command[1]]);
+		DrawFormatString(350, 430, Cr[3], L"HighDis:%.3fkm", Hdis[command[0]][command[1]] / 1000.0);
 		//プレビューを流す
 		if (moveC == 0 && XmoveC == 0 && strands(songM[command[0]][command[1]], GT14) == 0 && strands(playingsong, songM[command[0]][command[1]]) == 0) {
 			StopSoundMem(previewM);
@@ -316,6 +349,8 @@ int musicserect(int *p1) {
 			if (key == 0) {
 				StopSoundMem(previewM);
 				ClearDrawScreen();
+				InitSoundMem();
+				InitGraph();
 				next = 1;
 				break;
 			}
