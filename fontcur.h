@@ -26,12 +26,17 @@ void DrawCurFont(double dn, short int x, short int y, int sizeY, short int Cr, s
 		LoadDivGraph(L"picture/NumberRainbow.png", 10, 5, 2, 58, 64, font);
 		break;
 	}
+	if (dn < 0) {
+		dn *= -1;
+	}
 	for (int i = a; i > 0; i--) {
 		dn *= 10;
 	}
 	n = dn;
-	for (int i = 10; i < n; i *= 10) {
-		k++;
+	if (n != 0) {
+		for (int i = 10; i <= n; i *= 10) {
+			k++;
+		}
 	}
 	for (int i = k; i >= 0; i--) {
 		m = n % 10;
