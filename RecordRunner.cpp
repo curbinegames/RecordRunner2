@@ -23,7 +23,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (DxLib_Init() == -1)return -1;
 	SetDrawScreen(DX_SCREEN_BACK);
 	int next = 0, now = -1, bgm[2], mnom[7] = { 0,1,0,1,1,0,0 };
-	int G[2];
+	int G[3];
 	unsigned int Cr = GetColor(255, 255, 255);
 	bgm[0] = LoadSoundMem(L"song/no.mp3");
 	bgm[1] = LoadSoundMem(L"song/LetÅfs_be_happy.mp3");
@@ -56,7 +56,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			next = option();
 			break;
 		case(6):
-			next = play2(G[0], G[1]);
+			next = play2(G[0], G[1], G[2]);
 			break;
 		default:
 			ClearDrawScreen();

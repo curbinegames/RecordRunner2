@@ -2,7 +2,7 @@
 #include "RecordLoad.h"
 #include "fontcur.h"
 
-int play2(int n, int o) {
+int play2(int n, int o, int shift) {
 	/*---用語定義-----
 	ユーザー用譜面データ: ユーザーが作った譜面データ。ユーザーに分かりやすい。
 	PC用譜面データ: ユーザー用譜面データから計算で作られた、PC専用の譜面データ。PCに分かりやすい。
@@ -106,9 +106,12 @@ int play2(int n, int o) {
 	strcats(dataE, GT1);
 	strcopy(dataE, GT1, 1);
 	strcats(GT1, GT26[o]);
-	G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
+	G[2] = -1;
+	if (shift == 0) {
+		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
+	}
 	if (G[2] != 0) {
-		RecordLoad(n, o);//rrsデータが無かったら作る
+		RecordLoad(n, o);//rrsデータが無い、または作成の指示があれば作る
 		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
 	}
 	if (G[2] == 0) {
