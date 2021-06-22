@@ -3,7 +3,8 @@ int musicserect(int *p1) {
 	unsigned int Cr[7];
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
 	Cr[3] = GetColor(0, 0, 0);
-	int songT, musicT, picsong, e, i, n = 0, UD = 1, LR = 1, key = 1, ShiftKey = 0, next = 99, startC = -250, XstartC = -250, previewC = 0, moveC = 250, XmoveC = 250, command[2] = { 0,1 }, rimit[64], level[64][6], Hscore[64][6], Hdis[64][6];
+	int e, i, n = 0, UD = 1, LR = 1, key = 1, ShiftKey = 0, next = 99;
+	int songT, musicT, picsong, startC = -250, XstartC = -250, previewC = 0, moveC = 250, XmoveC = 250, command[2] = { 0,1 }, rimit[64], level[64][6], Hscore[64][6], Hdis[64][6];
 	int ClearRank[64][6];//0=EX, 1=S, 2=A, 3=B, 4=C, 5=D, 6=not play
 	int ClearRate[64][6];//0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
 	int G[2];
@@ -194,14 +195,16 @@ int musicserect(int *p1) {
 		picsong = command[0] - 3;
 		while (picsong < 0) picsong += n + 1;
 		for (i = 0; i < 7; i++) {
-			DrawGraph((UD*moveC*moveC + 62500 * i - 375000) / 3125, (6 * UD*moveC*moveC + 375000 * i - 531250) / 3125, bar[i], TRUE);
-			DrawString((UD*moveC*moveC + 62500 * i - 93750) / 3125, (6 * UD*moveC*moveC + 375000 * i - 468750) / 3125, songname[picsong][command[1]], Cr[i]);
-			DrawString((UD*moveC*moveC + 62500 * i - 93750) / 3125, (6 * UD*moveC*moveC + 375000 * i - 406250) / 3125, artist[picsong][command[1]], Cr[i]);
+			G[0] = (UD*moveC*moveC + 62500 * i) / 3125;
+			G[1] = (6 * UD*moveC*moveC + 375000 * i) / 3125;
+			DrawGraph(G[0] - 120, G[1] - 170, bar[i], TRUE);
+			DrawString(G[0] - 30, G[1] - 150, songname[picsong][command[1]], Cr[i]);
+			DrawString(G[0] - 30, G[1] - 130, artist[picsong][command[1]], Cr[i]);
 			if (1 <= ClearRate[picsong][command[1]]) {
-				DrawGraph((UD*moveC*moveC + 62500 * i - 375000) / 3125 + 275, (6 * UD*moveC*moveC + 375000 * i - 531250) / 3125 + 40, CRatepic[ClearRate[picsong][command[1]] - 1], TRUE);
+				DrawGraph(G[0] + 155, G[1] - 130, CRatepic[ClearRate[picsong][command[1]] - 1], TRUE);
 			}
 			if (0 <= ClearRank[picsong][command[1]] && ClearRank[picsong][command[1]] <= 5) {
-				DrawGraph((UD*moveC*moveC + 62500 * i - 375000) / 3125 + 275, (6 * UD*moveC*moveC + 375000 * i - 531250) / 3125 + 40, CRankpic[ClearRank[picsong][command[1]]], TRUE);
+				DrawGraph(G[0] + 155, G[1] - 130, CRankpic[ClearRank[picsong][command[1]]], TRUE);
 			}
 			picsong++;
 			if (picsong > n) picsong -= n + 1;

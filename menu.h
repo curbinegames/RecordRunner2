@@ -1,10 +1,6 @@
 int menu(void) {
-	/*
-	next = 次のモード
-	command = 選択中のモード
-	*/
-	int next = 1;
-	int command = 1;
+	int next = 1; //次のモード
+	int command = 1; //選択中のモード
 	int LR = 1;
 	int starttime = -250;
 	int movetime = 250;
@@ -17,8 +13,7 @@ int menu(void) {
 		fread(&lan, sizeof(lan), 5, fp);
 		fclose(fp);
 	}
-	unsigned int Cr;
-	Cr = GetColor(255, 255, 255);
+	unsigned int Cr = GetColor(255, 255, 255);
 	menu[0] = LoadGraph(L"picture/FREE PLAY.png");
 	menu[1] = LoadGraph(L"picture/COLLECTION.png");
 	menu[2] = LoadGraph(L"picture/OPTION.png");
