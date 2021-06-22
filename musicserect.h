@@ -203,8 +203,6 @@ int musicserect(int *p1) {
 			if (0 <= ClearRank[picsong][command[1]] && ClearRank[picsong][command[1]] <= 5) {
 				DrawGraph((UD*moveC*moveC + 62500 * i - 375000) / 3125 + 275, (6 * UD*moveC*moveC + 375000 * i - 531250) / 3125 + 40, CRankpic[ClearRank[picsong][command[1]]], TRUE);
 			}
-			DrawFormatString((UD*moveC*moveC + 62500 * i + 62500) / 3125, (6 * UD*moveC*moveC + 375000 * i - 312500) / 3125, Cr[i], L"ClearRank:%d", ClearRank[picsong][command[1]]);
-			DrawFormatString((UD*moveC*moveC + 62500 * i + 62500) / 3125, (6 * UD*moveC*moveC + 375000 * i - 312500) / 3125 + 20, Cr[i], L"ClearRate:%d", ClearRate[picsong][command[1]]);
 			picsong++;
 			if (picsong > n) picsong -= n + 1;
 		}
