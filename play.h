@@ -72,7 +72,7 @@ int play2(int n, int o, int shift) {
 	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
 	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
 	int Xline[3] = { 150,150,150 };//[上,中,下]レーンの横位置
-	double rate, bpm = 120, bpmG = 120;
+	double rate, SumRate[2] = { 0,0 }, bpm = 120, bpmG = 120;
 	double timer[3]; //[上, 中, 下]レーンの時間
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
 	double DifRate; //譜面定数
@@ -921,7 +921,7 @@ int play2(int n, int o, int shift) {
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.0f", 60000.0 / notzero(G[0]));
-		//for (i[0] = 0; i[0] < 1; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"%d", system[1] * 5); }
+		//for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"%d,%d", object[i[0]][0][objectN[i[0]]], object[i[0]][1][objectN[i[0]]]); }
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
@@ -947,7 +947,7 @@ int play2(int n, int o, int shift) {
 	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
 	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
 	int chap[3] = { 0,0,0 };
-	double readR[10];
+	double readR[10] = { 0,0,0,0,0,0,0,0,0,0 };
 	double acc = (judghcount[0] * 10000 + judghcount[1] * 9500 + judghcount[2] * 5500) / (notes*100.0);
 	wchar_t savec[10][255];
 	wchar_t save[255] = L"score/";
@@ -970,13 +970,14 @@ int play2(int n, int o, int shift) {
 	strcats(save, save2);
 	G[0] = _wfopen_s(&fp, save, L"rb"); //記録読み込み
 	if (G[0] == 0) {
-		fread(&read, sizeof(read), 6, fp);
-		fread(&ReadAcc, sizeof(ReadAcc), 6, fp);
-		fread(&Readdis, sizeof(Readdis), 6, fp);
-		fread(&ReadRank, sizeof(ReadRank), 6, fp);
-		fread(&ReadClear, sizeof(ReadClear), 6, fp);
+		fread(&read, sizeof(int), 6, fp);
+		fread(&ReadAcc, sizeof(double), 6, fp);
+		fread(&Readdis, sizeof(int), 6, fp);
+		fread(&ReadRank, sizeof(int), 6, fp);
+		fread(&ReadClear, sizeof(int), 6, fp);
 		fclose(fp);
 	}
+	G[9] = 0;
 	if (read[o] < score2[3]) { read[o] = score2[3]; } //ハイスコア保存
 	if (ReadAcc[o] < acc) { ReadAcc[o] = acc; } //ACC保存
 	if (Readdis[o] < Dscore[3]) { Readdis[o] = Dscore[3]; } //最長走行距離保存
@@ -1018,17 +1019,17 @@ int play2(int n, int o, int shift) {
 	if (DifRate == 0) rate = 0;
 	else if (judghcount[3] > 0) {
 		rate = DifRate - judghcount[3] * DifRate*0.03;
-		rate = mins(rate, 0);
+		rate = mins2(rate, 0);
 	}
 	//NO MISS,"譜面定数" + 1 - "safe数" x 0.05(下限="譜面定数")
 	else if (judghcount[3] == 0 && judghcount[2] > 0) {
 		rate = DifRate + 1 - judghcount[2] * 0.05;
-		rate = mins(rate, DifRate);
+		rate = mins2(rate, DifRate);
 	}
 	//FULL COMBO,"譜面定数" + 2 - "good数" x 0.01(下限="譜面定数" + 1)
 	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) {
 		rate = DifRate + 2 - judghcount[1] * 0.01;
-		rate = mins(rate, DifRate + 1);
+		rate = mins2(rate, DifRate + 1);
 	}
 	//PERFECT, "譜面定数" + 2
 	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] == 0) rate = DifRate + 2;
@@ -1043,6 +1044,8 @@ int play2(int n, int o, int shift) {
 		fread(&readR, sizeof(readR), 10, fp);
 		fclose(fp);
 	}
+	for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[0] += mins2(readR[i[0]], 0); } //プレイ前のレートを計算
+	SumRate[1] = SumRate[0];
 	G[0] = -1;
 	//同じ曲、または未収録を探す
 	for (i[0] = 0; i[0] < 10; i[0]++)if (strands(fileN, savec[i[0]]) || savec[i[0]] == '\0') {
@@ -1057,14 +1060,16 @@ int play2(int n, int o, int shift) {
 	//レートが高かったら更新する
 	if (readR[G[0]] < rate) {
 		readR[G[0]] = rate;
+		SumRate[1] = 0;
 		strcopy(fileN, savec[G[0]], 1);
+		for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[1] += mins2(readR[i[0]], 0); } //変化後のレートを計算
+		G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"wb");
+		fwrite(&savec, 255, 10, fp);
+		fclose(fp);
+		G[0] = _wfopen_s(&fp, L"save/rateN.dat", L"wb");
+		fwrite(&readR, sizeof(double), 10, fp);
+		fclose(fp);
 	}
-	G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"wb");
-	fwrite(&savec, 255, 10, fp);
-	fclose(fp);
-	G[0] = _wfopen_s(&fp, L"save/rateN.dat", L"wb");
-	fwrite(&readR, sizeof(double), 10, fp);
-	fclose(fp);
 	//リザルト画面
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	while (1) {
@@ -1078,6 +1083,9 @@ int play2(int n, int o, int shift) {
 		DrawCurFont(judghcount[3], 140, 175, 30, 1);
 		DrawCurFont(Mcombo, 155, 215, 30, 4);
 		DrawCurFont(notes, 265, 215, 30, 5);
+		DrawFormatString(10, 320, Cr, L"%.2f", SumRate[1]);
+		if (SumRate[1] != SumRate[0]) { DrawFormatString(10, 340, Cr, L"+%.2f", SumRate[1] - SumRate[0]); }
+		else { DrawString(10, 340, L"not rise", Cr); }
 		switch (rank) {
 		case 0:
 			DrawCurFont(score2[3], 310, 75, 55, 6);
@@ -1106,7 +1114,7 @@ int play2(int n, int o, int shift) {
 		}
 		if (gapa[1] == 0) gapa[1] = 1;
 		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
-		DrawCurFont(gapa[2] / gapa[1] - gapa[0] * gapa[0] / gapa[1] / gapa[1], 500, 230, 20, 0);
+		DrawCurFont(sanrute(gapa[2] / double(gapa[1]) - gapa[0] * gapa[0] / double(gapa[1]) / gapa[1]), 500, 230, 20, 0);
 		DrawGraph(140, 260, rankimg[rank], TRUE);
 		DrawGraph(5, 420, coleimg[Clear - 1], TRUE);
 		DrawGraph(336, 252, Rchaimg, TRUE);

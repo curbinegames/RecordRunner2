@@ -472,16 +472,14 @@ void RecordLoad(int n, int o) {
 					viewTN++;
 				}
 				//èIÇÌÇË
-				else if (strands(GT1, RecordCode[11])) {
-					break;
-				}
+				else if (strands(GT1, RecordCode[11])) { break; }
 				//Ç±ÇÍà»äO
 				else {
 					for (i[0] = 0; i[0] <= 2; i[0]++) {
 						G[0] = 0;
 						while (GT1[G[0]] != L'\0' && GT1[G[0]] != L',') G[0]++;
 						for (i[1] = 0; i[1] < G[0]; i[1]++) {
-							if (GT1[i[1]] == L'0')continue;
+							if (GT1[i[1]] != L'H' && GT1[i[1]] != L'C' && GT1[i[1]] != L'U' && GT1[i[1]] != L'D' && GT1[i[1]] != L'L' && GT1[i[1]] != L'R' && GT1[i[1]] != L'B' && GT1[i[1]] != L'G')continue;
 							object[i[0]][0][objectN[i[0]]] = timer[i[0]] + 240000 * i[1] / (bpmG * G[0]);
 							switch (GT1[i[1]]) {
 							case L'H':

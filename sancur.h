@@ -8,6 +8,16 @@ int maxs(int a, int b) {
 	if (a > b)a = b;
 	return a;
 }
+//a‚ğb‚Ü‚Åˆø‚«ã‚°‚½‚à‚Ì‚ğ•Ô‚·
+double mins2(double a, double b) {
+	if (a < b)a = b;
+	return a;
+}
+//a‚ğb‚Ü‚Åˆø‚«‰º‚°‚½‚à‚Ì‚ğ•Ô‚·
+double maxs2(double a, double b) {
+	if (a > b)a = b;
+	return a;
+}
 //a‚ª0‚¾‚Á‚½‚ç1‚É‚·‚é
 int notzero(int a) {
 	if (a == 0)a = 1;
