@@ -10,7 +10,7 @@ int musicserect(int *p1) {
 	int G[2];
 	double diskr = 0, rate[10], Hacc[64][6];
 	int preview[64][6][2];
-	wchar_t songname[64][6][256], artist[64][6][256], songM[64][6][256], jacketP[64][6][256], mapT[255], GT2[255], GT4[255], GT11[255], GT18[255];
+	wchar_t songname[64][6][256], artist[64][6][256], songM[64][6][256], jacketP[64][6][256], difP[64][256], mapT[255], GT2[255], GT4[255], GT11[255], GT18[255];
 	wchar_t GT[] = { L"record/" };
 	wchar_t GT3[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
 	wchar_t GT5[] = { L"#TITLE:" };
@@ -31,8 +31,10 @@ int musicserect(int *p1) {
 	wchar_t GT20[] = { L"#MAP:" };
 	wchar_t GT21[255] = L"record/";
 	wchar_t GT22[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
+	wchar_t GT23[] = { L"#DIFBAR:" };
 	wchar_t playingsong[255] = { L"NULL" };
 	wchar_t viewingjacket[255] = { L"NULL" };
+	wchar_t viewingDifBar[255] = { L"NULL" };
 	int bar[7], difbar[6], difC[5][2], CRatepic[5], CRankpic[6], detail, back, disk, help, select, jacketpic, previewM;
 	bar[0] = bar[1] = bar[2] = bar[4] = bar[5] = bar[6] = LoadGraph(L"picture/songbarB.png");
 	bar[3] = LoadGraph(L"picture/songbarY.png");
@@ -40,7 +42,7 @@ int musicserect(int *p1) {
 	difbar[1] = LoadGraph(L"picture/difeasy.png");
 	difbar[2] = LoadGraph(L"picture/difnormal.png");
 	difbar[3] = LoadGraph(L"picture/difhard.png");
-	difbar[4] = difbar[5] = LoadGraph(L"picture/difhope.png");
+	difbar[4] = difbar[5] = LoadGraph(L"picture/difanother.png");
 	difC[0][0] = LoadGraph(L"picture/dif0S.png");
 	difC[0][1] = LoadGraph(L"picture/dif0B.png");
 	difC[1][0] = LoadGraph(L"picture/dif1S.png");
@@ -81,6 +83,7 @@ int musicserect(int *p1) {
 	while (FileRead_eof(songT) == 0) {
 		FileRead_gets(GT2, 256, songT);
 		rimit[n] = 3;
+		strcopy(GT14, difP[n], 1);
 		for (i = 0; i < 6; i++) {
 			strcopy(GT, mapT, 1);
 			strcats(mapT, GT2);
@@ -139,6 +142,13 @@ int musicserect(int *p1) {
 					strcats(jacketP[n][i], GT19);
 					strmods(GT4, 8);
 					strcats(jacketP[n][i], GT4);
+				}
+				//差し替えAnotherバーを読み込む
+				if (strands(GT4, GT23)) {
+					strcopy(GT18, difP[n], 1);
+					strcats(difP[n], GT19);
+					strmods(GT4, 8);
+					strcats(difP[n], GT4);
 				}
 				//マップに入ったら抜ける
 				if (strands(GT4, GT20)) break;
@@ -217,7 +227,18 @@ int musicserect(int *p1) {
 			if (command[1] < i) G[1] = 1;
 			if (strands(songM[command[0]][i], GT14) == 0 && i <= rimit[command[0]]) DrawGraph(550 + 11 * G[1] + 16 * i, 290 - 11 * G[0], difC[i][G[0]], TRUE);
 		}
-		//難易度の名前を表示する
+		//難易度バーを表示する
+		if (strands(viewingDifBar, difP[command[0]]) == 0) {
+			DeleteGraph(difbar[4]);
+			DeleteGraph(difbar[5]);
+			strcopy(difP[command[0]], viewingDifBar, 1);
+			difbar[4] = difbar[5] = LoadGraph(viewingDifBar);
+			if (difbar[4] == -1) {
+				DeleteGraph(difbar[4]);
+				DeleteGraph(difbar[5]);
+				difbar[4] = difbar[5] = LoadGraph(L"picture/difanother.png");
+			}
+		}
 		if (LR == 1) {
 			DrawGraph(460, 320, difbar[command[1]], TRUE);
 			DrawGraph(-0.00288*XmoveC*XmoveC + 640, 320, difbar[command[1] + 1], TRUE);

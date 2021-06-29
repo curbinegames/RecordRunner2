@@ -110,22 +110,23 @@ void RecordLoad(int n, int o) {
 	wchar_t songNE[255];
 	songN[0] = L'\0';
 	wchar_t fileN[255];
-	wchar_t dataE[255] = L"record/";
+	wchar_t dataE[255] = L"record/";//フォルダの名前
 	wchar_t RRS[255]; //PC用譜面データの保存場所
 	wchar_t mp3FN[255] = L"song/";
 	wchar_t skyFN[255] = L"picture/backskynoamal.png";
 	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
 	wchar_t waterFN[255] = L"picture/waternormal.png";
+	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
 	wchar_t GT15[255];
 	wchar_t GT24[] = L"picture/";
 	wchar_t GT25[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	wchar_t RecordCode[23][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
+	wchar_t RecordCode[24][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
 		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
 		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
 		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
-		L"#VIEW:",L"#E.TITLE:",L"#CARROW"
+		L"#VIEW:",L"#E.TITLE:",L"#CARROW",L"#DIFBAR:"
 	};
 	FILE *fp;
 	//システムロード
@@ -171,6 +172,13 @@ void RecordLoad(int n, int o) {
 			strcopy(GT24, waterFN, 1);
 			strmods(GT1, 7);
 			strcats(waterFN, GT1);
+		}
+		//難易度バー(another)を読み込む
+		else if (strands(GT1, RecordCode[23])) {
+			strcopy(dataE, DifFN, 1);
+			strmods(GT1, 8);
+			stradds(DifFN, L'/');
+			strcats(DifFN, GT1);
 		}
 		//曲名を読み込む
 		else if (strands(GT1, RecordCode[6])) {
@@ -615,7 +623,8 @@ void RecordLoad(int n, int o) {
 		difkey[difkey[1][3]][1] = object[G[0]][0][objectN[G[0]]];
 		//hitノーツ補間
 		if (difkey[difkey[1][3]][0] == 1) {
-			if (difkey[difkey[2][3]][0] == 1 && difkey[difkey[2][3]][1] - 20 < difkey[difkey[2][3]][1]) {
+			if (difkey[difkey[2][3]][0] == 1 && difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
+				difkey[difkey[2][3]][2] *= 1;
 				objectN[G[0]]++;
 				continue;
 			}
@@ -752,6 +761,7 @@ void RecordLoad(int n, int o) {
 	fwrite(&G, sizeof(int), 2, fp);
 	fwrite(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 	fwrite(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
+	fwrite(&DifFN, 255, 1, fp);//難易度バー名
 	fclose(fp);
 	return;
 }

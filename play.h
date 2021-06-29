@@ -87,6 +87,7 @@ int play2(int n, int o, int shift) {
 	wchar_t skyFN[255] = L"picture/backskynoamal.png";
 	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
 	wchar_t waterFN[255] = L"picture/waternormal.png";
+	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	unsigned int Cr, Crb;
@@ -141,6 +142,7 @@ int play2(int n, int o, int shift) {
 		difkey[6][3] = G[1];//最終難易度
 		fread(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
+		fread(&DifFN, 255, 1, fp);//難易度バー名
 	}
 	fclose(fp);
 	//グラフィックと効果音の準備
@@ -195,7 +197,7 @@ int play2(int n, int o, int shift) {
 		break;
 	case 4:
 	case 5:
-		difberimg = LoadGraph(L"picture/difhope.png");
+		difberimg = LoadGraph(DifFN);
 		break;
 	}
 	backskyimg = LoadGraph(skyFN);
@@ -1114,7 +1116,7 @@ int play2(int n, int o, int shift) {
 		}
 		if (gapa[1] == 0) gapa[1] = 1;
 		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
-		DrawCurFont(sanrute(gapa[2] / double(gapa[1]) - gapa[0] * gapa[0] / double(gapa[1]) / gapa[1]), 500, 230, 20, 0);
+		DrawCurFont(gapa[2] / gapa[1] - gapa[0] * gapa[0] / gapa[1] / gapa[1], 500, 230, 20, 0);
 		DrawGraph(140, 260, rankimg[rank], TRUE);
 		DrawGraph(5, 420, coleimg[Clear - 1], TRUE);
 		DrawGraph(336, 252, Rchaimg, TRUE);
