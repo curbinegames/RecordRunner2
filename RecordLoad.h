@@ -257,6 +257,9 @@ void RecordLoad(int n, int o) {
 					case('p'):
 						G[1] = 6;
 						break;
+					case('e'):
+						G[1] = 7;
+						break;
 					}
 					strmods(GT1, 10);
 					GD[0] = strsans2(GT1);
@@ -301,6 +304,17 @@ void RecordLoad(int n, int o) {
 						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 2;
 						YmoveN[G[0]]++;
 						break;
+					case 7:
+						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
+						Ymove[G[0]][YmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
+						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
+						Ymove[G[0]][YmoveN[G[0]]][3] = 2;
+						Ymove[G[0]][YmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
+						Ymove[G[0]][YmoveN[G[0]] + 1][1] = Ymove[G[0]][YmoveN[G[0]] - 1][1];
+						Ymove[G[0]][YmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
+						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 3;
+						YmoveN[G[0]]++;
+						break;
 					}
 					YmoveN[G[0]]++;
 				}
@@ -325,6 +339,9 @@ void RecordLoad(int n, int o) {
 						break;
 					case('p'):
 						G[1] = 6;
+						break;
+					case('e'):
+						G[1] = 7;
 						break;
 					}
 					strmods(GT1, 10);
@@ -368,6 +385,17 @@ void RecordLoad(int n, int o) {
 						Xmove[G[0]][XmoveN[G[0]] + 1][1] = Xmove[G[0]][XmoveN[G[0]] - 1][1];
 						Xmove[G[0]][XmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
 						Xmove[G[0]][XmoveN[G[0]] + 1][3] = 2;
+						XmoveN[G[0]]++;
+						break;
+					case 7:
+						Xmove[G[0]][XmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
+						Xmove[G[0]][XmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
+						Xmove[G[0]][XmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
+						Xmove[G[0]][XmoveN[G[0]]][3] = 2;
+						Xmove[G[0]][XmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
+						Xmove[G[0]][XmoveN[G[0]] + 1][1] = Xmove[G[0]][XmoveN[G[0]] - 1][1];
+						Xmove[G[0]][XmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
+						Xmove[G[0]][XmoveN[G[0]] + 1][3] = 3;
 						XmoveN[G[0]]++;
 						break;
 					}
