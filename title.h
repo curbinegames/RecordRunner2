@@ -6,6 +6,8 @@ int title(void) {
 	ScreenFlip();
 	while (1) {
 		if (CheckHitKeyAll()) {
+			InitSoundMem();
+			InitGraph();
 			WaitTimer(500);
 			break;
 		}

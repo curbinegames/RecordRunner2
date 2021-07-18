@@ -22,20 +22,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetWindowSizeChangeEnableFlag(TRUE);
 	if (DxLib_Init() == -1)return -1;
 	SetDrawScreen(DX_SCREEN_BACK);
-	int next = 0, now = -1, bgm[2], mnom[7] = { 0,1,0,1,1,0,0 };
+	int next = 0, now = 0, bgm, mnom[7] = { 0,1,0,1,1,0,0 };
 	int G[3];
 	unsigned int Cr = GetColor(255, 255, 255);
-	bgm[0] = LoadSoundMem(L"song/no.mp3");
-	bgm[1] = LoadSoundMem(L"song/Letfs_be_happy.mp3");
+	bgm = LoadSoundMem(L"song/no.mp3");
 	//ƒQ[ƒ€I—¹(next‚ª5‚Ì‚Æ‚«)‚Ü‚Å‚ÌŠÔAˆ—‚ğŒJ‚è•Ô‚·
 	while (next != 5) {
 		InitGraph();
 		if (mnom[next] != now) {
-			StopSoundMem(bgm[now]);
+			StopSoundMem(bgm);
 			InitSoundMem;
-			bgm[0] = LoadSoundMem(L"song/no.mp3");
-			bgm[1] = LoadSoundMem(L"song/Letfs_be_happy.mp3");
-			PlaySoundMem(bgm[mnom[next]], DX_PLAYTYPE_LOOP);
+			now = mnom[next];
+			switch (mnom[next]) {
+			case 0:
+				bgm = LoadSoundMem(L"song/no.mp3");
+				break;
+			case 1:
+				bgm = LoadSoundMem(L"song/Letfs_be_happy.mp3");
+				break;
+			}
+			PlaySoundMem(bgm, DX_PLAYTYPE_LOOP);
 		}
 		//•\¦‚·‚é‰æ–Ê‚ğ‘I‘ğ‚·‚é
 		now = mnom[next];

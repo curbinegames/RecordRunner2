@@ -1,4 +1,5 @@
 int musicserect(int *p1) {
+	InitSoundMem();
 	//現在64曲しか入らないので、必要に応じて増やしてね。
 	unsigned int Cr[7];
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
