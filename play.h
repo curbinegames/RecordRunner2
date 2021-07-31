@@ -18,10 +18,11 @@ int play2(int n, int o, int shift) {
 	short int drop = 0;
 	short int rank = 0;
 	short int Clear = 0;
+	short int KeyPushCount[7] = { 0,0,0,0,0,0,0 };
 	int judgh = 0; //ノーツの時間距離
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[10], songT;
-	int system[5] = { 0,0,0,2,0 };
+	int system[6] = { 0,0,0,2,0,0 };
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int Ntime = 0;
@@ -97,7 +98,7 @@ int play2(int n, int o, int shift) {
 	//システムロード
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
-		fread(&system, sizeof(system), 5, fp);
+		fread(&system, sizeof(int), 6, fp);
 		fclose(fp);
 	}
 	songT = FileRead_open(L"song.txt");
@@ -170,6 +171,7 @@ int play2(int n, int o, int shift) {
 	int rankimg[6];
 	int coleimg[5];
 	int effimg[7][5];
+	int KeyViewimg[2];
 	int Rchaimg;
 	int musicmp3, attack, catchs, arrow, bomb;
 	judghimg = LoadGraph(L"picture/Marker.png");
@@ -235,6 +237,10 @@ int play2(int n, int o, int shift) {
 	LoadDivGraph(L"picture/lefteff.png", 5, 5, 1, 50, 50, effimg[4]);
 	LoadDivGraph(L"picture/righteff.png", 5, 5, 1, 50, 50, effimg[5]);
 	LoadDivGraph(L"picture/bombeff.png", 5, 5, 1, 50, 50, effimg[6]);
+	if (system[5]) {
+		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
+		KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
+	}
 	switch (system[0]) {
 	case 0:
 		LoadDivGraph(L"picture/Picker.png", 24, 6, 4, 160, 160, charaimg);
@@ -893,6 +899,10 @@ int play2(int n, int o, int shift) {
 			DrawFormatString(180, 45, Cr, L"%.3fkm", GD[0] + Dscore[1] / 1000.0);
 		}
 		Dscore[3] = GD[0] * 1000 + Dscore[1];
+		//スコアバー隠し表示
+		DrawGraph(0, 0, sbbarimg, TRUE);
+		//コンボ表示
+		if (combo >= 1) DrawFormatString(15, 15, Cr, L"%d combo", combo);
 		//部分難易度表示
 		if (holdG >= 1) {
 			G[0] = ddif[0] * 20 / notzero(ddifG[1]) + 155;
@@ -902,10 +912,6 @@ int play2(int n, int o, int shift) {
 			DrawFormatString(490, 100, Cr, L"ldif:%.2f", difkey[6][3] / 100.0);
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
 		}
-		//スコアバー隠し表示
-		DrawGraph(0, 0, sbbarimg, TRUE);
-		//コンボ表示
-		if (combo >= 1) DrawFormatString(15, 15, Cr, L"%d combo", combo);
 		//判定ずれバー表示
 		DrawGraph(219, 460, gapbarimg, TRUE);
 		G[0] = gapa[1] % 30;
@@ -914,6 +920,38 @@ int play2(int n, int o, int shift) {
 			if (G[0] < 0) G[0] += 30;
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (510 - G[0] * 17) / 2);
 			DrawGraph(318 - gap[i[0]], 460, gaplineimg, TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
+		}
+		//キー押し状況表示(オプション)
+		if (system[5]) {
+			if (holda == 1) { KeyPushCount[0] = (KeyPushCount[0] + 1) % 100; }
+			if (holdb == 1) { KeyPushCount[1] = (KeyPushCount[1] + 1) % 100; }
+			if (holdc == 1) { KeyPushCount[2] = (KeyPushCount[2] + 1) % 100; }
+			if (holdu == 1) { KeyPushCount[3] = (KeyPushCount[3] + 1) % 100; }
+			if (holdd == 1) { KeyPushCount[4] = (KeyPushCount[4] + 1) % 100; }
+			if (holdl == 1) { KeyPushCount[5] = (KeyPushCount[5] + 1) % 100; }
+			if (holdr == 1) { KeyPushCount[6] = (KeyPushCount[6] + 1) % 100; }
+			DrawGraph(5, 445, KeyViewimg[maxs(holda, 1)], TRUE);
+			DrawGraph(40, 445, KeyViewimg[maxs(holdb, 1)], TRUE);
+			DrawGraph(75, 445, KeyViewimg[maxs(holdc, 1)], TRUE);
+			DrawGraph(570, 410, KeyViewimg[maxs(holdu, 1)], TRUE);
+			DrawGraph(570, 445, KeyViewimg[maxs(holdd, 1)], TRUE);
+			DrawGraph(535, 445, KeyViewimg[maxs(holdl, 1)], TRUE);
+			DrawGraph(605, 445, KeyViewimg[maxs(holdr, 1)], TRUE);
+			if (KeyPushCount[0] == 0) { DrawString(10, 450, L"Z", Cr); }
+			else { DrawFormatString(10, 450, Cr, L"%2d", KeyPushCount[0]); }
+			if (KeyPushCount[1] == 0) { DrawString(45, 450, L"X", Cr); }
+			else { DrawFormatString(45, 450, Cr, L"%2d", KeyPushCount[1]); }
+			if (KeyPushCount[2] == 0) { DrawString(80, 450, L"C", Cr); }
+			else { DrawFormatString(80, 450, Cr, L"%2d", KeyPushCount[2]); }
+			if (KeyPushCount[3] == 0) { DrawString(575, 415, L"↑", Cr); }
+			else { DrawFormatString(575, 415, Cr, L"%2d", KeyPushCount[3]); }
+			if (KeyPushCount[4] == 0) { DrawString(575, 450, L"↓", Cr); }
+			else { DrawFormatString(575, 450, Cr, L"%2d", KeyPushCount[4]); }
+			if (KeyPushCount[5] == 0) { DrawString(540, 450, L"←", Cr); }
+			else { DrawFormatString(540, 450, Cr, L"%2d", KeyPushCount[5]); }
+			if (KeyPushCount[6] == 0) { DrawString(610, 450, L"→", Cr); }
+			else { DrawFormatString(610, 450, Cr, L"%2d", KeyPushCount[6]); }
 		}
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバック

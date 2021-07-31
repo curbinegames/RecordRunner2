@@ -15,11 +15,11 @@ int collection(void) {
 	icon[3] = LoadGraph(L"picture/CLS.png");
 	help = LoadGraph(L"picture/help.png");
 	sel = LoadSoundMem(L"sound/select.ogg");
-	int	lan[5] = { 0,0,0,2,0 };//Žg‚¤‚Ì‚Í[4,Œ¾Œê]‚¾‚¯
+	int	lan[6] = { 0,0,0,2,0,0 };//Žg‚¤‚Ì‚Í[4,Œ¾Œê]‚¾‚¯
 	FILE *fp;
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
-		fread(&lan, sizeof(lan), 5, fp);
+		fread(&lan, sizeof(lan), 6, fp);
 		fclose(fp);
 	}
 	while (1) {
