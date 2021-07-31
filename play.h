@@ -1021,17 +1021,17 @@ int play2(int n, int o, int shift) {
 	if (DifRate == 0) rate = 0;
 	else if (judghcount[3] > 0) {
 		rate = DifRate - judghcount[3] * DifRate*0.03;
-		rate = mins2(rate, 0);
+		rate = mins_D(rate, 0);
 	}
 	//NO MISS,"譜面定数" + 1 - "safe数" x 0.05(下限="譜面定数")
 	else if (judghcount[3] == 0 && judghcount[2] > 0) {
 		rate = DifRate + 1 - judghcount[2] * 0.05;
-		rate = mins2(rate, DifRate);
+		rate = mins_D(rate, DifRate);
 	}
 	//FULL COMBO,"譜面定数" + 2 - "good数" x 0.01(下限="譜面定数" + 1)
 	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) {
 		rate = DifRate + 2 - judghcount[1] * 0.01;
-		rate = mins2(rate, DifRate + 1);
+		rate = mins_D(rate, DifRate + 1);
 	}
 	//PERFECT, "譜面定数" + 2
 	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] == 0) rate = DifRate + 2;
@@ -1046,7 +1046,7 @@ int play2(int n, int o, int shift) {
 		fread(&readR, sizeof(readR), 10, fp);
 		fclose(fp);
 	}
-	for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[0] += mins2(readR[i[0]], 0); } //プレイ前のレートを計算
+	for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[0] += mins_D(readR[i[0]], 0); } //プレイ前のレートを計算
 	SumRate[1] = SumRate[0];
 	G[0] = -1;
 	//同じ曲、または未収録を探す
@@ -1064,7 +1064,7 @@ int play2(int n, int o, int shift) {
 		readR[G[0]] = rate;
 		SumRate[1] = 0;
 		strcopy(fileN, savec[G[0]], 1);
-		for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[1] += mins2(readR[i[0]], 0); } //変化後のレートを計算
+		for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[1] += mins_D(readR[i[0]], 0); } //変化後のレートを計算
 		G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"wb");
 		fwrite(&savec, 255, 10, fp);
 		fclose(fp);

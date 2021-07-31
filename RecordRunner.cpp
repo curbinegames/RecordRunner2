@@ -11,8 +11,10 @@
 /* next = 0 = タイトル
 	= 1 = メニュー
 	= 2 = 曲選択画面
-	= 3 = プレイ画面
-	= 99 = 終了処理*/
+	= 3 = コレクション画面
+	= 4 = オプション画面
+	= 6 = 演奏画面
+	= 5 = 終了処理*/
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	ChangeWindowMode(TRUE);

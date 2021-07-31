@@ -31,13 +31,11 @@ int menu(void) {
 	while (next == 1) {
 		ClearDrawScreen();
 		//ŽžŠÔŒvŽZ
-		movetime = GetNowCount() - starttime;
-		movetime = maxs(movetime, 250);
+		movetime = maxs(GetNowCount() - starttime, 250);
 		//•Ç•\Ž¦
 		goust = command - LR - 1;
 		while (goust < 0) goust += 4;
 		while (goust > 3) goust -= 4;
-		goust2 = (movetime - 250)*(movetime - 250);
 		DrawGraph(0, 0, menuW[goust], TRUE);
 		goust = command - 1;
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 51 * movetime / 50);

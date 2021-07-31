@@ -9,14 +9,26 @@ int maxs(int a, int b) {
 	return a;
 }
 //a‚ğb‚Ü‚Åˆø‚«ã‚°‚½‚à‚Ì‚ğ•Ô‚·
-double mins2(double a, double b) {
+double mins_D(double a, double b) {
 	if (a < b)a = b;
 	return a;
 }
 //a‚ğb‚Ü‚Åˆø‚«‰º‚°‚½‚à‚Ì‚ğ•Ô‚·
-double maxs2(double a, double b) {
+double maxs_D(double a, double b) {
 	if (a > b)a = b;
 	return a;
+}
+//b‚ğa‚Ü‚Åˆø‚«ã‚°Ac‚Ü‚Åˆø‚«‰º‚°‚½‚à‚Ì‚ğ•Ô‚·
+int betweens(int a, int b, int c) {
+	if (a > b) { return a; }
+	if (b > c) { return c; }
+	return b;
+}
+//b‚ğa‚Ü‚Åˆø‚«ã‚°Ac‚Ü‚Åˆø‚«‰º‚°‚½‚à‚Ì‚ğ•Ô‚·
+double betweens_D(double a, double b, double c) {
+	if (a > b) { return a; }
+	if (b > c) { return c; }
+	return b;
 }
 //a‚ª0‚¾‚Á‚½‚ç1‚É‚·‚é
 int notzero(int a) {
