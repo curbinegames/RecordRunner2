@@ -32,3 +32,10 @@ int shifttime(double n, double bpm, int time) {
 int read(int a) {
 	return LoadGraph(L"picture/backskynoamal.png");
 }
+
+void SETMove(double NowTime, double StartTime, double MovePoint, double MoveType, double EndTime, double bpm,int *StaetTimeBuff,int *MovePointBuff,int *EndTimeBuff,int *MoveTypeBuff) {
+	*StaetTimeBuff = shifttime(StartTime, bpm, NowTime);
+	*MovePointBuff = MovePoint * 50.0 + 100.0;
+	*EndTimeBuff = shifttime(EndTime, bpm, NowTime) - 5;
+	*MoveTypeBuff = MoveType;
+}

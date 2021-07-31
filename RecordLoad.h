@@ -122,11 +122,12 @@ void RecordLoad(int n, int o) {
 	wchar_t GT24[] = L"picture/";
 	wchar_t GT25[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	wchar_t RecordCode[24][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
+	wchar_t RecordCode[26][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
 		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
 		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
 		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
-		L"#VIEW:",L"#E.TITLE:",L"#CARROW",L"#DIFBAR:"
+		L"#VIEW:",L"#E.TITLE:",L"#CARROW",L"#DIFBAR:",L"#DIV",
+		L"#ROT"
 	};
 	FILE *fp;
 	//システムロード
@@ -400,6 +401,36 @@ void RecordLoad(int n, int o) {
 						break;
 					}
 					XmoveN[G[0]]++;
+				}
+				//振動
+				else if (strands(GT1, RecordCode[24])) {
+					G[0] = betweens(0, GT1[5] - 49, 2);
+					G[1] = 0;
+					if (GT1[4] == L'Y') { G[1] = 1; }
+					strmods(GT1, 7);
+					GD[0] = strsans2(GT1);//開始時間
+					strnex(GT1);
+					GD[1] = strsans2(GT1);//振動位置
+					strnex(GT1);
+					GD[2] = strsans2(GT1) / 2.0;//往復時間
+					strnex(GT1);
+					GD[3] = strsans2(GT1);//往復回数
+					if (G[1] == 1) {
+						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
+							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2], bpmG, &Ymove[G[0]][YmoveN[G[0]]][0], &Ymove[G[0]][YmoveN[G[0]]][1], &Ymove[G[0]][YmoveN[G[0]]][2], &Ymove[G[0]][YmoveN[G[0]]][3]);
+							SETMove(timer[0], GD[0] + GD[2], (Ymove[G[0]][YmoveN[G[0]] - 1][1] - 100.0) / 50.0, 1, GD[0] + GD[2] * 2, bpmG, &Ymove[G[0]][YmoveN[G[0]] + 1][0], &Ymove[G[0]][YmoveN[G[0]] + 1][1], &Ymove[G[0]][YmoveN[G[0]] + 1][2], &Ymove[G[0]][YmoveN[G[0]] + 1][3]);
+							GD[0] += GD[2] * 2;
+							YmoveN[G[0]] += 2;
+						}
+					}
+					else {
+						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
+							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2], bpmG, &Xmove[G[0]][XmoveN[G[0]]][0], &Xmove[G[0]][XmoveN[G[0]]][1], &Xmove[G[0]][XmoveN[G[0]]][2], &Xmove[G[0]][XmoveN[G[0]]][3]);
+							SETMove(timer[0], GD[0] + GD[2], (Xmove[G[0]][XmoveN[G[0]] - 1][1] - 100.0) / 50.0, 1, GD[0] + GD[2] * 2, bpmG, &Xmove[G[0]][XmoveN[G[0]] + 1][0], &Xmove[G[0]][XmoveN[G[0]] + 1][1], &Xmove[G[0]][XmoveN[G[0]] + 1][2], &Xmove[G[0]][XmoveN[G[0]] + 1][3]);
+							GD[0] += GD[2] * 2;
+							XmoveN[G[0]] += 2;
+						}
+					}
 				}
 				//GMOVE
 				else if (strands(GT1, RecordCode[16])) {
