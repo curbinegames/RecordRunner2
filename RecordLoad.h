@@ -546,7 +546,7 @@ void RecordLoad(int n, int o) {
 						G[0] = 0;
 						while (GT1[G[0]] != L'\0' && GT1[G[0]] != L',') G[0]++;
 						for (i[1] = 0; i[1] < G[0]; i[1]++) {
-							if (GT1[i[1]] != L'H' && GT1[i[1]] != L'C' && GT1[i[1]] != L'U' && GT1[i[1]] != L'D' && GT1[i[1]] != L'L' && GT1[i[1]] != L'R' && GT1[i[1]] != L'B' && GT1[i[1]] != L'G')continue;
+							if (GT1[i[1]] != L'H' && GT1[i[1]] != L'C' && GT1[i[1]] != L'U' && GT1[i[1]] != L'D' && GT1[i[1]] != L'L' && GT1[i[1]] != L'R' && GT1[i[1]] != L'B' && GT1[i[1]] != L'G' && GT1[i[1]] != L'?' && GT1[i[1]] != L'!')continue;
 							object[i[0]][0][objectN[i[0]]] = timer[i[0]] + 240000 * i[1] / (bpmG * G[0]);
 							switch (GT1[i[1]]) {
 							case L'H':
@@ -572,6 +572,13 @@ void RecordLoad(int n, int o) {
 								break;
 							case L'G':
 								object[i[0]][1][objectN[i[0]]] = 8;
+								break;
+							case L'?':
+								object[i[0]][1][objectN[i[0]]] = GetRand(4)+2;
+								if (object[i[0]][1][objectN[i[0]]] == 2) { object[i[0]][1][objectN[i[0]]] = 1; }
+								break;
+							case L'!':
+								object[i[0]][1][objectN[i[0]]] = GetRand(7)+1;
 								break;
 							}
 							//object[][2][]‚ðŽg‚¢‚½‚©‚Á‚½‚ç‚±‚±‚É“ü‚ê‚é(ƒQ[ƒ€“àŽžŠÔ‚É‚È‚é—\’è)
