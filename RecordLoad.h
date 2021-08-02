@@ -5,7 +5,6 @@ void RecordLoad(int n, int o) {
 	short int Lv = 0;
 	short int notes = 0;
 	int G[10], songT;
-	int system[5] = { 0,0,0,2,0 };
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int songdata = 0;
@@ -130,12 +129,6 @@ void RecordLoad(int n, int o) {
 		L"#ROT"
 	};
 	FILE *fp;
-	//システムロード
-	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&system, sizeof(system), 5, fp);
-		fclose(fp);
-	}
 	songT = FileRead_open(L"song.txt");
 	for (i[0] = 0; i[0] <= n; i[0]++) FileRead_gets(GT1, 256, songT);
 	FileRead_close(songT);
@@ -238,7 +231,11 @@ void RecordLoad(int n, int o) {
 				}
 				//縦移動
 				else if (strands(GT1, RecordCode[14])) {
-					G[0] = maxs(mins(GT1[8] - 49, 0), 4);
+					if (GT1[8] == L'A') {
+						G[0] = 0;
+						G[2] = 2;
+					}
+					else { G[2] = G[0] = maxs(mins(GT1[8] - 49, 0), 4); }
 					switch (GT1[5]) {
 					case('l'):
 						G[1] = 1;
@@ -268,60 +265,44 @@ void RecordLoad(int n, int o) {
 					GD[1] = strsans2(GT1);
 					strnex(GT1);
 					GD[2] = strsans2(GT1);
-					switch (G[1]) {
-					case 1:
-					case 2:
-					case 3:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]]][3] = G[1];
-						break;
-					case 4:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime(GD[2], bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][3] = 1;
-						break;
-					case 5:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][1] = (Ymove[G[0]][YmoveN[G[0]] - 1][1] + GD[1] * 50 + 100) / 2;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][3] = 2;
-						Ymove[G[0]][YmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]] + 1][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 3;
-						YmoveN[G[0]]++;
-						break;
-					case 6:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][3] = 3;
-						Ymove[G[0]][YmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]] + 1][1] = Ymove[G[0]][YmoveN[G[0]] - 1][1];
-						Ymove[G[0]][YmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 2;
-						YmoveN[G[0]]++;
-						break;
-					case 7:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][3] = 2;
-						Ymove[G[0]][YmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Ymove[G[0]][YmoveN[G[0]] + 1][1] = Ymove[G[0]][YmoveN[G[0]] - 1][1];
-						Ymove[G[0]][YmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 3;
-						YmoveN[G[0]]++;
-						break;
+					for (i[0] = G[0]; i[0] <= G[2]; i[0]++) {
+						switch (G[1]) {
+						case 1:
+						case 2:
+						case 3:
+							SETMove(timer[0], GD[0], GD[1], G[1], GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							break;
+						case 4:
+							SETMove(timer[0], GD[0], GD[1], 1, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							Ymove[i[0]][YmoveN[i[0]]][0] -= 5;
+							Ymove[i[0]][YmoveN[i[0]]][2] -= 5;
+							break;
+						case 5:
+							SETMove(timer[0], GD[0], (Ymove[i[0]][YmoveN[i[0]] - 1][1] + GD[1] * 50 - 100) / 100, 2, (GD[2] + GD[0]) / 2.0, bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							YmoveN[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, GD[1], 3, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							break;
+						case 6:
+							SETMove(timer[0], GD[0], GD[1], 3, (GD[2] + GD[0]) / 2.0, bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							YmoveN[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Ymove[i[0]][YmoveN[i[0]] - 2][1] - 100.0) / 50.0, 2, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							break;
+						case 7:
+							SETMove(timer[0], GD[0], GD[1], 2, (GD[2] + GD[0]) / 2.0, bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							YmoveN[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Ymove[i[0]][YmoveN[i[0]] - 2][1] - 100.0) / 50.0, 3, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							break;
+						}
+						YmoveN[i[0]]++;
 					}
-					YmoveN[G[0]]++;
 				}
 				//横移動
 				else if (strands(GT1, RecordCode[15])) {
-					G[0] = maxs(mins(GT1[8] - 49, 0), 2);
+					if (GT1[8] == L'A') {
+						G[0] = 0;
+						G[2] = 2;
+					}
+					else { G[2] = G[0] = maxs(mins(GT1[8] - 49, 0), 2); }
 					switch (GT1[5]) {
 					case('l'):
 						G[1] = 1;
@@ -351,56 +332,36 @@ void RecordLoad(int n, int o) {
 					GD[1] = strsans2(GT1);
 					strnex(GT1);
 					GD[2] = strsans2(GT1);
-					switch (G[1]) {
-					case 1:
-					case 2:
-					case 3:
-						Xmove[G[0]][XmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Xmove[G[0]][XmoveN[G[0]]][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
-						Xmove[G[0]][XmoveN[G[0]]][3] = G[1];
-						break;
-					case 4:
-						Xmove[G[0]][XmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]) - 5;
-						Xmove[G[0]][XmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Xmove[G[0]][XmoveN[G[0]]][2] = shifttime(GD[2], bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]]][3] = 1;
-						break;
-					case 5:
-						Xmove[G[0]][XmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]]][1] = (Xmove[G[0]][XmoveN[G[0]] - 1][1] + GD[1] * 50 + 100) / 2;
-						Xmove[G[0]][XmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]]][3] = 2;
-						Xmove[G[0]][XmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]] + 1][1] = GD[1] * 50.0 + 100.0;
-						Xmove[G[0]][XmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
-						Xmove[G[0]][XmoveN[G[0]] + 1][3] = 3;
-						XmoveN[G[0]]++;
-						break;
-					case 6:
-						Xmove[G[0]][XmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Xmove[G[0]][XmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]]][3] = 3;
-						Xmove[G[0]][XmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]] + 1][1] = Xmove[G[0]][XmoveN[G[0]] - 1][1];
-						Xmove[G[0]][XmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
-						Xmove[G[0]][XmoveN[G[0]] + 1][3] = 2;
-						XmoveN[G[0]]++;
-						break;
-					case 7:
-						Xmove[G[0]][XmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Xmove[G[0]][XmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]]][3] = 2;
-						Xmove[G[0]][XmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, timer[0]);
-						Xmove[G[0]][XmoveN[G[0]] + 1][1] = Xmove[G[0]][XmoveN[G[0]] - 1][1];
-						Xmove[G[0]][XmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
-						Xmove[G[0]][XmoveN[G[0]] + 1][3] = 3;
-						XmoveN[G[0]]++;
-						break;
+					for (i[0] = G[0]; i[0] <= G[2]; i[0]++) {
+						switch (G[1]) {
+						case 1:
+						case 2:
+						case 3:
+							SETMove(timer[0], GD[0], GD[1], G[1], GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							break;
+						case 4:
+							SETMove(timer[0], GD[0], GD[1], 1, GD[0], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							Xmove[i[0]][XmoveN[i[0]]][0] -= 5;
+							Xmove[i[0]][XmoveN[i[0]]][2] -= 5;
+							break;
+						case 5:
+							SETMove(timer[0], GD[0], (Xmove[i[0]][XmoveN[i[0]] - 1][1] + GD[1] * 50 - 100) / 100, 2, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							XmoveN[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, GD[1], 3, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							break;
+						case 6:
+							SETMove(timer[0], GD[0], GD[1], 3, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							XmoveN[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Xmove[i[0]][XmoveN[i[0]] - 2][1] - 100.0) / 50.0, 2, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							break;
+						case 7:
+							SETMove(timer[0], GD[0], GD[1], 2, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							XmoveN[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Xmove[i[0]][XmoveN[i[0]] - 2][1] - 100.0) / 50.0, 3, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							break;
+						}
+						XmoveN[i[0]]++;
 					}
-					XmoveN[G[0]]++;
 				}
 				//振動
 				else if (strands(GT1, RecordCode[24])) {
@@ -540,6 +501,8 @@ void RecordLoad(int n, int o) {
 				}
 				//終わり
 				else if (strands(GT1, RecordCode[11])) { break; }
+				//空白
+				else if (GT1[0] == L'\0') {}
 				//これ以外
 				else {
 					for (i[0] = 0; i[0] <= 2; i[0]++) {
