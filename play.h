@@ -490,7 +490,7 @@ int play2(int n, int o, int shift) {
 		for (i[0] = 0; i[0] < 2; i[0]++) if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0) lockN[i[0]]++;
 		if (viewT[0][viewTN + 1] <= Ntime && viewT[0][viewTN + 1] >= 0) viewTN++;
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime && speedt[i[0]][speedN[i[0]] + 1][0] >= 0) speedN[i[0]]++;
+			while (speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime && speedt[i[0]][speedN[i[0]] + 1][0] >= 0) speedN[i[0]]++;
 			G[0] = G[3] = G[4] = G[5] = 0;
 			for (i[1] = objectN[i[0]]; object[i[0]][0][i[1]] > 0; i[1]++) {
 				if (object[i[0]][0][i[1]] >= viewT[0][viewTN + G[0] + 1] && viewT[0][viewTN + G[0] + 1] >= 0) G[0]++;
@@ -498,7 +498,7 @@ int play2(int n, int o, int shift) {
 				if (object[i[0]][0][i[1]] - Ntime >= 3000 && 3000 >= viewT[1][viewTN + G[0]]) break;
 				if (object[i[0]][0][i[1]] >= lock[0][1][lockN[0] + G[3] + 1] && lock[0][1][lockN[0] + G[3] + 1] >= 0) G[3]++;
 				if (object[i[0]][0][i[1]] >= lock[1][1][lockN[1] + G[4] + 1] && lock[1][1][lockN[1] + G[4] + 1] >= 0) G[4]++;
-				if (object[i[0]][0][i[1]] >= speedt[i[0]][speedN[i[0]] + G[5] + 1][0] && speedt[i[0]][speedN[i[0]] + G[5] + 1][0] >= 0) G[5]++;
+				while (object[i[0]][0][i[1]] >= speedt[i[0]][speedN[i[0]] + G[5] + 1][0] && speedt[i[0]][speedN[i[0]] + G[5] + 1][0] >= 0) G[5]++;
 				//縦位置
 				if (lock[1][0][lockN[1] + G[4]] == 1) G[2] = object[i[0]][3][i[1]];
 				else G[2] = Yline[i[0]];
@@ -924,13 +924,13 @@ int play2(int n, int o, int shift) {
 		}
 		//キー押し状況表示(オプション)
 		if (system[5]) {
-			if (holda == 1) { KeyPushCount[0] = (KeyPushCount[0] + 1) % 100; }
-			if (holdb == 1) { KeyPushCount[1] = (KeyPushCount[1] + 1) % 100; }
-			if (holdc == 1) { KeyPushCount[2] = (KeyPushCount[2] + 1) % 100; }
-			if (holdu == 1) { KeyPushCount[3] = (KeyPushCount[3] + 1) % 100; }
-			if (holdd == 1) { KeyPushCount[4] = (KeyPushCount[4] + 1) % 100; }
-			if (holdl == 1) { KeyPushCount[5] = (KeyPushCount[5] + 1) % 100; }
-			if (holdr == 1) { KeyPushCount[6] = (KeyPushCount[6] + 1) % 100; }
+			if (holda == 1) { KeyPushCount[0]++; }
+			if (holdb == 1) { KeyPushCount[1]++; }
+			if (holdc == 1) { KeyPushCount[2]++; }
+			if (holdu == 1) { KeyPushCount[3]++; }
+			if (holdd == 1) { KeyPushCount[4]++; }
+			if (holdl == 1) { KeyPushCount[5]++; }
+			if (holdr == 1) { KeyPushCount[6]++; }
 			DrawGraph(5, 445, KeyViewimg[maxs(holda, 1)], TRUE);
 			DrawGraph(40, 445, KeyViewimg[maxs(holdb, 1)], TRUE);
 			DrawGraph(75, 445, KeyViewimg[maxs(holdc, 1)], TRUE);
@@ -939,19 +939,19 @@ int play2(int n, int o, int shift) {
 			DrawGraph(535, 445, KeyViewimg[maxs(holdl, 1)], TRUE);
 			DrawGraph(605, 445, KeyViewimg[maxs(holdr, 1)], TRUE);
 			if (KeyPushCount[0] == 0) { DrawString(10, 450, L"Z", Cr); }
-			else { DrawFormatString(10, 450, Cr, L"%2d", KeyPushCount[0]); }
+			else { DrawFormatString(10, 450, Cr, L"%2d", KeyPushCount[0] % 100); }
 			if (KeyPushCount[1] == 0) { DrawString(45, 450, L"X", Cr); }
-			else { DrawFormatString(45, 450, Cr, L"%2d", KeyPushCount[1]); }
+			else { DrawFormatString(45, 450, Cr, L"%2d", KeyPushCount[1] % 100); }
 			if (KeyPushCount[2] == 0) { DrawString(80, 450, L"C", Cr); }
-			else { DrawFormatString(80, 450, Cr, L"%2d", KeyPushCount[2]); }
+			else { DrawFormatString(80, 450, Cr, L"%2d", KeyPushCount[2] % 100); }
 			if (KeyPushCount[3] == 0) { DrawString(575, 415, L"↑", Cr); }
-			else { DrawFormatString(575, 415, Cr, L"%2d", KeyPushCount[3]); }
+			else { DrawFormatString(575, 415, Cr, L"%2d", KeyPushCount[3] % 100); }
 			if (KeyPushCount[4] == 0) { DrawString(575, 450, L"↓", Cr); }
-			else { DrawFormatString(575, 450, Cr, L"%2d", KeyPushCount[4]); }
+			else { DrawFormatString(575, 450, Cr, L"%2d", KeyPushCount[4] % 100); }
 			if (KeyPushCount[5] == 0) { DrawString(540, 450, L"←", Cr); }
-			else { DrawFormatString(540, 450, Cr, L"%2d", KeyPushCount[5]); }
+			else { DrawFormatString(540, 450, Cr, L"%2d", KeyPushCount[5] % 100); }
 			if (KeyPushCount[6] == 0) { DrawString(610, 450, L"→", Cr); }
-			else { DrawFormatString(610, 450, Cr, L"%2d", KeyPushCount[6]); }
+			else { DrawFormatString(610, 450, Cr, L"%2d", KeyPushCount[6] % 100); }
 		}
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバック
