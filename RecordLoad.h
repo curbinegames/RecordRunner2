@@ -75,6 +75,8 @@ void RecordLoad(int n, int o) {
 	viewT[0][0] = 0;
 	viewT[1][0] = 3000;
 	short int viewTN = 1;
+	int Movie[14][99];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
+	short int MovieN = 0;
 	int object[3][5][999]; //[上,中,下]レーンの音符の[時間,種類,(使ってない),縦位置,横位置]
 	object[0][3][0] = 300;
 	object[1][3][0] = 350;
@@ -121,12 +123,12 @@ void RecordLoad(int n, int o) {
 	wchar_t GT24[] = L"picture/";
 	wchar_t GT25[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	wchar_t RecordCode[26][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
+	wchar_t RecordCode[27][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
 		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
 		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
 		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
 		L"#VIEW:",L"#E.TITLE:",L"#CARROW",L"#DIFBAR:",L"#DIV",
-		L"#ROT"
+		L"#ROT",L"#MOVIE:"
 	};
 	FILE *fp;
 	songT = FileRead_open(L"song.txt");
@@ -499,6 +501,49 @@ void RecordLoad(int n, int o) {
 					viewT[1][viewTN] = strsans(GT1);
 					viewTN++;
 				}
+				//アイテム表示
+				else if (strands(GT1, RecordCode[26])) {
+					strmods(GT1, 7);
+					Movie[0][MovieN] = strsans(GT1);
+					strnex(GT1);
+					switch (GT1[0]) {
+					case L'l':
+						Movie[1][MovieN] = 1;
+						break;
+					case L'a':
+						Movie[1][MovieN] = 2;
+						break;
+					case L'd':
+						Movie[1][MovieN] = 3;
+						break;
+					}
+					strnex(GT1);
+					Movie[2][MovieN] = shifttime(strsans2(GT1), bpmG, timer[0]);
+					strnex(GT1);
+					Movie[3][MovieN] = shifttime(strsans2(GT1), bpmG, timer[0]);
+					strnex(GT1);
+					Movie[4][MovieN] = strsans2(GT1) * 50 + 100;
+					strnex(GT1);
+					Movie[5][MovieN] = strsans2(GT1) * 50 + 100;
+					strnex(GT1);
+					Movie[6][MovieN] = strsans2(GT1) * 50 + 100;
+					strnex(GT1);
+					Movie[7][MovieN] = strsans2(GT1) * 50 + 100;
+					strnex(GT1);
+					Movie[8][MovieN] = strsans(GT1) * 100;
+					strnex(GT1);
+					Movie[9][MovieN] = strsans(GT1) * 100;
+					strnex(GT1);
+					Movie[10][MovieN] = strsans(GT1);
+					strnex(GT1);
+					Movie[11][MovieN] = strsans(GT1);
+					strnex(GT1);
+					Movie[12][MovieN] = strsans2(GT1)*255.0;
+					strnex(GT1);
+					Movie[13][MovieN] = strsans2(GT1)*255.0;
+					strnex(GT1);
+					MovieN++;
+				}
 				//終わり
 				else if (strands(GT1, RecordCode[11])) { break; }
 				//空白
@@ -791,6 +836,7 @@ void RecordLoad(int n, int o) {
 	fwrite(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 	fwrite(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 	fwrite(&DifFN, 255, 1, fp);//難易度バー名
+	fwrite(&Movie, sizeof(int), 1386, fp);//動画データ
 	fclose(fp);
 	return;
 }

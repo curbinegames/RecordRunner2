@@ -21,7 +21,7 @@ int play2(int n, int o, int shift) {
 	short int KeyPushCount[7] = { 0,0,0,0,0,0,0 };
 	int judgh = 0; //ノーツの時間距離
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
-	int G[10], songT;
+	int G[20], songT;
 	int system[6] = { 0,0,0,2,0,0 };
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
@@ -66,6 +66,8 @@ int play2(int n, int o, int shift) {
 	short int carrowN = 0;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	short int viewTN = 0;
+	int Movie[14][99];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
+	short int MovieN = 0;
 	int object[3][5][999]; //[上,中,下]レーンの音符の[時間,種類,(使ってない),縦位置,横位置]
 	short int objectN[3] = { 0,0,0 }; //↑の番号
 	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
@@ -144,6 +146,7 @@ int play2(int n, int o, int shift) {
 		fread(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 		fread(&DifFN, 255, 1, fp);//難易度バー名
+		fread(&Movie, sizeof(int), 1386, fp);//動画データ
 	}
 	fclose(fp);
 	//グラフィックと効果音の準備
@@ -296,8 +299,9 @@ int play2(int n, int o, int shift) {
 	while (1) {
 		ClearDrawScreen();
 		GetHitKeyStateAll(key);
-		//背景を真っ暗にしている場合、背景を表示しない。
+		//背景を真っ暗にしている場合、背景と動画を表示しない。
 		if (system[3] != 0) {
+			//ここから背景
 			//背景の横位置計算
 			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) speedN[3]++;
 			bgp[0] -= speedt[3][speedN[3]][1];
@@ -353,8 +357,54 @@ int play2(int n, int o, int shift) {
 			}
 			if (bgf[0] <= -640)bgf[0] += 640;
 			if (bgf[1] >= 640)bgf[1] -= 480;
-			//アイテム表示
-
+			//ここまで背景表示
+			//ここからアイテム表示
+			while (Movie[3][MovieN] < Ntime && Movie[3][MovieN]>-500) { MovieN++; }
+			G[0] = 0;
+			while (Movie[3][MovieN + G[0]] >= Ntime && Movie[3][MovieN + G[0]] > -500) {
+				GetGraphSize(item[Movie[0][MovieN + G[0]]], &G[1], &G[2]);
+				G[1] /= 2;
+				G[2] /= 2;
+				switch (Movie[1][MovieN + G[0]]) {
+				case 1:
+					G[3] = lins(Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime);
+					G[4] = lins(Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime);
+					G[5] = lins(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]], Ntime);
+					G[6] = lins(Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime);
+					G[7] = lins(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
+					break;
+				case 2:
+					G[3] = pals(Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime);
+					G[4] = pals(Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime);
+					G[5] = pals(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]], Ntime);
+					G[6] = pals(Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime);
+					G[7] = pals(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
+					break;
+				case 3:
+					G[3] = pals(Movie[3][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime);
+					G[4] = pals(Movie[3][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime);
+					G[5] = pals(Movie[3][MovieN + G[0]], Movie[8][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[9][MovieN + G[0]], Ntime);
+					G[6] = pals(Movie[3][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime);
+					G[7] = pals(Movie[3][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
+					break;
+				}
+				G[7] = betweens(0, G[7], 255);
+				G[8] = -G[1]; G[9] = -G[2];
+				G[10] = G[1]; G[11] = -G[2];
+				G[12] = G[1]; G[13] = G[2];
+				G[14] = -G[1]; G[15] = G[2];
+				for (i[0] = 8; i[0] < 16; i[0]++) { G[i[0]] = G[i[0]] * G[5] / 100; }
+				for (i[0] = 8; i[0] < 16; i[0] += 2) {
+					G[16] = G[i[0]];
+					G[i[0]] = G[i[0]] * cosC(G[6]) - G[i[0] + 1] * sinC(G[6]) + G[3];
+					G[i[0] + 1] = G[16] * sinC(G[6]) + G[i[0] + 1] * cosC(G[6]) + G[4];
+				}
+				SetDrawBlendMode(DX_BLENDMODE_ALPHA, G[7]);
+				DrawModiGraph(G[8], G[9], G[10], G[11], G[12], G[13], G[14], G[15], item[Movie[0][MovieN + G[0]]], TRUE);
+				SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+				G[0]++;
+			}
+			//ここまでアイテム表示
 		}
 		//フィルター表示
 		switch (system[3]) {
@@ -490,7 +540,7 @@ int play2(int n, int o, int shift) {
 		for (i[0] = 0; i[0] < 2; i[0]++) if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0) lockN[i[0]]++;
 		if (viewT[0][viewTN + 1] <= Ntime && viewT[0][viewTN + 1] >= 0) viewTN++;
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			while (speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime && speedt[i[0]][speedN[i[0]] + 1][0] >= 0) speedN[i[0]]++;
+			if (speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime && speedt[i[0]][speedN[i[0]] + 1][0] >= 0) speedN[i[0]]++;
 			G[0] = G[3] = G[4] = G[5] = 0;
 			for (i[1] = objectN[i[0]]; object[i[0]][0][i[1]] > 0; i[1]++) {
 				if (object[i[0]][0][i[1]] >= viewT[0][viewTN + G[0] + 1] && viewT[0][viewTN + G[0] + 1] >= 0) G[0]++;
