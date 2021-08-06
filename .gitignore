@@ -1,4 +1,5 @@
 
+collection.h
 RecordRunner2.vcxproj
 RecordRunner2.vcxproj.filters
 RecordRunner2.vcxproj.user
@@ -12,6 +13,7 @@ RecordRunner2.vcxproj.user
 *.ogg
 *.MP3
 *.mp3
+*.not
 *.png
 *.rrs
 *.sln

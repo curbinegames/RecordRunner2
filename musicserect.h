@@ -77,7 +77,12 @@ int musicserect(int *p1) {
 	FILE *fp;
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
-		fread(&lan, sizeof(lan), 6, fp);
+		fread(&lan, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+	G[0] = _wfopen_s(&fp, L"save/SongSelect.dat", L"rb");
+	if (G[0] == 0) {
+		fread(&command, sizeof(int), 2, fp);
 		fclose(fp);
 	}
 	songT = FileRead_open(L"song.txt");
@@ -175,7 +180,7 @@ int musicserect(int *p1) {
 			fread(&ClearRate[n], sizeof(int), 6, fp);
 			fclose(fp);
 		}
-		if (Hscore[n][5] > 0) rimit[n] = 4;
+		if (strands(songname[n][5], GT14) || Hscore[n][5] > 0) rimit[n] = 4;
 		FileRead_close(musicT);
 		n++;
 	}
@@ -399,5 +404,9 @@ int musicserect(int *p1) {
 		}
 		WaitTimer(5);
 	}
+	//‘I‘ð‹È‚Ì•Û‘¶
+	G[0] = _wfopen_s(&fp, L"save/SongSelect.dat", L"wb");
+	fwrite(&command, sizeof(int), 2, fp);
+	fclose(fp);
 	return next;
 }
