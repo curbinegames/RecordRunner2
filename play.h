@@ -274,24 +274,10 @@ int play2(int n, int o, int shift) {
 	//ゲーム開始前の下準備
 	notes = notzero(notes);
 	GD[0] = difkey[4][3] / 100.0 - Lv;//mdifと難易度表記の差
-	if (Lv == 0) {
-		DifRate = 0;
-	}
-	else if (2 <= GD[0]) {
-		DifRate = Lv + 0.9;
-	}
-	else if (0 <= GD[0] && GD[0] < 2) {
-		DifRate = Lv + 0.2 * GD[0] + 0.5;
-	}
-	else if (-1 <= GD[0] && GD[0] < 0) {
-		DifRate = Lv + 0.5 * GD[0] + 0.5;
-	}
-	else if (-2 <= GD[0] && GD[0] < 1) {
-		DifRate = Lv * (GD[0] + 2);
-	}
-	else {
-		DifRate = 0;
-	}
+	if (Lv == 0) { DifRate = 0; }
+	else if (2 <= GD[0]) { DifRate = Lv + 0.9; }
+	else if (0 <= GD[0] && GD[0] < 2) { DifRate = Lv + 0.45 * GD[0]; }
+	else { DifRate = difkey[4][3] / 100.0; }
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK);
 	WaitTimer(10);
 	int Stime = GetNowCount();
@@ -361,7 +347,11 @@ int play2(int n, int o, int shift) {
 			//ここからアイテム表示
 			while (Movie[3][MovieN] < Ntime && Movie[3][MovieN]>-500) { MovieN++; }
 			G[0] = 0;
-			while (Movie[3][MovieN + G[0]] >= Ntime && Movie[3][MovieN + G[0]] > -500) {
+			while (Movie[3][MovieN + G[0]] > -500) {
+				if (Movie[2][MovieN + G[0]] > Ntime) {
+					G[0]++;
+					continue;
+				}
 				GetGraphSize(item[Movie[0][MovieN + G[0]]], &G[1], &G[2]);
 				G[1] /= 2;
 				G[2] /= 2;
