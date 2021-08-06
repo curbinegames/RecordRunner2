@@ -530,9 +530,9 @@ void RecordLoad(int n, int o) {
 					strnex(GT1);
 					Movie[7][MovieN] = strsans2(GT1) * 50 + 100;
 					strnex(GT1);
-					Movie[8][MovieN] = strsans(GT1) * 100;
+					Movie[8][MovieN] = strsans2(GT1) * 100;
 					strnex(GT1);
-					Movie[9][MovieN] = strsans(GT1) * 100;
+					Movie[9][MovieN] = strsans2(GT1) * 100;
 					strnex(GT1);
 					Movie[10][MovieN] = strsans(GT1);
 					strnex(GT1);
@@ -654,10 +654,10 @@ void RecordLoad(int n, int o) {
 	┣間隔が150ms以下75ms以上の時は得点("間隔"/(-75)+3)倍(1～2倍)
 	┗間隔が75ms以下の時は得点2倍
 	間隔が20ms以下のhitノーツは同時押し扱い、1.2倍
-	arrowひっかけは2.5倍
+	arrowひっかけは1.8倍
 	2個前と違うキーの時は得点1.2倍(全キー対象)
 	arrowキーは得点1.2倍
-	1=hit,2=non,3=up,4=down,5=left,6=right,7=non or douw,8=up or down,9=up or non
+	1=hit,2=non,3=up,4=down,5=left,6=right,7=non or down,8=up or down,9=up or non
 	*/
 	objectN[0] = 0;
 	objectN[1] = 0;
@@ -666,24 +666,24 @@ void RecordLoad(int n, int o) {
 	if (difkey[0][3] > 49)difkey[0][3] = 49;
 	difkey[7][3] = (Etime - noteoff) / 25 * 2;
 	if (difkey[7][3] < 10000)difkey[7][3] = 10000;
+	//ノーツがなくなるまで繰り返す
 	while (object[0][0][objectN[0]] >= 0 || object[1][0][objectN[1]] >= 0 || object[2][0][objectN[2]] >= 0) {
+		//GHOSTノーツをスキップ
 		for (i[0] = 0; i[0] < 3; i[0]++) while (object[i[0]][1][objectN[i[0]]] == 8 && object[i[0]][0][objectN[i[0]]] >= 0) objectN[i[0]]++;
 		G[0] = -1;
+		//一番早いノーツを探してG[0]に代入
 		for (i[0] = 0; i[0] < 3; i[0]++) if (object[i[0]][0][objectN[i[0]]] >= 0) {
 			G[0] = i[0];
 			break;
 		}
+		//無かったらブレーク
 		if (G[0] == -1) break;
+		//一番早いノーツを探してG[0]に代入
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] > object[i[0]][0][objectN[i[0]]] && object[i[0]][0][objectN[i[0]]] >= 0){
-				G[0] = i[0];
-			}
-			else if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] == object[i[0]][0][objectN[i[0]]] && object[G[0]][1][objectN[G[0]]] == 2 && object[i[0]][1][objectN[i[0]]] != 2 && object[i[0]][0][objectN[i[0]]] >= 0) {
-				G[0] = i[0];
-			}
+			if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] > object[i[0]][0][objectN[i[0]]] && object[i[0]][0][objectN[i[0]]] >= 0) { G[0] = i[0]; }
+			else if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] == object[i[0]][0][objectN[i[0]]] && object[G[0]][1][objectN[G[0]]] == 2 && object[i[0]][1][objectN[i[0]]] != 2 && object[i[0]][0][objectN[i[0]]] >= 0) { G[0] = i[0]; }
 		}
 		//ddifの計算
-		//old
 		while (object[G[0]][0][objectN[G[0]]] >= (Etime - noteoff) / 25 * ddifG[0] + noteoff) {
 			if (difkey[5][3] < 49) {
 				for (i[0] = 0; i[0] < difkey[5][3]; i[0]++) if (difkey[i[0]][1] > (Etime - noteoff) / 25 * ddifG[0] - difkey[7][3] + noteoff)ddif[ddifG[0] - 1] += difkey[i[0]][2];
@@ -727,6 +727,20 @@ void RecordLoad(int n, int o) {
 			else if (difkey[difkey[1][3]][0] == 4 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 8)) {
 				difkey[difkey[2][3]][0] = 4;
 				objectN[G[0]]++;
+				continue;
+			}
+		}
+		//leftノーツ補間
+		else if (difkey[difkey[1][3]][0] == 5) {
+			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
+				difkey[difkey[2][3]][0] = 5;
+				continue;
+			}
+		}
+		//rightノーツ補間
+		else if (difkey[difkey[1][3]][0] == 6) {
+			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
+				difkey[difkey[2][3]][0] = 6;
 				continue;
 			}
 		}
