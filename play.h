@@ -9,7 +9,7 @@ int play2(int n, int o, int shift) {
 	----------------*/
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
-	short int i[2];
+	short int i[3];
 	short int Lv = 0;
 	short int notes = 0;
 	short int bgp[3] = { 0,0,0 }; //[0:sky,1:ground,2:water]の横位置
@@ -92,6 +92,8 @@ int play2(int n, int o, int shift) {
 	wchar_t waterFN[255] = L"picture/waternormal.png";
 	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
+	wchar_t GT2[255];
+	wchar_t GT3[255] = { L".png" };
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	unsigned int Cr, Crb;
 	Cr = GetColor(255, 255, 255);
@@ -128,7 +130,7 @@ int play2(int n, int o, int shift) {
 		fread(&songN, 255, 1, fp);//曲名
 		fread(&songNE, 255, 1, fp);//曲名(英語)
 		fread(&Lv, sizeof(short int), 1, fp);//レベル
-		fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
+		//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 		fread(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 		fread(&speedt, sizeof(double), 990, fp);//レーン速度
 		fread(&chamo, sizeof(int), 594, fp);//キャラグラ変換タイミング
@@ -240,6 +242,23 @@ int play2(int n, int o, int shift) {
 	LoadDivGraph(L"picture/lefteff.png", 5, 5, 1, 50, 50, effimg[4]);
 	LoadDivGraph(L"picture/righteff.png", 5, 5, 1, 50, 50, effimg[5]);
 	LoadDivGraph(L"picture/bombeff.png", 5, 5, 1, 50, 50, effimg[6]);
+	for (i[0] = L'0'; i[0] <= L'9'; i[0]++) {
+		for (i[1] = L'0'; i[1] <= L'9'; i[1]++) {
+			for (i[2] = L'0'; i[2] <= L'9'; i[2]++) {
+				strcopy(dataE, GT2, 1);
+				stradds(GT2, L'/');
+				stradds(GT2, i[0]);
+				stradds(GT2, i[1]);
+				stradds(GT2, i[2]);
+				strcats(GT2, GT3);
+				item[itemN] = LoadGraph(GT2);
+				if (item[itemN] == -1) { break; }
+				itemN++;
+			}
+			if (item[itemN] == -1) { break; }
+		}
+		if (item[itemN] == -1) { break; }
+	}
 	if (system[5]) {
 		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
 		KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
@@ -285,9 +304,8 @@ int play2(int n, int o, int shift) {
 	while (1) {
 		ClearDrawScreen();
 		GetHitKeyStateAll(key);
-		//背景を真っ暗にしている場合、背景と動画を表示しない。
+		//背景表示
 		if (system[3] != 0) {
-			//ここから背景
 			//背景の横位置計算
 			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) speedN[3]++;
 			bgp[0] -= speedt[3][speedN[3]][1];
@@ -343,8 +361,22 @@ int play2(int n, int o, int shift) {
 			}
 			if (bgf[0] <= -640)bgf[0] += 640;
 			if (bgf[1] >= 640)bgf[1] -= 480;
-			//ここまで背景表示
-			//ここからアイテム表示
+		}
+		//フィルター表示
+		switch (system[3]) {
+		case 1:
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
+			DrawGraph(0, 0, filterimg, TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+			break;
+		case 2:
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 85);
+			DrawGraph(0, 0, filterimg, TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+			break;
+		}
+		//動画表示
+		if (system[3] != 0) {
 			while (Movie[3][MovieN] < Ntime && Movie[3][MovieN]>-500) { MovieN++; }
 			G[0] = 0;
 			while (Movie[3][MovieN + G[0]] > -500) {
@@ -371,11 +403,11 @@ int play2(int n, int o, int shift) {
 					G[7] = pals(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
 					break;
 				case 3:
-					G[3] = pals(Movie[3][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime);
-					G[4] = pals(Movie[3][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime);
-					G[5] = pals(Movie[3][MovieN + G[0]], Movie[8][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[9][MovieN + G[0]], Ntime);
-					G[6] = pals(Movie[3][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime);
-					G[7] = pals(Movie[3][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
+					G[3] = pals(Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Ntime);
+					G[4] = pals(Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Ntime);
+					G[5] = pals(Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]], Ntime);
+					G[6] = pals(Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Ntime);
+					G[7] = pals(Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Ntime);
 					break;
 				}
 				G[7] = betweens(0, G[7], 255);
@@ -394,20 +426,6 @@ int play2(int n, int o, int shift) {
 				SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 				G[0]++;
 			}
-			//ここまでアイテム表示
-		}
-		//フィルター表示
-		switch (system[3]) {
-		case 1:
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
-			DrawGraph(0, 0, filterimg, TRUE);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-			break;
-		case 2:
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 85);
-			DrawGraph(0, 0, filterimg, TRUE);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-			break;
 		}
 		//キャラ位置ガイドの表示
 		if (carrow[1][carrowN + 1] < Ntime && carrow[1][carrowN + 1] >= 0) carrowN++;
@@ -861,7 +879,7 @@ int play2(int n, int o, int shift) {
 			//ゴーストノーツ
 			else if (object[i[0]][1][objectN[i[0]]] == 8 && judgh < 16) objectN[i[0]]++;
 			//全ノーツslowmiss
-			else if (judgh <= -100 && judgh >= -100000 && object[i[0]][1][objectN[i[0]]] >= 1 && object[i[0]][1][objectN[i[0]]] <= 6) {
+			else while (judgh <= -100 && judgh >= -100000 && object[i[0]][1][objectN[i[0]]] >= 1 && object[i[0]][1][objectN[i[0]]] <= 6) {
 				judghname[i[0]][0] = 4;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 0;
@@ -869,6 +887,7 @@ int play2(int n, int o, int shift) {
 				objectN[i[0]]++;
 				judghcount[3]++;
 				life -= 20;
+				judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
 			}
 		}
 		if (gapa[2] > 2140000000) {

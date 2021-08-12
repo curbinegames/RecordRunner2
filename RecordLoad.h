@@ -9,8 +9,8 @@ void RecordLoad(int n, int o) {
 	int Etime = 0; //譜面の終わりの時間
 	int songdata = 0;
 	double GD[5];
-	int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
-	short int itemN = 0; //↑の番号
+	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
+	//short int itemN = 0; //↑の番号
 	int chamo[3][99][2]; //キャラの[0:上,1:中,2:下]の[0:グラフィック,1:切り替え時間]
 	chamo[0][0][0] = 0;
 	chamo[0][0][1] = 0;
@@ -189,13 +189,13 @@ void RecordLoad(int n, int o) {
 		//レベルを読み込む
 		else if (strands(GT1, RecordCode[7])) Lv = SETLv(GT1);
 		//アイテムを読み込む
-		else if (strands(GT1, RecordCode[8])) {
+		/*else if (strands(GT1, RecordCode[8])) {
 			strmods(GT1, 6);
 			strcopy(dataE, GT15, 1);
 			stradds(GT15, L'/');
 			strcats(GT15, GT1);
 			item[itemN++] = LoadGraph(GT15);
-		}
+		}*/
 		//落ち物背景指定
 		else if (strands(GT1, RecordCode[9])) {
 			strmods(GT1, 6);
@@ -299,7 +299,7 @@ void RecordLoad(int n, int o) {
 							Ymove[i[0]][YmoveN[i[0]]][2] -= 5;
 							break;
 						case 5:
-							SETMove(timer[0], GD[0], (Ymove[i[0]][YmoveN[i[0]] - 1][1] + GD[1] * 50 - 100) / 100, 2, (GD[2] + GD[0]) / 2.0, bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							SETMove(timer[0], GD[0], (Ymove[i[0]][YmoveN[i[0]] - 1][1] + (GD[1] + G[3] * i[0] - G[3]) * 50 - 100) / 100, 2, (GD[2] + GD[0]) / 2.0, bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
 							YmoveN[i[0]]++;
 							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, GD[1] + G[3] * i[0] - G[3], 3, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
 							break;
@@ -870,7 +870,7 @@ void RecordLoad(int n, int o) {
 	fwrite(&songN, 255, 1, fp);//曲名
 	fwrite(&songNE, 255, 1, fp);//曲名(英語)
 	fwrite(&Lv, sizeof(short int), 1, fp);//レベル
-	fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
+	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 	fwrite(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 	fwrite(&speedt, sizeof(double), 990, fp);//レーン速度
 	fwrite(&chamo, sizeof(int), 594, fp);//キャラグラ変換タイミング
