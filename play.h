@@ -380,7 +380,7 @@ int play2(int n, int o, int shift) {
 			while (Movie[3][MovieN] < Ntime && Movie[3][MovieN]>-500) { MovieN++; }
 			G[0] = 0;
 			while (Movie[3][MovieN + G[0]] > -500) {
-				if (Movie[2][MovieN + G[0]] > Ntime) {
+				if (Movie[2][MovieN + G[0]] > Ntime || Movie[3][MovieN + G[0]] < Ntime) {
 					G[0]++;
 					continue;
 				}
@@ -617,7 +617,7 @@ int play2(int n, int o, int shift) {
 			for (i[0] = G[1] + 1; i[0] < 3; i[0]++) {
 				G[2] = object[i[0]][0][objectN[i[0]]] - Ntime;
 				if (object[i[0]][1][objectN[i[0]]] == 1 && G[2] <= 125 && G[2] >= -100 &&
-				object[i[0]][0][objectN[i[0]]] <= object[G[1]][0][objectN[0]]) {
+				object[i[0]][0][objectN[i[0]]] <= object[G[1]][0][objectN[G[1]]]) {
 				G[1] = i[0];
 				}
 			}

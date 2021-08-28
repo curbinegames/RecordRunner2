@@ -180,7 +180,7 @@ int musicserect(int *p1) {
 			fread(&ClearRate[n], sizeof(int), 6, fp);
 			fclose(fp);
 		}
-		if (strands(songname[n][5], GT14) || Hscore[n][5] > 0) rimit[n] = 4;
+		if (strands(songname[n][4], GT14) == 0 && (strands(songname[n][5], GT14) || Hscore[n][5] > 0)) rimit[n] = 4;
 		FileRead_close(musicT);
 		n++;
 	}
@@ -206,7 +206,7 @@ int musicserect(int *p1) {
 			strcopy(jacketP[command[0]][command[1]], viewingjacket, 1);
 			jacketpic = LoadGraph(viewingjacket);
 		}
-		DrawGraph(305, 75, jacketpic, TRUE);
+		DrawExtendGraph(305, 75, 545, 315, jacketpic, TRUE);
 		//‹È–¼‚»‚Ì‘¼‚à‚ë‚à‚ë‚ð•\Ž¦‚·‚é
 		picsong = command[0] - 3;
 		while (picsong < 0) picsong += n + 1;
