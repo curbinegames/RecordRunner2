@@ -4,7 +4,9 @@
 #include "title.h"
 #include "menu.h"
 #include "musicserect.h"
+#include "musicserect2.h"
 #include "play.h"
+#include "play2.h"
 #include "collection.h"
 #include "option.h"
 
@@ -25,7 +27,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (DxLib_Init() == -1)return -1;
 	SetDrawScreen(DX_SCREEN_BACK);
 	int next = 0, now = 0, bgm, mnom[7] = { 0,1,0,1,1,0,0 };
-	int G[3];
+	int G[5];
 	unsigned int Cr = GetColor(255, 255, 255);
 	bgm = LoadSoundMem(L"song/no.mp3");
 	//ÉQÅ[ÉÄèIóπ(nextÇ™5ÇÃÇ∆Ç´)Ç‹Ç≈ÇÃä‘ÅAèàóùÇåJÇËï‘Ç∑
@@ -55,7 +57,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			next = menu();
 			break;
 		case(2):
-			next = musicserect(&G[0]);
+			next = musicserect2(&G[0]);
 			break;
 		case(3):
 			next = collection();
@@ -64,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			next = option();
 			break;
 		case(6):
-			next = play2(G[0], G[1], G[2]);
+			next = play3(G[0], G[1], G[2], G[3], G[4]);
 			break;
 		default:
 			ClearDrawScreen();

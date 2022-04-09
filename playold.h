@@ -1,10 +1,8 @@
 #include "playing.h"
 #include "RecordLoad.h"
-#include "RecordLoad2.h"
 #include "fontcur.h"
-#include "result.h"
 
-int play2(int n, int o, int shift, int AutoFlag) {
+int play2(int n, int o, int shift) {
 	/*---用語定義-----
 	ユーザー用譜面データ: ユーザーが作った譜面データ。ユーザーに分かりやすい。
 	PC用譜面データ: ユーザー用譜面データから計算で作られた、PC専用の譜面データ。PCに分かりやすい。
@@ -68,7 +66,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 	short int carrowN = 0;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	short int viewTN = 0;
-	int Movie[14][999];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
+	int Movie[14][99];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
 	short int MovieN = 0;
 	int object[3][5][999]; //[上,中,下]レーンの音符の[時間,種類,(使ってない),縦位置,横位置]
 	short int objectN[3] = { 0,0,0 }; //↑の番号
@@ -150,7 +148,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		fread(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 		fread(&DifFN, 255, 1, fp);//難易度バー名
-		fread(&Movie, sizeof(int), 13986, fp);//動画データ
+		fread(&Movie, sizeof(int), 1386, fp);//動画データ
 	}
 	fclose(fp);
 	//グラフィックと効果音の準備
@@ -494,12 +492,12 @@ int play2(int n, int o, int shift, int AutoFlag) {
 			charaput = 2;
 		}
 		//上が押されて、直前のヒットマーカーをたたいていないとき
-		else if (holdu >= 1 && holdd == 0) {
+		else if (key[KEY_INPUT_UP] == 1 && key[KEY_INPUT_DOWN] == 0) {
 			G[4] = Yline[0];
 			charaput = 0;
 		}
 		//下が押されて、直前のヒットマーカーをたたいていないとき
-		else if (holdu == 0 && holdd >= 1) {
+		else if (key[KEY_INPUT_UP] == 0 && key[KEY_INPUT_DOWN] == 1) {
 			G[4] = Yline[2];
 			charaput = 2;
 		}
@@ -519,169 +517,20 @@ int play2(int n, int o, int shift, int AutoFlag) {
 			if (carrow[0][carrowN] == 1) DrawGraph(Xline[charaput] - 160, G[4] - 75, charaimg[Ntime * int(bpm) / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6], TRUE);
 			else DrawTurnGraph(Xline[0] + 30, G[4] - 75, charaimg[Ntime * int(bpm) / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6], TRUE);
 		}
-		//キー設定
-		if (AutoFlag == 0) {
-			if (key[KEY_INPUT_Z] == 0) holda = 0;
-			else if (key[KEY_INPUT_Z] == 1) holda++;
-			if (key[KEY_INPUT_X] == 0) holdb = 0;
-			else if (key[KEY_INPUT_X] == 1) holdb++;
-			if (key[KEY_INPUT_C] == 0) holdc = 0;
-			else if (key[KEY_INPUT_C] == 1) holdc++;
-			if (key[KEY_INPUT_UP] == 0) holdu = 0;
-			else if (key[KEY_INPUT_UP] == 1) holdu++;
-			if (key[KEY_INPUT_LEFT] == 0) holdl = 0;
-			else if (key[KEY_INPUT_LEFT] == 1) holdl++;
-			if (key[KEY_INPUT_RIGHT] == 0) holdr = 0;
-			else if (key[KEY_INPUT_RIGHT] == 1) holdr++;
-			if (key[KEY_INPUT_DOWN] == 0) holdd = 0;
-			else if (key[KEY_INPUT_DOWN] == 1) holdd++;
-		}
-		//オートプレイ用コード
-		else if (AutoFlag == 1) {
-			if (holdc >= 1) { holdc++; }
-			if (holda >= 1) { holda++; }
-			if (holdb >= 1) { holdb++; }
-			if (holdu >= 1) { holdu++; }
-			if (holdd >= 1) { holdd++; }
-			if (holdl >= 1) { holdl++; }
-			if (holdr >= 1) { holdr++; }
-			//縦連前ボタン離し
-			if (object[0][1][objectN[0]] == 3 && object[0][0][objectN[0]] - Ntime <= 40 ||
-				object[1][1][objectN[1]] == 3 && object[1][0][objectN[1]] - Ntime <= 40 ||
-				object[2][1][objectN[2]] == 3 && object[2][0][objectN[2]] - Ntime <= 40) {
-				holdu = 0;
-			}
-			if (object[0][1][objectN[0]] == 4 && object[0][0][objectN[0]] - Ntime <= 40 ||
-				object[1][1][objectN[1]] == 4 && object[1][0][objectN[1]] - Ntime <= 40 ||
-				object[2][1][objectN[2]] == 4 && object[2][0][objectN[2]] - Ntime <= 40) {
-				holdd = 0;
-			}
-			if (object[0][1][objectN[0]] == 5 && object[0][0][objectN[0]] - Ntime <= 40 ||
-				object[1][1][objectN[1]] == 5 && object[1][0][objectN[1]] - Ntime <= 40 ||
-				object[2][1][objectN[2]] == 5 && object[2][0][objectN[2]] - Ntime <= 40) {
-				holdl = 0;
-			}
-			if (object[0][1][objectN[0]] == 6 && object[0][0][objectN[0]] - Ntime <= 40 ||
-				object[1][1][objectN[1]] == 6 && object[1][0][objectN[1]] - Ntime <= 40 ||
-				object[2][1][objectN[2]] == 6 && object[2][0][objectN[2]] - Ntime <= 40) {
-				holdr = 0;
-			}
-			//ヒットノーツ処理
-			G[0] = 0;
-			if (object[0][1][objectN[0]] == 1 && object[0][0][objectN[0]] - Ntime <= 8) { G[0]++; }
-			if (object[1][1][objectN[1]] == 1 && object[1][0][objectN[1]] - Ntime <= 8) { G[0]++; }
-			if (object[2][1][objectN[2]] == 1 && object[2][0][objectN[2]] - Ntime <= 8) { G[0]++; }
-			if (G[0] == 1) {
-				if (holdc == 0) {
-					holdc = 1;
-					holda = 0;
-					holdb = 0;
-				}
-				else {
-					holda = 1;
-					holdc = 0;
-					holdb = 0;
-				}
-			}
-			else if (G[0] == 2) {
-				if (holdc == 0) {
-					holdc = 1;
-					holdb = 1;
-					holda = 0;
-				}
-				else {
-					holda = 1;
-					holdb = 1;
-					holdc = 0;
-				}
-			}
-			else if (G[0] == 3) {
-				holda = 1;
-				holdb = 1;
-				holdc = 1;
-			}
-			//左右アローノーツ処理
-			if (object[0][1][objectN[0]] == 5 && object[0][0][objectN[0]] - Ntime <= 8 ||
-				object[1][1][objectN[1]] == 5 && object[1][0][objectN[1]] - Ntime <= 8 ||
-				object[2][1][objectN[2]] == 5 && object[2][0][objectN[2]] - Ntime <= 8) {
-				if (G[0] == 0) {
-					holdu = 0;
-					holdd = 0;
-					holdl = 0;
-					holdr = 0;
-				}
-				G[0] = 1;
-				holdl = 1;
-			}
-			if (object[0][1][objectN[0]] == 6 && object[0][0][objectN[0]] - Ntime <= 8 ||
-				object[1][1][objectN[1]] == 6 && object[1][0][objectN[1]] - Ntime <= 8 ||
-				object[2][1][objectN[2]] == 6 && object[2][0][objectN[2]] - Ntime <= 8) {
-				if (G[0] == 0) {
-					holdu = 0;
-					holdd = 0;
-					holdl = 0;
-					holdr = 0;
-				}
-				G[0] = 1;
-				holdr = 1;
-			}
-			//ボムノーツ処理
-			if (object[0][1][objectN[0]] == 7 && object[0][0][objectN[0]] - Ntime <= 40) { holdu = 0; }
-			if (object[2][1][objectN[2]] == 7 && object[2][0][objectN[2]] - Ntime <= 40) { holdd = 0; }
-			if (object[1][1][objectN[1]] == 7 && object[1][0][objectN[1]] - Ntime <= 40) {
-				if (object[0][1][objectN[0]] == 7 && object[0][0][objectN[0]] - Ntime <= 40 ||
-					object[2][1][objectN[2]] == 2 && object[2][0][objectN[2]] - Ntime <= 40) {
-					holdu = 0; holdd++;
-				}
-				else { holdu++; holdd = 0; }
-			}
-			//上下アローノーツ処理
-			if (object[0][1][objectN[0]] == 3 && object[0][0][objectN[0]] - Ntime <= 8 ||
-				object[1][1][objectN[1]] == 3 && object[1][0][objectN[1]] - Ntime <= 8 ||
-				object[2][1][objectN[2]] == 3 && object[2][0][objectN[2]] - Ntime <= 8) {
-				if (G[0] == 0) {
-					holdu = 0;
-					holdd = 0;
-					holdl = 0;
-					holdr = 0;
-				}
-				G[0] = 1;
-				holdu = 1;
-				if (object[0][1][objectN[0]] == 7 && object[0][0][objectN[0]] - Ntime <= 40) { holdd = 1; }
-			}
-			if (object[0][1][objectN[0]] == 4 && object[0][0][objectN[0]] - Ntime <= 8 ||
-				object[1][1][objectN[1]] == 4 && object[1][0][objectN[1]] - Ntime <= 8 ||
-				object[2][1][objectN[2]] == 4 && object[2][0][objectN[2]] - Ntime <= 8) {
-				if (G[0] == 0) {
-					holdu = 0;
-					holdd = 0;
-					holdl = 0;
-					holdr = 0;
-				}
-				G[0] = 1;
-				holdd = 1;
-				if (object[2][1][objectN[2]] == 7 && object[2][0][objectN[2]] - Ntime <= 40) { holdu = 1; }
-			}
-			//キャッチノーツ処理
-			if (object[0][1][objectN[0]] == 2 && object[0][0][objectN[0]] - Ntime <= 8) { holdu++; holdd = 0; }
-			if (object[1][1][objectN[1]] == 2 && object[1][0][objectN[1]] - Ntime <= 8) { holdu = 0; holdd = 0; }
-			if (object[2][1][objectN[2]] == 2 && object[2][0][objectN[2]] - Ntime <= 8) { holdu = 0; holdd++; }
-			if (holdc > 10) { holdc = 0; }
-			if (holda > 10) { holda = 0; }
-			if (holdb > 10) { holdb = 0; }
-			if (holdu > 10 &&
-				object[0][1][objectN[0]] != 2 && object[1][1][objectN[1]] != 2 && object[2][1][objectN[2]] != 2 &&
-				object[0][1][objectN[0]] != 7 && object[1][1][objectN[1]] != 7 && object[2][1][objectN[2]] != 7) {
-				holdu = 0;
-			}
-			if (holdd > 10 &&
-				object[0][1][objectN[0]] != 2 && object[1][1][objectN[1]] != 2 && object[2][1][objectN[2]] != 2 &&
-				object[0][1][objectN[0]] != 7 && object[1][1][objectN[1]] != 7 && object[2][1][objectN[2]] != 7) {
-				holdd = 0;
-			}
-			if (holdl > 10) { holdl = 0; }
-			if (holdr > 10) { holdr = 0; }
-		}
+		if (key[KEY_INPUT_Z] == 0) holda = 0;
+		else if (key[KEY_INPUT_Z] == 1) holda++;
+		if (key[KEY_INPUT_X] == 0) holdb = 0;
+		else if (key[KEY_INPUT_X] == 1) holdb++;
+		if (key[KEY_INPUT_C] == 0) holdc = 0;
+		else if (key[KEY_INPUT_C] == 1) holdc++;
+		if (key[KEY_INPUT_UP] == 0) holdu = 0;
+		else if (key[KEY_INPUT_UP] == 1) holdu++;
+		if (key[KEY_INPUT_LEFT] == 0) holdl = 0;
+		else if (key[KEY_INPUT_LEFT] == 1) holdl++;
+		if (key[KEY_INPUT_RIGHT] == 0) holdr = 0;
+		else if (key[KEY_INPUT_RIGHT] == 1) holdr++;
+		if (key[KEY_INPUT_DOWN] == 0) holdd = 0;
+		else if (key[KEY_INPUT_DOWN] == 1) holdd++;
 		if (key[KEY_INPUT_G] == 0) holdG = 0;
 		else if (key[KEY_INPUT_G] == 1) holdG++;
 		if (GetWindowUserCloseFlag(TRUE)) return 5;
@@ -1171,8 +1020,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.0f", 60000.0 / notzero(G[0]));
-		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
-		//for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 120 + i[0] * 20, Cr, L"%d,%d", object[i[0]][0][objectN[i[0]]], object[i[0]][1][objectN[i[0]]]); }
+		//for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 100 + i[0] * 20, Cr, L"%d,%d", object[i[0]][0][objectN[i[0]]], object[i[0]][1][objectN[i[0]]]); }
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
@@ -1183,7 +1031,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		}
 		if (drop) { DrawGraph(0, 0, dropimg, TRUE); }
 		//終了時間から1秒以上たって、曲が終了したら抜ける。
-		if (Etime + 2000 <= Ntime && (musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
+		if (CheckSoundMem(musicmp3) == 0 && Etime <= Ntime + 5000) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
 			break;
@@ -1192,7 +1040,188 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		Ntime = GetNowCount() - Stime + system[1] * 5;
 		ScreenFlip();
 	}
+	int	read[7] = { 0,0,0,0,0,0,0 };
+	double ReadAcc[7] = { 0,0,0,0,0,0,0 };
+	int	Readdis[7] = { 0,0,0,0,0,0,0 };
+	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
+	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
+	int chap[3] = { 0,0,0 };
+	double readR[10] = { 0,0,0,0,0,0,0,0,0,0 };
+	double acc = (judghcount[0] * 10000 + judghcount[1] * 9500 + judghcount[2] * 5500) / (notes*100.0);
+	wchar_t savec[10][255];
+	wchar_t save[255] = L"score/";
+	wchar_t save2[255] = L".dat";
+	score2[3] = score2[0] + score2[1] - score2[2];
+	//ランク判定
+	if (score2[3] >= 98000) rank = 0;
+	else if (score2[3] >= 95000) rank = 1;
+	else if (score2[3] >= 90000) rank = 2;
+	else if (score2[3] >= 85000) rank = 3;
+	else if (score2[3] >= 80000) rank = 4;
+	else rank = 5;
+	//クリアレート判定
+	if (drop == 1) { Clear = 1; }
+	else if (drop == 0 && judghcount[3] > 0) { Clear = 2; }
+	else if (drop == 0 && judghcount[3] == 0 && judghcount[2] > 0) { Clear = 3; }
+	else if (drop == 0 && judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) { Clear = 4; }
+	else Clear = 5;
+	strcats(save, fileN);
+	strcats(save, save2);
+	G[0] = _wfopen_s(&fp, save, L"rb"); //記録読み込み
+	if (G[0] == 0) {
+		fread(&read, sizeof(int), 6, fp);
+		fread(&ReadAcc, sizeof(double), 6, fp);
+		fread(&Readdis, sizeof(int), 6, fp);
+		fread(&ReadRank, sizeof(int), 6, fp);
+		fread(&ReadClear, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+	G[9] = 0;
+	if (read[o] < score2[3]) { read[o] = score2[3]; } //ハイスコア保存
+	if (ReadAcc[o] < acc) { ReadAcc[o] = acc; } //ACC保存
+	if (Readdis[o] < Dscore[3]) { Readdis[o] = Dscore[3]; } //最長走行距離保存
+	if (ReadRank[o] > rank || ReadRank[o] < 0) { ReadRank[o] = rank; } //ランク保存
+	if (ReadClear[o] < Clear) { ReadClear[o] = Clear; } //クリアレート保存
+	G[0] = _wfopen_s(&fp, save, L"wb");
+	fwrite(&read, sizeof(int), 6, fp);
+	fwrite(&ReadAcc, sizeof(double), 6, fp);
+	fwrite(&Readdis, sizeof(int), 6, fp);
+	fwrite(&ReadRank, sizeof(int), 6, fp);
+	fwrite(&ReadClear, sizeof(int), 6, fp);
+	fclose(fp);
+	//プレイ回数保存
+	G[0] = _wfopen_s(&fp, L"save/data.dat", L"rb");
+	if (G[0] == 0) {
+		fread(&read, sizeof(read), 7, fp);
+		fclose(fp);
+	}
+	read[0]++;
+	if (drop == 1) read[1]++;
+	else read[3]++;
+	if (judghcount[3] == 0)read[4]++;
+	if (judghcount[2] == 0 && judghcount[3] == 0)read[5]++;
+	if (judghcount[1] == 0 && judghcount[2] == 0 && judghcount[3] == 0)read[6]++;
+	G[0] = _wfopen_s(&fp, L"save/data.dat", L"wb");
+	fwrite(&read, sizeof(int), 7, fp);
+	fclose(fp);
+	//キャラプレイ数保存
+	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"rb");
+	if (G[0] == 0) {
+		fread(&chap, sizeof(chap), 3, fp);
+		fclose(fp);
+	}
+	chap[system[0]]++;
+	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"wb");
+	fwrite(&chap, sizeof(int), 3, fp);
+	fclose(fp);
+	//レート計算(level0なら0固定)"譜面定数" - "miss数" x "譜面定数" x 0.03(下限=0)
+	if (DifRate == 0) rate = 0;
+	else if (judghcount[3] > 0) {
+		rate = DifRate - judghcount[3] * DifRate*0.03;
+		rate = mins_D(rate, 0);
+	}
+	//NO MISS,"譜面定数" + 1 - "safe数" x 0.05(下限="譜面定数")
+	else if (judghcount[3] == 0 && judghcount[2] > 0) {
+		rate = DifRate + 1 - judghcount[2] * 0.05;
+		rate = mins_D(rate, DifRate);
+	}
+	//FULL COMBO,"譜面定数" + 2 - "good数" x 0.01(下限="譜面定数" + 1)
+	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) {
+		rate = DifRate + 2 - judghcount[1] * 0.01;
+		rate = mins_D(rate, DifRate + 1);
+	}
+	//PERFECT, "譜面定数" + 2
+	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] == 0) rate = DifRate + 2;
+	//レート保存
+	G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"rb");
+	if (G[0] == 0) {
+		fread(&savec, 255, 10, fp);
+		fclose(fp);
+	}
+	G[0] = _wfopen_s(&fp, L"save/rateN.dat", L"rb");
+	if (G[0] == 0) {
+		fread(&readR, sizeof(readR), 10, fp);
+		fclose(fp);
+	}
+	for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[0] += mins_D(readR[i[0]], 0); } //プレイ前のレートを計算
+	SumRate[1] = SumRate[0];
+	G[0] = -1;
+	//同じ曲、または未収録を探す
+	for (i[0] = 0; i[0] < 10; i[0]++)if (strands(fileN, savec[i[0]]) || savec[i[0]] == '\0') {
+		G[0] = i[0];
+		break;
+	}
+	//なかったら、一番低いレートを探す
+	if (G[0] == -1) {
+		G[0] = 0;
+		for (i[0] = 1; i[0] < 10; i[0]++)if (readR[G[0]] > readR[i[0]]) G[0] = i[0];
+	}
+	//レートが高かったら更新する
+	if (readR[G[0]] < rate) {
+		readR[G[0]] = rate;
+		SumRate[1] = 0;
+		strcopy(fileN, savec[G[0]], 1);
+		for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[1] += mins_D(readR[i[0]], 0); } //変化後のレートを計算
+		G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"wb");
+		fwrite(&savec, 255, 10, fp);
+		fclose(fp);
+		G[0] = _wfopen_s(&fp, L"save/rateN.dat", L"wb");
+		fwrite(&readR, sizeof(double), 10, fp);
+		fclose(fp);
+	}
+	//リザルト画面
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	while (1) {
+		ClearDrawScreen();
+		DrawGraph(0, 0, resultimg, TRUE);
+		DrawGraph(460, 20, difberimg, TRUE);
+		DrawString(100, 13, songN, Cr);
+		DrawCurFont(judghcount[0], 140, 52, 30, 4);
+		DrawCurFont(judghcount[1], 140, 93, 30, 2);
+		DrawCurFont(judghcount[2], 140, 134, 30, 3);
+		DrawCurFont(judghcount[3], 140, 175, 30, 1);
+		DrawCurFont(Mcombo, 155, 215, 30, 4);
+		DrawCurFont(notes, 265, 215, 30, 5);
+		DrawFormatString(10, 320, Cr, L"%.2f", SumRate[1]);
+		if (SumRate[1] != SumRate[0]) { DrawFormatString(10, 340, Cr, L"+%.2f", SumRate[1] - SumRate[0]); }
+		else { DrawString(10, 340, L"not rise", Cr); }
+		switch (rank) {
+		case 0:
+			DrawCurFont(score2[3], 310, 75, 55, 6);
+			DrawCurFont(acc, 430, 150, 30, 6, 2);
+			break;
+		case 1:
+			DrawCurFont(score2[3], 310, 75, 55, 4);
+			DrawCurFont(acc, 430, 150, 30, 4, 2);
+			break;
+		case 2:
+			DrawCurFont(score2[3], 310, 75, 55, 2);
+			DrawCurFont(acc, 430, 150, 30, 2, 2);
+			break;
+		case 3:
+			DrawCurFont(score2[3], 310, 75, 55, 3);
+			DrawCurFont(acc, 430, 150, 30, 3, 2);
+			break;
+		case 4:
+			DrawCurFont(score2[3], 310, 75, 55, 5);
+			DrawCurFont(acc, 430, 150, 30, 5, 2);
+			break;
+		case 5:
+			DrawCurFont(score2[3], 310, 75, 55, 1);
+			DrawCurFont(acc, 430, 150, 30, 1, 2);
+			break;
+		}
+		if (gapa[1] == 0) gapa[1] = 1;
+		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
+		DrawCurFont(gapa[2] / gapa[1] - gapa[0] * gapa[0] / gapa[1] / gapa[1], 500, 230, 20, 0);
+		DrawGraph(140, 260, rankimg[rank], TRUE);
+		DrawGraph(5, 420, coleimg[Clear - 1], TRUE);
+		DrawGraph(336, 252, Rchaimg, TRUE);
+		ScreenFlip();
+		//エンターが押された
+		if (CheckHitKey(KEY_INPUT_RETURN) == 1) break;
+		else if (GetWindowUserCloseFlag(TRUE)) return 5;
+	}
 	InitGraph();
-	if (AutoFlag == 1) { return 2; }
-	else { return result(0, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score2, Mcombo, notes, gapa, Dscore[3]); }
+	return 2;
 }

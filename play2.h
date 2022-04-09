@@ -1,14 +1,16 @@
-#include "playing.h"
-#include "RecordLoad.h"
-#include "RecordLoad2.h"
-#include "fontcur.h"
-#include "result.h"
+int GetHighScore(wchar_t pas[255], int dif);
+int GetRemainNotes(int *judghcount, int Notes);
+int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo);
+void ShowCombo(int combo, int *pic);
+void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic);
+void RunningStats(int *judghcount, int Score, int HighScore);
 
-int play2(int n, int o, int shift, int AutoFlag) {
+int play3(int p, int n, int o, int shift, int AutoFlag) {
 	/*---用語定義-----
 	ユーザー用譜面データ: ユーザーが作った譜面データ。ユーザーに分かりやすい。
 	PC用譜面データ: ユーザー用譜面データから計算で作られた、PC専用の譜面データ。PCに分かりやすい。
 	----------------*/
+	//p: パックナンバー
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
 	short int i[3];
@@ -38,6 +40,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 	int holdr = 0;
 	int holdG = 0;
 	int combo = 0;
+	int AllNotesHitTime = -1;
 	int LaneTrack[3] = { -150,-150,-150 };
 	int Mcombo = 0;
 	int Dscore[4] = { 0,0,0,0 }; //距離に当たる部分[加点用,加点保存用,距離保存用,実点数]
@@ -46,6 +49,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 	int gap[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//gap = 判定ずれ
 	int gapa[3] = { 0,0,0 };//gapa = 判定ずれ[合計, 個数, 2乗の合計]
 	int score2[4] = { 0,0,0,0 }; //[通常スコア(90000), コンボスコア(10000), 減点, 合計]
+	int HighSrore; //ハイスコア
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	for (i[0] = 0; i[0] <= 59; i[0]++)fps[i[0]] = 17;
 	fps[60] = 0;
@@ -89,13 +93,18 @@ int play2(int n, int o, int shift, int AutoFlag) {
 	wchar_t dataE[255] = L"record/";
 	wchar_t RRS[255]; //PC用譜面データの保存場所
 	wchar_t mp3FN[255] = L"song/";
+	wchar_t DataFN[255] = L"score/";
 	wchar_t skyFN[255] = L"picture/backskynoamal.png";
 	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
 	wchar_t waterFN[255] = L"picture/waternormal.png";
 	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
 	wchar_t GT2[255];
-	wchar_t GT3[255] = { L".png" };
+	wchar_t GT3[] = L".png";
+	wchar_t GT4[255];
+	wchar_t ST1[] = L"record/";
+	wchar_t ST2[] = L"/list.txt";
+	wchar_t ST3[] = L".dat";
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	unsigned int Cr, Crb;
 	Cr = GetColor(255, 255, 255);
@@ -107,7 +116,15 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		fread(&system, sizeof(int), 6, fp);
 		fclose(fp);
 	}
-	songT = FileRead_open(L"song.txt");
+	songT = FileRead_open(L"RecordPack.txt");
+	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
+	FileRead_close(songT);
+	strcats(dataE, GT1);
+	stradds(dataE, L'/');
+	strcopy(ST1, GT2, 1);
+	strcats(GT2, GT1);
+	strcats(GT2, ST2);
+	songT = FileRead_open(GT2);
 	for (i[0] = 0; i[0] <= n; i[0]++) FileRead_gets(GT1, 256, songT);
 	FileRead_close(songT);
 	strcopy(GT1, fileN, 1);
@@ -119,7 +136,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
 	}
 	if (G[2] != 0) {
-		RecordLoad(n, o);//rrsデータが無い、または作成の指示があれば作る
+		RecordLoad2(p, n, o);//rrsデータが無い、または作成の指示があれば作る
 		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
 	}
 	if (G[2] == 0) {
@@ -153,6 +170,10 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		fread(&Movie, sizeof(int), 13986, fp);//動画データ
 	}
 	fclose(fp);
+	strcats(DataFN, fileN);
+	strcats(DataFN, ST3);
+	//ハイスコア取得
+	HighSrore = GetHighScore(DataFN, o);
 	//グラフィックと効果音の準備
 	/*グラフィック用変数
 	judghimg = 判定マーク
@@ -179,8 +200,15 @@ int play2(int n, int o, int shift, int AutoFlag) {
 	int coleimg[5];
 	int effimg[7][5];
 	int KeyViewimg[2];
+	int Bonusimg[3] = { LoadGraph(L"picture/PERFECT.png"),
+		LoadGraph(L"picture/FULLCOMBO.png"),
+		LoadGraph(L"picture/NOMISS.png") };
 	int Rchaimg;
+	int ComboFontimg[10];
 	int musicmp3, attack, catchs, arrow, bomb;
+	int BonusSnd[3] = { LoadSoundMem(L"sound/a-perfect.mp3"),
+		LoadSoundMem(L"sound/a-fullcombo.mp3"),
+		LoadSoundMem(L"sound/a-nomiss.mp3") };
 	judghimg = LoadGraph(L"picture/Marker.png");
 	hitimg = LoadGraph(L"picture/hit.png");
 	hitcimg = LoadGraph(L"picture/hitc.png");
@@ -244,6 +272,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 	LoadDivGraph(L"picture/lefteff.png", 5, 5, 1, 50, 50, effimg[4]);
 	LoadDivGraph(L"picture/righteff.png", 5, 5, 1, 50, 50, effimg[5]);
 	LoadDivGraph(L"picture/bombeff.png", 5, 5, 1, 50, 50, effimg[6]);
+	LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, ComboFontimg);
 	for (i[0] = L'0'; i[0] <= L'9'; i[0]++) {
 		for (i[1] = L'0'; i[1] <= L'9'; i[1]++) {
 			for (i[2] = L'0'; i[2] <= L'9'; i[2]++) {
@@ -601,6 +630,7 @@ int play2(int n, int o, int shift, int AutoFlag) {
 				holdc = 1;
 			}
 			//左右アローノーツ処理
+			G[0] = 0;
 			if (object[0][1][objectN[0]] == 5 && object[0][0][objectN[0]] - Ntime <= 8 ||
 				object[1][1][objectN[1]] == 5 && object[1][0][objectN[1]] - Ntime <= 8 ||
 				object[2][1][objectN[2]] == 5 && object[2][0][objectN[2]] - Ntime <= 8) {
@@ -695,6 +725,8 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		//ヒット
 		if (holda == 1 || holdb == 1 || holdc == 1) charahit = GetNowCount();
 		if (charahit + 750 < GetNowCount()) charahit = 0;
+		//コンボ表示
+		ShowCombo(combo, ComboFontimg);
 		//音符表示
 		for (i[0] = 0; i[0] < 2; i[0]++) if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0) lockN[i[0]]++;
 		if (viewT[0][viewTN + 1] <= Ntime && viewT[0][viewTN + 1] >= 0) viewTN++;
@@ -1111,8 +1143,10 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		Dscore[3] = GD[0] * 1000 + Dscore[1];
 		//スコアバー隠し表示
 		DrawGraph(0, 0, sbbarimg, TRUE);
-		//コンボ表示
-		if (combo >= 1) DrawFormatString(15, 15, Cr, L"%d combo", combo);
+		//ランニングステータス表示
+		G[0] = GetRemainNotes(judghcount, notes);
+		G[1] = CalPosScore(score2, G[0], notes, combo, Mcombo);
+		RunningStats(judghcount, G[1], HighSrore);
 		//部分難易度表示
 		if (holdG >= 1) {
 			G[0] = ddif[0] * 20 / notzero(ddifG[1]) + 155;
@@ -1172,7 +1206,6 @@ int play2(int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.0f", 60000.0 / notzero(G[0]));
 		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
-		//for (i[0] = 0; i[0] < 3; i[0]++) { DrawFormatString(20, 120 + i[0] * 20, Cr, L"%d,%d", object[i[0]][0][objectN[i[0]]], object[i[0]][1][objectN[i[0]]]); }
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
@@ -1182,11 +1215,24 @@ int play2(int n, int o, int shift, int AutoFlag) {
 			Dscore[2] = mins(Ntime - noteoff, 0);
 		}
 		if (drop) { DrawGraph(0, 0, dropimg, TRUE); }
-		//終了時間から1秒以上たって、曲が終了したら抜ける。
-		if (Etime + 2000 <= Ntime && (musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
+		//ノーツが全部なくなった瞬間の時間を記録
+		if (GetRemainNotes(judghcount, notes) == 0 && AllNotesHitTime < 0) {
+			AllNotesHitTime = GetNowCount();
+		}
+		//オートでなく、ノーミス以上を出したら演出
+		if (AutoFlag == 0) {
+			ShowBonusEff(judghcount, AllNotesHitTime, BonusSnd, Bonusimg);
+		}
+		//終了時間から5秒以上たって、曲が終了したら抜ける。
+		if (Etime + 5000 <= Ntime && (musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
 			break;
+		}
+		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
+			StopSoundMem(musicmp3);
+			DeleteSoundMem(musicmp3);
+			return 2;
 		}
 		WaitTimer(5);
 		Ntime = GetNowCount() - Stime + system[1] * 5;
@@ -1194,5 +1240,111 @@ int play2(int n, int o, int shift, int AutoFlag) {
 	}
 	InitGraph();
 	if (AutoFlag == 1) { return 2; }
-	else { return result(0, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score2, Mcombo, notes, gapa, Dscore[3]); }
+	else { return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score2, Mcombo, notes, gapa, Dscore[3]); }
+}
+
+int GetHighScore(wchar_t pas[255], int dif) {
+	FILE *fp;
+	int a[7] = { 0,0,0,0,0,0,0 };
+	int G = _wfopen_s(&fp, pas, L"rb");
+	if (G == 0) {
+		fread(&a, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+	return a[dif];
+}
+
+int GetRemainNotes(int *judghcount, int Notes) {
+	return Notes - judghcount[0] - judghcount[1] - judghcount[2] - judghcount[3];
+}
+
+int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo) {
+	int PosCombo = mins(combo + RemainNotes, MaxCombo);
+	return score[0] + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
+}
+
+void ShowCombo(int combo, int *pic) {
+#define ROCATION_X 320
+#define ROCATION_Y 150
+#define CHARA_WIDTH 50
+
+	if (combo < 10) {
+		return;
+	}
+	int t;
+	int xx;
+	GetGraphSize(pic[0], &xx, &t);
+	t = 0;
+	int s;
+	for (int i = combo; i > 0; i /= 10) {
+		t++;
+	}
+	for (int i = t - 1; i >= 0; i--) {
+		s = combo;
+		for (int j = 0; j < i; j++) {
+			s /= 10;
+		}
+		s %= 10;
+		DrawGraph(t * CHARA_WIDTH / 2 - CHARA_WIDTH / 2 - i * CHARA_WIDTH - xx / 2 + ROCATION_X, ROCATION_Y, pic[s], TRUE);
+	}
+}
+
+void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic) {
+#define NO_MISS 2
+#define FULL_COMBO 1
+#define PERFECT 0
+#define PIC_X 150
+#define PIC_Y 200
+	int Bonus = -1;
+	if (judghcount[3] > 0) {
+		return;
+	}
+	else if (judghcount[2] > 0) {
+		Bonus = NO_MISS;
+	}
+	else if (judghcount[1] > 0) {
+		Bonus = FULL_COMBO;
+	}
+	else {
+		Bonus = PERFECT;
+	}
+	if (EffStartTime + 1 >= GetNowCount()) {
+		PlaySoundMem(Snd[Bonus], DX_PLAYTYPE_BACK);
+	}
+	if (EffStartTime + 2000 > GetNowCount()) {
+		DrawGraph(PIC_X, PIC_Y, pic[Bonus], TRUE);
+	}
+}
+
+void RunningStats(int *judghcount, int PosScore, int HighScore) {
+#define x1 6
+#define y1 6
+#define x2 188
+#define y2 6
+#define x3 150
+#define y3 69
+#define x4 6
+#define y4 69
+	unsigned int CrG = GetColor(63, 63, 63);
+	unsigned int CrD = GetColor(255, 63, 127);
+	unsigned int CrY = GetColor(255, 255, 0);
+	unsigned int CrC = GetColor(0, 255, 255);
+	if (judghcount[3] > 0) {
+		DrawTriangle(x1, y1, x2, y2, x3, y3, CrG, TRUE);
+	}
+	else if (judghcount[2] > 0) {
+		DrawTriangle(x1, y1, x2, y2, x3, y3, CrD, TRUE);
+	}
+	else if (judghcount[1] > 0) {
+		DrawTriangle(x1, y1, x2, y2, x3, y3, CrY, TRUE);
+	}
+	else {
+		DrawTriangle(x1, y1, x2, y2, x3, y3, CrC, TRUE);
+	}
+	if (PosScore < HighScore) {
+		DrawTriangle(x1, y1, x3, y3, x4, y4, CrG, TRUE);
+	}
+	else {
+		DrawTriangle(x1, y1, x3, y3, x4, y4, GetColor(lins(HighScore, 255, 100000, 0, PosScore), 255, lins(HighScore, 0, 100000, 255, PosScore)), TRUE);
+	}
 }

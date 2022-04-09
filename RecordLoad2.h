@@ -1,4 +1,4 @@
-void RecordLoad(int n, int o) {
+void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
 	short int i[2];
@@ -119,10 +119,13 @@ void RecordLoad(int n, int o) {
 	wchar_t waterFN[255] = L"picture/waternormal.png";
 	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
+	wchar_t GT2[255];
 	wchar_t GT15[255];
 	wchar_t GT24[] = L"picture/";
 	wchar_t GT25[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
+	wchar_t ST1[] = L"record/";
+	wchar_t ST2[] = L"list.txt";
 	wchar_t RecordCode[27][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
 		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
 		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
@@ -131,6 +134,7 @@ void RecordLoad(int n, int o) {
 		L"#ROT",L"#MOVIE:"
 	};
 	FILE *fp;
+	/*
 	songT = FileRead_open(L"song.txt");
 	for (i[0] = 0; i[0] <= n; i[0]++) FileRead_gets(GT1, 256, songT);
 	FileRead_close(songT);
@@ -138,6 +142,23 @@ void RecordLoad(int n, int o) {
 	strcats(dataE, GT1);
 	strcopy(dataE, GT1, 1);
 	strcats(GT1, GT25[o]);
+	*/
+
+	songT = FileRead_open(L"RecordPack.txt");
+	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
+	FileRead_close(songT);
+	strcats(dataE, GT1); //"record/<パック名>"
+	stradds(dataE, L'/'); //"record/<パック名>/"
+	strcopy(dataE, GT2, 1);
+	strcats(GT2, ST2); //"record/<パック名>/list.txt"
+	songT = FileRead_open(GT2);
+	for (i[0] = 0; i[0] <= n; i[0]++) FileRead_gets(GT1, 256, songT);
+	FileRead_close(songT);
+	strcopy(GT1, fileN, 1); //"<曲名>"
+	strcats(dataE, GT1); //"record/<パック名>/<曲名>"
+	strcopy(dataE, GT1, 1);
+	strcats(GT1, GT25[o]); //"record/<パック名>/<曲名>/<難易度>.txt"
+
 	songdata = FileRead_open(GT1);
 	//テキストデータを読む
 	while (FileRead_eof(songdata) == 0) {

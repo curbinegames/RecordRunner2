@@ -4,7 +4,7 @@ int musicserect(int *p1) {
 	unsigned int Cr[7];
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
 	Cr[3] = GetColor(0, 0, 0);
-	int e, i, n = 0, UD = 1, LR = 1, key = 1, ShiftKey = 0, next = 99;
+	int e, i, n = 0, UD = 1, LR = 1, key = 1, ShiftKey = 0, AutoFlag = 0, next = 99;
 	int songT, musicT, picsong, startC = -250, XstartC = -250, previewC = 0, moveC = 250, XmoveC = 250, command[2] = { 0,1 }, rimit[64], level[64][6], Hscore[64][6], Hdis[64][6];
 	int ClearRank[64][6];//0=EX, 1=S, 2=A, 3=B, 4=C, 5=D, 6=not play
 	int ClearRate[64][6];//0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
@@ -280,6 +280,7 @@ int musicserect(int *p1) {
 		//デバッグ(320,410スタート)
 		ScreenFlip();
 		if (CheckHitKey(KEY_INPUT_LSHIFT) == 1 || CheckHitKey(KEY_INPUT_RSHIFT) == 1) { ShiftKey = 1; }
+		if (CheckHitKey(KEY_INPUT_P) == 1) { AutoFlag = 1; }
 		else { ShiftKey = 0; }
 		if (CheckHitKey(KEY_INPUT_UP) == 1) {
 			//上が押された
@@ -371,6 +372,8 @@ int musicserect(int *p1) {
 				*p1 = command[1];
 				p1++;
 				*p1 = ShiftKey;
+				p1++;
+				*p1 = AutoFlag;
 				next = 6;
 				break;
 			}
