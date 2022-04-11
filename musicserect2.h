@@ -1,6 +1,12 @@
 #define PackNumLim 8
 #define SongNumLim 64
-//入る曲数は"PackNumLim" x "SongNumLim"
+#define SORT_DEFAULT 0
+#define SORT_LEVEL 1
+#define SORT_SCORE 2
+
+void ChangeSortMode(int *mode);
+void SortSong(int *mapping, const int mode, const int dif, const int lv[SongNumLim][6], const int score[SongNumLim][6], const int SongNumCount);
+void ViewSortMode(const int mode);
 
 int musicserect2(int *p1) {
 	unsigned int Cr[7];
@@ -22,6 +28,7 @@ int musicserect2(int *p1) {
 	int key = 1;
 	int SongPreSTime = 0;
 	int SongPrePat = 0;
+	int SortMode = SORT_DEFAULT;
 	int next = 5;
 	int PackFirstNum[PackNumLim];
 	int limit[SongNumLim];
@@ -353,12 +360,14 @@ int musicserect2(int *p1) {
 		DrawFormatString(550, 100, Cr[0], L"RATE:%5.2f",
 			rate[0] + rate[1] + rate[2] + rate[3] + rate[4] +
 			rate[5] + rate[6] + rate[7] + rate[8] + rate[9]);
+		//今のソート内容を表示する
+		ViewSortMode(SortMode);
 		//操作説明を表示する
 		DrawGraph(0, 0, help, TRUE);
 		if (lan[4] == 0)DrawString(5, 460, L"上下キー:曲選択　左右キー:難易度選択   Enterキー:決定   BackSpaceキー:戻る", Cr[0]);
 		else if (lan[4] == 1)DrawString(5, 460, L"↑↓key:music select, ←→key:dif select, Enter key:start, BackSpace key:back to menu", Cr[0]);
 		//デバッグ(320,410スタート)
-		//DrawFormatString(320, 410, Cr[0], L"%d", GetNowCount() - SongPreSTime);
+		//DrawFormatString(320, 410, Cr[0], L"%d", SortMode);
 		ScreenFlip();
 		if (CheckHitKey(KEY_INPUT_LSHIFT) == 1 || CheckHitKey(KEY_INPUT_RSHIFT) == 1) { ShiftKey = 1; }
 		else { ShiftKey = 0; }
@@ -423,6 +432,13 @@ int musicserect2(int *p1) {
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				LR = -1;
 				XstartC = GetNowCount();
+			}
+			key = 1;
+		}
+		else if (CheckHitKey(KEY_INPUT_Z) == 1) {
+			if (key == 0) {
+				ChangeSortMode(&SortMode);
+				SortSong(Mapping, SortMode, command[1], level, Hscore, SongNumCount);
 			}
 			key = 1;
 		}
@@ -542,4 +558,84 @@ int musicserect2(int *p1) {
 	//songM[64]->SongFileName[PackNumLim][SongNumLim]
 	//songname[64]->SongName[PackNumLim][SongNumLim]
 	//songT->G[0]
+}
+
+void ChangeSortMode(int *mode) {
+	*mode = *mode + 1;
+	if (*mode >= 3) {
+		*mode = 0;
+	}
+}
+
+void SortSong(int *mapping, const int mode, const int dif, const int lv[SongNumLim][6], const int score[SongNumLim][6], const int SongNumCount) {
+	int n = 0;
+	int m = SongNumCount;
+	int o = 0;
+	int p = 1;
+	switch (mode) {
+	case SORT_DEFAULT:
+		for (int i = 0; i < SongNumCount; i++) {
+			*mapping = i;
+			mapping++;
+		}
+		break;
+	case SORT_LEVEL:
+		while (p) {
+			p = 0;
+			for (int i = 0; i < SongNumCount - 1; i += 2) {
+				if (lv[mapping[i]][dif] > lv[mapping[i + 1]][dif]) {
+					o = mapping[i];
+					mapping[i] = mapping[i + 1];
+					mapping[i + 1] = o;
+					p = 1;
+				}
+			}
+			for (int i = 1; i < SongNumCount - 1; i += 2) {
+				if (lv[mapping[i]][dif] > lv[mapping[i + 1]][dif]) {
+					o = mapping[i];
+					mapping[i] = mapping[i + 1];
+					mapping[i + 1] = o;
+					p = 1;
+				}
+			}
+		}
+		break;
+	case SORT_SCORE:
+		while (p) {
+			p = 0;
+			for (int i = 0; i < SongNumCount - 1; i += 2) {
+				if (score[mapping[i]][dif] > score[mapping[i + 1]][dif]) {
+					o = mapping[i];
+					mapping[i] = mapping[i + 1];
+					mapping[i + 1] = o;
+					p = 1;
+				}
+			}
+			for (int i = 1; i < SongNumCount - 1; i += 2) {
+				if (score[mapping[i]][dif] > score[mapping[i + 1]][dif]) {
+					o = mapping[i];
+					mapping[i] = mapping[i + 1];
+					mapping[i + 1] = o;
+					p = 1;
+				}
+			}
+		}
+		break;
+	}
+}
+
+void ViewSortMode(const int mode) {
+#define POS_X 260
+#define POS_Y 20
+	switch (mode) {
+	case SORT_DEFAULT:
+		DrawString(POS_X, POS_Y, L"デフォルト", GetColor(255, 255, 255));
+		break;
+	case SORT_LEVEL:
+		DrawString(POS_X, POS_Y, L"レベル順", GetColor(255, 255, 255));
+		break;
+	case SORT_SCORE:
+		DrawString(POS_X, POS_Y, L"スコア順", GetColor(255, 255, 255));
+		break;
+	}
 }
