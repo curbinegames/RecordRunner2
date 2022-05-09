@@ -6,7 +6,7 @@ int menu(void) {
 	int movetime = 250;
 	int menu[4], menuG[4], menuW[4], help, goust, goust2, i, select;
 	int key = 1;
-	int	lan[6] = { 0,0,0,2,0,0 };//Žg‚¤‚Ì‚Í[4,Œ¾Œê]‚¾‚¯
+	int	lan[7] = { 0,0,0,2,0,0,0 };//Žg‚¤‚Ì‚Í[4,Œ¾Œê]‚¾‚¯
 	FILE *fp;
 	goust = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (goust == 0) {

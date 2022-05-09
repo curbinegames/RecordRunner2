@@ -2,11 +2,11 @@ int option(void) {
 	//ロード
 	//data = [キャラ,オフセット,SE,背景明るさ,言語]
 	int e, sel;
-	int	data[6] = { 0,0,0,2,0,0 };
+	int	data[7] = { 0,0,0,2,0,0,0 };
 	FILE *fp;
 	e = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (e == 0) {
-		fread(&data, sizeof(int), 6, fp);
+		fread(&data, sizeof(int), 7, fp);
 		fclose(fp);
 	}
 	//処理
@@ -77,6 +77,26 @@ int option(void) {
 			DrawString(100, 300, L"ボタン表示: on", Cr);
 			break;
 		}
+		switch (data[6]) {
+		case 0:
+			DrawString(100, 350, L"判定表示位置: 中央の上", Cr);
+			break;
+		case 1:
+			DrawString(100, 350, L"判定表示位置: 左上", Cr);
+			break;
+		case 2:
+			DrawString(100, 350, L"判定表示位置: 右上", Cr);
+			break;
+		case 3:
+			DrawString(100, 350, L"判定表示位置: 中央", Cr);
+			break;
+		case 4:
+			DrawString(100, 350, L"判定表示位置: キャラの上", Cr);
+			break;
+		case 5:
+			DrawString(100, 350, L"判定表示位置: 表示しない", Cr);
+			break;
+		}
 		switch (command) {
 		case 0:
 			if (data[4] == 0)DrawString(20, 420, L"使用するキャラクターを変えます。", Cr);
@@ -99,7 +119,11 @@ int option(void) {
 			break;
 		case 5:
 			if (data[4] == 0)DrawString(20, 420, L"ボタンの押し状況をプレイ画面に表示します。", Cr);
-			else if (data[4] == 1)DrawString(20, 420, L"Choose whether to display the key states on playing mode", Cr);
+			else if (data[4] == 1)DrawString(20, 420, L"Choose whether to display the key states on playing mode.", Cr);
+			break;
+		case 6:
+			if (data[4] == 0)DrawString(20, 420, L"判定の表示場所を決めます。", Cr);
+			else if (data[4] == 1)DrawString(20, 420, L"Choose judge position.", Cr);
 			break;
 		}
 		DrawGraph(0, 0, help, TRUE);
@@ -142,7 +166,7 @@ int option(void) {
 			//バックスペースが押された
 			if (key == 0) {
 				e = _wfopen_s(&fp, L"save/system.dat", L"wb");
-				fwrite(&data, sizeof(int), 6, fp);
+				fwrite(&data, sizeof(int), 7, fp);
 				fclose(fp);
 				ClearDrawScreen();
 				break;
@@ -158,9 +182,9 @@ int option(void) {
 			key = 0;
 		}
 		if (command < 0) {
-			command = 5;
+			command = 6;
 		}
-		if (command > 5) {
+		if (command > 6) {
 			command = 0;
 		}
 		if (data[0] == -1) {
@@ -198,6 +222,12 @@ int option(void) {
 		}
 		if (data[5] == 2) {
 			data[5] = 0;
+		}
+		if (data[6] == -1) {
+			data[6] = 5;
+		}
+		if (data[6] == 6) {
+			data[6] = 0;
 		}
 	}
 	return 1;

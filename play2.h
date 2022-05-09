@@ -1,8 +1,11 @@
 int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes(int *judghcount, int Notes);
+void GetScore(int *score, const int *judghcount, const int notes, const int MaxCombo);
 int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo);
 void ShowCombo(int combo, int *pic);
 void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic);
+void ShowJudge(const int *viewjudge, const int *judgeimg, const int posX, const int posY);
+void ShowScore(int *score, int Hscore);
 void RunningStats(int *judghcount, int Score, int HighScore);
 
 int play3(int p, int n, int o, int shift, int AutoFlag) {
@@ -26,7 +29,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int judgh = 0; //ノーツの時間距離
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20], songT;
-	int system[6] = { 0,0,0,2,0,0 };
+	int system[7] = { 0,0,0,2,0,0,0 };
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int Ntime = 0;
@@ -50,6 +53,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int gapa[3] = { 0,0,0 };//gapa = 判定ずれ[合計, 個数, 2乗の合計]
 	int score2[4] = { 0,0,0,0 }; //[通常スコア(90000), コンボスコア(10000), 減点, 合計]
 	int HighSrore; //ハイスコア
+	int viewjudge[4] = { 0,0,0,0 };
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	for (i[0] = 0; i[0] <= 59; i[0]++)fps[i[0]] = 17;
 	fps[60] = 0;
@@ -113,7 +117,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	//システムロード
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
-		fread(&system, sizeof(int), 6, fp);
+		fread(&system, sizeof(int), 7, fp);
 		fclose(fp);
 	}
 	songT = FileRead_open(L"RecordPack.txt");
@@ -191,13 +195,56 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	dangerimg
 	charaimg
 	musicmp3 = 音楽*/
-	int judghimg, hitimg, hitcimg, catchimg, upimg, downimg, leftimg, rightimg, bombimg, goustimg;
-	int backskyimg, backgroundimg, backwaterimg, dangerimg, dropimg, resultimg, sbarimg, sbbarimg, filterimg, charaguideimg, gapbarimg, gaplineimg, difberimg;
-	int Lbarimg[3];
-	int Tbarimg[2];
+	int BonusSnd[3] = {
+		LoadSoundMem(L"sound/a-perfect.mp3"),
+		LoadSoundMem(L"sound/a-fullcombo.mp3"),
+		LoadSoundMem(L"sound/a-nomiss.mp3")
+	};
+	int judgeimg[4] = {
+		LoadGraph(L"picture/judge-just.png"),
+		LoadGraph(L"picture/judge-good.png"),
+		LoadGraph(L"picture/judge-safe.png"),
+		LoadGraph(L"picture/judge-miss.png")
+	};
+	int judghimg = LoadGraph(L"picture/Marker.png");
+	int backskyimg = LoadGraph(skyFN);
+	int backgroundimg = LoadGraph(groundFN);
+	int backwaterimg = LoadGraph(waterFN);
+	int dangerimg = LoadGraph(L"picture/danger.png");
+	int dropimg = LoadGraph(L"picture/drop.png");
+	int resultimg = LoadGraph(L"picture/result.png");
+	int sbarimg = LoadGraph(L"picture/scoreber.png");
+	int sbbarimg = LoadGraph(L"picture/scoreber2.png");
+	int filterimg = LoadGraph(L"picture/Black.png");
+	int charaguideimg = LoadGraph(L"picture/Cguide.png");
+	int gapbarimg = LoadGraph(L"picture/GapBer.png");
+	int gaplineimg = LoadGraph(L"picture/GapBerLine.png");
+	int difberimg;
+	int Lbarimg[3] = {
+		LoadGraph(L"picture/LIFEbar.png"),
+		LoadGraph(L"picture/LIFEbar2.png"),
+		LoadGraph(L"picture/LIFEbar3.png")
+	};
+	int Tbarimg[2] = {
+		LoadGraph(L"picture/TIMEbar.png"),
+		LoadGraph(L"picture/TIMEbar2.png")
+	};
 	int	charaimg[30];
-	int rankimg[6];
-	int coleimg[5];
+	int rankimg[6] = {
+		LoadGraph(L"picture/rankEX.png"),
+		LoadGraph(L"picture/rankS.png"),
+		LoadGraph(L"picture/rankA.png"),
+		LoadGraph(L"picture/rankB.png"),
+		LoadGraph(L"picture/rankC.png"),
+		LoadGraph(L"picture/rankD.png")
+	};
+	int coleimg[5] = {
+		LoadGraph(L"picture/DROPED.png"),
+		LoadGraph(L"picture/CLEARED.png"),
+		LoadGraph(L"picture/NOMISS.png"),
+		LoadGraph(L"picture/FULLCOMBO.png"),
+		LoadGraph(L"picture/PERFECT.png")
+	};
 	int effimg[7][5];
 	int KeyViewimg[2];
 	int Bonusimg[3] = { LoadGraph(L"picture/PERFECT.png"),
@@ -205,20 +252,17 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		LoadGraph(L"picture/NOMISS.png") };
 	int Rchaimg;
 	int ComboFontimg[10];
+	//ノーツの画像
+	int hitimg = LoadGraph(L"picture/hit.png");
+	int hitcimg = LoadGraph(L"picture/hitc.png");
+	int catchimg = LoadGraph(L"picture/catch.png");
+	int upimg = LoadGraph(L"picture/up.png");
+	int downimg = LoadGraph(L"picture/down.png");
+	int leftimg = LoadGraph(L"picture/left.png");
+	int rightimg = LoadGraph(L"picture/right.png");
+	int bombimg = LoadGraph(L"picture/bomb.png");
+	int goustimg = LoadGraph(L"picture/goust.png");
 	int musicmp3, attack, catchs, arrow, bomb;
-	int BonusSnd[3] = { LoadSoundMem(L"sound/a-perfect.mp3"),
-		LoadSoundMem(L"sound/a-fullcombo.mp3"),
-		LoadSoundMem(L"sound/a-nomiss.mp3") };
-	judghimg = LoadGraph(L"picture/Marker.png");
-	hitimg = LoadGraph(L"picture/hit.png");
-	hitcimg = LoadGraph(L"picture/hitc.png");
-	catchimg = LoadGraph(L"picture/catch.png");
-	upimg = LoadGraph(L"picture/up.png");
-	downimg = LoadGraph(L"picture/down.png");
-	leftimg = LoadGraph(L"picture/left.png");
-	rightimg = LoadGraph(L"picture/right.png");
-	bombimg = LoadGraph(L"picture/bomb.png");
-	goustimg = LoadGraph(L"picture/goust.png");
 	switch (o) {
 	case 0:
 		difberimg = LoadGraph(L"picture/difauto.png");
@@ -237,34 +281,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		difberimg = LoadGraph(DifFN);
 		break;
 	}
-	backskyimg = LoadGraph(skyFN);
-	backgroundimg = LoadGraph(groundFN);
-	backwaterimg = LoadGraph(waterFN);
-	dangerimg = LoadGraph(L"picture/danger.png");
-	dropimg = LoadGraph(L"picture/drop.png");
-	resultimg = LoadGraph(L"picture/result.png");
-	sbarimg = LoadGraph(L"picture/scoreber.png");
-	sbbarimg = LoadGraph(L"picture/scoreber2.png");
-	Lbarimg[0] = LoadGraph(L"picture/LIFEbar.png");
-	Lbarimg[1] = LoadGraph(L"picture/LIFEbar2.png");
-	Lbarimg[2] = LoadGraph(L"picture/LIFEbar3.png");
-	Tbarimg[0] = LoadGraph(L"picture/TIMEbar.png");
-	Tbarimg[1] = LoadGraph(L"picture/TIMEbar2.png");
-	rankimg[0] = LoadGraph(L"picture/rankEX.png");
-	rankimg[1] = LoadGraph(L"picture/rankS.png");
-	rankimg[2] = LoadGraph(L"picture/rankA.png");
-	rankimg[3] = LoadGraph(L"picture/rankB.png");
-	rankimg[4] = LoadGraph(L"picture/rankC.png");
-	rankimg[5] = LoadGraph(L"picture/rankD.png");
-	coleimg[0] = LoadGraph(L"picture/DROPED.png");
-	coleimg[1] = LoadGraph(L"picture/CLEARED.png");
-	coleimg[2] = LoadGraph(L"picture/NOMISS.png");
-	coleimg[3] = LoadGraph(L"picture/FULLCOMBO.png");
-	coleimg[4] = LoadGraph(L"picture/PERFECT.png");
-	filterimg = LoadGraph(L"picture/Black.png");
-	charaguideimg = LoadGraph(L"picture/Cguide.png");
-	gapbarimg = LoadGraph(L"picture/GapBer.png");
-	gaplineimg = LoadGraph(L"picture/GapBerLine.png");
 	LoadDivGraph(L"picture/hiteff.png", 5, 5, 1, 50, 50, effimg[0]);
 	LoadDivGraph(L"picture/hiteff.png", 5, 5, 1, 50, 50, effimg[1]);
 	LoadDivGraph(L"picture/upeff.png", 5, 5, 1, 50, 50, effimg[2]);
@@ -727,6 +743,26 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (charahit + 750 < GetNowCount()) charahit = 0;
 		//コンボ表示
 		ShowCombo(combo, ComboFontimg);
+		//判定表示
+		switch (system[6]) {
+		case 0:
+			ShowJudge(viewjudge, judgeimg, 270, 100);
+			break;
+		case 1:
+			ShowJudge(viewjudge, judgeimg, 10, 100);
+			break;
+		case 2:
+			ShowJudge(viewjudge, judgeimg, 530, 100);
+			break;
+		case 3:
+			ShowJudge(viewjudge, judgeimg, 270, 260);
+			break;
+		case 4:
+			ShowJudge(viewjudge, judgeimg, Xline[charaput] - 120, Yline[charaput] - 100);
+			break;
+		default:
+			break;
+		}
 		//音符表示
 		for (i[0] = 0; i[0] < 2; i[0]++) if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0) lockN[i[0]]++;
 		if (viewT[0][viewTN + 1] <= Ntime && viewT[0][viewTN + 1] >= 0) viewTN++;
@@ -814,6 +850,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			gapa[1]++;
 			//just
 			if (G[2] <= 40 && G[2] >= -40) {
+				viewjudge[0] = GetNowCount();
 				judghname[G[1]][0] = 1;
 				combo++;
 				judghcount[0]++;
@@ -823,6 +860,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			//good
 			else if (G[2] <= 70 && G[2] >= -70) {
+				viewjudge[1] = GetNowCount();
 				judghname[G[1]][0] = 2;
 				combo++;
 				judghcount[1]++;
@@ -832,6 +870,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			//safe
 			else if (G[2] <= 100 && G[2] >= -100) {
+				viewjudge[2] = GetNowCount();
 				judghname[G[1]][0] = 3;
 				judghcount[2]++;
 				life++;
@@ -839,6 +878,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			//fastmiss
 			else if (G[2] <= 125) {
+				viewjudge[3] = GetNowCount();
 				judghname[G[1]][0] = 4;
 				combo = 0;
 				judghcount[3]++;
@@ -853,6 +893,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghname[i[0]][0] = 1;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 2;
+				viewjudge[0] = GetNowCount();
 				objectN[i[0]]++;
 				combo++;
 				charahit = 0;
@@ -872,6 +913,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				gapa[1]++;
 				//just
 				if (judgh <= 40 && judgh >= -40) {
+					viewjudge[0] = GetNowCount();
 					judghname[i[0]][0] = 1;
 					combo++;
 					judghcount[0]++;
@@ -882,6 +924,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
+					viewjudge[1] = GetNowCount();
 					judghname[i[0]][0] = 2;
 					combo++;
 					judghcount[1]++;
@@ -892,6 +935,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
+					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					judghcount[2]++;
 					life++;
@@ -900,6 +944,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//fastmiss
 				else if (judgh <= 125) {
+					viewjudge[3] = GetNowCount();
 					judghname[i[0]][0] = 4;
 					combo = 0;
 					judghcount[3]++;
@@ -916,6 +961,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				gapa[1]++;
 				//just
 				if (judgh <= 40 && judgh >= -40) {
+					viewjudge[0] = GetNowCount();
 					judghname[i[0]][0] = 1;
 					combo++;
 					judghcount[0]++;
@@ -926,6 +972,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
+					viewjudge[1] = GetNowCount();
 					judghname[i[0]][0] = 2;
 					combo++;
 					judghcount[1]++;
@@ -936,6 +983,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
+					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					judghcount[2]++;
 					life++;
@@ -944,6 +992,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//fastmiss
 				else if (judgh <= 125) {
+					viewjudge[3] = GetNowCount();
 					judghname[i[0]][0] = 4;
 					combo = 0;
 					judghcount[3]++;
@@ -960,6 +1009,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				gapa[1]++;
 				//just
 				if (judgh <= 40 && judgh >= -40) {
+					viewjudge[0] = GetNowCount();
 					judghname[i[0]][0] = 1;
 					combo++;
 					judghcount[0]++;
@@ -970,6 +1020,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
+					viewjudge[1] = GetNowCount();
 					judghname[i[0]][0] = 2;
 					combo++;
 					judghcount[1]++;
@@ -980,6 +1031,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
+					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					judghcount[2]++;
 					life++;
@@ -988,6 +1040,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//fastmiss
 				else if (judgh <= 125) {
+					viewjudge[3] = GetNowCount();
 					judghname[i[0]][0] = 4;
 					combo = 0;
 					judghcount[3]++;
@@ -1004,6 +1057,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				gapa[1]++;
 				//just
 				if (judgh <= 40 && judgh >= -40) {
+					viewjudge[0] = GetNowCount();
 					judghname[i[0]][0] = 1;
 					combo++;
 					judghcount[0]++;
@@ -1014,6 +1068,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
+					viewjudge[1] = GetNowCount();
 					judghname[i[0]][0] = 2;
 					combo++;
 					judghcount[1]++;
@@ -1024,6 +1079,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
+					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					judghcount[2]++;
 					life++;
@@ -1032,6 +1088,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				//fastmiss
 				else if (judgh <= 125) {
+					viewjudge[3] = GetNowCount();
 					judghname[i[0]][0] = 4;
 					combo = 0;
 					judghcount[3]++;
@@ -1043,6 +1100,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghname[i[0]][0] = 4;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 7;
+				viewjudge[3] = GetNowCount();
 				objectN[i[0]]++;
 				combo = 0;
 				judghcount[3]++;
@@ -1053,6 +1111,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghname[i[0]][0] = 1;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 7;
+				viewjudge[0] = GetNowCount();
 				objectN[i[0]]++;
 				combo++;
 				judghcount[0]++;
@@ -1066,6 +1125,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghname[i[0]][0] = 4;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 0;
+				viewjudge[3] = GetNowCount();
 				combo = 0;
 				objectN[i[0]]++;
 				judghcount[3]++;
@@ -1079,24 +1139,14 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			gapa[2] /= 2;
 		}
 		Mcombo = mins(Mcombo, combo);
-		//判定+ヒットエフェクト表示
+		//ヒットエフェクト表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			switch (judghname[i[0]][0]) {
-			case(1):
-				DrawString(Xline[i[0]] - 25, Yline[i[0]] - 25, L"JUST", Cr);
-				break;
-			case(2):
-				DrawString(Xline[i[0]] - 25, Yline[i[0]] - 25, L"GOOD", Cr);
-				break;
-			case(3):
-				DrawString(Xline[i[0]] - 25, Yline[i[0]] - 25, L"SAFE", Cr);
-				break;
-			case(4):
-				DrawString(Xline[i[0]] - 25, Yline[i[0]] - 25, L"MISS", Cr);
-				break;
+			if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] >= 1 && judghname[i[0]][0] <= 3 && judghname[i[0]][2] >= 1 && judghname[i[0]][2] <= 6) {
+				DrawGraph(Xline[i[0]] - 10, Yline[i[0]] - 10, effimg[judghname[i[0]][2] - 1][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5], TRUE);
 			}
-			if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] >= 1 && judghname[i[0]][0] <= 3 && judghname[i[0]][2] >= 1 && judghname[i[0]][2] <= 6)DrawGraph(Xline[i[0]] - 10, Yline[i[0]] - 10, effimg[judghname[i[0]][2] - 1][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5], TRUE);
-			else if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] == 4 && judghname[i[0]][2] == 7)DrawGraph(Xline[i[0]] - 10, Yline[i[0]] - 10, effimg[6][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5], TRUE);
+			else if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] == 4 && judghname[i[0]][2] == 7) {
+				DrawGraph(Xline[i[0]] - 10, Yline[i[0]] - 10, effimg[6][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5], TRUE);
+			}
 			if (judghname[i[0]][1] + 750 < GetNowCount()) {
 				judghname[i[0]][0] = 0;
 				judghname[i[0]][1] = 0;
@@ -1110,10 +1160,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//スコアバー表示
 		DrawGraph(0, 0, sbarimg, TRUE);
-		//点数表示
-		score2[0] = (judghcount[0] * 90000 + judghcount[1] * 85000 + judghcount[2] * 45000) / notes;
-		score2[1] = Mcombo * 10000 / notes;
-		DrawFormatString(490, 20, Cr, L"SCORE:%d", score2[0] + score2[1] - score2[2]);
+		//スコア表示
+		GetScore(score2, judghcount, notes, Mcombo);
+		ShowScore(score2, HighSrore);
 		//ライフ表示
 		life = maxs(life, 500);
 		if (life > 100) {
@@ -1258,6 +1307,11 @@ int GetRemainNotes(int *judghcount, int Notes) {
 	return Notes - judghcount[0] - judghcount[1] - judghcount[2] - judghcount[3];
 }
 
+void GetScore(int *score, const int *judghcount, const int notes, const int MaxCombo) {
+	score[0] = (judghcount[0] * 90000 + judghcount[1] * 85000 + judghcount[2] * 45000) / notes;
+	score[1] = MaxCombo * 10000 / notes;
+}
+
 int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo) {
 	int PosCombo = mins(combo + RemainNotes, MaxCombo);
 	return score[0] + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
@@ -1313,6 +1367,24 @@ void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic) {
 	}
 	if (EffStartTime + 2000 > GetNowCount()) {
 		DrawGraph(PIC_X, PIC_Y, pic[Bonus], TRUE);
+	}
+}
+
+void ShowJudge(const int *viewjudge, const int *judgeimg, const int posX, const int posY) {
+	for (int i = 0; i < 4; i++) {
+		if (GetNowCount() - viewjudge[i] < 750) {
+			DrawGraph(posX, posY + pals(250, 0, 0, 25, maxs(GetNowCount() - viewjudge[i], 250)), judgeimg[i], TRUE);
+		}
+	}
+	return;
+}
+
+void ShowScore(int *score, int Hscore) {
+	if (score[0] <= Hscore) {
+		DrawFormatString(490, 20, GetColor(255, 255, 255), L"SCORE:%d", score[0] + score[1] - score[2]);
+	}
+	else {
+		DrawFormatString(490, 20, GetColor(255, 255, 0), L"SCORE:%d", score[0] + score[1] - score[2]);
 	}
 }
 

@@ -5,6 +5,7 @@
 #define SORT_SCORE 2
 
 void ChangeSortMode(int *mode);
+void ShowHelpBar(unsigned int Cr, int bar, int lan);
 void SortSong(int *mapping, const int mode, const int dif, const int lv[SongNumLim][6], const int score[SongNumLim][6], const int SongNumCount);
 void ViewSortMode(const int mode);
 
@@ -43,6 +44,7 @@ int musicserect2(int *p1) {
 	double rate[10];
 	double diskr = 0;
 	double Hacc[SongNumLim][6];
+	//wchar_t変数定義
 	wchar_t PackName[PackNumLim][256];
 	wchar_t difP[SongNumLim][256];
 	wchar_t SongName[SongNumLim][6][256];
@@ -122,6 +124,7 @@ int musicserect2(int *p1) {
 	G[0] = _wfopen_s(&fp, L"save/SongSelect2.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&command, sizeof(int), 2, fp);
+		fread(&SortMode, sizeof(int), 1, fp);
 		fclose(fp);
 	}
 	G[0] = FileRead_open(L"RecordPack.txt");
@@ -246,6 +249,14 @@ int musicserect2(int *p1) {
 		}
 	}
 	//ここまで、曲情報の読み込み
+	//曲のソート
+	G[0] = Mapping[command[0]];
+	SortSong(Mapping, SortMode, command[1], level, Hscore, SongNumCount);
+	for (int i = 0; i < SongNumCount; i++) {
+		if (Mapping[i] == G[0]) {
+			command[0] = i;
+		}
+	}
 	e = _wfopen_s(&fp, L"save/rateN.dat", L"rb");
 	if (e == 0) {
 		fread(&rate, sizeof(rate), 10, fp);
@@ -363,9 +374,7 @@ int musicserect2(int *p1) {
 		//今のソート内容を表示する
 		ViewSortMode(SortMode);
 		//操作説明を表示する
-		DrawGraph(0, 0, help, TRUE);
-		if (lan[4] == 0)DrawString(5, 460, L"上下キー:曲選択　左右キー:難易度選択   Enterキー:決定   BackSpaceキー:戻る", Cr[0]);
-		else if (lan[4] == 1)DrawString(5, 460, L"↑↓key:music select, ←→key:dif select, Enter key:start, BackSpace key:back to menu", Cr[0]);
+		ShowHelpBar(Cr[0], help, lan[4]);
 		//デバッグ(320,410スタート)
 		//DrawFormatString(320, 410, Cr[0], L"%d", SortMode);
 		ScreenFlip();
@@ -381,8 +390,8 @@ int musicserect2(int *p1) {
 				startC = GetNowCount();
 				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
 				if (command[0] < 0) command[0] = SongNumCount - 1;
-				//今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-				if (strands(SongName[Mapping[command[0]]][command[1]], ST3)) {
+				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
+				if (SortMode == SORT_DEFAULT && strands(SongName[Mapping[command[0]]][command[1]], ST3)) {
 					if (strands(SongName[Mapping[command[0]]][0], ST3) != 1) command[1] = 0;
 					for (int i = 1; i <= 3; i++) {
 						if (strands(SongName[Mapping[command[0]]][i], ST3) != 1) {
@@ -402,8 +411,8 @@ int musicserect2(int *p1) {
 				startC = GetNowCount();
 				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
 				if (command[0] >= SongNumCount) command[0] = 0;
-				//今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-				if (strands(SongName[Mapping[command[0]]][command[1]], ST3)) {
+				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
+				if (SortMode == SORT_DEFAULT && strands(SongName[Mapping[command[0]]][command[1]], ST3)) {
 					if (strands(SongName[Mapping[command[0]]][0], ST3) != 1) command[1] = 0;
 					for (int i = 1; i <= 3; i++) {
 						if (strands(SongName[Mapping[command[0]]][i], ST3) != 1) {
@@ -422,6 +431,15 @@ int musicserect2(int *p1) {
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				LR = 1;
 				XstartC = GetNowCount();
+				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
+					G[0] = Mapping[command[0]];
+					SortSong(Mapping, SortMode, command[1], level, Hscore, SongNumCount);
+					for (int i = 0; i < SongNumCount; i++) {
+						if (Mapping[i] == G[0]) {
+							command[0] = i;
+						}
+					}
+				}
 			}
 			key = 1;
 		}
@@ -432,13 +450,28 @@ int musicserect2(int *p1) {
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				LR = -1;
 				XstartC = GetNowCount();
+				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
+					G[0] = Mapping[command[0]];
+					SortSong(Mapping, SortMode, command[1], level, Hscore, SongNumCount);
+					for (int i = 0; i < SongNumCount; i++) {
+						if (Mapping[i] == G[0]) {
+							command[0] = i;
+						}
+					}
+				}
 			}
 			key = 1;
 		}
 		else if (CheckHitKey(KEY_INPUT_Z) == 1) {
 			if (key == 0) {
 				ChangeSortMode(&SortMode);
+				G[0] = Mapping[command[0]];
 				SortSong(Mapping, SortMode, command[1], level, Hscore, SongNumCount);
+				for (int i = 0; i < SongNumCount; i++) {
+					if (Mapping[i] == G[0]) {
+						command[0] = i;
+					}
+				}
 			}
 			key = 1;
 		}
@@ -526,6 +559,7 @@ int musicserect2(int *p1) {
 	G[0] = _wfopen_s(&fp, L"save/SongSelect2.dat", L"wb");
 	fwrite(&Mapping[command[0]], sizeof(int), 1, fp);
 	fwrite(&command[1], sizeof(int), 1, fp);
+	fwrite(&SortMode, sizeof(int), 1, fp);
 	fclose(fp);
 	return next;
 
@@ -565,6 +599,31 @@ void ChangeSortMode(int *mode) {
 	if (*mode >= 3) {
 		*mode = 0;
 	}
+}
+
+void ShowHelpBar(unsigned int Cr, int bar, int lan) {
+	DrawGraph(0, 0, bar, TRUE);
+	switch (int(GetNowCount() / 10000 % 3) * 10 + lan) {
+	case 0:
+		DrawString(5, 460, L"Enterキー: 決定, BackSpaceキー: 戻る", Cr);
+		break;
+	case 1:
+		DrawString(5, 460, L"Enter key: start, BackSpace key: back to menu", Cr);
+		break;
+	case 10:
+		DrawString(5, 460, L"上下キー: 曲選択, 左右キー: 難易度選択", Cr);
+		break;
+	case 11:
+		DrawString(5, 460, L"↑↓key: music select, ←→key: dif select", Cr);
+		break;
+	case 20:
+		DrawString(5, 460, L"Zキー: 楽曲を並び替える, Pキー+Enterキー: オートプレイ", Cr);
+		break;
+	case 21:
+		DrawString(5, 460, L"Z key: Sort Songs, P and Enter key: Auto Play", Cr);
+		break;
+	}
+	return;
 }
 
 void SortSong(int *mapping, const int mode, const int dif, const int lv[SongNumLim][6], const int score[SongNumLim][6], const int SongNumCount) {
@@ -622,6 +681,7 @@ void SortSong(int *mapping, const int mode, const int dif, const int lv[SongNumL
 		}
 		break;
 	}
+	return;
 }
 
 void ViewSortMode(const int mode) {
