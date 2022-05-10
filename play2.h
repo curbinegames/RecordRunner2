@@ -3,7 +3,7 @@ int GetRemainNotes(int *judghcount, int Notes);
 void GetScore(int *score, const int *judghcount, const int notes, const int MaxCombo);
 int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo);
 void ShowCombo(int combo, int *pic);
-void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic);
+void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic, int filter, int biglight, int *smalllight, int flash, int ring);
 void ShowJudge(const int *viewjudge, const int *judgeimg, const int posX, const int posY);
 void ShowScore(int *score, int Hscore);
 void RunningStats(int *judghcount, int Score, int HighScore);
@@ -178,28 +178,24 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	strcats(DataFN, ST3);
 	//ハイスコア取得
 	HighSrore = GetHighScore(DataFN, o);
-	//グラフィックと効果音の準備
-	/*グラフィック用変数
-	judghimg = 判定マーク
-	hitimg = hit
-	hitcimg = hitの周りの色
-	catchimg = catch
-	upimg = up
-	downimg = down
-	leftimg = left
-	rightimg = right
-	bombimg = bomb
-	goustimg = goust
-	backskyimg
-	backgroundimg
-	dangerimg
-	charaimg
-	musicmp3 = 音楽*/
+	//ボーナス演出素材
+	int Bonusimg[3] = { LoadGraph(L"picture/PERFECT.png"),
+		LoadGraph(L"picture/FULLCOMBO.png"),
+		LoadGraph(L"picture/NOMISS.png") };
 	int BonusSnd[3] = {
 		LoadSoundMem(L"sound/a-perfect.mp3"),
 		LoadSoundMem(L"sound/a-fullcombo.mp3"),
 		LoadSoundMem(L"sound/a-nomiss.mp3")
 	};
+	int BigLightimg = LoadGraph(L"picture/Bonus-Biglight.png");
+	int SmallLightimg[3] = {
+		LoadGraph(L"picture/Bonus-Smalllight3.png"),
+		LoadGraph(L"picture/Bonus-Smalllight2.png"),
+		LoadGraph(L"picture/Bonus-Smalllight1.png")
+	};
+	int flashimg = LoadGraph(L"picture/White.png");
+	int B_ringimg = LoadGraph(L"picture/Bonus-Ring.png");
+	//その他グラフィックと効果音
 	int judgeimg[4] = {
 		LoadGraph(L"picture/judge-just.png"),
 		LoadGraph(L"picture/judge-good.png"),
@@ -247,9 +243,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	};
 	int effimg[7][5];
 	int KeyViewimg[2];
-	int Bonusimg[3] = { LoadGraph(L"picture/PERFECT.png"),
-		LoadGraph(L"picture/FULLCOMBO.png"),
-		LoadGraph(L"picture/NOMISS.png") };
 	int Rchaimg;
 	int ComboFontimg[10];
 	//ノーツの画像
@@ -1269,8 +1262,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			AllNotesHitTime = GetNowCount();
 		}
 		//オートでなく、ノーミス以上を出したら演出
-		if (AutoFlag == 0) {
-			ShowBonusEff(judghcount, AllNotesHitTime, BonusSnd, Bonusimg);
+		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
+			ShowBonusEff(judghcount, AllNotesHitTime, BonusSnd, Bonusimg, filterimg, BigLightimg, SmallLightimg, flashimg, B_ringimg);
 		}
 		//終了時間から5秒以上たって、曲が終了したら抜ける。
 		if (Etime + 5000 <= Ntime && (musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
@@ -1343,12 +1336,15 @@ void ShowCombo(int combo, int *pic) {
 	}
 }
 
-void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic) {
+void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic, int filter, int biglight, int *smalllight, int flash, int ring) {
 #define NO_MISS 2
 #define FULL_COMBO 1
 #define PERFECT 0
-#define PIC_X 150
-#define PIC_Y 200
+#define BIG 8
+#define SIZE_X 319
+#define SIZE_Y 54
+#define PIC_X 320
+#define PIC_Y 240
 	int Bonus = -1;
 	if (judghcount[3] > 0) {
 		return;
@@ -1362,11 +1358,77 @@ void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic) {
 	else {
 		Bonus = PERFECT;
 	}
-	if (EffStartTime + 1 >= GetNowCount()) {
+	if (EffStartTime >= GetNowCount()) {
 		PlaySoundMem(Snd[Bonus], DX_PLAYTYPE_BACK);
 	}
-	if (EffStartTime + 2000 > GetNowCount()) {
-		DrawGraph(PIC_X, PIC_Y, pic[Bonus], TRUE);
+	//BlackCover
+	if (GetNowCount() < EffStartTime + 1800) {
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 127);
+		DrawGraph(0, 0, filter, TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+	if (EffStartTime + 1800 <= GetNowCount() && GetNowCount() < EffStartTime + 2000) {
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(1800, 127, 2000, 0, GetNowCount() - EffStartTime));
+		DrawGraph(0, 0, filter, TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+	//SmallLight
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 3; j++) {
+			for (int k = 0; k < 4 - Bonus; k++) {
+				int posX = j * 180 + EffStartTime % (57137 + 29 * i + 67 * j + 127 * k) % 180;
+				int posY = i * 190 + EffStartTime % (62843 + 37 * i + 67 * j + 157 * k) % 190;
+				SetDrawBlendMode(DX_BLENDMODE_ALPHA, mins(pals(posY, 255, posY + 240, 0, lins(100, 720, 1000, -240, GetNowCount() - EffStartTime)), 0));
+				DrawGraph(posX, posY, smalllight[Bonus], TRUE);
+				SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+			}
+		}
+	}
+	//BigLight
+	if (100 <= GetNowCount() - EffStartTime && GetNowCount() - EffStartTime <= 1000) {
+		for (int i = 0; i < 3 - Bonus; i++) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(500, 255, 1000, 0, mins(GetNowCount() - EffStartTime, 500)));
+			DrawRotaGraph(PIC_X, PIC_Y, 1, double(GetNowCount() - EffStartTime) / 200.0 + 3.14 * (180.0 / (3 - Bonus)) * i / 180.0, biglight, TRUE, FALSE);
+			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+		}
+	}
+	//ring
+	if (100 <= GetNowCount() - EffStartTime && GetNowCount() - EffStartTime <= 1000) {
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, maxs(lins(700, 255, 1000, 0, GetNowCount() - EffStartTime), 255));
+		DrawExtendGraph(lins(100, PIC_X - 160, 1000, PIC_X - 240, GetNowCount() - EffStartTime),
+			lins(100, PIC_Y - 160, 1000, PIC_Y - 240, GetNowCount() - EffStartTime),
+			lins(100, PIC_X + 160, 1000, PIC_X + 240, GetNowCount() - EffStartTime),
+			lins(100, PIC_Y + 160, 1000, PIC_Y + 240, GetNowCount() - EffStartTime),
+			ring, TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+	//flash
+	if (100 <= GetNowCount() - EffStartTime && GetNowCount() - EffStartTime <= 300) {
+		for (int i = 0; i < 3 - Bonus; i++) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 191, 300, 0, GetNowCount() - EffStartTime));
+			DrawGraph(0, 0, flash, TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+		}
+	}
+	//BonusText
+	if (GetNowCount() < EffStartTime + 100) {
+		DrawExtendGraph(lins(0, PIC_X - SIZE_X * BIG / 2, 100, PIC_X - SIZE_X / 2, GetNowCount() - EffStartTime),
+			lins(0, PIC_Y - SIZE_Y * BIG / 2, 100, PIC_Y - SIZE_Y / 2, GetNowCount() - EffStartTime),
+			lins(0, PIC_X + SIZE_X * BIG / 2, 100, PIC_X + SIZE_X / 2, GetNowCount() - EffStartTime),
+			lins(0, PIC_Y + SIZE_Y * BIG / 2, 100, PIC_Y + SIZE_Y / 2, GetNowCount() - EffStartTime),
+			pic[Bonus], TRUE);
+	}
+	else if (EffStartTime + 100 <= GetNowCount() && GetNowCount() < EffStartTime + 1800) {
+		DrawGraph(PIC_X - SIZE_X / 2, PIC_Y - SIZE_Y / 2, pic[Bonus], TRUE);
+	}
+	else if (EffStartTime + 1800 <= GetNowCount() && GetNowCount() < EffStartTime + 2000) {
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(1800, 255, 2000, 0, GetNowCount() - EffStartTime));
+		DrawExtendGraph(lins(2000, PIC_X - SIZE_X, 1800, PIC_X - SIZE_X / 2, GetNowCount() - EffStartTime),
+			lins(2000, PIC_Y - SIZE_Y, 1800, PIC_Y - SIZE_Y / 2, GetNowCount() - EffStartTime),
+			lins(2000, PIC_X + SIZE_X, 1800, PIC_X + SIZE_X / 2, GetNowCount() - EffStartTime),
+			lins(2000, PIC_Y + SIZE_Y, 1800, PIC_Y + SIZE_Y / 2, GetNowCount() - EffStartTime),
+			pic[Bonus], TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 }
 
