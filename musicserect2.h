@@ -5,11 +5,16 @@
 #define SORT_SCORE 2
 
 void ChangeSortMode(int *mode);
+void DrawBackPicture(int img);
+void DrawRate(double rate, int bar);
+double GetRate();
+int GetRateBarPic(const double rate);
 void ShowHelpBar(unsigned int Cr, int bar, int lan);
 void SortSong(int *mapping, const int mode, const int dif, const int lv[SongNumLim][6], const int score[SongNumLim][6], const int SongNumCount);
 void ViewSortMode(const int mode);
 
 int musicserect2(int *p1) {
+	FILE *fp;
 	unsigned int Cr[7];
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
 	Cr[3] = GetColor(0, 0, 0);
@@ -41,7 +46,7 @@ int musicserect2(int *p1) {
 	int ClearRate[SongNumLim][6];//0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
 	int Mapping[SongNumLim];
 	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[4:言語]だけ
-	double rate[10];
+	double rate = GetRate();
 	double diskr = 0;
 	double Hacc[SongNumLim][6];
 	//wchar_t変数定義
@@ -113,9 +118,9 @@ int musicserect2(int *p1) {
 	difbar[2] = LoadGraph(L"picture/difnormal.png");
 	difbar[3] = LoadGraph(L"picture/difhard.png");
 	difbar[4] = difbar[5] = LoadGraph(L"picture/difanother.png");
+	int ratebarimg = GetRateBarPic(rate);
 	int previewM = LoadSoundMem(L"null.mp3");
 	int select = LoadSoundMem(L"sound/arrow.ogg");
-	FILE *fp;
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&lan, sizeof(int), 6, fp);
@@ -257,16 +262,11 @@ int musicserect2(int *p1) {
 			command[0] = i;
 		}
 	}
-	e = _wfopen_s(&fp, L"save/rateN.dat", L"rb");
-	if (e == 0) {
-		fread(&rate, sizeof(rate), 10, fp);
-		fclose(fp);
-	}
-	for (int i = 0; i < 10; i++) { rate[i] = mins(rate[i], 0); }
 	G[0] += 0;
 	while (1) {
 		ClearDrawScreen();
-		DrawGraph(0, 0, back, TRUE);
+		//背景の表示
+		DrawBackPicture(back);
 		//曲一覧を作成する
 		moveC = mins(-1 * (GetNowCount() - startC) + 250, 0);
 		XmoveC = mins(-1 * (GetNowCount() - XstartC) + 250, 0);
@@ -364,13 +364,12 @@ int musicserect2(int *p1) {
 			WaitTimer(30);
 			SongPreSTime = GetNowCount();
 		}
+		//レートを表示する
+		DrawRate(rate, ratebarimg);
 		//ディスクを表示する(レート表示場所)
-		DrawRotaGraph(640, 25, 1, diskr, disk, TRUE);
+		DrawRotaGraph(610, 25, 1, diskr, disk, TRUE);
 		diskr += 0.02;
 		if (diskr > 6.28) diskr -= 6.28;
-		DrawFormatString(550, 100, Cr[0], L"RATE:%5.2f",
-			rate[0] + rate[1] + rate[2] + rate[3] + rate[4] +
-			rate[5] + rate[6] + rate[7] + rate[8] + rate[9]);
 		//今のソート内容を表示する
 		ViewSortMode(SortMode);
 		//操作説明を表示する
@@ -601,6 +600,54 @@ void ChangeSortMode(int *mode) {
 	}
 }
 
+void DrawBackPicture(int img) {
+	const int posx = (-GetNowCount() / 10) % 640;
+	DrawGraph(posx, 0, img, TRUE);
+	DrawGraph(posx + 640, 0, img, TRUE);
+	return;
+}
+
+void DrawRate(double rate, int bar) {
+	DrawGraph(320, 0, bar, TRUE);
+	DrawFormatString(360, 20, GetColor(0, 0, 0), L"RATE:%.2f", rate);
+	return;
+}
+
+double GetRate() {
+	double ans[10] = { 0,0,0,0,0,0,0,0,0,0 };
+	int e;
+	FILE *fp;
+	e = _wfopen_s(&fp, L"save/rateN.dat", L"rb");
+	if (e == 0) {
+		fread(&ans, sizeof(double), 10, fp);
+		fclose(fp);
+	}
+	for (int i = 0; i < 10; i++) {
+		ans[i] = mins(ans[i], 0);
+	}
+	return ans[0] + ans[1] + ans[2] + ans[3] + ans[4] + ans[5] + ans[6] + ans[7] + ans[8] + ans[9];
+}
+
+int GetRateBarPic(const double rate) {
+	int pic = NULL;
+	if (rate < 25) {
+		pic = LoadGraph(L"picture/MSrate1.png");
+	}
+	else if (25 <= rate && rate < 55) {
+		pic = LoadGraph(L"picture/MSrate2.png");
+	}
+	else if (55 <= rate && rate < 90) {
+		pic = LoadGraph(L"picture/MSrate3.png");
+	}
+	else if (90 <= rate && rate < 120) {
+		pic = LoadGraph(L"picture/MSrate4.png");
+	}
+	else {
+		pic = LoadGraph(L"picture/MSrate5.png");
+	}
+	return pic;
+}
+
 void ShowHelpBar(unsigned int Cr, int bar, int lan) {
 	DrawGraph(0, 0, bar, TRUE);
 	switch (int(GetNowCount() / 10000 % 3) * 10 + lan) {
@@ -685,8 +732,8 @@ void SortSong(int *mapping, const int mode, const int dif, const int lv[SongNumL
 }
 
 void ViewSortMode(const int mode) {
-#define POS_X 260
-#define POS_Y 20
+#define POS_X 550
+#define POS_Y 110
 	switch (mode) {
 	case SORT_DEFAULT:
 		DrawString(POS_X, POS_Y, L"デフォルト", GetColor(255, 255, 255));
