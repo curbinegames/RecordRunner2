@@ -1,3 +1,20 @@
+int mins(int a, int b);
+int maxs(int a, int b);
+double mins_D(double a, double b);
+double maxs_D(double a, double b);
+int betweens(int a, int b, int c);
+double betweens_D(double a, double b, double c);
+int notzero(int a);
+int lins(double x1, double y1, double x2, double y2, double x);
+int pals(double x1, double y1, double x2, double y2, double x);
+double sanrute(double c);
+int abss(int a, int b);
+int NumLoop(int a, int b);
+double sinC(int a);
+double cosC(int a);
+void DrawFixPic(int x1, int y1, int x2, int y2, int pic);
+void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle);
+
 //aÇbÇ‹Ç≈à¯Ç´è„Ç∞ÇΩÇ‡ÇÃÇï‘Ç∑
 int mins(int a, int b) {
 	if (a < b)a = b;
@@ -118,4 +135,56 @@ double sinC(int a) {
 double cosC(int a) {
 	a += 90;
 	return sinC(a);
+}
+
+void DrawFixPic(int x1, int y1, int x2, int y2, int pic) {
+	int SizeX = 640;
+	int SizeY = 480;
+	int CSizeX = mins(x2 - x1, 2);
+	int CSizeXHalf = CSizeX / 2;
+	int CSizeY = mins(y2 - y1, 2);
+	int CSizeYHalf = CSizeY / 2;
+	double ratio = double(x2 - x1) / double(y2 - y1);
+	if (ratio < 0.01) {
+		ratio = 0.01;
+	}
+	GetGraphSize(pic, &SizeX, &SizeY);
+	if (SizeX / ratio >= SizeY) {
+		DrawExtendGraph(
+			x1,
+			CSizeYHalf - CSizeYHalf * SizeY * ratio / SizeX + y1,
+			CSizeX + x1,
+			CSizeYHalf + CSizeYHalf * SizeY * ratio / SizeX + y1, pic, TRUE
+		);
+	}
+	else {
+		DrawExtendGraph(
+			CSizeXHalf - CSizeXHalf * SizeX / ratio / SizeY + x1,
+			y1,
+			CSizeXHalf + CSizeXHalf * SizeX / ratio / SizeY + x1,
+			CSizeY + y1, pic, TRUE
+		);
+	}
+	return;
+}
+
+void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle) {
+	int PSizeX = 1;
+	int PSizeY = 1;
+	GetGraphSize(handle, &PSizeX, &PSizeY);
+	PSizeX /= 2;
+	PSizeY /= 2;
+	int pos[8] = {
+		-PSizeX * sizeX, -PSizeY * sizeY,
+		PSizeX * sizeX, -PSizeY * sizeY,
+		PSizeX * sizeX, PSizeY * sizeY,
+		-PSizeX * sizeX, PSizeY * sizeY };
+	int G = 0;
+	for (int i = 0; i < 8; i += 2) {
+		G = pos[i];
+		pos[i] = pos[i] * cosC(rot) - pos[i + 1] * sinC(rot) + x;
+		pos[i + 1] = G * sinC(rot) + pos[i + 1] * cosC(rot) + y;
+	}
+	DrawModiGraph(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7], handle, TRUE);
+	return;
 }

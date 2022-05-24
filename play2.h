@@ -1,3 +1,9 @@
+#define CHARA_POS_UP 0
+#define CHARA_POS_MID 1
+#define CHARA_POS_DOWN 2
+
+int GetCharaPos(int time, int charahit, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd,
+	int jn1, int jn2, int jn3, int keyu, int keyd);
 int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes(int *judghcount, int Notes);
 void GetScore(int *score, const int *judghcount, const int notes, const int MaxCombo);
@@ -424,45 +430,38 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					G[0]++;
 					continue;
 				}
-				GetGraphSize(item[Movie[0][MovieN + G[0]]], &G[1], &G[2]);
-				G[1] /= 2;
-				G[2] /= 2;
 				switch (Movie[1][MovieN + G[0]]) {
 				case 1:
-					G[3] = lins(Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime);
-					G[4] = lins(Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime);
-					G[5] = lins(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]], Ntime);
-					G[6] = lins(Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime);
-					G[7] = lins(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
+					SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime));
+					DrawDeformationPic(
+						lins(Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime),
+						lins(Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime),
+						lins(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime),
+						lins(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime),
+						lins(Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime),
+						item[Movie[0][MovieN + G[0]]]);
 					break;
 				case 2:
-					G[3] = pals(Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime);
-					G[4] = pals(Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime);
-					G[5] = pals(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]], Ntime);
-					G[6] = pals(Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime);
-					G[7] = pals(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
+					SetDrawBlendMode(DX_BLENDMODE_ALPHA, pals(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime));
+					DrawDeformationPic(
+						pals(Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime),
+						pals(Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime),
+						pals(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime),
+						pals(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime),
+						pals(Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime),
+						item[Movie[0][MovieN + G[0]]]);
 					break;
 				case 3:
-					G[3] = pals(Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Ntime);
-					G[4] = pals(Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Ntime);
-					G[5] = pals(Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]], Ntime);
-					G[6] = pals(Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Ntime);
-					G[7] = pals(Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Ntime);
+					SetDrawBlendMode(DX_BLENDMODE_ALPHA, pals(Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Ntime));
+					DrawDeformationPic(
+						pals(Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Ntime),
+						pals(Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Ntime),
+						pals(Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Ntime),
+						pals(Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Ntime),
+						pals(Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Ntime),
+						item[Movie[0][MovieN + G[0]]]);
 					break;
 				}
-				G[7] = betweens(0, G[7], 255);
-				G[8] = -G[1]; G[9] = -G[2];
-				G[10] = G[1]; G[11] = -G[2];
-				G[12] = G[1]; G[13] = G[2];
-				G[14] = -G[1]; G[15] = G[2];
-				for (i[0] = 8; i[0] < 16; i[0]++) { G[i[0]] = G[i[0]] * G[5] / 100; }
-				for (i[0] = 8; i[0] < 16; i[0] += 2) {
-					G[16] = G[i[0]];
-					G[i[0]] = G[i[0]] * cosC(G[6]) - G[i[0] + 1] * sinC(G[6]) + G[3];
-					G[i[0] + 1] = G[16] * sinC(G[6]) + G[i[0] + 1] * cosC(G[6]) + G[4];
-				}
-				SetDrawBlendMode(DX_BLENDMODE_ALPHA, G[7]);
-				DrawModiGraph(G[8], G[9], G[10], G[11], G[12], G[13], G[14], G[15], item[Movie[0][MovieN + G[0]]], TRUE);
 				SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 				G[0]++;
 			}
@@ -510,42 +509,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			chamoN[i[0]]++;
 		}
 		G[3] = 0;
-		//キャラ位置決め
-		for (i[0] = 0; i[0] <= 2; i[0]++) if (object[i[0]][0][objectN[i[0]]] <= Ntime + 16 && object[i[0]][1][objectN[i[0]]] == 2) G[3] = 1;
-		for (i[0] = 0; i[0] <= 2; i[0]++) {
+		//ghost back
+		for (i[0] = 0; i[0] < 3; i[0]++) {
 			G[i[0]] = objectN[i[0]] - 1;
 			while (object[i[0]][1][G[i[0]]] == 8 && G[i[0]] >= 1) G[i[0]]--;
 		}
-		//上ラインのヒットマーカーをたたいているとき
-		if (charahit > 0 && G[3] == 0 && object[0][0][G[0]] > object[1][0][G[1]] && object[0][0][G[0]] > object[2][0][G[2]] && object[0][0][G[0]] + 750 > Ntime && object[0][1][G[0]] == 1 && judghname[0][0] >= 1 && judghname[0][0] <= 3) {
-			G[4] = Yline[0];
-			charaput = 0;
-		}
-		//中ラインのヒットマーカーをたたいているとき
-		else if (charahit > 0 && G[3] == 0 && object[1][0][G[1]] > object[0][0][G[0]] && object[1][0][G[1]] > object[2][0][G[2]] && object[1][0][G[1]] + 750 > Ntime && object[1][1][G[1]] == 1 && judghname[1][0] >= 1 && judghname[1][0] <= 3) {
-			G[4] = Yline[1];
-			charaput = 1;
-		}
-		//下ラインのヒットマーカーをたたいているとき
-		else if (charahit > 0 && G[3] == 0 && object[2][0][G[2]] > object[0][0][G[0]] && object[2][0][G[2]] > object[1][0][G[1]] && object[2][0][G[2]] + 750 > Ntime && object[2][1][G[2]] == 1 && judghname[2][0] >= 1 && judghname[2][0] <= 3) {
-			G[4] = Yline[2];
-			charaput = 2;
-		}
-		//上が押されて、直前のヒットマーカーをたたいていないとき
-		else if (holdu >= 1 && holdd == 0) {
-			G[4] = Yline[0];
-			charaput = 0;
-		}
-		//下が押されて、直前のヒットマーカーをたたいていないとき
-		else if (holdu == 0 && holdd >= 1) {
-			G[4] = Yline[2];
-			charaput = 2;
-		}
-		//何も押されていないか、上下同時に押されていて、直前のヒットマーカーをたたいていないとき
-		else {
-			G[4] = Yline[1];
-			charaput = 1;
-		}
+		//get chara position
+		charaput = GetCharaPos(Ntime, charahit, object[0][0][G[0]], object[1][0][G[1]],
+			object[2][0][G[2]], object[0][1][G[0]], object[1][1][G[1]], object[2][1][G[2]],
+			judghname[0][0], judghname[1][0], judghname[2][0], holdu, holdd);
+		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
 		if (GetNowCount() - charahit > 250) G[5] = 0;
 		else G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit);
@@ -1283,6 +1256,56 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	InitGraph();
 	if (AutoFlag == 1) { return 2; }
 	else { return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score2, Mcombo, notes, gapa, Dscore[3]); }
+}
+
+int GetCharaPos(int time, int charahit, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd,
+	int jn1, int jn2, int jn3, int keyu, int keyd) {
+	int cavoid = 0;
+	int object[3][2];
+	object[0][0] = obtu;
+	object[1][0] = obtm;
+	object[2][0] = obtd;
+	object[0][1] = obnu;
+	object[1][1] = obnm;
+	object[2][1] = obnd;
+	int ans = CHARA_POS_MID;
+	//キャッチノーツ避け
+	for (int i = 0; i < 3; i++) {
+		if (object[i][0] <= time + 16 && object[i][1] == 2) {
+			cavoid = 1;
+		}
+	}
+	//上ラインのヒットマーカーをたたいているとき
+	if (charahit > 0 && cavoid == 0 && object[0][0] > object[1][0] &&
+		object[0][0] > object[2][0] && object[0][0] + 750 > time && object[0][1] == 1 &&
+		jn1 >= 1 && jn1 <= 3) {
+		ans = CHARA_POS_UP;
+	}
+	//中ラインのヒットマーカーをたたいているとき
+	else if (charahit > 0 && cavoid == 0 && object[1][0] > object[0][0] &&
+		object[1][0] > object[2][0] && object[1][0] + 750 > time && object[1][1] == 1 &&
+		jn2 >= 1 && jn2 <= 3) {
+		ans = CHARA_POS_MID;
+	}
+	//下ラインのヒットマーカーをたたいているとき
+	else if (charahit > 0 && cavoid == 0 && object[2][0] > object[0][0] &&
+		object[2][0] > object[1][0] && object[2][0] + 750 > time && object[2][1] == 1 &&
+		jn3 >= 1 && jn3 <= 3) {
+		ans = CHARA_POS_DOWN;
+	}
+	//上が押されて、直前のヒットマーカーをたたいていないとき
+	else if (keyu >= 1 && keyd == 0) {
+		ans = CHARA_POS_UP;
+	}
+	//下が押されて、直前のヒットマーカーをたたいていないとき
+	else if (keyu == 0 && keyd >= 1) {
+		ans = CHARA_POS_DOWN;
+	}
+	//何も押されていないか、上下同時に押されていて、直前のヒットマーカーをたたいていないとき
+	else {
+		ans = CHARA_POS_MID;
+	}
+	return ans;
 }
 
 int GetHighScore(wchar_t pas[255], int dif) {
