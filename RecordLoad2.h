@@ -693,6 +693,7 @@ void RecordLoad2(int p, int n, int o) {
 			}
 		}
 	}
+	FileRead_close(songdata);
 	//譜面の最後にgoustを置く
 	for (i[0] = 0; i[0] <= 2; i[0]++) {
 		object[i[0]][0][objectN[i[0]]] = timer[i[0]];
@@ -875,9 +876,9 @@ void RecordLoad2(int p, int n, int o) {
 	for (i[0] = 0; i[0] < difkey[5][3]; i[0]++) if (difkey[i[0]][1] > Etime - difkey[7][3])ddif[ddifG[0] - 1] += difkey[i[0]][2];
 	for (i[0] = ddifG[0] - 1; i[0] <= 24; i[0]++)ddif[i[0]] = ddif[ddifG[0] - 1];
 	difkey[6][3] = ddif[ddifG[0] - 1] / 50;
-	//モーニンググローリーLv.1->884, Trick MonitorLv.9->28632, "測定"/31.8+47.1="Lv"*100
-	difkey[4][3] = difkey[4][3] / 31.8 + 47.1;
-	difkey[6][3] = difkey[6][3] / 31.8 + 47.1;
+	//NEEDYOULv.1->379, Co-op TaylorLv.9.9->40595, "測定"/31.8+47.1="Lv"*100
+	difkey[4][3] = lins(379, 100, 40595, 990, difkey[4][3]);
+	difkey[6][3] = lins(379, 100, 40595, 990, difkey[6][3]);
 	//ここからPC用譜面データのファイルの作成(セーブ作業)
 	strcopy(dataE, RRS, 1);
 	strcats(RRS, GT26[o]);

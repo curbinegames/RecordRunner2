@@ -19,7 +19,7 @@ int musicserect2(int *p1) {
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
 	Cr[3] = GetColor(0, 0, 0);
 	int e;
-	int G[5];
+	int G[6];
 	int command[2] = { 0,1 };
 	int SongNumCount = 0;
 	int moveC = 250;
@@ -160,7 +160,7 @@ int musicserect2(int *p1) {
 				stradds(GT2, L'/'); //"record/<パック名>/<曲名>/"
 				strcopy(GT2, GT3, 1); //GT3にコピー
 				strcats(GT2, ST4[j]); //"record/<パック名>/<曲名>/<難易度番号>.txt"
-				G[3] = FileRead_open(GT2);
+				//初期値定義(ファイルがなくても代入する)
 				strcopy(ST3, SongName[G[2]][j], 1);
 				strcopy(ST3, artist[G[2]][j], 1);
 				strcopy(ST3, SongFileName[G[2]][j], 1);
@@ -168,6 +168,10 @@ int musicserect2(int *p1) {
 				level[G[2]][j] = -1;
 				preview[G[2]][j][0] = 441000;
 				preview[G[2]][j][1] = 2646000;
+				G[3] = FileRead_open(GT2);
+				if (G[3] == 0) {
+					continue;
+				}
 				while (FileRead_eof(G[3]) == 0) {
 					FileRead_gets(GT2, 256, G[3]);
 					//曲名を読み込む

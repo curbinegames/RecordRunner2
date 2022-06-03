@@ -1,7 +1,20 @@
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
 #define CHARA_POS_DOWN 2
+#define NOTE_HIT 1
+#define NOTE_CATCH 2
+#define NOTE_UP 3
+#define NOTE_DOWN 4
+#define NOTE_LEFT 5
+#define NOTE_RIGHT 6
+#define NOTE_BOMB 7
+#define NOTE_GHOST 8
+#define SE_HIT 1
+#define SE_CATCH 2
+#define SE_ARROW 4
+#define SE_BOMB 8
 
+int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
 int GetCharaPos(int time, int charahit, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd,
 	int jn1, int jn2, int jn3, int keyu, int keyd);
 int GetHighScore(wchar_t pas[255], int dif);
@@ -97,6 +110,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	double DifRate; //譜面定数
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
 	char key[256];
+	char seflag = 0;//reserved, reserved, reserved, reserved, bomb, arrow, catch, hit
 	wchar_t songN[255];
 	wchar_t songNE[255];
 	wchar_t fileN[255];
@@ -788,24 +802,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (holda == 1) { G[0]++; }
 		if (holdb == 1) { G[0]++; }
 		if (holdc == 1) { G[0]++; }
-		while (G[0] > 0) {
-			G[1] = -1;//一番近いヒットノーツ[-1:ヒットノーツがない、0:上レーン、1:中レーン、2:下レーン]
-			G[2] = 200;//押したタイミングとノーツのタイミングのずれ
-			for (i[0] = 0; i[0] < 3; i[0]++) {
-				G[2] = object[i[0]][0][objectN[i[0]]] - Ntime;
-				if (object[i[0]][1][objectN[i[0]]] == 1 && G[2] <= 125 && G[2] >= -100) {
-					G[1] = i[0];
-					break;
-				}
-			}
+		while (0 < G[0]) {
+			G[1] = CheckNearHitNote(object[0][1][objectN[0]], object[1][1][objectN[1]],
+				object[2][1][objectN[2]], object[0][0][objectN[0]] - Ntime,
+				object[1][0][objectN[1]] - Ntime, object[2][0][objectN[2]] - Ntime);
 			if (G[1] == -1) { break; }
-			for (i[0] = G[1] + 1; i[0] < 3; i[0]++) {
-				G[2] = object[i[0]][0][objectN[i[0]]] - Ntime;
-				if (object[i[0]][1][objectN[i[0]]] == 1 && G[2] <= 125 && G[2] >= -100 &&
-				object[i[0]][0][objectN[i[0]]] <= object[G[1]][0][objectN[G[1]]]) {
-				G[1] = i[0];
-				}
-			}
 			G[2] = object[G[1]][0][objectN[G[1]]] - Ntime;
 			judghname[G[1]][1] = GetNowCount();
 			judghname[G[1]][2] = 1;
@@ -822,7 +823,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghcount[0]++;
 				life += 2;
 				Dscore[0] += 2;
-				PlaySoundMem(attack, DX_PLAYTYPE_BACK);
+				seflag |= SE_HIT;
 			}
 			//good
 			else if (G[2] <= 70 && G[2] >= -70) {
@@ -832,7 +833,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghcount[1]++;
 				life++;
 				Dscore[0]++;
-				PlaySoundMem(attack, DX_PLAYTYPE_BACK);
+				seflag |= SE_HIT;
 			}
 			//safe
 			else if (G[2] <= 100 && G[2] >= -100) {
@@ -840,7 +841,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghname[G[1]][0] = 3;
 				judghcount[2]++;
 				life++;
-				PlaySoundMem(attack, DX_PLAYTYPE_BACK);
+				seflag |= SE_HIT;
 			}
 			//fastmiss
 			else if (G[2] <= 125) {
@@ -866,7 +867,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghcount[0]++;
 				life += 2;
 				Dscore[0] += 2;
-				PlaySoundMem(catchs, DX_PLAYTYPE_BACK);
+				seflag |= SE_CATCH;
 			}
 			//アローノーツ各種
 			else if ((holdu == 1) && object[i[0]][1][objectN[i[0]]] == 3 && judgh <= 125 && judgh >= -100) {
@@ -885,8 +886,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[0]++;
 					life += 2;
 					Dscore[0] += 2;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
@@ -896,8 +896,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[1]++;
 					life++;
 					Dscore[0]++;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
@@ -905,8 +904,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghname[i[0]][0] = 3;
 					judghcount[2]++;
 					life++;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//fastmiss
 				else if (judgh <= 125) {
@@ -933,8 +931,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[0]++;
 					life += 2;
 					Dscore[0] += 2;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
@@ -944,8 +941,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[1]++;
 					life++;
 					Dscore[0]++;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
@@ -953,8 +949,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghname[i[0]][0] = 3;
 					judghcount[2]++;
 					life++;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//fastmiss
 				else if (judgh <= 125) {
@@ -981,8 +976,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[0]++;
 					life += 2;
 					Dscore[0] += 2;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
@@ -992,8 +986,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[1]++;
 					life++;
 					Dscore[0]++;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
@@ -1001,8 +994,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghname[i[0]][0] = 3;
 					judghcount[2]++;
 					life++;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//fastmiss
 				else if (judgh <= 125) {
@@ -1029,8 +1021,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[0]++;
 					life += 2;
 					Dscore[0] += 2;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
@@ -1040,8 +1031,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[1]++;
 					life++;
 					Dscore[0]++;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
@@ -1049,8 +1039,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghname[i[0]][0] = 3;
 					judghcount[2]++;
 					life++;
-					if (CheckSoundMem(arrow))StopSoundMem(arrow);
-					PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+					seflag |= SE_ARROW;
 				}
 				//fastmiss
 				else if (judgh <= 125) {
@@ -1071,7 +1060,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				combo = 0;
 				judghcount[3]++;
 				life -= 20;
-				PlaySoundMem(bomb, DX_PLAYTYPE_BACK);
+				seflag |= SE_BOMB;
 			}
 			else if (object[i[0]][1][objectN[i[0]]] == 7 && judgh < -40) {
 				judghname[i[0]][0] = 1;
@@ -1099,6 +1088,19 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
 			}
 		}
+		if ((seflag & SE_HIT) != 0) {
+			PlaySoundMem(attack, DX_PLAYTYPE_BACK);
+		}
+		if ((seflag & SE_CATCH) != 0) {
+			PlaySoundMem(catchs, DX_PLAYTYPE_BACK);
+		}
+		if ((seflag & SE_ARROW) != 0) {
+			PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+		}
+		if ((seflag & SE_BOMB) != 0) {
+			PlaySoundMem(bomb, DX_PLAYTYPE_BACK);
+		}
+		seflag = 0;
 		if (gapa[2] > 2140000000) {
 			gapa[0] /= 2;
 			gapa[1] /= 2;
@@ -1256,6 +1258,24 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	InitGraph();
 	if (AutoFlag == 1) { return 2; }
 	else { return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score2, Mcombo, notes, gapa, Dscore[3]); }
+}
+
+int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {
+	int ans = -1;
+	int mintime = 200;
+	if (un == NOTE_HIT && ut < mintime) {
+		ans = 0;
+		mintime = ut;
+	}
+	if (mn == NOTE_HIT && mt < mintime) {
+		ans = 1;
+		mintime = mt;
+	}
+	if (dn == NOTE_HIT && dt < mintime) {
+		ans = 2;
+		mintime = dt;
+	}
+	return ans;
 }
 
 int GetCharaPos(int time, int charahit, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd,
