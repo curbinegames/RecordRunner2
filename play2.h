@@ -1,3 +1,6 @@
+#include "RecordLoad2.h"
+#include "result.h"
+
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
 #define CHARA_POS_DOWN 2
@@ -15,17 +18,29 @@
 #define SE_BOMB 8
 
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
-int GetCharaPos(int time, int charahit, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd,
-	int jn1, int jn2, int jn3, int keyu, int keyd);
+int GetCharaPos(int time, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd, int keyu,
+	int keyd, int hitatp, int hitatt);
 int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes(int *judghcount, int Notes);
 void GetScore(int *score, const int *judghcount, const int notes, const int MaxCombo);
+struct score_box GetScore2(struct score_box score, const int *judghcount, const int notes, const int MaxCombo);
 int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo);
+int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo);
 void ShowCombo(int combo, int *pic);
 void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic, int filter, int biglight, int *smalllight, int flash, int ring);
 void ShowJudge(const int *viewjudge, const int *judgeimg, const int posX, const int posY);
 void ShowScore(int *score, int Hscore);
+void ShowScore2(struct score_box score, int Hscore, int time);
 void RunningStats(int *judghcount, int Score, int HighScore);
+
+struct score_box {
+	int normal = 0;
+	int combo = 0;
+	int loss = 0;
+	int sum = 0;
+	int before = 0;
+	int time = 0;
+};
 
 int play3(int p, int n, int o, int shift, int AutoFlag) {
 	/*---用語定義-----
@@ -70,9 +85,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int life = 500;
 	int gap[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//gap = 判定ずれ
 	int gapa[3] = { 0,0,0 };//gapa = 判定ずれ[合計, 個数, 2乗の合計]
+	struct score_box score;
 	int score2[4] = { 0,0,0,0 }; //[通常スコア(90000), コンボスコア(10000), 減点, 合計]
 	int HighSrore; //ハイスコア
 	int viewjudge[4] = { 0,0,0,0 };
+	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	for (i[0] = 0; i[0] <= 59; i[0]++)fps[i[0]] = 17;
 	fps[60] = 0;
@@ -529,9 +546,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			while (object[i[0]][1][G[i[0]]] == 8 && G[i[0]] >= 1) G[i[0]]--;
 		}
 		//get chara position
-		charaput = GetCharaPos(Ntime, charahit, object[0][0][G[0]], object[1][0][G[1]],
-			object[2][0][G[2]], object[0][1][G[0]], object[1][1][G[1]], object[2][1][G[2]],
-			judghname[0][0], judghname[1][0], judghname[2][0], holdu, holdd);
+		charaput = GetCharaPos(Ntime, object[0][0][G[0]], object[1][0][G[1]], object[2][0][G[2]],
+			object[0][1][G[0]], object[1][1][G[1]], object[2][1][G[2]], holdu, holdd, hitatk[0],
+			hitatk[1]);
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
 		if (GetNowCount() - charahit > 250) G[5] = 0;
@@ -708,6 +725,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (holdl > 10) { holdl = 0; }
 			if (holdr > 10) { holdr = 0; }
 		}
+		//キー押しヒット解除
+		if (holdu == 1 || holdd == 1) {
+			hitatk[1] = -1000;
+		}
 		if (key[KEY_INPUT_G] == 0) holdG = 0;
 		else if (key[KEY_INPUT_G] == 1) holdG++;
 		if (GetWindowUserCloseFlag(TRUE)) return 5;
@@ -802,7 +823,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (holda == 1) { G[0]++; }
 		if (holdb == 1) { G[0]++; }
 		if (holdc == 1) { G[0]++; }
-		while (0 < G[0]) {
+		for (i[0] = 0; i[0] < G[0]; i[0]++) {
+			if (i[0] > 0) {
+				hitatk[0] = 1;
+				hitatk[1] = Ntime;
+			}
 			G[1] = CheckNearHitNote(object[0][1][objectN[0]], object[1][1][objectN[1]],
 				object[2][1][objectN[2]], object[0][0][objectN[0]] - Ntime,
 				object[1][0][objectN[1]] - Ntime, object[2][0][objectN[2]] - Ntime);
@@ -815,6 +840,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			gapa[0] += G[2];
 			gapa[2] += G[2] * G[2];
 			gapa[1]++;
+			if (i[0] == 0) {
+				hitatk[0] = G[1];
+				hitatk[1] = Ntime;
+			}
 			//just
 			if (G[2] <= 40 && G[2] >= -40) {
 				viewjudge[0] = GetNowCount();
@@ -824,6 +853,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				life += 2;
 				Dscore[0] += 2;
 				seflag |= SE_HIT;
+				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+				score.time = Ntime;
 			}
 			//good
 			else if (G[2] <= 70 && G[2] >= -70) {
@@ -834,6 +865,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				life++;
 				Dscore[0]++;
 				seflag |= SE_HIT;
+				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+				score.time = Ntime;
 			}
 			//safe
 			else if (G[2] <= 100 && G[2] >= -100) {
@@ -842,6 +875,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghcount[2]++;
 				life++;
 				seflag |= SE_HIT;
+				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+				score.time = Ntime;
 			}
 			//fastmiss
 			else if (G[2] <= 125) {
@@ -851,7 +886,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghcount[3]++;
 				life -= 20;
 			}
-			G[0]--;
 		}
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
@@ -868,6 +902,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				life += 2;
 				Dscore[0] += 2;
 				seflag |= SE_CATCH;
+				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+				score.time = Ntime;
 			}
 			//アローノーツ各種
 			else if ((holdu == 1) && object[i[0]][1][objectN[i[0]]] == 3 && judgh <= 125 && judgh >= -100) {
@@ -887,6 +923,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life += 2;
 					Dscore[0] += 2;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
@@ -897,6 +935,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life++;
 					Dscore[0]++;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
@@ -905,6 +945,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[2]++;
 					life++;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//fastmiss
 				else if (judgh <= 125) {
@@ -932,6 +974,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life += 2;
 					Dscore[0] += 2;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
@@ -942,6 +986,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life++;
 					Dscore[0]++;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
@@ -950,6 +996,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[2]++;
 					life++;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//fastmiss
 				else if (judgh <= 125) {
@@ -977,6 +1025,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life += 2;
 					Dscore[0] += 2;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
@@ -987,6 +1037,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life++;
 					Dscore[0]++;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
@@ -995,6 +1047,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[2]++;
 					life++;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//fastmiss
 				else if (judgh <= 125) {
@@ -1022,6 +1076,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life += 2;
 					Dscore[0] += 2;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
@@ -1032,6 +1088,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life++;
 					Dscore[0]++;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
@@ -1040,6 +1098,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghcount[2]++;
 					life++;
 					seflag |= SE_ARROW;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
 				}
 				//fastmiss
 				else if (judgh <= 125) {
@@ -1072,6 +1132,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghcount[0]++;
 				life += 2;
 				Dscore[0] += 2;
+				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+				score.time = Ntime;
 			}
 			//ゴーストノーツ
 			else if (object[i[0]][1][objectN[i[0]]] == 8 && judgh < 16) objectN[i[0]]++;
@@ -1124,13 +1186,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		//ライフが0未満の時、1毎に減点スコアを20増やす。
 		if (life < 0) {
 			score2[2] = maxs(score2[2] - life * 20, score2[0] + score2[1]);
+			score.loss = maxs(score.loss - life * 20, score.normal + score.combo);
 			life = 0;
 		}
 		//スコアバー表示
 		DrawGraph(0, 0, sbarimg, TRUE);
 		//スコア表示
-		GetScore(score2, judghcount, notes, Mcombo);
-		ShowScore(score2, HighSrore);
+		//GetScore(score2, judghcount, notes, Mcombo);
+		score = GetScore2(score, judghcount, notes, Mcombo);
+		//ShowScore(score2, HighSrore);
+		ShowScore2(score, HighSrore, Ntime);
 		//ライフ表示
 		life = maxs(life, 500);
 		if (life > 100) {
@@ -1162,7 +1227,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		DrawGraph(0, 0, sbbarimg, TRUE);
 		//ランニングステータス表示
 		G[0] = GetRemainNotes(judghcount, notes);
-		G[1] = CalPosScore(score2, G[0], notes, combo, Mcombo);
+		//G[1] = CalPosScore(score2, G[0], notes, combo, Mcombo);
+		G[1] = CalPosScore2(score, G[0], notes, combo, Mcombo);
 		RunningStats(judghcount, G[1], HighSrore);
 		//部分難易度表示
 		if (holdG >= 1) {
@@ -1257,7 +1323,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	}
 	InitGraph();
 	if (AutoFlag == 1) { return 2; }
-	else { return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score2, Mcombo, notes, gapa, Dscore[3]); }
+	else { return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score.sum, Mcombo, notes, gapa, Dscore[3]); }
 }
 
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {
@@ -1278,9 +1344,9 @@ int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {
 	return ans;
 }
 
-int GetCharaPos(int time, int charahit, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd,
-	int jn1, int jn2, int jn3, int keyu, int keyd) {
-	int cavoid = 0;
+int GetCharaPos(int time, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd, int keyu,
+	int keyd, int hitatp, int hitatt) {
+	int avoid = 0;
 	int object[3][2];
 	object[0][0] = obtu;
 	object[1][0] = obtm;
@@ -1291,26 +1357,21 @@ int GetCharaPos(int time, int charahit, int obtu, int obtm, int obtd, int obnu, 
 	int ans = CHARA_POS_MID;
 	//キャッチノーツ避け
 	for (int i = 0; i < 3; i++) {
-		if (object[i][0] <= time + 16 && object[i][1] == 2) {
-			cavoid = 1;
+		if (object[i][1] == 2 && object[i][0] <= time + 16) {
+			avoid = 1;
+			ans = CHARA_POS_MID;
 		}
 	}
 	//上ラインのヒットマーカーをたたいているとき
-	if (charahit > 0 && cavoid == 0 && object[0][0] > object[1][0] &&
-		object[0][0] > object[2][0] && object[0][0] + 750 > time && object[0][1] == 1 &&
-		jn1 >= 1 && jn1 <= 3) {
+	if (hitatp == CHARA_POS_UP && time - hitatt < 750 && avoid == 0) {
 		ans = CHARA_POS_UP;
 	}
 	//中ラインのヒットマーカーをたたいているとき
-	else if (charahit > 0 && cavoid == 0 && object[1][0] > object[0][0] &&
-		object[1][0] > object[2][0] && object[1][0] + 750 > time && object[1][1] == 1 &&
-		jn2 >= 1 && jn2 <= 3) {
+	else if (hitatp == CHARA_POS_MID && time - hitatt < 750 && avoid == 0) {
 		ans = CHARA_POS_MID;
 	}
 	//下ラインのヒットマーカーをたたいているとき
-	else if (charahit > 0 && cavoid == 0 && object[2][0] > object[0][0] &&
-		object[2][0] > object[1][0] && object[2][0] + 750 > time && object[2][1] == 1 &&
-		jn3 >= 1 && jn3 <= 3) {
+	else if (hitatp == CHARA_POS_DOWN && time - hitatt < 750 && avoid == 0) {
 		ans = CHARA_POS_DOWN;
 	}
 	//上が押されて、直前のヒットマーカーをたたいていないとき
@@ -1348,9 +1409,21 @@ void GetScore(int *score, const int *judghcount, const int notes, const int MaxC
 	score[1] = MaxCombo * 10000 / notes;
 }
 
+struct score_box GetScore2(struct score_box score, const int *judghcount, const int notes, const int MaxCombo) {
+	score.normal = (judghcount[0] * 90000 + judghcount[1] * 85000 + judghcount[2] * 45000) / notes;
+	score.combo = MaxCombo * 10000 / notes;
+	score.sum = score.normal + score.combo - score.loss;
+	return score;
+}
+
 int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo) {
 	int PosCombo = mins(combo + RemainNotes, MaxCombo);
 	return score[0] + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
+}
+
+int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
+	int PosCombo = mins(combo + RemainNotes, MaxCombo);
+	return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
 }
 
 void ShowCombo(int combo, int *pic) {
@@ -1491,6 +1564,18 @@ void ShowScore(int *score, int Hscore) {
 	else {
 		DrawFormatString(490, 20, GetColor(255, 255, 0), L"SCORE:%d", score[0] + score[1] - score[2]);
 	}
+}
+
+void ShowScore2(struct score_box score, int Hscore, int time) {
+	unsigned int Cr = GetColor(255, 255, 255);
+	int s_score = score.sum;
+	if (time - score.time < 500) {
+		s_score = pals(500, score.sum, 0, score.before, time - score.time);
+	}
+	if (Hscore <= s_score) {
+		Cr = GetColor(255, 255, 0);
+	}
+	DrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
 }
 
 void RunningStats(int *judghcount, int PosScore, int HighScore) {

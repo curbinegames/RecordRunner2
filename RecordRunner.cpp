@@ -5,7 +5,6 @@
 #include "menu.h"
 #include "musicserect.h"
 #include "musicserect2.h"
-#include "play.h"
 #include "play2.h"
 #include "collection.h"
 #include "option.h"

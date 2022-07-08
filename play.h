@@ -1,7 +1,4 @@
-#include "playing.h"
 #include "RecordLoad.h"
-#include "RecordLoad2.h"
-#include "fontcur.h"
 #include "result.h"
 
 int play2(int n, int o, int shift, int AutoFlag) {
@@ -1194,5 +1191,5 @@ int play2(int n, int o, int shift, int AutoFlag) {
 	}
 	InitGraph();
 	if (AutoFlag == 1) { return 2; }
-	else { return result(0, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score2, Mcombo, notes, gapa, Dscore[3]); }
+	else { return result(0, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score2[3], Mcombo, notes, gapa, Dscore[3]); }
 }

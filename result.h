@@ -1,4 +1,6 @@
-int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_t songN[255], wchar_t DifFN[255], int judghcount[4], int score2[4], int Mcombo, short int notes, int gapa[3], int Dscore) {
+#include "fontcur.h"
+
+int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_t songN[255], wchar_t DifFN[255], int judghcount[4], int score, int Mcombo, short int notes, int gapa[3], int Dscore) {
 	short int i[3];
 	short int rank;
 	short int Clear;
@@ -106,13 +108,12 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	wchar_t savec[10][255];
 	wchar_t save[255] = L"score/";
 	wchar_t save2[255] = L".dat";
-	score2[3] = score2[0] + score2[1] - score2[2];
 	//ランク判定
-	if (score2[3] >= 98000) rank = 0;
-	else if (score2[3] >= 95000) rank = 1;
-	else if (score2[3] >= 90000) rank = 2;
-	else if (score2[3] >= 85000) rank = 3;
-	else if (score2[3] >= 80000) rank = 4;
+	if (score >= 98000) rank = 0;
+	else if (score >= 95000) rank = 1;
+	else if (score >= 90000) rank = 2;
+	else if (score >= 85000) rank = 3;
+	else if (score >= 80000) rank = 4;
 	else rank = 5;
 	//クリアレート判定
 	if (drop == 1) { Clear = 1; }
@@ -132,7 +133,7 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 		fclose(fp);
 	}
 	G[9] = 0;
-	if (read[o] < score2[3]) { read[o] = score2[3]; } //ハイスコア保存
+	if (read[o] < score) { read[o] = score; } //ハイスコア保存
 	if (ReadAcc[o] < acc) { ReadAcc[o] = acc; } //ACC保存
 	if (Readdis[o] < Dscore) { Readdis[o] = Dscore; } //最長走行距離保存
 	if (ReadRank[o] > rank || ReadRank[o] < 0) { ReadRank[o] = rank; } //ランク保存
@@ -242,30 +243,26 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 		else { DrawString(10, 340, L"not rise", Cr); }
 		switch (rank) {
 		case 0:
-			DrawCurFont(score2[3], 310, 75, 55, 6);
-			DrawCurFont(acc, 430, 150, 30, 6, 2);
+			G[0] = 6;
 			break;
 		case 1:
-			DrawCurFont(score2[3], 310, 75, 55, 4);
-			DrawCurFont(acc, 430, 150, 30, 4, 2);
+			G[0] = 4;
 			break;
 		case 2:
-			DrawCurFont(score2[3], 310, 75, 55, 2);
-			DrawCurFont(acc, 430, 150, 30, 2, 2);
+			G[0] = 2;
 			break;
 		case 3:
-			DrawCurFont(score2[3], 310, 75, 55, 3);
-			DrawCurFont(acc, 430, 150, 30, 3, 2);
+			G[0] = 3;
 			break;
 		case 4:
-			DrawCurFont(score2[3], 310, 75, 55, 5);
-			DrawCurFont(acc, 430, 150, 30, 5, 2);
+			G[0] = 5;
 			break;
 		case 5:
-			DrawCurFont(score2[3], 310, 75, 55, 1);
-			DrawCurFont(acc, 430, 150, 30, 1, 2);
+			G[0] = 1;
 			break;
 		}
+		DrawCurFont(score, 310, 75, 55, G[0]);
+		DrawCurFont(acc, 430, 150, 30, G[0], 2);
 		if (gapa[1] == 0) gapa[1] = 1;
 		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
 		DrawCurFont(gapa[2] / gapa[1] - gapa[0] * gapa[0] / gapa[1] / gapa[1], 500, 230, 20, 0);

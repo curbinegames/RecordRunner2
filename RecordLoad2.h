@@ -1,3 +1,5 @@
+#include "playing.h"
+
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
