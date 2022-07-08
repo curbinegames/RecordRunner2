@@ -24,6 +24,7 @@ int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes(int *judghcount, int Notes);
 void GetScore(int *score, const int *judghcount, const int notes, const int MaxCombo);
 struct score_box GetScore2(struct score_box score, const int *judghcount, const int notes, const int MaxCombo);
+void Getxxxpng(wchar_t *str, int num);
 int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo);
 void ShowCombo(int combo, int *pic);
@@ -319,22 +320,13 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	LoadDivGraph(L"picture/righteff.png", 5, 5, 1, 50, 50, effimg[5]);
 	LoadDivGraph(L"picture/bombeff.png", 5, 5, 1, 50, 50, effimg[6]);
 	LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, ComboFontimg);
-	for (i[0] = L'0'; i[0] <= L'9'; i[0]++) {
-		for (i[1] = L'0'; i[1] <= L'9'; i[1]++) {
-			for (i[2] = L'0'; i[2] <= L'9'; i[2]++) {
-				strcopy(dataE, GT2, 1);
-				stradds(GT2, L'/');
-				stradds(GT2, i[0]);
-				stradds(GT2, i[1]);
-				stradds(GT2, i[2]);
-				strcats(GT2, GT3);
-				item[itemN] = LoadGraph(GT2);
-				if (item[itemN] == -1) { break; }
-				itemN++;
-			}
-			if (item[itemN] == -1) { break; }
-		}
-		if (item[itemN] == -1) { break; }
+	for (i[0] = 0; i[0] < 1000; i[0]++) {
+		strcopy(dataE, GT1, 1);
+		stradds(GT1, L'/');
+		Getxxxpng(&GT2[0], i[0]);
+		strcats(GT1, GT2);
+		item[i[0]] = LoadGraph(GT1);
+		if (item[i[0]] == -1) { break; }
 	}
 	if (system[5]) {
 		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
@@ -1414,6 +1406,25 @@ struct score_box GetScore2(struct score_box score, const int *judghcount, const 
 	score.combo = MaxCombo * 10000 / notes;
 	score.sum = score.normal + score.combo - score.loss;
 	return score;
+}
+
+void Getxxxpng(wchar_t *str, int num) {
+	*str = num / 100 + '0';
+	str++;
+	*str = num / 10 % 10 + '0';
+	str++;
+	*str = num % 10 + '0';
+	str++;
+	*str = '.';
+	str++;
+	*str = 'p';
+	str++;
+	*str = 'n';
+	str++;
+	*str = 'g';
+	str++;
+	*str = '\0';
+	return;
 }
 
 int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo) {
