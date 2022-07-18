@@ -389,17 +389,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			//îwåiÇÃècà íuåvéZ
 			for (i[0] = 3; i[0] <= 4; i[0]++) {
 				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
-					switch (Ymove[i[0]][YmoveN[i[0]]][3]) {
-					case(1):
-						Yline[i[0]] = lins(Ymove[i[0]][YmoveN[i[0]]][0], Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2], Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
-						break;
-					case(2):
-						Yline[i[0]] = pals(Ymove[i[0]][YmoveN[i[0]]][0], Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2], Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
-						break;
-					case(3):
-						Yline[i[0]] = pals(Ymove[i[0]][YmoveN[i[0]]][2], Ymove[i[0]][YmoveN[i[0]]][1], Ymove[i[0]][YmoveN[i[0]]][0], Ymove[i[0]][YmoveN[i[0]] - 1][1], Ntime);
-						break;
-					}
+					Yline[i[0]] = movecal(Ymove[i[0]][YmoveN[i[0]]][3],
+						Ymove[i[0]][YmoveN[i[0]]][0],
+						Ymove[i[0]][YmoveN[i[0]] - 1][1],
+						Ymove[i[0]][YmoveN[i[0]]][2],
+						Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
 				}
 				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] || Ymove[i[0]][YmoveN[i[0]]][3] == 4) Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
 			}
@@ -453,38 +447,20 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					G[0]++;
 					continue;
 				}
-				switch (Movie[1][MovieN + G[0]]) {
-				case 1:
-					SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime));
-					DrawDeformationPic(
-						lins(Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime),
-						lins(Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime),
-						lins(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime),
-						lins(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime),
-						lins(Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime),
-						item[Movie[0][MovieN + G[0]]]);
-					break;
-				case 2:
-					SetDrawBlendMode(DX_BLENDMODE_ALPHA, pals(Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime));
-					DrawDeformationPic(
-						pals(Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime),
-						pals(Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime),
-						pals(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime),
-						pals(Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime),
-						pals(Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime),
-						item[Movie[0][MovieN + G[0]]]);
-					break;
-				case 3:
-					SetDrawBlendMode(DX_BLENDMODE_ALPHA, pals(Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Ntime));
-					DrawDeformationPic(
-						pals(Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Ntime),
-						pals(Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Ntime),
-						pals(Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Ntime),
-						pals(Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Ntime),
-						pals(Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Ntime),
-						item[Movie[0][MovieN + G[0]]]);
-					break;
-				}
+				G[1] = movecal(Movie[1][MovieN + G[0]],
+					Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
+				G[2] = movecal(Movie[1][MovieN + G[0]],
+					Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime);
+				G[3] = movecal(Movie[1][MovieN + G[0]],
+					Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime);
+				G[4] = movecal(Movie[1][MovieN + G[0]],
+					Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime);
+				G[5] = movecal(Movie[1][MovieN + G[0]],
+					Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime);
+				G[6] = movecal(Movie[1][MovieN + G[0]],
+					Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime);
+				SetDrawBlendMode(DX_BLENDMODE_ALPHA, G[1]);
+				DrawDeformationPic(G[2], G[3], G[4], G[5], G[6], item[Movie[0][MovieN + G[0]]]);
 				SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 				G[0]++;
 			}
@@ -497,32 +473,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			//ècà⁄ìÆ
 			if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
-				switch (Ymove[i[0]][YmoveN[i[0]]][3]) {
-				case(1):
-					Yline[i[0]] = lins(Ymove[i[0]][YmoveN[i[0]]][0], Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2], Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
-					break;
-				case(2):
-					Yline[i[0]] = pals(Ymove[i[0]][YmoveN[i[0]]][0], Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2], Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
-					break;
-				case(3):
-					Yline[i[0]] = pals(Ymove[i[0]][YmoveN[i[0]]][2], Ymove[i[0]][YmoveN[i[0]]][1], Ymove[i[0]][YmoveN[i[0]]][0], Ymove[i[0]][YmoveN[i[0]] - 1][1], Ntime);
-					break;
-				}
+				Yline[i[0]] = movecal(Ymove[i[0]][YmoveN[i[0]]][3], Ymove[i[0]][YmoveN[i[0]]][0], Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2], Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
 			}
 			if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] || Ymove[i[0]][YmoveN[i[0]]][3] == 4) Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
 			//â°à⁄ìÆ
 			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][0] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0]) {
-				switch (Xmove[i[0]][XmoveN[i[0]]][3]) {
-				case(1):
-					Xline[i[0]] = lins(Xmove[i[0]][XmoveN[i[0]]][0], Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2], Xmove[i[0]][XmoveN[i[0]]][1], Ntime);
-					break;
-				case(2):
-					Xline[i[0]] = pals(Xmove[i[0]][XmoveN[i[0]]][0], Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2], Xmove[i[0]][XmoveN[i[0]]][1], Ntime);
-					break;
-				case(3):
-					Xline[i[0]] = pals(Xmove[i[0]][XmoveN[i[0]]][2], Xmove[i[0]][XmoveN[i[0]]][1], Xmove[i[0]][XmoveN[i[0]]][0], Xmove[i[0]][XmoveN[i[0]] - 1][1], Ntime);
-					break;
-				}
+				Xline[i[0]] = movecal(Xmove[i[0]][XmoveN[i[0]]][3], Xmove[i[0]][XmoveN[i[0]]][0], Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2], Xmove[i[0]][XmoveN[i[0]]][1], Ntime);
 			}
 			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][2] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0] || Xmove[i[0]][XmoveN[i[0]]][3] == 4) Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
 			DrawGraph(Xline[i[0]], Yline[i[0]], judghimg, TRUE);

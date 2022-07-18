@@ -7,6 +7,7 @@ double betweens_D(double a, double b, double c);
 int notzero(int a);
 int lins(double x1, double y1, double x2, double y2, double x);
 int pals(double x1, double y1, double x2, double y2, double x);
+double movecal(int mode, double x1, double y1, double x2, double y2, double x);
 double sanrute(double c);
 int abss(int a, int b);
 int NumLoop(int a, int b);
@@ -61,6 +62,19 @@ int lins(double x1, double y1, double x2, double y2, double x) {
 int pals(double x1, double y1, double x2, double y2, double x) {
 	if (x1 == x2) return x1;
 	else return (y2 - y1) / (x2 - x1) / (x2 - x1) * (x - x1) * (x - x1) + y1;
+}
+//mode(1:lin,2:acc,3:dec)に合わせた計算をする。
+double movecal(int mode, double startx, double starty, double endx, double endy, double nowx) {
+	switch (mode) {
+	case 1:
+		return lins(startx, starty, endx, endy, nowx);
+	case 2:
+		return pals(startx, starty, endx, endy, nowx);
+	case 3:
+		return pals(endx, endy, startx, starty, nowx);
+	default:
+		return 0;
+	}
 }
 //ルートcを返す(打切り誤差あり)
 double sanrute(double c) {
