@@ -1,6 +1,7 @@
 #include "fontcur.h"
+#include "playbox.h"
 
-int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_t songN[255], wchar_t DifFN[255], int judghcount[4], int score, int Mcombo, short int notes, int gapa[3], int Dscore) {
+int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_t songN[255], wchar_t DifFN[255], struct judge_box judge, int score, int Mcombo, short int notes, int gapa[3], int Dscore) {
 	short int i[3];
 	short int rank;
 	short int Clear;
@@ -104,7 +105,7 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
 	int chap[3] = { 0,0,0 };
 	double readR[10] = { 0,0,0,0,0,0,0,0,0,0 };
-	double acc = (judghcount[0] * 10000 + judghcount[1] * 9500 + judghcount[2] * 5500) / (notes*100.0);
+	double acc = (judge.just * 10000 + judge.good * 9500 + judge.safe * 5500) / (notes*100.0);
 	wchar_t savec[10][255];
 	wchar_t save[255] = L"score/";
 	wchar_t save2[255] = L".dat";
@@ -117,9 +118,9 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	else rank = 5;
 	//クリアレート判定
 	if (drop == 1) { Clear = 1; }
-	else if (drop == 0 && judghcount[3] > 0) { Clear = 2; }
-	else if (drop == 0 && judghcount[3] == 0 && judghcount[2] > 0) { Clear = 3; }
-	else if (drop == 0 && judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) { Clear = 4; }
+	else if (drop == 0 && judge.miss > 0) { Clear = 2; }
+	else if (drop == 0 && judge.miss == 0 && judge.safe > 0) { Clear = 3; }
+	else if (drop == 0 && judge.miss == 0 && judge.safe == 0 && judge.good > 0) { Clear = 4; }
 	else Clear = 5;
 	strcats(save, fileN);
 	strcats(save, save2);
@@ -154,9 +155,9 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	read[0]++;
 	if (drop == 1) read[1]++;
 	else read[3]++;
-	if (judghcount[3] == 0)read[4]++;
-	if (judghcount[2] == 0 && judghcount[3] == 0)read[5]++;
-	if (judghcount[1] == 0 && judghcount[2] == 0 && judghcount[3] == 0)read[6]++;
+	if (judge.miss == 0)read[4]++;
+	if (judge.miss == 0 && judge.safe == 0)read[5]++;
+	if (judge.miss == 0 && judge.safe == 0 && judge.good == 0)read[6]++;
 	G[0] = _wfopen_s(&fp, L"save/data.dat", L"wb");
 	fwrite(&read, sizeof(int), 7, fp);
 	fclose(fp);
@@ -172,22 +173,22 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	fclose(fp);
 	//レート計算(level0なら0固定)"譜面定数" - "miss数" x "譜面定数" x 0.03(下限=0)
 	if (DifRate == 0) rate = 0;
-	else if (judghcount[3] > 0) {
-		rate = DifRate - judghcount[3] * DifRate*0.03;
+	else if (judge.miss > 0) {
+		rate = DifRate - judge.miss * DifRate*0.03;
 		rate = mins_D(rate, 0);
 	}
 	//NO MISS,"譜面定数" + 1 - "safe数" x 0.05(下限="譜面定数")
-	else if (judghcount[3] == 0 && judghcount[2] > 0) {
-		rate = DifRate + 1 - judghcount[2] * 0.05;
+	else if (judge.miss == 0 && judge.safe > 0) {
+		rate = DifRate + 1 - judge.safe * 0.05;
 		rate = mins_D(rate, DifRate);
 	}
 	//FULL COMBO,"譜面定数" + 2 - "good数" x 0.01(下限="譜面定数" + 1)
-	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] > 0) {
-		rate = DifRate + 2 - judghcount[1] * 0.01;
+	else if (judge.miss == 0 && judge.safe == 0 && judge.good > 0) {
+		rate = DifRate + 2 - judge.good * 0.01;
 		rate = mins_D(rate, DifRate + 1);
 	}
 	//PERFECT, "譜面定数" + 2
-	else if (judghcount[3] == 0 && judghcount[2] == 0 && judghcount[1] == 0) rate = DifRate + 2;
+	else if (judge.miss == 0 && judge.safe == 0 && judge.good == 0) rate = DifRate + 2;
 	//レート保存
 	G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"rb");
 	if (G[0] == 0) {
@@ -232,10 +233,10 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 		DrawGraph(0, 0, resultimg, TRUE);
 		DrawGraph(460, 20, difberimg, TRUE);
 		DrawString(100, 13, songN, Cr);
-		DrawCurFont(judghcount[0], 140, 52, 30, 4);
-		DrawCurFont(judghcount[1], 140, 93, 30, 2);
-		DrawCurFont(judghcount[2], 140, 134, 30, 3);
-		DrawCurFont(judghcount[3], 140, 175, 30, 1);
+		DrawCurFont(judge.just, 140, 52, 30, 4);
+		DrawCurFont(judge.good, 140, 93, 30, 2);
+		DrawCurFont(judge.safe, 140, 134, 30, 3);
+		DrawCurFont(judge.miss, 140, 175, 30, 1);
 		DrawCurFont(Mcombo, 155, 215, 30, 4);
 		DrawCurFont(notes, 265, 215, 30, 5);
 		DrawFormatString(10, 320, Cr, L"%.2f", SumRate[1]);

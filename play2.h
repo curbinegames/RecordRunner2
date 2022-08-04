@@ -1,5 +1,6 @@
 #include "RecordLoad2.h"
 #include "result.h"
+#include "playbox.h"
 
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
@@ -17,31 +18,24 @@
 #define SE_ARROW 4
 #define SE_BOMB 8
 
+struct judge_box AddHitJudge(struct judge_box ans, int gup);
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
 int GetCharaPos(int time, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd, int keyu,
 	int keyd, int hitatp, int hitatt);
 int GetHighScore(wchar_t pas[255], int dif);
-int GetRemainNotes(int *judghcount, int Notes);
-void GetScore(int *score, const int *judghcount, const int notes, const int MaxCombo);
-struct score_box GetScore2(struct score_box score, const int *judghcount, const int notes, const int MaxCombo);
+int GetRemainNotes2(struct judge_box judge, int Notes);
+struct score_box GetScore3(struct score_box score, struct judge_box judge, const int notes,
+	const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
 int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo);
 void ShowCombo(int combo, int *pic);
-void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic, int filter, int biglight, int *smalllight, int flash, int ring);
+void ShowBonusEff(struct judge_box judge, int EffStartTime, int *Snd, int *pic, int filter, int biglight,
+	int *smalllight, int flash, int ring);
 void ShowJudge(const int *viewjudge, const int *judgeimg, const int posX, const int posY);
-void ShowScore(int *score, int Hscore);
 void ShowScore2(struct score_box score, int Hscore, int time);
-void RunningStats(int *judghcount, int Score, int HighScore);
+void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
 
-struct score_box {
-	int normal = 0;
-	int combo = 0;
-	int loss = 0;
-	int sum = 0;
-	int before = 0;
-	int time = 0;
-};
 
 int play3(int p, int n, int o, int shift, int AutoFlag) {
 	/*---用語定義-----
@@ -86,6 +80,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int life = 500;
 	int gap[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//gap = 判定ずれ
 	int gapa[3] = { 0,0,0 };//gapa = 判定ずれ[合計, 個数, 2乗の合計]
+	struct judge_box judge;
 	struct score_box score;
 	int score2[4] = { 0,0,0,0 }; //[通常スコア(90000), コンボスコア(10000), 減点, 合計]
 	int HighSrore; //ハイスコア
@@ -217,9 +212,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	//ハイスコア取得
 	HighSrore = GetHighScore(DataFN, o);
 	//ボーナス演出素材
-	int Bonusimg[3] = { LoadGraph(L"picture/PERFECT.png"),
+	int Bonusimg[3] = {
+		LoadGraph(L"picture/PERFECT.png"),
 		LoadGraph(L"picture/FULLCOMBO.png"),
-		LoadGraph(L"picture/NOMISS.png") };
+		LoadGraph(L"picture/NOMISS.png")
+	};
 	int BonusSnd[3] = {
 		LoadSoundMem(L"sound/a-perfect.mp3"),
 		LoadSoundMem(L"sound/a-fullcombo.mp3"),
@@ -284,15 +281,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int Rchaimg;
 	int ComboFontimg[10];
 	//ノーツの画像
-	int hitimg = LoadGraph(L"picture/hit.png");
-	int hitcimg = LoadGraph(L"picture/hitc.png");
-	int catchimg = LoadGraph(L"picture/catch.png");
-	int upimg = LoadGraph(L"picture/up.png");
-	int downimg = LoadGraph(L"picture/down.png");
-	int leftimg = LoadGraph(L"picture/left.png");
-	int rightimg = LoadGraph(L"picture/right.png");
-	int bombimg = LoadGraph(L"picture/bomb.png");
-	int goustimg = LoadGraph(L"picture/goust.png");
+	struct note_img noteimg;
 	int musicmp3, attack, catchs, arrow, bomb;
 	switch (o) {
 	case 0:
@@ -376,7 +365,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		//背景表示
 		if (system[3] != 0) {
 			//背景の横位置計算
-			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) speedN[3]++;
+			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) {
+				speedN[3]++;
+			}
 			bgp[0] -= speedt[3][speedN[3]][1];
 			if (bgp[0] < -700) bgp[0] += 640;
 			else if (bgp[0] > 0) bgp[0] -= 640;
@@ -395,7 +386,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 						Ymove[i[0]][YmoveN[i[0]]][2],
 						Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
 				}
-				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] || Ymove[i[0]][YmoveN[i[0]]][3] == 4) Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
+				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] ||
+					Ymove[i[0]][YmoveN[i[0]]][3] == 4) {
+					Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
+				}
 			}
 			//背景表示
 			for (i[0] = 0; i[0] < 2; i[0]++) {
@@ -418,7 +412,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (fall[fallN][1] >= 0) {
 				G[0] = bgf[0];//横
 				G[1] = bgf[1] + Yline[3];//縦
-				for (i[0] = 0; i[0] < 2; i[0]++) for (i[1] = 0; i[1] < 3; i[1]++) DrawGraph(G[0] + i[0] * 640, G[1] - i[1] * 480, item[fall[fallN][1]], TRUE);
+				for (i[0] = 0; i[0] < 2; i[0]++) {
+					for (i[1] = 0; i[1] < 3; i[1]++) {
+						DrawGraph(G[0] + i[0] * 640, G[1] - i[1] * 480, item[fall[fallN][1]], TRUE);
+					}
+				}
 				bgf[0] -= 5;
 				bgf[1] += 2;
 			}
@@ -447,18 +445,24 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					G[0]++;
 					continue;
 				}
-				G[1] = movecal(Movie[1][MovieN + G[0]],
-					Movie[2][MovieN + G[0]], Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[13][MovieN + G[0]], Ntime);
-				G[2] = movecal(Movie[1][MovieN + G[0]],
-					Movie[2][MovieN + G[0]], Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[5][MovieN + G[0]], Ntime);
-				G[3] = movecal(Movie[1][MovieN + G[0]],
-					Movie[2][MovieN + G[0]], Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[7][MovieN + G[0]], Ntime);
-				G[4] = movecal(Movie[1][MovieN + G[0]],
-					Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime);
-				G[5] = movecal(Movie[1][MovieN + G[0]],
-					Movie[2][MovieN + G[0]], Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]], Movie[9][MovieN + G[0]] / 100.0, Ntime);
-				G[6] = movecal(Movie[1][MovieN + G[0]],
-					Movie[2][MovieN + G[0]], Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]], Movie[11][MovieN + G[0]], Ntime);
+				G[1] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+					Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]],
+					Movie[13][MovieN + G[0]], Ntime);
+				G[2] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+					Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]],
+					Movie[5][MovieN + G[0]], Ntime);
+				G[3] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+					Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]],
+					Movie[7][MovieN + G[0]], Ntime);
+				G[4] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+					Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]],
+					Movie[9][MovieN + G[0]] / 100.0, Ntime);
+				G[5] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+					Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]],
+					Movie[9][MovieN + G[0]] / 100.0, Ntime);
+				G[6] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+					Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]],
+					Movie[11][MovieN + G[0]], Ntime);
 				SetDrawBlendMode(DX_BLENDMODE_ALPHA, G[1]);
 				DrawDeformationPic(G[2], G[3], G[4], G[5], G[6], item[Movie[0][MovieN + G[0]]]);
 				SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
@@ -466,25 +470,40 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		//キャラ位置ガイドの表示
-		if (carrow[1][carrowN + 1] < Ntime && carrow[1][carrowN + 1] >= 0) carrowN++;
-		if (carrow[0][carrowN] == 1) { DrawGraph(Xline[charaput] - 4, Yline[charaput] - 4, charaguideimg, TRUE); }
+		if (carrow[1][carrowN + 1] < Ntime && carrow[1][carrowN + 1] >= 0) {
+			carrowN++;
+		}
+		if (carrow[0][carrowN] == 1) {
+			DrawGraph(Xline[charaput] - 4, Yline[charaput] - 4, charaguideimg, TRUE);
+		}
 		else { DrawTurnGraph(Xline[charaput] - 56, Yline[charaput] - 4, charaguideimg, TRUE); }
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			//縦移動
 			if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
-				Yline[i[0]] = movecal(Ymove[i[0]][YmoveN[i[0]]][3], Ymove[i[0]][YmoveN[i[0]]][0], Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2], Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
+				Yline[i[0]] = movecal(Ymove[i[0]][YmoveN[i[0]]][3], Ymove[i[0]][YmoveN[i[0]]][0],
+					Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2],
+					Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
 			}
-			if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] || Ymove[i[0]][YmoveN[i[0]]][3] == 4) Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
+			if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] ||
+				Ymove[i[0]][YmoveN[i[0]]][3] == 4) {
+				Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
+			}
 			//横移動
 			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][0] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0]) {
-				Xline[i[0]] = movecal(Xmove[i[0]][XmoveN[i[0]]][3], Xmove[i[0]][XmoveN[i[0]]][0], Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2], Xmove[i[0]][XmoveN[i[0]]][1], Ntime);
+				Xline[i[0]] = movecal(Xmove[i[0]][XmoveN[i[0]]][3], Xmove[i[0]][XmoveN[i[0]]][0],
+					Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2],
+					Xmove[i[0]][XmoveN[i[0]]][1], Ntime);
 			}
-			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][2] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0] || Xmove[i[0]][XmoveN[i[0]]][3] == 4) Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
+			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][2] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0] ||
+				Xmove[i[0]][XmoveN[i[0]]][3] == 4) {
+				Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
+			}
 			DrawGraph(Xline[i[0]], Yline[i[0]], judghimg, TRUE);
 		}
 		//キャラグラ変換
-		for (i[0] = 0; i[0] < 3; i[0]++)while (Ntime >= chamo[i[0]][chamoN[i[0]] + 1][1] && chamo[i[0]][chamoN[i[0]] + 1][1] >= 0) {
+		for (i[0] = 0; i[0] < 3; i[0]++)while (Ntime >= chamo[i[0]][chamoN[i[0]] + 1][1] &&
+			chamo[i[0]][chamoN[i[0]] + 1][1] >= 0) {
 			chamoN[i[0]]++;
 		}
 		G[3] = 0;
@@ -502,12 +521,26 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (GetNowCount() - charahit > 250) G[5] = 0;
 		else G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit);
 		if (charahit > 0) {
-			if (carrow[0][carrowN] == 1) DrawGraph(Xline[charaput] + G[5] - 160, G[4] - 75, charaimg[maxs(mins((GetNowCount() - charahit) / 125 + 18, 18), 23)], TRUE);
-			else DrawTurnGraph(Xline[charaput] - G[5] + 30, G[4] - 75, charaimg[maxs(mins((GetNowCount() - charahit) / 125 + 18, 18), 23)], TRUE);
+			if (carrow[0][carrowN] == 1) {
+				DrawGraph(Xline[charaput] + G[5] - 160, G[4] - 75,
+					charaimg[maxs(mins((GetNowCount() - charahit) / 125 + 18, 18), 23)], TRUE);
+			}
+			else {
+				DrawTurnGraph(Xline[charaput] - G[5] + 30, G[4] - 75,
+					charaimg[maxs(mins((GetNowCount() - charahit) / 125 + 18, 18), 23)], TRUE);
+			}
 		}
 		else {
-			if (carrow[0][carrowN] == 1) DrawGraph(Xline[charaput] - 160, G[4] - 75, charaimg[Ntime * int(bpm) / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6], TRUE);
-			else DrawTurnGraph(Xline[0] + 30, G[4] - 75, charaimg[Ntime * int(bpm) / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6], TRUE);
+			if (carrow[0][carrowN] == 1) {
+				DrawGraph(Xline[charaput] - 160, G[4] - 75,
+					charaimg[Ntime * int(bpm) / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
+					TRUE);
+			}
+			else {
+				DrawTurnGraph(Xline[0] + 30, G[4] - 75,
+					charaimg[Ntime * int(bpm) / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
+					TRUE);
+			}
 		}
 		//キー設定
 		if (AutoFlag == 0) {
@@ -674,12 +707,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (holdr > 10) { holdr = 0; }
 		}
 		//キー押しヒット解除
-		if (holdu == 1 || holdd == 1) {
-			hitatk[1] = -1000;
-		}
-		if (key[KEY_INPUT_G] == 0) holdG = 0;
-		else if (key[KEY_INPUT_G] == 1) holdG++;
-		if (GetWindowUserCloseFlag(TRUE)) return 5;
+		if (holdu == 1 || holdd == 1) { hitatk[1] = -1000; }
+		if (key[KEY_INPUT_G] == 0) { holdG = 0; }
+		else if (key[KEY_INPUT_G] == 1) { holdG++; }
+		if (GetWindowUserCloseFlag(TRUE)) { return 5; }
 		//キャッチ判定に使う数値を計算
 		LaneTrack[charaput] = Ntime;
 		if (holdu == 0 && holdd == 0 || holdu > 0 && holdd > 0) { LaneTrack[1] = Ntime; }
@@ -713,18 +744,29 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			break;
 		}
 		//音符表示
-		for (i[0] = 0; i[0] < 2; i[0]++) if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0) lockN[i[0]]++;
+		for (i[0] = 0; i[0] < 2; i[0]++) {
+			if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0){
+				lockN[i[0]]++;
+			}
+		}
 		if (viewT[0][viewTN + 1] <= Ntime && viewT[0][viewTN + 1] >= 0) viewTN++;
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime && speedt[i[0]][speedN[i[0]] + 1][0] >= 0) speedN[i[0]]++;
+			if (speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime &&
+				speedt[i[0]][speedN[i[0]] + 1][0] >= 0) {
+				speedN[i[0]]++;
+			}
 			G[0] = G[3] = G[4] = G[5] = 0;
 			for (i[1] = objectN[i[0]]; object[i[0]][0][i[1]] > 0; i[1]++) {
-				if (object[i[0]][0][i[1]] >= viewT[0][viewTN + G[0] + 1] && viewT[0][viewTN + G[0] + 1] >= 0) G[0]++;
+				if (object[i[0]][0][i[1]] >= viewT[0][viewTN + G[0] + 1] &&
+					viewT[0][viewTN + G[0] + 1] >= 0) G[0]++;
 				if (object[i[0]][0][i[1]] - Ntime >= viewT[1][viewTN + G[0]]) continue;
 				if (object[i[0]][0][i[1]] - Ntime >= 3000 && 3000 >= viewT[1][viewTN + G[0]]) break;
-				if (object[i[0]][0][i[1]] >= lock[0][1][lockN[0] + G[3] + 1] && lock[0][1][lockN[0] + G[3] + 1] >= 0) G[3]++;
-				if (object[i[0]][0][i[1]] >= lock[1][1][lockN[1] + G[4] + 1] && lock[1][1][lockN[1] + G[4] + 1] >= 0) G[4]++;
-				while (object[i[0]][0][i[1]] >= speedt[i[0]][speedN[i[0]] + G[5] + 1][0] && speedt[i[0]][speedN[i[0]] + G[5] + 1][0] >= 0) G[5]++;
+				if (object[i[0]][0][i[1]] >= lock[0][1][lockN[0] + G[3] + 1] &&
+					lock[0][1][lockN[0] + G[3] + 1] >= 0) G[3]++;
+				if (object[i[0]][0][i[1]] >= lock[1][1][lockN[1] + G[4] + 1] &&
+					lock[1][1][lockN[1] + G[4] + 1] >= 0) G[4]++;
+				while (object[i[0]][0][i[1]] >= speedt[i[0]][speedN[i[0]] + G[5] + 1][0] &&
+					speedt[i[0]][speedN[i[0]] + G[5] + 1][0] >= 0) G[5]++;
 				//縦位置
 				if (lock[1][0][lockN[1] + G[4]] == 1) G[2] = object[i[0]][3][i[1]];
 				else G[2] = Yline[i[0]];
@@ -735,33 +777,33 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				else G[1] += Xline[i[0]] - 150;
 				switch (object[i[0]][1][i[1]]) {
 				case 1:
-					DrawGraph(G[1], G[2], hitimg, TRUE);
-					DrawGraph(G[1], G[2], hitcimg, TRUE);
+					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
+					DrawGraph(G[1], G[2], noteimg.hitcircle, TRUE);
 					break;
 				case 2:
-					DrawGraph(G[1], G[2], catchimg, TRUE);
+					DrawGraph(G[1], G[2], noteimg.catchi, TRUE);
 					break;
 				case 3:
-					DrawGraph(G[1], G[2], hitimg, TRUE);
-					DrawGraph(G[1], G[2], upimg, TRUE);
+					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
+					DrawGraph(G[1], G[2], noteimg.up, TRUE);
 					break;
 				case 4:
-					DrawGraph(G[1], G[2], hitimg, TRUE);
-					DrawGraph(G[1], G[2], downimg, TRUE);
+					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
+					DrawGraph(G[1], G[2], noteimg.down, TRUE);
 					break;
 				case 5:
-					DrawGraph(G[1], G[2], hitimg, TRUE);
-					DrawGraph(G[1], G[2], leftimg, TRUE);
+					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
+					DrawGraph(G[1], G[2], noteimg.left, TRUE);
 					break;
 				case 6:
-					DrawGraph(G[1], G[2], hitimg, TRUE);
-					DrawGraph(G[1], G[2], rightimg, TRUE);
+					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
+					DrawGraph(G[1], G[2], noteimg.right, TRUE);
 					break;
 				case 7:
-					DrawGraph(G[1], G[2], bombimg, TRUE);
+					DrawGraph(G[1], G[2], noteimg.bomb, TRUE);
 					break;
 				case 8:
-					DrawGraph(G[1], G[2], goustimg, TRUE);
+					DrawGraph(G[1], G[2], noteimg.goust, TRUE);
 					break;
 				}
 			}
@@ -792,12 +834,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				hitatk[0] = G[1];
 				hitatk[1] = Ntime;
 			}
+			judge = AddHitJudge(judge, G[2]);
 			//just
 			if (G[2] <= 40 && G[2] >= -40) {
 				viewjudge[0] = GetNowCount();
 				judghname[G[1]][0] = 1;
 				combo++;
-				judghcount[0]++;
 				life += 2;
 				Dscore[0] += 2;
 				seflag |= SE_HIT;
@@ -809,7 +851,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				viewjudge[1] = GetNowCount();
 				judghname[G[1]][0] = 2;
 				combo++;
-				judghcount[1]++;
 				life++;
 				Dscore[0]++;
 				seflag |= SE_HIT;
@@ -820,7 +861,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			else if (G[2] <= 100 && G[2] >= -100) {
 				viewjudge[2] = GetNowCount();
 				judghname[G[1]][0] = 3;
-				judghcount[2]++;
 				life++;
 				seflag |= SE_HIT;
 				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
@@ -831,13 +871,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				viewjudge[3] = GetNowCount();
 				judghname[G[1]][0] = 4;
 				combo = 0;
-				judghcount[3]++;
 				life -= 20;
 			}
 		}
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
-			//キャッチノーツ(justのみ)
+			//キャッチノーツ(pjustのみ)
 			if (LaneTrack[i[0]] + 100 >= object[i[0]][0][objectN[i[0]]] && object[i[0]][1][objectN[i[0]]] == 2 && judgh <= 0) {
 				judghname[i[0]][0] = 1;
 				judghname[i[0]][1] = GetNowCount();
@@ -846,7 +885,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				objectN[i[0]]++;
 				combo++;
 				charahit = 0;
-				judghcount[0]++;
+				judge.pjust++;
+				judge.just++;
 				life += 2;
 				Dscore[0] += 2;
 				seflag |= SE_CATCH;
@@ -862,12 +902,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				gapa[0] += judgh;
 				gapa[2] += judgh * judgh;
 				gapa[1]++;
+				judge = AddHitJudge(judge, judgh);
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					viewjudge[0] = GetNowCount();
 					judghname[i[0]][0] = 1;
 					combo++;
-					judghcount[0]++;
 					life += 2;
 					Dscore[0] += 2;
 					seflag |= SE_ARROW;
@@ -879,7 +919,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[1] = GetNowCount();
 					judghname[i[0]][0] = 2;
 					combo++;
-					judghcount[1]++;
 					life++;
 					Dscore[0]++;
 					seflag |= SE_ARROW;
@@ -890,7 +929,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				else if (judgh <= 100 && judgh >= -100) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
-					judghcount[2]++;
 					life++;
 					seflag |= SE_ARROW;
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
@@ -901,7 +939,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[3] = GetNowCount();
 					judghname[i[0]][0] = 4;
 					combo = 0;
-					judghcount[3]++;
 					life -= 20;
 				}
 			}
@@ -913,12 +950,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				gapa[0] += judgh;
 				gapa[2] += judgh * judgh;
 				gapa[1]++;
+				judge = AddHitJudge(judge, judgh);
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					viewjudge[0] = GetNowCount();
 					judghname[i[0]][0] = 1;
 					combo++;
-					judghcount[0]++;
 					life += 2;
 					Dscore[0] += 2;
 					seflag |= SE_ARROW;
@@ -930,7 +967,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[1] = GetNowCount();
 					judghname[i[0]][0] = 2;
 					combo++;
-					judghcount[1]++;
 					life++;
 					Dscore[0]++;
 					seflag |= SE_ARROW;
@@ -941,7 +977,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				else if (judgh <= 100 && judgh >= -100) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
-					judghcount[2]++;
 					life++;
 					seflag |= SE_ARROW;
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
@@ -952,7 +987,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[3] = GetNowCount();
 					judghname[i[0]][0] = 4;
 					combo = 0;
-					judghcount[3]++;
 					life -= 20;
 				}
 			}
@@ -964,12 +998,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				gapa[0] += judgh;
 				gapa[2] += judgh * judgh;
 				gapa[1]++;
+				judge = AddHitJudge(judge, judgh);
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					viewjudge[0] = GetNowCount();
 					judghname[i[0]][0] = 1;
 					combo++;
-					judghcount[0]++;
 					life += 2;
 					Dscore[0] += 2;
 					seflag |= SE_ARROW;
@@ -981,7 +1015,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[1] = GetNowCount();
 					judghname[i[0]][0] = 2;
 					combo++;
-					judghcount[1]++;
 					life++;
 					Dscore[0]++;
 					seflag |= SE_ARROW;
@@ -992,7 +1025,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				else if (judgh <= 100 && judgh >= -100) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
-					judghcount[2]++;
 					life++;
 					seflag |= SE_ARROW;
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
@@ -1003,7 +1035,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[3] = GetNowCount();
 					judghname[i[0]][0] = 4;
 					combo = 0;
-					judghcount[3]++;
 					life -= 20;
 				}
 			}
@@ -1015,12 +1046,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				gapa[0] += judgh;
 				gapa[2] += judgh * judgh;
 				gapa[1]++;
+				judge = AddHitJudge(judge, judgh);
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					viewjudge[0] = GetNowCount();
 					judghname[i[0]][0] = 1;
 					combo++;
-					judghcount[0]++;
 					life += 2;
 					Dscore[0] += 2;
 					seflag |= SE_ARROW;
@@ -1032,7 +1063,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[1] = GetNowCount();
 					judghname[i[0]][0] = 2;
 					combo++;
-					judghcount[1]++;
 					life++;
 					Dscore[0]++;
 					seflag |= SE_ARROW;
@@ -1043,7 +1073,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				else if (judgh <= 100 && judgh >= -100) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
-					judghcount[2]++;
 					life++;
 					seflag |= SE_ARROW;
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
@@ -1054,7 +1083,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[3] = GetNowCount();
 					judghname[i[0]][0] = 4;
 					combo = 0;
-					judghcount[3]++;
 					life -= 20;
 				}
 			}
@@ -1066,7 +1094,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				viewjudge[3] = GetNowCount();
 				objectN[i[0]]++;
 				combo = 0;
-				judghcount[3]++;
+				judge.miss++;
 				life -= 20;
 				seflag |= SE_BOMB;
 			}
@@ -1077,7 +1105,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				viewjudge[0] = GetNowCount();
 				objectN[i[0]]++;
 				combo++;
-				judghcount[0]++;
+				judge.pjust++;
+				judge.just++;
 				life += 2;
 				Dscore[0] += 2;
 				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
@@ -1093,7 +1122,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				viewjudge[3] = GetNowCount();
 				combo = 0;
 				objectN[i[0]]++;
-				judghcount[3]++;
+				judge.miss++;
 				life -= 20;
 				judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
 			}
@@ -1140,9 +1169,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		//スコアバー表示
 		DrawGraph(0, 0, sbarimg, TRUE);
 		//スコア表示
-		//GetScore(score2, judghcount, notes, Mcombo);
-		score = GetScore2(score, judghcount, notes, Mcombo);
-		//ShowScore(score2, HighSrore);
+		score = GetScore3(score, judge, notes, Mcombo);
 		ShowScore2(score, HighSrore, Ntime);
 		//ライフ表示
 		life = maxs(life, 500);
@@ -1174,10 +1201,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		//スコアバー隠し表示
 		DrawGraph(0, 0, sbbarimg, TRUE);
 		//ランニングステータス表示
-		G[0] = GetRemainNotes(judghcount, notes);
-		//G[1] = CalPosScore(score2, G[0], notes, combo, Mcombo);
+		G[0] = GetRemainNotes2(judge, notes);
 		G[1] = CalPosScore2(score, G[0], notes, combo, Mcombo);
-		RunningStats(judghcount, G[1], HighSrore);
+		RunningStats2(judge, G[1], HighSrore);
 		//部分難易度表示
 		if (holdG >= 1) {
 			G[0] = ddif[0] * 20 / notzero(ddifG[1]) + 155;
@@ -1235,8 +1261,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		fps[61] = Ntime;
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
-		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.0f", 60000.0 / notzero(G[0]));
+		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.2f", 60000.0 / notzero(G[0]));
 		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
+		DrawFormatString(20, 120, Cr, L"DATA: %d", score.normal);
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
@@ -1247,12 +1274,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		if (drop) { DrawGraph(0, 0, dropimg, TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
-		if (GetRemainNotes(judghcount, notes) == 0 && AllNotesHitTime < 0) {
+		if (GetRemainNotes2(judge, notes) == 0 && AllNotesHitTime < 0) {
 			AllNotesHitTime = GetNowCount();
 		}
 		//オートでなく、ノーミス以上を出したら演出
 		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
-			ShowBonusEff(judghcount, AllNotesHitTime, BonusSnd, Bonusimg, filterimg, BigLightimg, SmallLightimg, flashimg, B_ringimg);
+			ShowBonusEff(judge, AllNotesHitTime, BonusSnd, Bonusimg, filterimg, BigLightimg, SmallLightimg, flashimg, B_ringimg);
 		}
 		//終了時間から5秒以上たって、曲が終了したら抜ける。
 		if (Etime + 5000 <= Ntime && (musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
@@ -1271,7 +1298,26 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	}
 	InitGraph();
 	if (AutoFlag == 1) { return 2; }
-	else { return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judghcount, score.sum, Mcombo, notes, gapa, Dscore[3]); }
+	else { return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judge, score.sum, Mcombo, notes, gapa, Dscore[3]); }
+}
+
+struct judge_box AddHitJudge(struct judge_box ans, int gup) {
+	if (-10 <= gup && gup <= 10) {
+		ans.pjust++;
+	}
+	if (-40 <= gup && gup <= 40) {
+		ans.just++;
+	}
+	else if (-70 <= gup && gup <= 70) {
+		ans.good++;
+	}
+	else if (-100 <= gup && gup <= 100) {
+		ans.safe++;
+	}
+	else if (gup <= 200) {
+		ans.miss++;
+	}
+	return ans;
 }
 
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {
@@ -1348,19 +1394,21 @@ int GetHighScore(wchar_t pas[255], int dif) {
 	return a[dif];
 }
 
-int GetRemainNotes(int *judghcount, int Notes) {
-	return Notes - judghcount[0] - judghcount[1] - judghcount[2] - judghcount[3];
+int GetRemainNotes2(struct judge_box judge, int Notes) {
+	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
 
-void GetScore(int *score, const int *judghcount, const int notes, const int MaxCombo) {
-	score[0] = (judghcount[0] * 90000 + judghcount[1] * 85000 + judghcount[2] * 45000) / notes;
-	score[1] = MaxCombo * 10000 / notes;
-}
-
-struct score_box GetScore2(struct score_box score, const int *judghcount, const int notes, const int MaxCombo) {
-	score.normal = (judghcount[0] * 90000 + judghcount[1] * 85000 + judghcount[2] * 45000) / notes;
+struct score_box GetScore3(struct score_box score, struct judge_box judge, const int notes,
+	const int MaxCombo) {
+	score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
 	score.combo = MaxCombo * 10000 / notes;
-	score.sum = score.normal + score.combo - score.loss;
+	if (score.normal + score.combo - score.loss == 100000) {
+		score.pjust = mins(100 - notes + judge.pjust, 0);
+	}
+	else {
+		score.pjust = 0;
+	}
+	score.sum = score.normal + score.combo - score.loss + score.pjust;
 	return score;
 }
 
@@ -1419,7 +1467,8 @@ void ShowCombo(int combo, int *pic) {
 	}
 }
 
-void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic, int filter, int biglight, int *smalllight, int flash, int ring) {
+void ShowBonusEff(struct judge_box judge, int EffStartTime, int *Snd, int *pic, int filter,
+	int biglight, int *smalllight, int flash, int ring) {
 #define NO_MISS 2
 #define FULL_COMBO 1
 #define PERFECT 0
@@ -1429,13 +1478,13 @@ void ShowBonusEff(int *judghcount, int EffStartTime, int *Snd, int *pic, int fil
 #define PIC_X 320
 #define PIC_Y 240
 	int Bonus = -1;
-	if (judghcount[3] > 0) {
+	if (judge.miss > 0) {
 		return;
 	}
-	else if (judghcount[2] > 0) {
+	else if (judge.safe > 0) {
 		Bonus = NO_MISS;
 	}
-	else if (judghcount[1] > 0) {
+	else if (judge.good > 0) {
 		Bonus = FULL_COMBO;
 	}
 	else {
@@ -1524,15 +1573,6 @@ void ShowJudge(const int *viewjudge, const int *judgeimg, const int posX, const 
 	return;
 }
 
-void ShowScore(int *score, int Hscore) {
-	if (score[0] <= Hscore) {
-		DrawFormatString(490, 20, GetColor(255, 255, 255), L"SCORE:%d", score[0] + score[1] - score[2]);
-	}
-	else {
-		DrawFormatString(490, 20, GetColor(255, 255, 0), L"SCORE:%d", score[0] + score[1] - score[2]);
-	}
-}
-
 void ShowScore2(struct score_box score, int Hscore, int time) {
 	unsigned int Cr = GetColor(255, 255, 255);
 	int s_score = score.sum;
@@ -1545,7 +1585,7 @@ void ShowScore2(struct score_box score, int Hscore, int time) {
 	DrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
 }
 
-void RunningStats(int *judghcount, int PosScore, int HighScore) {
+void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {
 #define x1 6
 #define y1 6
 #define x2 188
@@ -1558,13 +1598,13 @@ void RunningStats(int *judghcount, int PosScore, int HighScore) {
 	unsigned int CrD = GetColor(255, 63, 127);
 	unsigned int CrY = GetColor(255, 255, 0);
 	unsigned int CrC = GetColor(0, 255, 255);
-	if (judghcount[3] > 0) {
+	if (judge.miss > 0) {
 		DrawTriangle(x1, y1, x2, y2, x3, y3, CrG, TRUE);
 	}
-	else if (judghcount[2] > 0) {
+	else if (judge.safe > 0) {
 		DrawTriangle(x1, y1, x2, y2, x3, y3, CrD, TRUE);
 	}
-	else if (judghcount[1] > 0) {
+	else if (judge.good > 0) {
 		DrawTriangle(x1, y1, x2, y2, x3, y3, CrY, TRUE);
 	}
 	else {
