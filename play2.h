@@ -110,7 +110,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int viewTN = 0;
 	int Movie[14][999];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
 	short int MovieN = 0;
-	int object[3][5][999]; //[上,中,下]レーンの音符の[時間,種類,(使ってない),縦位置,横位置]
+	struct note_box note[3][999];
 	short int objectN[3] = { 0,0,0 }; //↑の番号
 	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
 	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
@@ -195,7 +195,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 		fread(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 		fread(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-		fread(&object, sizeof(int), 14985, fp);//ノーツデータ
+		fread(&note, sizeof(struct note_box), 2997, fp);//ノーツデータ
 		fread(&notes, sizeof(short int), 1, fp);//ノーツ数
 		fread(&Etime, sizeof(int), 1, fp);//曲終了時間
 		fread(&G, sizeof(int), 2, fp);
@@ -510,12 +510,14 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		//ghost back
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			G[i[0]] = objectN[i[0]] - 1;
-			while (object[i[0]][1][G[i[0]]] == 8 && G[i[0]] >= 1) G[i[0]]--;
+			while (note[i[0]][G[i[0]]].object == 8 && G[i[0]] >= 1) {
+				G[i[0]]--;
+			}
 		}
 		//get chara position
-		charaput = GetCharaPos(Ntime, object[0][0][G[0]], object[1][0][G[1]], object[2][0][G[2]],
-			object[0][1][G[0]], object[1][1][G[1]], object[2][1][G[2]], holdu, holdd, hitatk[0],
-			hitatk[1]);
+		charaput = GetCharaPos(Ntime, note[0][G[0]].hittime, note[1][G[1]].hittime,
+			note[2][G[2]].hittime, note[0][G[0]].object, note[1][G[1]].object, note[2][G[2]].object,
+			holdu, holdd, hitatk[0], hitatk[1]);
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
 		if (GetNowCount() - charahit > 250) G[5] = 0;
@@ -569,31 +571,37 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (holdl >= 1) { holdl++; }
 			if (holdr >= 1) { holdr++; }
 			//縦連前ボタン離し
-			if (object[0][1][objectN[0]] == 3 && object[0][0][objectN[0]] - Ntime <= 40 ||
-				object[1][1][objectN[1]] == 3 && object[1][0][objectN[1]] - Ntime <= 40 ||
-				object[2][1][objectN[2]] == 3 && object[2][0][objectN[2]] - Ntime <= 40) {
+			if (note[0][objectN[0]].object == 3 && note[0][objectN[0]].hittime - Ntime <= 40 ||
+				note[1][objectN[1]].object == 3 && note[1][objectN[1]].hittime - Ntime <= 40 ||
+				note[2][objectN[2]].object == 3 && note[2][objectN[2]].hittime - Ntime <= 40) {
 				holdu = 0;
 			}
-			if (object[0][1][objectN[0]] == 4 && object[0][0][objectN[0]] - Ntime <= 40 ||
-				object[1][1][objectN[1]] == 4 && object[1][0][objectN[1]] - Ntime <= 40 ||
-				object[2][1][objectN[2]] == 4 && object[2][0][objectN[2]] - Ntime <= 40) {
+			if (note[0][objectN[0]].object == 4 && note[0][objectN[0]].hittime - Ntime <= 40 ||
+				note[1][objectN[1]].object == 4 && note[1][objectN[1]].hittime - Ntime <= 40 ||
+				note[2][objectN[2]].object == 4 && note[2][objectN[2]].hittime - Ntime <= 40) {
 				holdd = 0;
 			}
-			if (object[0][1][objectN[0]] == 5 && object[0][0][objectN[0]] - Ntime <= 40 ||
-				object[1][1][objectN[1]] == 5 && object[1][0][objectN[1]] - Ntime <= 40 ||
-				object[2][1][objectN[2]] == 5 && object[2][0][objectN[2]] - Ntime <= 40) {
+			if (note[0][objectN[0]].object == 5 && note[0][objectN[0]].hittime - Ntime <= 40 ||
+				note[1][objectN[1]].object == 5 && note[1][objectN[1]].hittime - Ntime <= 40 ||
+				note[2][objectN[2]].object == 5 && note[2][objectN[2]].hittime - Ntime <= 40) {
 				holdl = 0;
 			}
-			if (object[0][1][objectN[0]] == 6 && object[0][0][objectN[0]] - Ntime <= 40 ||
-				object[1][1][objectN[1]] == 6 && object[1][0][objectN[1]] - Ntime <= 40 ||
-				object[2][1][objectN[2]] == 6 && object[2][0][objectN[2]] - Ntime <= 40) {
+			if (note[0][objectN[0]].object == 6 && note[0][objectN[0]].hittime - Ntime <= 40 ||
+				note[1][objectN[1]].object == 6 && note[1][objectN[1]].hittime - Ntime <= 40 ||
+				note[2][objectN[2]].object == 6 && note[2][objectN[2]].hittime - Ntime <= 40) {
 				holdr = 0;
 			}
 			//ヒットノーツ処理
 			G[0] = 0;
-			if (object[0][1][objectN[0]] == 1 && object[0][0][objectN[0]] - Ntime <= 8) { G[0]++; }
-			if (object[1][1][objectN[1]] == 1 && object[1][0][objectN[1]] - Ntime <= 8) { G[0]++; }
-			if (object[2][1][objectN[2]] == 1 && object[2][0][objectN[2]] - Ntime <= 8) { G[0]++; }
+			if (note[0][objectN[0]].object == 1 && note[0][objectN[0]].hittime - Ntime <= 8) {
+				G[0]++;
+			}
+			if (note[1][objectN[1]].object == 1 && note[1][objectN[1]].hittime - Ntime <= 8) {
+				G[0]++;
+			}
+			if (note[2][objectN[2]].object == 1 && note[2][objectN[2]].hittime - Ntime <= 8) {
+				G[0]++;
+			}
 			if (G[0] == 1) {
 				if (holdc == 0) {
 					holdc = 1;
@@ -625,9 +633,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			//左右アローノーツ処理
 			G[0] = 0;
-			if (object[0][1][objectN[0]] == 5 && object[0][0][objectN[0]] - Ntime <= 8 ||
-				object[1][1][objectN[1]] == 5 && object[1][0][objectN[1]] - Ntime <= 8 ||
-				object[2][1][objectN[2]] == 5 && object[2][0][objectN[2]] - Ntime <= 8) {
+			if (note[0][objectN[0]].object == 5 && note[0][objectN[0]].hittime - Ntime <= 8 ||
+				note[1][objectN[1]].object == 5 && note[1][objectN[1]].hittime - Ntime <= 8 ||
+				note[2][objectN[2]].object == 5 && note[2][objectN[2]].hittime - Ntime <= 8) {
 				if (G[0] == 0) {
 					holdu = 0;
 					holdd = 0;
@@ -637,9 +645,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[0] = 1;
 				holdl = 1;
 			}
-			if (object[0][1][objectN[0]] == 6 && object[0][0][objectN[0]] - Ntime <= 8 ||
-				object[1][1][objectN[1]] == 6 && object[1][0][objectN[1]] - Ntime <= 8 ||
-				object[2][1][objectN[2]] == 6 && object[2][0][objectN[2]] - Ntime <= 8) {
+			if (note[0][objectN[0]].object == 6 && note[0][objectN[0]].hittime - Ntime <= 8 ||
+				note[1][objectN[1]].object == 6 && note[1][objectN[1]].hittime - Ntime <= 8 ||
+				note[2][objectN[2]].object == 6 && note[2][objectN[2]].hittime - Ntime <= 8) {
 				if (G[0] == 0) {
 					holdu = 0;
 					holdd = 0;
@@ -650,19 +658,27 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				holdr = 1;
 			}
 			//ボムノーツ処理
-			if (object[0][1][objectN[0]] == 7 && object[0][0][objectN[0]] - Ntime <= 40) { holdu = 0; }
-			if (object[2][1][objectN[2]] == 7 && object[2][0][objectN[2]] - Ntime <= 40) { holdd = 0; }
-			if (object[1][1][objectN[1]] == 7 && object[1][0][objectN[1]] - Ntime <= 40) {
-				if (object[0][1][objectN[0]] == 7 && object[0][0][objectN[0]] - Ntime <= 40 ||
-					object[2][1][objectN[2]] == 2 && object[2][0][objectN[2]] - Ntime <= 40) {
-					holdu = 0; holdd++;
+			if (note[0][objectN[0]].object == 7 && note[0][objectN[0]].hittime - Ntime <= 40) {
+				holdu = 0;
+			}
+			if (note[2][objectN[2]].object == 7 && note[2][objectN[2]].hittime - Ntime <= 40) {
+				holdd = 0;
+			}
+			if (note[1][objectN[1]].object == 7 && note[1][objectN[1]].hittime - Ntime <= 40) {
+				if (note[0][objectN[0]].object == 7 && note[0][objectN[0]].hittime - Ntime <= 40 ||
+					note[2][objectN[2]].object == 2 && note[2][objectN[2]].hittime - Ntime <= 40) {
+					holdu = 0;
+					holdd++;
 				}
-				else { holdu++; holdd = 0; }
+				else {
+					holdu++;
+					holdd = 0;
+				}
 			}
 			//上下アローノーツ処理
-			if (object[0][1][objectN[0]] == 3 && object[0][0][objectN[0]] - Ntime <= 8 ||
-				object[1][1][objectN[1]] == 3 && object[1][0][objectN[1]] - Ntime <= 8 ||
-				object[2][1][objectN[2]] == 3 && object[2][0][objectN[2]] - Ntime <= 8) {
+			if (note[0][objectN[0]].object == 3 && note[0][objectN[0]].hittime - Ntime <= 8 ||
+				note[1][objectN[1]].object == 3 && note[1][objectN[1]].hittime - Ntime <= 8 ||
+				note[2][objectN[2]].object == 3 && note[2][objectN[2]].hittime - Ntime <= 8) {
 				if (G[0] == 0) {
 					holdu = 0;
 					holdd = 0;
@@ -671,11 +687,13 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				G[0] = 1;
 				holdu = 1;
-				if (object[0][1][objectN[0]] == 7 && object[0][0][objectN[0]] - Ntime <= 40) { holdd = 1; }
+				if (note[0][objectN[0]].object == 7 && note[0][objectN[0]].hittime - Ntime <= 40) {
+					holdd = 1;
+				}
 			}
-			if (object[0][1][objectN[0]] == 4 && object[0][0][objectN[0]] - Ntime <= 8 ||
-				object[1][1][objectN[1]] == 4 && object[1][0][objectN[1]] - Ntime <= 8 ||
-				object[2][1][objectN[2]] == 4 && object[2][0][objectN[2]] - Ntime <= 8) {
+			if (note[0][objectN[0]].object == 4 && note[0][objectN[0]].hittime - Ntime <= 8 ||
+				note[1][objectN[1]].object == 4 && note[1][objectN[1]].hittime - Ntime <= 8 ||
+				note[2][objectN[2]].object == 4 && note[2][objectN[2]].hittime - Ntime <= 8) {
 				if (G[0] == 0) {
 					holdu = 0;
 					holdd = 0;
@@ -684,23 +702,36 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				G[0] = 1;
 				holdd = 1;
-				if (object[2][1][objectN[2]] == 7 && object[2][0][objectN[2]] - Ntime <= 40) { holdu = 1; }
+				if (note[2][objectN[2]].hittime == 7 && note[2][objectN[2]].hittime - Ntime <= 40) {
+					holdu = 1;
+				}
 			}
 			//キャッチノーツ処理
-			if (object[0][1][objectN[0]] == 2 && object[0][0][objectN[0]] - Ntime <= 8) { holdu++; holdd = 0; }
-			if (object[1][1][objectN[1]] == 2 && object[1][0][objectN[1]] - Ntime <= 8) { holdu = 0; holdd = 0; }
-			if (object[2][1][objectN[2]] == 2 && object[2][0][objectN[2]] - Ntime <= 8) { holdu = 0; holdd++; }
+			if (note[0][objectN[0]].object == 2 && note[0][objectN[0]].hittime - Ntime <= 8) {
+				holdu++;
+				holdd = 0;
+			}
+			if (note[1][objectN[1]].object == 2 && note[1][objectN[1]].hittime - Ntime <= 8) {
+				holdu = 0;
+				holdd = 0;
+			}
+			if (note[2][objectN[2]].object == 2 && note[2][objectN[2]].hittime - Ntime <= 8) {
+				holdu = 0;
+				holdd++;
+			}
 			if (holdc > 10) { holdc = 0; }
 			if (holda > 10) { holda = 0; }
 			if (holdb > 10) { holdb = 0; }
 			if (holdu > 10 &&
-				object[0][1][objectN[0]] != 2 && object[1][1][objectN[1]] != 2 && object[2][1][objectN[2]] != 2 &&
-				object[0][1][objectN[0]] != 7 && object[1][1][objectN[1]] != 7 && object[2][1][objectN[2]] != 7) {
+				note[0][objectN[0]].object != 2 && note[1][objectN[1]].object != 2 &&
+				note[2][objectN[2]].object != 2 && note[0][objectN[0]].object != 7 &&
+				note[1][objectN[1]].object != 7 && note[2][objectN[2]].object != 7) {
 				holdu = 0;
 			}
 			if (holdd > 10 &&
-				object[0][1][objectN[0]] != 2 && object[1][1][objectN[1]] != 2 && object[2][1][objectN[2]] != 2 &&
-				object[0][1][objectN[0]] != 7 && object[1][1][objectN[1]] != 7 && object[2][1][objectN[2]] != 7) {
+				note[0][objectN[0]].object != 2 && note[1][objectN[1]].object != 2 &&
+				note[2][objectN[2]].object != 2 && note[0][objectN[0]].object != 7 &&
+				note[1][objectN[1]].object != 7 && note[2][objectN[2]].object != 7) {
 				holdd = 0;
 			}
 			if (holdl > 10) { holdl = 0; }
@@ -756,26 +787,42 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				speedN[i[0]]++;
 			}
 			G[0] = G[3] = G[4] = G[5] = 0;
-			for (i[1] = objectN[i[0]]; object[i[0]][0][i[1]] > 0; i[1]++) {
-				if (object[i[0]][0][i[1]] >= viewT[0][viewTN + G[0] + 1] &&
-					viewT[0][viewTN + G[0] + 1] >= 0) G[0]++;
-				if (object[i[0]][0][i[1]] - Ntime >= viewT[1][viewTN + G[0]]) continue;
-				if (object[i[0]][0][i[1]] - Ntime >= 3000 && 3000 >= viewT[1][viewTN + G[0]]) break;
-				if (object[i[0]][0][i[1]] >= lock[0][1][lockN[0] + G[3] + 1] &&
-					lock[0][1][lockN[0] + G[3] + 1] >= 0) G[3]++;
-				if (object[i[0]][0][i[1]] >= lock[1][1][lockN[1] + G[4] + 1] &&
-					lock[1][1][lockN[1] + G[4] + 1] >= 0) G[4]++;
-				while (object[i[0]][0][i[1]] >= speedt[i[0]][speedN[i[0]] + G[5] + 1][0] &&
-					speedt[i[0]][speedN[i[0]] + G[5] + 1][0] >= 0) G[5]++;
+			for (i[1] = objectN[i[0]]; note[i[0]][i[1]].hittime > 0; i[1]++) {
+				if (note[i[0]][i[1]].hittime >= viewT[0][viewTN + G[0] + 1] &&
+					viewT[0][viewTN + G[0] + 1] >= 0) {
+					G[0]++;
+				}
+				if (note[i[0]][i[1]].hittime - Ntime >= viewT[1][viewTN + G[0]]) {
+					continue;
+				}
+				if (note[i[0]][i[1]].hittime - Ntime >= 3000 && 3000 >= viewT[1][viewTN + G[0]]) {
+					break;
+				}
+				if (note[i[0]][i[1]].hittime >= lock[0][1][lockN[0] + G[3] + 1] &&
+					lock[0][1][lockN[0] + G[3] + 1] >= 0) {
+					G[3]++;
+				}
+				if (note[i[0]][i[1]].hittime >= lock[1][1][lockN[1] + G[4] + 1] &&
+					lock[1][1][lockN[1] + G[4] + 1] >= 0) {
+					G[4]++;
+				}
+				while (note[i[0]][i[1]].hittime >= speedt[i[0]][speedN[i[0]] + G[5] + 1][0] &&
+					speedt[i[0]][speedN[i[0]] + G[5] + 1][0] >= 0) {
+					G[5]++;
+				}
 				//縦位置
-				if (lock[1][0][lockN[1] + G[4]] == 1) G[2] = object[i[0]][3][i[1]];
-				else G[2] = Yline[i[0]];
+				if (lock[1][0][lockN[1] + G[4]] == 1) {
+					G[2] = note[i[0]][i[1]].ypos;
+				}
+				else {
+					G[2] = Yline[i[0]];
+				}
 				//横位置
-				G[1] = (speedt[i[0]][speedN[i[0]] + G[5]][1] * 20 * (object[i[0]][0][i[1]] - Ntime) + 5000) / 50;
+				G[1] = (speedt[i[0]][speedN[i[0]] + G[5]][1] * 20 * (note[i[0]][i[1]].hittime - Ntime) + 5000) / 50;
 				G[1] += 50;
-				if (lock[0][0][lockN[0] + G[3]] == 1) G[1] += object[i[0]][4][i[1]] - 150;
+				if (lock[0][0][lockN[0] + G[3]] == 1) G[1] += note[i[0]][i[1]].xpos - 150;
 				else G[1] += Xline[i[0]] - 150;
-				switch (object[i[0]][1][i[1]]) {
+				switch (note[i[0]][i[1]].object) {
 				case 1:
 					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
 					DrawGraph(G[1], G[2], noteimg.hitcircle, TRUE);
@@ -818,11 +865,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				hitatk[0] = 1;
 				hitatk[1] = Ntime;
 			}
-			G[1] = CheckNearHitNote(object[0][1][objectN[0]], object[1][1][objectN[1]],
-				object[2][1][objectN[2]], object[0][0][objectN[0]] - Ntime,
-				object[1][0][objectN[1]] - Ntime, object[2][0][objectN[2]] - Ntime);
+			G[1] = CheckNearHitNote(note[0][objectN[0]].object, note[1][objectN[1]].object,
+				note[2][objectN[2]].object, note[0][objectN[0]].hittime - Ntime,
+				note[1][objectN[1]].hittime - Ntime, note[2][objectN[2]].hittime - Ntime);
 			if (G[1] == -1) { break; }
-			G[2] = object[G[1]][0][objectN[G[1]]] - Ntime;
+			G[2] = note[G[1]][objectN[G[1]]].hittime - Ntime;
 			judghname[G[1]][1] = GetNowCount();
 			judghname[G[1]][2] = 1;
 			objectN[G[1]]++;
@@ -875,9 +922,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
+			judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
 			//キャッチノーツ(pjustのみ)
-			if (LaneTrack[i[0]] + 100 >= object[i[0]][0][objectN[i[0]]] && object[i[0]][1][objectN[i[0]]] == 2 && judgh <= 0) {
+			if (LaneTrack[i[0]] + 100 >= note[i[0]][objectN[i[0]]].hittime &&
+				note[i[0]][objectN[i[0]]].object == 2 && judgh <= 0) {
 				judghname[i[0]][0] = 1;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 2;
@@ -894,7 +942,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				score.time = Ntime;
 			}
 			//アローノーツ各種
-			else if ((holdu == 1) && object[i[0]][1][objectN[i[0]]] == 3 && judgh <= 125 && judgh >= -100) {
+			else if ((holdu == 1) && note[i[0]][objectN[i[0]]].object == 3 &&
+				judgh <= 125 && judgh >= -100) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 3;
 				objectN[i[0]]++;
@@ -942,7 +991,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life -= 20;
 				}
 			}
-			else if ((holdd == 1) && object[i[0]][1][objectN[i[0]]] == 4 && judgh <= 125 && judgh >= -100) {
+			else if ((holdd == 1) && note[i[0]][objectN[i[0]]].object == 4 &&
+				judgh <= 125 && judgh >= -100) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 4;
 				objectN[i[0]]++;
@@ -990,7 +1040,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life -= 20;
 				}
 			}
-			else if ((holdl == 1) && object[i[0]][1][objectN[i[0]]] == 5 && judgh <= 125 && judgh >= -100) {
+			else if ((holdl == 1) && note[i[0]][objectN[i[0]]].object == 5 &&
+			judgh <= 125 && judgh >= -100) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 5;
 				objectN[i[0]]++;
@@ -1038,7 +1089,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life -= 20;
 				}
 			}
-			else if ((holdr == 1) && object[i[0]][1][objectN[i[0]]] == 6 && judgh <= 125 && judgh >= -100) {
+			else if ((holdr == 1) && note[i[0]][objectN[i[0]]].object == 6 &&
+			judgh <= 125 && judgh >= -100) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 6;
 				objectN[i[0]]++;
@@ -1087,7 +1139,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 			}
 			//ボムノーツ
-			else if (i[0] == charaput && object[i[0]][1][objectN[i[0]]] == 7 && judgh <= 0 && judgh >= -40) {
+			else if (i[0] == charaput && note[i[0]][objectN[i[0]]].object == 7 &&
+			judgh <= 0 && judgh >= -40) {
 				judghname[i[0]][0] = 4;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 7;
@@ -1098,7 +1151,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				life -= 20;
 				seflag |= SE_BOMB;
 			}
-			else if (object[i[0]][1][objectN[i[0]]] == 7 && judgh < -40) {
+			else if (note[i[0]][objectN[i[0]]].object == 7 && judgh < -40) {
 				judghname[i[0]][0] = 1;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 7;
@@ -1113,9 +1166,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				score.time = Ntime;
 			}
 			//ゴーストノーツ
-			else if (object[i[0]][1][objectN[i[0]]] == 8 && judgh < 16) objectN[i[0]]++;
+			else if (note[i[0]][objectN[i[0]]].object == 8 && judgh < 16) objectN[i[0]]++;
 			//全ノーツslowmiss
-			else while (judgh <= -100 && judgh >= -100000 && object[i[0]][1][objectN[i[0]]] >= 1 && object[i[0]][1][objectN[i[0]]] <= 6) {
+			else while (judgh <= -100 && judgh >= -100000 &&
+			note[i[0]][objectN[i[0]]].object >= 1 && note[i[0]][objectN[i[0]]].object <= 6) {
 				judghname[i[0]][0] = 4;
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 0;
@@ -1124,7 +1178,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				objectN[i[0]]++;
 				judge.miss++;
 				life -= 20;
-				judgh = object[i[0]][0][objectN[i[0]]] - Ntime;
+				judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
 			}
 		}
 		if ((seflag & SE_HIT) != 0) {
@@ -1263,7 +1317,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.2f", 60000.0 / notzero(G[0]));
 		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
-		DrawFormatString(20, 120, Cr, L"DATA: %d", score.normal);
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い

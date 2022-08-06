@@ -1,4 +1,5 @@
 #include "playing.h"
+#include "playbox.h"
 
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
@@ -79,10 +80,10 @@ void RecordLoad2(int p, int n, int o) {
 	short int viewTN = 1;
 	int Movie[14][999];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
 	short int MovieN = 0;
-	int object[3][5][999]; //[上,中,下]レーンの音符の[時間,種類,(使ってない),縦位置,横位置]
-	object[0][3][0] = 300;
-	object[1][3][0] = 350;
-	object[2][3][0] = 400;
+	struct note_box note[3][999];//[上,中,下]レーンのノーツ[番号]
+	note[0][0].ypos = 300;
+	note[1][0].ypos = 350;
+	note[2][0].ypos = 400;
 	short int objectN[3] = { 0,0,0 }; //↑の番号
 	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
 	difkey[0][2] = 0;
@@ -615,77 +616,111 @@ void RecordLoad2(int p, int n, int o) {
 						G[0] = 0;
 						while (GT1[G[0]] != L'\0' && GT1[G[0]] != L',') G[0]++;
 						for (i[1] = 0; i[1] < G[0]; i[1]++) {
-							if (GT1[i[1]] != L'H' && GT1[i[1]] != L'C' && GT1[i[1]] != L'U' && GT1[i[1]] != L'D' && GT1[i[1]] != L'L' && GT1[i[1]] != L'R' && GT1[i[1]] != L'B' && GT1[i[1]] != L'G' && GT1[i[1]] != L'?' && GT1[i[1]] != L'!')continue;
-							object[i[0]][0][objectN[i[0]]] = timer[i[0]] + 240000 * i[1] / (bpmG * G[0]);
+							if (GT1[i[1]] != L'H' && GT1[i[1]] != L'C' && GT1[i[1]] != L'U' && GT1[i[1]] != L'D' &&
+								GT1[i[1]] != L'L' && GT1[i[1]] != L'R' && GT1[i[1]] != L'B' && GT1[i[1]] != L'G' &&
+								GT1[i[1]] != L'?' && GT1[i[1]] != L'!') {
+								continue;
+							}
+							note[i[0]][objectN[i[0]]].hittime = timer[i[0]] + 240000 * i[1] / (bpmG * G[0]);
 							switch (GT1[i[1]]) {
 							case L'H':
-								object[i[0]][1][objectN[i[0]]] = 1;
+								note[i[0]][objectN[i[0]]].object = 1;
 								break;
 							case L'C':
-								object[i[0]][1][objectN[i[0]]] = 2;
+								note[i[0]][objectN[i[0]]].object = 2;
 								break;
 							case L'U':
-								object[i[0]][1][objectN[i[0]]] = 3;
+								note[i[0]][objectN[i[0]]].object = 3;
 								break;
 							case L'D':
-								object[i[0]][1][objectN[i[0]]] = 4;
+								note[i[0]][objectN[i[0]]].object = 4;
 								break;
 							case L'L':
-								object[i[0]][1][objectN[i[0]]] = 5;
+								note[i[0]][objectN[i[0]]].object = 5;
 								break;
 							case L'R':
-								object[i[0]][1][objectN[i[0]]] = 6;
+								note[i[0]][objectN[i[0]]].object = 6;
 								break;
 							case L'B':
-								object[i[0]][1][objectN[i[0]]] = 7;
+								note[i[0]][objectN[i[0]]].object = 7;
 								break;
 							case L'G':
-								object[i[0]][1][objectN[i[0]]] = 8;
+								note[i[0]][objectN[i[0]]].object = 8;
 								break;
 							case L'?':
-								object[i[0]][1][objectN[i[0]]] = GetRand(4)+2;
-								if (object[i[0]][1][objectN[i[0]]] == 2) { object[i[0]][1][objectN[i[0]]] = 1; }
+								note[i[0]][objectN[i[0]]].object = GetRand(4) + 2;
+								if (note[i[0]][objectN[i[0]]].object == 2) {
+									note[i[0]][objectN[i[0]]].object = 1;
+								}
 								break;
 							case L'!':
-								object[i[0]][1][objectN[i[0]]] = GetRand(7)+1;
+								note[i[0]][objectN[i[0]]].object = GetRand(7) + 1;
 								break;
 							}
-							//object[][2][]を使いたかったらここに入れる(ゲーム内時間になる予定)
-							object[i[0]][3][objectN[i[0]]] = 50 * i[0] + 300;
-							object[i[0]][4][objectN[i[0]]] = 150;
+							//note[][].viewtimeを使いたかったらここに入れる
+							note[i[0]][objectN[i[0]]].ypos = 50 * i[0] + 300;
+							note[i[0]][objectN[i[0]]].xpos = 150;
 							//縦位置を計算する
-							while (Ymove[i[0]][YmoveN2[i[0]]][2] <= object[i[0]][0][objectN[i[0]]] && Ymove[i[0]][YmoveN2[i[0]]][2] >= 0)YmoveN2[i[0]]++;
-							if (Ymove[i[0]][YmoveN2[i[0]]][0] >= 0 && Ymove[i[0]][YmoveN2[i[0]]][0] <= object[i[0]][0][objectN[i[0]]] && Ymove[i[0]][YmoveN2[i[0]]][2] > object[i[0]][0][objectN[i[0]]]) {
+							while (Ymove[i[0]][YmoveN2[i[0]]][2] <= note[i[0]][objectN[i[0]]].hittime &&
+								Ymove[i[0]][YmoveN2[i[0]]][2] >= 0) {
+								YmoveN2[i[0]]++;
+							}
+							if (Ymove[i[0]][YmoveN2[i[0]]][0] >= 0 &&
+								Ymove[i[0]][YmoveN2[i[0]]][0] <= note[i[0]][objectN[i[0]]].hittime &&
+								Ymove[i[0]][YmoveN2[i[0]]][2] > note[i[0]][objectN[i[0]]].hittime) {
 								switch (Ymove[i[0]][YmoveN2[i[0]]][3]) {
 								case 1:
-									object[i[0]][3][objectN[i[0]]] = lins(Ymove[i[0]][YmoveN2[i[0]]][0], Ymove[i[0]][YmoveN2[i[0]] - 1][1], Ymove[i[0]][YmoveN2[i[0]]][2], Ymove[i[0]][YmoveN2[i[0]]][1], object[i[0]][0][objectN[i[0]]]);
+									note[i[0]][objectN[i[0]]].ypos = lins(Ymove[i[0]][YmoveN2[i[0]]][0],
+										Ymove[i[0]][YmoveN2[i[0]] - 1][1], Ymove[i[0]][YmoveN2[i[0]]][2],
+										Ymove[i[0]][YmoveN2[i[0]]][1], note[i[0]][objectN[i[0]]].hittime);
 									break;
 								case 2:
-									object[i[0]][3][objectN[i[0]]] = pals(Ymove[i[0]][YmoveN2[i[0]]][0], Ymove[i[0]][YmoveN2[i[0]] - 1][1], Ymove[i[0]][YmoveN2[i[0]]][2], Ymove[i[0]][YmoveN2[i[0]]][1], object[i[0]][0][objectN[i[0]]]);
+									note[i[0]][objectN[i[0]]].ypos = pals(Ymove[i[0]][YmoveN2[i[0]]][0],
+										Ymove[i[0]][YmoveN2[i[0]] - 1][1], Ymove[i[0]][YmoveN2[i[0]]][2],
+										Ymove[i[0]][YmoveN2[i[0]]][1], note[i[0]][objectN[i[0]]].hittime);
 									break;
 								case 3:
-									object[i[0]][3][objectN[i[0]]] = pals(Ymove[i[0]][YmoveN2[i[0]]][2], Ymove[i[0]][YmoveN2[i[0]]][1], Ymove[i[0]][YmoveN2[i[0]]][0], Ymove[i[0]][YmoveN2[i[0]] - 1][1], object[i[0]][0][objectN[i[0]]]);
+									note[i[0]][objectN[i[0]]].ypos = pals(Ymove[i[0]][YmoveN2[i[0]]][2],
+										Ymove[i[0]][YmoveN2[i[0]]][1], Ymove[i[0]][YmoveN2[i[0]]][0],
+										Ymove[i[0]][YmoveN2[i[0]] - 1][1], note[i[0]][objectN[i[0]]].hittime);
 									break;
 								}
 							}
-							else object[i[0]][3][objectN[i[0]]] = Ymove[i[0]][YmoveN2[i[0]] - 1][1];
+							else {
+								note[i[0]][objectN[i[0]]].ypos = Ymove[i[0]][YmoveN2[i[0]] - 1][1];
+							}
 							//横位置を計算する
-							while (Xmove[i[0]][XmoveN2[i[0]]][2] <= object[i[0]][0][objectN[i[0]]] && Xmove[i[0]][XmoveN2[i[0]]][2] >= 0) XmoveN2[i[0]]++;
-							if (Xmove[i[0]][XmoveN2[i[0]]][0] >= 0 && Xmove[i[0]][XmoveN2[i[0]]][0] <= object[i[0]][0][objectN[i[0]]] && Xmove[i[0]][XmoveN2[i[0]]][2] > object[i[0]][0][objectN[i[0]]]) {
+							while (Xmove[i[0]][XmoveN2[i[0]]][2] <= note[i[0]][objectN[i[0]]].hittime &&
+								Xmove[i[0]][XmoveN2[i[0]]][2] >= 0) {
+								XmoveN2[i[0]]++;
+							}
+							if (Xmove[i[0]][XmoveN2[i[0]]][0] >= 0 &&
+								Xmove[i[0]][XmoveN2[i[0]]][0] <= note[i[0]][objectN[i[0]]].hittime &&
+								Xmove[i[0]][XmoveN2[i[0]]][2] > note[i[0]][objectN[i[0]]].hittime) {
 								switch (Xmove[i[0]][XmoveN2[i[0]]][3]) {
 								case 1:
-									object[i[0]][4][objectN[i[0]]] = lins(Xmove[i[0]][XmoveN2[i[0]]][0], Xmove[i[0]][XmoveN2[i[0]] - 1][1], Xmove[i[0]][XmoveN2[i[0]]][2], Xmove[i[0]][XmoveN2[i[0]]][1], object[i[0]][0][objectN[i[0]]]);
+									note[i[0]][objectN[i[0]]].xpos = lins(Xmove[i[0]][XmoveN2[i[0]]][0],
+										Xmove[i[0]][XmoveN2[i[0]] - 1][1], Xmove[i[0]][XmoveN2[i[0]]][2],
+										Xmove[i[0]][XmoveN2[i[0]]][1], note[i[0]][objectN[i[0]]].hittime);
 									break;
 								case 2:
-									object[i[0]][4][objectN[i[0]]] = pals(Xmove[i[0]][XmoveN2[i[0]]][0], Xmove[i[0]][XmoveN2[i[0]] - 1][1], Xmove[i[0]][XmoveN2[i[0]]][2], Xmove[i[0]][XmoveN2[i[0]]][1], object[i[0]][0][objectN[i[0]]]);
+									note[i[0]][objectN[i[0]]].xpos = pals(Xmove[i[0]][XmoveN2[i[0]]][0],
+										Xmove[i[0]][XmoveN2[i[0]] - 1][1], Xmove[i[0]][XmoveN2[i[0]]][2],
+										Xmove[i[0]][XmoveN2[i[0]]][1], note[i[0]][objectN[i[0]]].hittime);
 									break;
 								case 3:
-									object[i[0]][4][objectN[i[0]]] = pals(Xmove[i[0]][XmoveN2[i[0]]][2], Xmove[i[0]][XmoveN2[i[0]]][1], Xmove[i[0]][XmoveN2[i[0]]][0], Xmove[i[0]][XmoveN2[i[0]] - 1][1], object[i[0]][0][objectN[i[0]]]);
+									note[i[0]][objectN[i[0]]].xpos = pals(Xmove[i[0]][XmoveN2[i[0]]][2],
+										Xmove[i[0]][XmoveN2[i[0]]][1], Xmove[i[0]][XmoveN2[i[0]]][0],
+										Xmove[i[0]][XmoveN2[i[0]] - 1][1], note[i[0]][objectN[i[0]]].hittime);
 									break;
 								}
 							}
-							else object[i[0]][4][objectN[i[0]]] = Xmove[i[0]][XmoveN2[i[0]] - 1][1];
-							if (object[i[0]][1][objectN[i[0]]] != 8) notes++;
+							else {
+								note[i[0]][objectN[i[0]]].xpos = Xmove[i[0]][XmoveN2[i[0]] - 1][1];
+							}
+							if (note[i[0]][objectN[i[0]]].object != 8) {
+								notes++;
+							}
 							objectN[i[0]]++;
 						}
 						if (i[0] <= 1) FileRead_gets(GT1, 256, songdata);
@@ -698,10 +733,10 @@ void RecordLoad2(int p, int n, int o) {
 	FileRead_close(songdata);
 	//譜面の最後にgoustを置く
 	for (i[0] = 0; i[0] <= 2; i[0]++) {
-		object[i[0]][0][objectN[i[0]]] = timer[i[0]];
-		object[i[0]][0][objectN[i[0]] + 1] = -1;
-		object[i[0]][1][objectN[i[0]]] = 8;
-		object[i[0]][3][objectN[i[0]]] = 1000;
+		note[i[0]][objectN[i[0]]].hittime = timer[i[0]];
+		note[i[0]][objectN[i[0]] + 1].hittime = -1;
+		note[i[0]][objectN[i[0]]].object = 8;
+		note[i[0]][objectN[i[0]]].ypos = 1000;
 	}
 	lock[0][0][lockN[0]] = 1;
 	lock[0][1][lockN[0]] = -1;
@@ -729,34 +764,57 @@ void RecordLoad2(int p, int n, int o) {
 	difkey[7][3] = (Etime - noteoff) / 25 * 2;
 	if (difkey[7][3] < 10000)difkey[7][3] = 10000;
 	//ノーツがなくなるまで繰り返す
-	while (object[0][0][objectN[0]] >= 0 || object[1][0][objectN[1]] >= 0 || object[2][0][objectN[2]] >= 0) {
+	while (note[0][objectN[0]].hittime >= 0 || note[1][objectN[1]].hittime >= 0 ||
+		note[2][objectN[2]].hittime >= 0) {
 		//GHOSTノーツをスキップ
-		for (i[0] = 0; i[0] < 3; i[0]++) while (object[i[0]][1][objectN[i[0]]] == 8 && object[i[0]][0][objectN[i[0]]] >= 0) objectN[i[0]]++;
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			while (note[i[0]][objectN[i[0]]].object == 8 && note[i[0]][objectN[i[0]]].hittime >= 0) {
+				objectN[i[0]]++;
+			}
+		}
 		G[0] = -1;
 		//一番早いノーツを探してG[0]に代入
-		for (i[0] = 0; i[0] < 3; i[0]++) if (object[i[0]][0][objectN[i[0]]] >= 0) {
-			G[0] = i[0];
-			break;
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			if (note[i[0]][objectN[i[0]]].hittime >= 0) {
+				G[0] = i[0];
+				break;
+			}
 		}
 		//無かったらブレーク
 		if (G[0] == -1) break;
 		//一番早いノーツを探してG[0]に代入
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] > object[i[0]][0][objectN[i[0]]] && object[i[0]][0][objectN[i[0]]] >= 0) { G[0] = i[0]; }
-			else if (G[0] != i[0] && object[G[0]][0][objectN[G[0]]] == object[i[0]][0][objectN[i[0]]] && object[G[0]][1][objectN[G[0]]] == 2 && object[i[0]][1][objectN[i[0]]] != 2 && object[i[0]][0][objectN[i[0]]] >= 0) { G[0] = i[0]; }
+			if (G[0] != i[0] && note[G[0]][objectN[G[0]]].hittime > note[i[0]][objectN[i[0]]].hittime &&
+				note[i[0]][objectN[i[0]]].hittime >= 0) {
+				G[0] = i[0];
+			}
+			else if (G[0] != i[0] &&
+				note[G[0]][objectN[G[0]]].hittime == note[i[0]][objectN[i[0]]].hittime &&
+				note[G[0]][objectN[G[0]]].object == 2 && note[i[0]][objectN[i[0]]].object != 2 &&
+				note[i[0]][objectN[i[0]]].hittime >= 0) {
+				G[0] = i[0];
+			}
 		}
 		//ddifの計算
-		while (object[G[0]][0][objectN[G[0]]] >= (Etime - noteoff) / 25 * ddifG[0] + noteoff) {
+		while (note[G[0]][objectN[G[0]]].hittime >= (Etime - noteoff) / 25 * ddifG[0] + noteoff) {
 			if (difkey[5][3] < 49) {
-				for (i[0] = 0; i[0] < difkey[5][3]; i[0]++) if (difkey[i[0]][1] > (Etime - noteoff) / 25 * ddifG[0] - difkey[7][3] + noteoff)ddif[ddifG[0] - 1] += difkey[i[0]][2];
+				for (i[0] = 0; i[0] < difkey[5][3]; i[0]++) {
+					if (difkey[i[0]][1] > (Etime - noteoff) / 25 * ddifG[0] - difkey[7][3] + noteoff) {
+						ddif[ddifG[0] - 1] += difkey[i[0]][2];
+					}
+				}
 			}
 			else {
-				for (i[0] = 0; i[0] <= 49; i[0]++)if (difkey[i[0]][1] > (Etime - noteoff) / 25 * ddifG[0] - difkey[7][3] + noteoff) ddif[ddifG[0] - 1] += difkey[i[0]][2];
+				for (i[0] = 0; i[0] <= 49; i[0]++) {
+					if (difkey[i[0]][1] > (Etime - noteoff) / 25 * ddifG[0] - difkey[7][3] + noteoff) {
+						ddif[ddifG[0] - 1] += difkey[i[0]][2];
+					}
+				}
 			}
 			ddifG[0]++;
 		}
-		difkey[difkey[1][3]][0] = object[G[0]][1][objectN[G[0]]];
-		difkey[difkey[1][3]][1] = object[G[0]][0][objectN[G[0]]];
+		difkey[difkey[1][3]][0] = note[G[0]][objectN[G[0]]].object;
+		difkey[difkey[1][3]][1] = note[G[0]][objectN[G[0]]].hittime;
 		//hitノーツ補間
 		if (difkey[difkey[1][3]][0] == 1) {
 			if (difkey[difkey[2][3]][0] == 1 && difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
@@ -853,15 +911,27 @@ void RecordLoad2(int p, int n, int o) {
 				if (difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6)difkey[difkey[1][3]][2] *= 1.2;
 			}
 		}
-		for (i[0] = 0; i[0] < 3; i[0]++) if (object[G[0]][1][objectN[G[0]]] >= 3 && object[G[0]][1][objectN[G[0]]] <= 6 && G[0] != i[0] && object[G[0]][1][objectN[G[0]]] == object[i[0]][1][objectN[i[0]]] && object[G[0]][0][objectN[G[0]]] + 5 >= object[i[0]][0][objectN[i[0]]]) objectN[i[0]]++;
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			if (note[G[0]][objectN[G[0]]].object >= 3 && note[G[0]][objectN[G[0]]].object <= 6 &&
+				G[0] != i[0] && note[G[0]][objectN[G[0]]].object == note[i[0]][objectN[i[0]]].object &&
+				note[G[0]][objectN[G[0]]].hittime + 5 >= note[i[0]][objectN[i[0]]].hittime) {
+				objectN[i[0]]++;
+			}
+		}
 		objectN[G[0]]++;
 		difkey[5][3]++;
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= difkey[0][3]; i[0]++) {
-			if (difkey[i[0]][2] < 0) break;
-			if (difkey[i[0]][1] > difkey[difkey[1][3]][1] - difkey[7][3])G[0] += difkey[i[0]][2];
+			if (difkey[i[0]][2] < 0) {
+				break;
+			}
+			if (difkey[i[0]][1] > difkey[difkey[1][3]][1] - difkey[7][3]) {
+				G[0] += difkey[i[0]][2];
+			}
 		}
-		if (difkey[4][3] < G[0])difkey[4][3] = G[0];
+		if (difkey[4][3] < G[0]) {
+			difkey[4][3] = G[0];
+		}
 		for (i[0] = 1; i[0] < 4; i[0]++) {
 			difkey[i[0]][3]++;
 			if (difkey[i[0]][3] > difkey[0][3])difkey[i[0]][3] = 0;
@@ -875,8 +945,14 @@ void RecordLoad2(int p, int n, int o) {
 	if (ddifG[1] <= 0)ddifG[1] = 1;
 	difkey[4][3] /= 50;
 	ddif[ddifG[0] - 1] = 0;
-	for (i[0] = 0; i[0] < difkey[5][3]; i[0]++) if (difkey[i[0]][1] > Etime - difkey[7][3])ddif[ddifG[0] - 1] += difkey[i[0]][2];
-	for (i[0] = ddifG[0] - 1; i[0] <= 24; i[0]++)ddif[i[0]] = ddif[ddifG[0] - 1];
+	for (i[0] = 0; i[0] < difkey[5][3]; i[0]++) {
+		if (difkey[i[0]][1] > Etime - difkey[7][3]) {
+			ddif[ddifG[0] - 1] += difkey[i[0]][2];
+		}
+	}
+	for (i[0] = ddifG[0] - 1; i[0] <= 24; i[0]++) {
+		ddif[i[0]] = ddif[ddifG[0] - 1];
+	}
 	difkey[6][3] = ddif[ddifG[0] - 1] / 50;
 	//NEEDYOULv.1->379, Co-op TaylorLv.9.9->40595, "測定"/31.8+47.1="Lv"*100
 	difkey[4][3] = lins(379, 100, 40595, 990, difkey[4][3]);
@@ -903,7 +979,7 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 	fwrite(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 	fwrite(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-	fwrite(&object, sizeof(int), 14985, fp);//ノーツデータ
+	fwrite(&note, sizeof(struct note_box), 2997, fp);//ノーツデータ
 	fwrite(&notes, sizeof(short int), 1, fp);//ノーツ数
 	fwrite(&Etime, sizeof(int), 1, fp);//曲終了時間
 	G[0] = difkey[4][3];//最高難易度

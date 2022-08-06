@@ -21,6 +21,13 @@ struct note_img {
 	int bomb = LoadGraph(L"picture/bomb.png");
 	int goust = LoadGraph(L"picture/goust.png");
 };
+struct note_box {
+	int hittime = -1;
+	int viewtime = -1;
+	int object = -1;
+	int xpos = -1;
+	int ypos = -1;
+};
 struct score_box {
 	int normal = 0;
 	int combo = 0;
