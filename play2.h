@@ -20,8 +20,8 @@
 
 struct judge_box AddHitJudge(struct judge_box ans, int gup);
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
-int GetCharaPos(int time, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd, int keyu,
-	int keyd, int hitatp, int hitatt);
+int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
+	struct note_box lownote, int keyu, int keyd, int hitatp, int hitatt);
 int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes2(struct judge_box judge, int Notes);
 struct score_box GetScore3(struct score_box score, struct judge_box judge, const int notes,
@@ -515,9 +515,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		//get chara position
-		charaput = GetCharaPos(Ntime, note[0][G[0]].hittime, note[1][G[1]].hittime,
-			note[2][G[2]].hittime, note[0][G[0]].object, note[1][G[1]].object, note[2][G[2]].object,
-			holdu, holdd, hitatk[0], hitatk[1]);
+		charaput = GetCharaPos(Ntime, note[0][G[0]], note[1][G[1]], note[2][G[2]], holdu, holdd,
+			hitatk[0], hitatk[1]);
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
 		if (GetNowCount() - charahit > 250) G[5] = 0;
@@ -1391,20 +1390,14 @@ int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {
 	return ans;
 }
 
-int GetCharaPos(int time, int obtu, int obtm, int obtd, int obnu, int obnm, int obnd, int keyu,
-	int keyd, int hitatp, int hitatt) {
+int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
+	struct note_box lownote, int keyu, int keyd, int hitatp, int hitatt) {
 	int avoid = 0;
-	int object[3][2];
-	object[0][0] = obtu;
-	object[1][0] = obtm;
-	object[2][0] = obtd;
-	object[0][1] = obnu;
-	object[1][1] = obnm;
-	object[2][1] = obnd;
+	struct note_box note[3] = { highnote, midnote, lownote };
 	int ans = CHARA_POS_MID;
 	//キャッチノーツ避け
 	for (int i = 0; i < 3; i++) {
-		if (object[i][1] == 2 && object[i][0] <= time + 16) {
+		if (note[i].object == 2 && note[i].hittime <= time + 16) {
 			avoid = 1;
 			ans = CHARA_POS_MID;
 		}
