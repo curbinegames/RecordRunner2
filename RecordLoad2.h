@@ -641,6 +641,7 @@ void RecordLoad2(int p, int n, int o) {
 						camera[cameraN].mode = 0;
 						break;
 					}
+					cameraN++;
 				}
 				else if (strands(GT1, RecordCode[28])) {
 					strmods(GT1, 9);
@@ -654,15 +655,16 @@ void RecordLoad2(int p, int n, int o) {
 					strnex(GT1);
 					switch (GT1[0]) {
 					case L'a':
-						camera[cameraN].mode = 1;
-						break;
-					case L'd':
 						camera[cameraN].mode = 2;
 						break;
+					case L'd':
+						camera[cameraN].mode = 3;
+						break;
 					default:
-						camera[cameraN].mode = 0;
+						camera[cameraN].mode = 1;
 						break;
 					}
+					cameraN++;
 				}
 				//èIÇÌÇË
 				else if (strands(GT1, RecordCode[11])) { break; }

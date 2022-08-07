@@ -960,21 +960,23 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
 			//キャッチノーツ(pjustのみ)
 			if (LaneTrack[i[0]] + 100 >= note[i[0]][objectN[i[0]]].hittime &&
-				note[i[0]][objectN[i[0]]].object == 2 && judgh <= 0) {
-				judghname[i[0]][0] = 1;
-				judghname[i[0]][1] = GetNowCount();
-				judghname[i[0]][2] = 2;
-				viewjudge[0] = GetNowCount();
-				objectN[i[0]]++;
-				combo++;
-				charahit = 0;
-				judge.pjust++;
-				judge.just++;
-				life += 2;
-				Dscore[0] += 2;
-				seflag |= SE_CATCH;
-				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
-				score.time = Ntime;
+				note[i[0]][objectN[i[0]]].object == 2) {
+				while (note[i[0]][objectN[i[0]]].hittime - Ntime <= 0) {
+					judghname[i[0]][0] = 1;
+					judghname[i[0]][1] = GetNowCount();
+					judghname[i[0]][2] = 2;
+					viewjudge[0] = GetNowCount();
+					objectN[i[0]]++;
+					combo++;
+					charahit = 0;
+					judge.pjust++;
+					judge.just++;
+					life += 2;
+					Dscore[0] += 2;
+					seflag |= SE_CATCH;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
+				}
 			}
 			//アローノーツ各種
 			else if ((holdu == 1) && note[i[0]][objectN[i[0]]].object == 3 &&
@@ -1186,19 +1188,21 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				life -= 20;
 				seflag |= SE_BOMB;
 			}
-			else if (note[i[0]][objectN[i[0]]].object == 7 && judgh < -40) {
-				judghname[i[0]][0] = 1;
-				judghname[i[0]][1] = GetNowCount();
-				judghname[i[0]][2] = 7;
-				viewjudge[0] = GetNowCount();
-				objectN[i[0]]++;
-				combo++;
-				judge.pjust++;
-				judge.just++;
-				life += 2;
-				Dscore[0] += 2;
-				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
-				score.time = Ntime;
+			else if (note[i[0]][objectN[i[0]]].object == 7) {
+				while (note[i[0]][objectN[i[0]]].hittime - Ntime < -40) {
+					judghname[i[0]][0] = 1;
+					judghname[i[0]][1] = GetNowCount();
+					judghname[i[0]][2] = 7;
+					viewjudge[0] = GetNowCount();
+					objectN[i[0]]++;
+					combo++;
+					judge.pjust++;
+					judge.just++;
+					life += 2;
+					Dscore[0] += 2;
+					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.time = Ntime;
+				}
 			}
 			//ゴーストノーツ
 			else if (note[i[0]][objectN[i[0]]].object == 8 && judgh < 16) objectN[i[0]]++;
@@ -1357,7 +1361,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.2f", 60000.0 / notzero(G[0]));
 		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
-		DrawFormatString(20, 120, Cr, L"DATA: %d", cameraN);
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
