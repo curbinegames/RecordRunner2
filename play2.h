@@ -27,7 +27,6 @@ int GetRemainNotes2(struct judge_box judge, int Notes);
 struct score_box GetScore3(struct score_box score, struct judge_box judge, const int notes,
 	const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
-int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo);
 void ShowCombo(int combo, int *pic);
 void ShowBonusEff(struct judge_box judge, int EffStartTime, int *Snd, int *pic, int filter, int biglight,
@@ -80,6 +79,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int life = 500;
 	int gap[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//gap = 判定ずれ
 	int gapa[3] = { 0,0,0 };//gapa = 判定ずれ[合計, 個数, 2乗の合計]
+	struct camera_box camera[255];
+	short int cameraN = 0;
+	int nowcamera[2] = { 320,240 };
 	struct judge_box judge;
 	struct score_box score;
 	int score2[4] = { 0,0,0,0 }; //[通常スコア(90000), コンボスコア(10000), 減点, 合計]
@@ -205,6 +207,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 		fread(&DifFN, 255, 1, fp);//難易度バー名
 		fread(&Movie, sizeof(int), 13986, fp);//動画データ
+		fread(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 	}
 	fclose(fp);
 	strcats(DataFN, fileN);
@@ -362,6 +365,20 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	while (1) {
 		ClearDrawScreen();
 		GetHitKeyStateAll(key);
+		//カメラ移動
+		while (0 <= camera[cameraN].endtime && camera[cameraN].endtime < Ntime) {
+			cameraN++;
+		}
+		if (camera[cameraN].starttime <= Ntime && Ntime <= camera[cameraN].endtime) {
+			nowcamera[0] = movecal(camera[cameraN].mode, camera[cameraN].starttime,
+				camera[cameraN - 1].xpos, camera[cameraN].endtime, camera[cameraN].xpos, Ntime);
+			nowcamera[1] = movecal(camera[cameraN].mode, camera[cameraN].starttime,
+				camera[cameraN - 1].ypos, camera[cameraN].endtime, camera[cameraN].ypos, Ntime);
+		}
+		else {
+			nowcamera[0] = camera[cameraN - 1].xpos;
+			nowcamera[1] = camera[cameraN - 1].ypos;
+		}
 		//背景表示
 		if (system[3] != 0) {
 			//背景の横位置計算
@@ -369,14 +386,26 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				speedN[3]++;
 			}
 			bgp[0] -= speedt[3][speedN[3]][1];
-			if (bgp[0] < -700) bgp[0] += 640;
-			else if (bgp[0] > 0) bgp[0] -= 640;
+			if (bgp[0] < -700 + nowcamera[0] / 5) {
+				bgp[0] += 640;
+			}
+			else if (bgp[0] > 0 + nowcamera[0] / 5) {
+				bgp[0] -= 640;
+			}
 			bgp[1] -= speedt[3][speedN[3]][1] * 5;
-			if (bgp[1] < -700) bgp[1] += 640;
-			else if (bgp[1] > 0) bgp[1] -= 640;
+			if (bgp[1] < -700 + nowcamera[0]) {
+				bgp[1] += 640;
+			}
+			else if (bgp[1] > 0 + nowcamera[0]) {
+				bgp[1] -= 640;
+			}
 			bgp[2] -= speedt[4][speedN[4]][1] * 5;
-			if (bgp[2] < -700) bgp[2] += 640;
-			else if (bgp[2] > 0) bgp[2] -= 640;
+			if (bgp[2] < -700 + nowcamera[0]) {
+				bgp[2] += 640;
+			}
+			else if (bgp[2] > 0 + nowcamera[0]) {
+				bgp[2] -= 640;
+			}
 			//背景の縦位置計算
 			for (i[0] = 3; i[0] <= 4; i[0]++) {
 				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
@@ -397,11 +426,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				while (G[0] < 700) {
 					switch (i[0]) {
 					case(0):
-						DrawGraph(G[0], Yline[3] / 5 - 160, backskyimg, TRUE);
+						DrawGraph(G[0] + nowcamera[0] / 5, Yline[3] / 5 - 160 + nowcamera[1] / 5, backskyimg, TRUE);
 						break;
 					case(1):
-						DrawGraph(G[0], Yline[3] - 400, backgroundimg, TRUE);
-						DrawGraph(G[0], Yline[4] - 400, backwaterimg, TRUE);
+						DrawGraph(G[0] + nowcamera[0], Yline[3] - 400 + nowcamera[1], backgroundimg, TRUE);
+						DrawGraph(G[0] + nowcamera[0], Yline[4] - 400 + nowcamera[1], backwaterimg, TRUE);
 						break;
 					}
 					G[0] += 640;
@@ -450,10 +479,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Movie[13][MovieN + G[0]], Ntime);
 				G[2] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]],
-					Movie[5][MovieN + G[0]], Ntime);
+					Movie[5][MovieN + G[0]], Ntime) + nowcamera[0];
 				G[3] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]],
-					Movie[7][MovieN + G[0]], Ntime);
+					Movie[7][MovieN + G[0]], Ntime) + nowcamera[1];
 				G[4] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]],
 					Movie[9][MovieN + G[0]] / 100.0, Ntime);
@@ -474,9 +503,13 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			carrowN++;
 		}
 		if (carrow[0][carrowN] == 1) {
-			DrawGraph(Xline[charaput] - 4, Yline[charaput] - 4, charaguideimg, TRUE);
+			DrawGraph(Xline[charaput] - 4 + nowcamera[0], Yline[charaput] - 4 + nowcamera[1],
+				charaguideimg, TRUE);
 		}
-		else { DrawTurnGraph(Xline[charaput] - 56, Yline[charaput] - 4, charaguideimg, TRUE); }
+		else {
+			DrawTurnGraph(Xline[charaput] - 56 + nowcamera[0], Yline[charaput] - 4 + nowcamera[1],
+				charaguideimg, TRUE);
+		}
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			//縦移動
@@ -499,7 +532,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				Xmove[i[0]][XmoveN[i[0]]][3] == 4) {
 				Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
 			}
-			DrawGraph(Xline[i[0]], Yline[i[0]], judghimg, TRUE);
+			DrawGraph(Xline[i[0]] + nowcamera[0], Yline[i[0]] + nowcamera[1], judghimg, TRUE);
 		}
 		//キャラグラ変換
 		for (i[0] = 0; i[0] < 3; i[0]++)while (Ntime >= chamo[i[0]][chamoN[i[0]] + 1][1] &&
@@ -523,22 +556,22 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		else G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit);
 		if (charahit > 0) {
 			if (carrow[0][carrowN] == 1) {
-				DrawGraph(Xline[charaput] + G[5] - 160, G[4] - 75,
+				DrawGraph(Xline[charaput] + G[5] - 160 + nowcamera[0], G[4] - 75 + nowcamera[1],
 					charaimg[maxs(mins((GetNowCount() - charahit) / 125 + 18, 18), 23)], TRUE);
 			}
 			else {
-				DrawTurnGraph(Xline[charaput] - G[5] + 30, G[4] - 75,
+				DrawTurnGraph(Xline[charaput] - G[5] + 30 + nowcamera[0], G[4] - 75 + nowcamera[1],
 					charaimg[maxs(mins((GetNowCount() - charahit) / 125 + 18, 18), 23)], TRUE);
 			}
 		}
 		else {
 			if (carrow[0][carrowN] == 1) {
-				DrawGraph(Xline[charaput] - 160, G[4] - 75,
+				DrawGraph(Xline[charaput] - 160 + nowcamera[0], G[4] - 75 + nowcamera[1],
 					charaimg[Ntime * int(bpm) / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
 					TRUE);
 			}
 			else {
-				DrawTurnGraph(Xline[0] + 30, G[4] - 75,
+				DrawTurnGraph(Xline[0] + 30 + nowcamera[0], G[4] - 75 + nowcamera[1],
 					charaimg[Ntime * int(bpm) / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
 					TRUE);
 			}
@@ -821,6 +854,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[1] += 50;
 				if (lock[0][0][lockN[0] + G[3]] == 1) G[1] += note[i[0]][i[1]].xpos - 150;
 				else G[1] += Xline[i[0]] - 150;
+				//カメラ補正
+				G[1] += nowcamera[0];
+				G[2] += nowcamera[1];
 				switch (note[i[0]][i[1]].object) {
 				case 1:
 					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
@@ -1201,11 +1237,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		Mcombo = mins(Mcombo, combo);
 		//ヒットエフェクト表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] >= 1 && judghname[i[0]][0] <= 3 && judghname[i[0]][2] >= 1 && judghname[i[0]][2] <= 6) {
-				DrawGraph(Xline[i[0]] - 10, Yline[i[0]] - 10, effimg[judghname[i[0]][2] - 1][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5], TRUE);
+			if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] >= 1 &&
+				judghname[i[0]][0] <= 3 && judghname[i[0]][2] >= 1 && judghname[i[0]][2] <= 6) {
+				DrawGraph(Xline[i[0]] - 10 + nowcamera[0], Yline[i[0]] - 10 + nowcamera[1],
+					effimg[judghname[i[0]][2] - 1][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5],
+					TRUE);
 			}
-			else if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] == 4 && judghname[i[0]][2] == 7) {
-				DrawGraph(Xline[i[0]] - 10, Yline[i[0]] - 10, effimg[6][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5], TRUE);
+			else if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] == 4 &&
+				judghname[i[0]][2] == 7) {
+				DrawGraph(Xline[i[0]] - 10 + nowcamera[0], Yline[i[0]] - 10 + nowcamera[1],
+					effimg[6][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5], TRUE);
 			}
 			if (judghname[i[0]][1] + 750 < GetNowCount()) {
 				judghname[i[0]][0] = 0;
@@ -1316,6 +1357,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.2f", 60000.0 / notzero(G[0]));
 		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
+		DrawFormatString(20, 120, Cr, L"DATA: %d", cameraN);
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
@@ -1475,11 +1517,6 @@ void Getxxxpng(wchar_t *str, int num) {
 	str++;
 	*str = '\0';
 	return;
-}
-
-int CalPosScore(int *score, int RemainNotes, int Notes, int combo, int MaxCombo) {
-	int PosCombo = mins(combo + RemainNotes, MaxCombo);
-	return score[0] + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
 }
 
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {

@@ -3,6 +3,15 @@
 
 #define PLAY_BOX 1
 
+struct camera_box {
+	int starttime = -1;
+	int endtime = -1;
+	int xpos = -1;
+	int ypos = -1;
+	double zoom = -1;
+	int rot = -1;
+	int mode = -1;
+};
 struct judge_box {
 	int pjust = 0;
 	int just = 0;

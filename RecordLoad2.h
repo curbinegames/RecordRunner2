@@ -80,6 +80,15 @@ void RecordLoad2(int p, int n, int o) {
 	short int viewTN = 1;
 	int Movie[14][999];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
 	short int MovieN = 0;
+	struct camera_box camera[255];
+	camera[0].starttime = 0;
+	camera[0].endtime = 0;
+	camera[0].xpos = 0;
+	camera[0].ypos = 0;
+	camera[0].zoom = 1;
+	camera[0].rot = 0;
+	camera[0].mode = 0;
+	short int cameraN = 1; //↑の番号
 	struct note_box note[3][999];//[上,中,下]レーンのノーツ[番号]
 	note[0][0].ypos = 300;
 	note[1][0].ypos = 350;
@@ -129,12 +138,12 @@ void RecordLoad2(int p, int n, int o) {
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	wchar_t ST1[] = L"record/";
 	wchar_t ST2[] = L"list.txt";
-	wchar_t RecordCode[27][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
+	wchar_t RecordCode[29][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
 		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
 		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
 		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
 		L"#VIEW:",L"#E.TITLE:",L"#CARROW",L"#DIFBAR:",L"#DIV",
-		L"#ROT",L"#MOVIE:"
+		L"#ROT",L"#MOVIE:",L"#CAMERA:",L"#CAMMOVE:"
 	};
 	FILE *fp;
 	/*
@@ -606,6 +615,55 @@ void RecordLoad2(int p, int n, int o) {
 					strnex(GT1);
 					MovieN++;
 				}
+				//カメラ移動
+				else if (strands(GT1, RecordCode[27])) {
+					strmods(GT1, 8);
+					camera[cameraN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
+					strnex(GT1);
+					camera[cameraN].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
+					strnex(GT1);
+					camera[cameraN].xpos = strsans2(GT1) * 50;
+					strnex(GT1);
+					camera[cameraN].ypos = strsans2(GT1) * 50;
+					strnex(GT1);
+					camera[cameraN].zoom = strsans2(GT1);
+					strnex(GT1);
+					camera[cameraN].rot = strsans2(GT1);
+					strnex(GT1);
+					switch (GT1[0]) {
+					case L'a':
+						camera[cameraN].mode = 1;
+						break;
+					case L'd':
+						camera[cameraN].mode = 2;
+						break;
+					default:
+						camera[cameraN].mode = 0;
+						break;
+					}
+				}
+				else if (strands(GT1, RecordCode[28])) {
+					strmods(GT1, 9);
+					camera[cameraN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
+					strnex(GT1);
+					camera[cameraN].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
+					strnex(GT1);
+					camera[cameraN].xpos = strsans2(GT1) * 50;
+					strnex(GT1);
+					camera[cameraN].ypos = strsans2(GT1) * 50;
+					strnex(GT1);
+					switch (GT1[0]) {
+					case L'a':
+						camera[cameraN].mode = 1;
+						break;
+					case L'd':
+						camera[cameraN].mode = 2;
+						break;
+					default:
+						camera[cameraN].mode = 0;
+						break;
+					}
+				}
 				//終わり
 				else if (strands(GT1, RecordCode[11])) { break; }
 				//空白
@@ -989,6 +1047,7 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 	fwrite(&DifFN, 255, 1, fp);//難易度バー名
 	fwrite(&Movie, sizeof(int), 13986, fp);//動画データ
+	fwrite(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 	fclose(fp);
 	return;
 }
