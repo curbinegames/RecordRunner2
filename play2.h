@@ -84,7 +84,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int nowcamera[2] = { 320,240 };
 	struct judge_box judge;
 	struct score_box score;
-	int score2[4] = { 0,0,0,0 }; //[通常スコア(90000), コンボスコア(10000), 減点, 合計]
+	struct scrool_box scrool[99];
+	int scroolN = 0;
 	int HighSrore; //ハイスコア
 	int viewjudge[4] = { 0,0,0,0 };
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
@@ -208,6 +209,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&DifFN, 255, 1, fp);//難易度バー名
 		fread(&Movie, sizeof(int), 13986, fp);//動画データ
 		fread(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
+		fread(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 	}
 	fclose(fp);
 	strcats(DataFN, fileN);
@@ -380,26 +382,29 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			nowcamera[1] = camera[cameraN - 1].ypos;
 		}
 		//背景表示
+		while (0 <= scrool[scroolN + 1].starttime && scrool[scroolN + 1].starttime <= Ntime) {
+			scroolN++;
+		}
 		if (system[3] != 0) {
 			//背景の横位置計算
 			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) {
 				speedN[3]++;
 			}
-			bgp[0] -= speedt[3][speedN[3]][1];
+			bgp[0] -= speedt[3][speedN[3]][1] * scrool[scroolN].speed;
 			if (bgp[0] < -700 + nowcamera[0] / 5) {
 				bgp[0] += 640;
 			}
 			else if (bgp[0] > 0 + nowcamera[0] / 5) {
 				bgp[0] -= 640;
 			}
-			bgp[1] -= speedt[3][speedN[3]][1] * 5;
+			bgp[1] -= speedt[3][speedN[3]][1] * 5 * scrool[scroolN].speed;
 			if (bgp[1] < -700 + nowcamera[0]) {
 				bgp[1] += 640;
 			}
 			else if (bgp[1] > 0 + nowcamera[0]) {
 				bgp[1] -= 640;
 			}
-			bgp[2] -= speedt[4][speedN[4]][1] * 5;
+			bgp[2] -= speedt[4][speedN[4]][1] * 5 * scrool[scroolN].speed;
 			if (bgp[2] < -700 + nowcamera[0]) {
 				bgp[2] += 640;
 			}
@@ -820,16 +825,20 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			G[0] = G[3] = G[4] = G[5] = 0;
 			for (i[1] = objectN[i[0]]; note[i[0]][i[1]].hittime > 0; i[1]++) {
+				//表示/非表示ナンバーを進める
 				if (note[i[0]][i[1]].hittime >= viewT[0][viewTN + G[0] + 1] &&
 					viewT[0][viewTN + G[0] + 1] >= 0) {
 					G[0]++;
 				}
+				//非表示スキップ
 				if (note[i[0]][i[1]].hittime - Ntime >= viewT[1][viewTN + G[0]]) {
 					continue;
 				}
+				//3秒ブレーク
 				if (note[i[0]][i[1]].hittime - Ntime >= 3000 && 3000 >= viewT[1][viewTN + G[0]]) {
 					break;
 				}
+				//ノーツロックナンバーを進める
 				if (note[i[0]][i[1]].hittime >= lock[0][1][lockN[0] + G[3] + 1] &&
 					lock[0][1][lockN[0] + G[3] + 1] >= 0) {
 					G[3]++;
@@ -838,6 +847,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					lock[1][1][lockN[1] + G[4] + 1] >= 0) {
 					G[4]++;
 				}
+				//スピードナンバーを進める
 				while (note[i[0]][i[1]].hittime >= speedt[i[0]][speedN[i[0]] + G[5] + 1][0] &&
 					speedt[i[0]][speedN[i[0]] + G[5] + 1][0] >= 0) {
 					G[5]++;
@@ -850,7 +860,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					G[2] = Yline[i[0]];
 				}
 				//横位置
-				G[1] = (speedt[i[0]][speedN[i[0]] + G[5]][1] * 20 * (note[i[0]][i[1]].hittime - Ntime) + 5000) / 50;
+				G[1] = (speedt[i[0]][speedN[i[0]] + G[5]][1] * 20 * (note[i[0]][i[1]].viewtime - (scrool[scroolN].speed * Ntime + scrool[scroolN].basetime)) + 5000) / 50;
 				G[1] += 50;
 				if (lock[0][0][lockN[0] + G[3]] == 1) G[1] += note[i[0]][i[1]].xpos - 150;
 				else G[1] += Xline[i[0]] - 150;
@@ -1260,7 +1270,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//ライフが0未満の時、1毎に減点スコアを20増やす。
 		if (life < 0) {
-			score2[2] = maxs(score2[2] - life * 20, score2[0] + score2[1]);
 			score.loss = maxs(score.loss - life * 20, score.normal + score.combo);
 			life = 0;
 		}

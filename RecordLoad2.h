@@ -89,6 +89,11 @@ void RecordLoad2(int p, int n, int o) {
 	camera[0].rot = 0;
 	camera[0].mode = 0;
 	short int cameraN = 1; //↑の番号
+	struct scrool_box scrool[99];
+	scrool[0].starttime = 0;
+	scrool[0].basetime = 0;
+	scrool[0].speed = 1;
+	short int scroolN = 1;
 	struct note_box note[3][999];//[上,中,下]レーンのノーツ[番号]
 	note[0][0].ypos = 300;
 	note[1][0].ypos = 350;
@@ -138,12 +143,12 @@ void RecordLoad2(int p, int n, int o) {
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	wchar_t ST1[] = L"record/";
 	wchar_t ST2[] = L"list.txt";
-	wchar_t RecordCode[29][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
+	wchar_t RecordCode[30][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
 		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
 		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
 		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
 		L"#VIEW:",L"#E.TITLE:",L"#CARROW",L"#DIFBAR:",L"#DIV",
-		L"#ROT",L"#MOVIE:",L"#CAMERA:",L"#CAMMOVE:"
+		L"#ROT",L"#MOVIE:",L"#CAMERA:",L"#CAMMOVE:",L"#SCROOL:"
 	};
 	FILE *fp;
 	/*
@@ -666,6 +671,16 @@ void RecordLoad2(int p, int n, int o) {
 					}
 					cameraN++;
 				}
+				//スクロール
+				else if (strands(GT1, RecordCode[29])) {
+					strmods(GT1, 8);
+					scrool[scroolN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
+					strnex(GT1);
+					scrool[scroolN].speed = strsans2(GT1);
+					G[0]= scrool[scroolN - 1].speed * scrool[scroolN].starttime + scrool[scroolN - 1].basetime;
+					scrool[scroolN].basetime = G[0] - scrool[scroolN].speed * scrool[scroolN].starttime;
+					scroolN++;
+				}
 				//終わり
 				else if (strands(GT1, RecordCode[11])) { break; }
 				//空白
@@ -717,7 +732,13 @@ void RecordLoad2(int p, int n, int o) {
 								note[i[0]][objectN[i[0]]].object = GetRand(7) + 1;
 								break;
 							}
-							//note[][].viewtimeを使いたかったらここに入れる
+							//viewtimeを計算する
+							G[1] = 0;
+							while (0 <= scrool[G[1] + 1].starttime &&
+								scrool[G[1] + 1].starttime <= note[i[0]][objectN[i[0]]].hittime) {
+								G[1]++;
+							}
+							note[i[0]][objectN[i[0]]].viewtime = note[i[0]][objectN[i[0]]].hittime * scrool[G[1]].speed + scrool[G[1]].basetime;
 							note[i[0]][objectN[i[0]]].ypos = 50 * i[0] + 300;
 							note[i[0]][objectN[i[0]]].xpos = 150;
 							//縦位置を計算する
@@ -1050,6 +1071,7 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&DifFN, 255, 1, fp);//難易度バー名
 	fwrite(&Movie, sizeof(int), 13986, fp);//動画データ
 	fwrite(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
+	fwrite(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 	fclose(fp);
 	return;
 }

@@ -46,5 +46,10 @@ struct score_box {
 	int before = 0;
 	int time = 0;
 };
+struct scrool_box {
+	int starttime = -1;
+	double basetime = -1;
+	double speed = -1;
+};
 
 #endif // PLAY_BOX
