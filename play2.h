@@ -27,6 +27,7 @@ int GetRemainNotes2(struct judge_box judge, int Notes);
 struct score_box GetScore3(struct score_box score, struct judge_box judge, const int notes,
 	const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
+void Getxxxwav(wchar_t *str, int num);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo);
 void ShowCombo(int combo, int *pic);
 void ShowBonusEff(struct judge_box judge, int EffStartTime, int *Snd, int *pic, int filter, int biglight,
@@ -96,6 +97,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	double GD[5];
 	int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
 	short int itemN = 0; //↑の番号
+	int Sitem[99]; //サウンドアイテムのアドレス、DrawGraphで呼べる。
+	short int SitemN = 0; //↑の番号
 	int chamo[3][99][2]; //キャラの[0:上,1:中,2:下]の[0:グラフィック,1:切り替え時間]
 	short int chamoN[3] = { 0,0,0 }; //↑の番号
 	int fall[99][2]; //落ち物背景の[0:番号,1:時間]
@@ -314,13 +317,21 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	LoadDivGraph(L"picture/righteff.png", 5, 5, 1, 50, 50, effimg[5]);
 	LoadDivGraph(L"picture/bombeff.png", 5, 5, 1, 50, 50, effimg[6]);
 	LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, ComboFontimg);
-	for (i[0] = 0; i[0] < 1000; i[0]++) {
+	for (i[0] = 0; i[0] < 100; i[0]++) {
 		strcopy(dataE, GT1, 1);
 		stradds(GT1, L'/');
 		Getxxxpng(&GT2[0], i[0]);
 		strcats(GT1, GT2);
 		item[i[0]] = LoadGraph(GT1);
 		if (item[i[0]] == -1) { break; }
+	}
+	for (i[0] = 1; i[0] < 100; i[0]++) {
+		strcopy(dataE, GT1, 1);
+		stradds(GT1, L'/');
+		Getxxxwav(&GT2[0], i[0]);
+		strcats(GT1, GT2);
+		Sitem[i[0] - 1] = LoadSoundMem(GT1);
+		if (Sitem[i[0] - 1] == -1) { break; }
 	}
 	if (system[5]) {
 		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
@@ -864,13 +875,15 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[1] += 50;
 				if (lock[0][0][lockN[0] + G[3]] == 1) G[1] += note[i[0]][i[1]].xpos - 150;
 				else G[1] += Xline[i[0]] - 150;
+				//色
+				G[3] = note[i[0]][i[1]].color;
 				//カメラ補正
 				G[1] += nowcamera[0];
 				G[2] += nowcamera[1];
 				switch (note[i[0]][i[1]].object) {
 				case 1:
 					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
-					DrawGraph(G[1], G[2], noteimg.hitcircle, TRUE);
+					DrawGraph(G[1], G[2], noteimg.hitcircle[G[3]], TRUE);
 					break;
 				case 2:
 					DrawGraph(G[1], G[2], noteimg.catchi, TRUE);
@@ -917,7 +930,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			G[2] = note[G[1]][objectN[G[1]]].hittime - Ntime;
 			judghname[G[1]][1] = GetNowCount();
 			judghname[G[1]][2] = 1;
-			objectN[G[1]]++;
 			gap[gapa[1] % 30] = G[2];
 			gapa[0] += G[2];
 			gapa[2] += G[2] * G[2];
@@ -934,7 +946,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				combo++;
 				life += 2;
 				Dscore[0] += 2;
-				seflag |= SE_HIT;
+				if (note[G[1]][objectN[G[1]]].sound == 0) {
+					seflag |= SE_HIT;
+				}
+				else {
+					PlaySoundMem(Sitem[note[G[1]][objectN[G[1]]].sound - 1], DX_PLAYTYPE_BACK);
+				}
 				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 				score.time = Ntime;
 			}
@@ -945,7 +962,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				combo++;
 				life++;
 				Dscore[0]++;
-				seflag |= SE_HIT;
+				if (note[G[1]][objectN[G[1]]].sound == 0) {
+					seflag |= SE_HIT;
+				}
+				else {
+					PlaySoundMem(Sitem[note[G[1]][objectN[G[1]]].sound - 1], DX_PLAYTYPE_BACK);
+				}
 				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 				score.time = Ntime;
 			}
@@ -954,7 +976,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				viewjudge[2] = GetNowCount();
 				judghname[G[1]][0] = 3;
 				life++;
-				seflag |= SE_HIT;
+				if (note[G[1]][objectN[G[1]]].sound == 0) {
+					seflag |= SE_HIT;
+				}
+				else {
+					PlaySoundMem(Sitem[note[G[1]][objectN[G[1]]].sound - 1], DX_PLAYTYPE_BACK);
+				}
 				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 				score.time = Ntime;
 			}
@@ -965,6 +992,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				combo = 0;
 				life -= 20;
 			}
+			objectN[G[1]]++;
 		}
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
@@ -976,16 +1004,21 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judghname[i[0]][1] = GetNowCount();
 					judghname[i[0]][2] = 2;
 					viewjudge[0] = GetNowCount();
-					objectN[i[0]]++;
 					combo++;
 					charahit = 0;
 					judge.pjust++;
 					judge.just++;
 					life += 2;
 					Dscore[0] += 2;
-					seflag |= SE_CATCH;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_CATCH;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
+					objectN[i[0]]++;
 				}
 			}
 			//アローノーツ各種
@@ -993,7 +1026,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judgh <= 125 && judgh >= -100) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 3;
-				objectN[i[0]]++;
 				gap[gapa[1] % 30] = judgh;
 				gapa[0] += judgh;
 				gapa[2] += judgh * judgh;
@@ -1006,7 +1038,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life += 2;
 					Dscore[0] += 2;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1017,7 +1054,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life++;
 					Dscore[0]++;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1026,7 +1068,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					life++;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1037,12 +1084,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo = 0;
 					life -= 20;
 				}
+				objectN[i[0]]++;
 			}
 			else if ((holdd == 1) && note[i[0]][objectN[i[0]]].object == 4 &&
 				judgh <= 125 && judgh >= -100) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 4;
-				objectN[i[0]]++;
 				gap[gapa[1] % 30] = judgh;
 				gapa[0] += judgh;
 				gapa[2] += judgh * judgh;
@@ -1055,7 +1102,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life += 2;
 					Dscore[0] += 2;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1066,7 +1118,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life++;
 					Dscore[0]++;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1075,7 +1132,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					life++;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1086,12 +1148,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo = 0;
 					life -= 20;
 				}
+				objectN[i[0]]++;
 			}
 			else if ((holdl == 1) && note[i[0]][objectN[i[0]]].object == 5 &&
 			judgh <= 125 && judgh >= -100) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 5;
-				objectN[i[0]]++;
 				gap[gapa[1] % 30] = judgh;
 				gapa[0] += judgh;
 				gapa[2] += judgh * judgh;
@@ -1104,7 +1166,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life += 2;
 					Dscore[0] += 2;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1115,7 +1182,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life++;
 					Dscore[0]++;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1124,7 +1196,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					life++;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1135,12 +1212,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo = 0;
 					life -= 20;
 				}
+				objectN[i[0]]++;
 			}
 			else if ((holdr == 1) && note[i[0]][objectN[i[0]]].object == 6 &&
 			judgh <= 125 && judgh >= -100) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 6;
-				objectN[i[0]]++;
 				gap[gapa[1] % 30] = judgh;
 				gapa[0] += judgh;
 				gapa[2] += judgh * judgh;
@@ -1153,7 +1230,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life += 2;
 					Dscore[0] += 2;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1164,7 +1246,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life++;
 					Dscore[0]++;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1173,7 +1260,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					life++;
-					seflag |= SE_ARROW;
+					if (note[i[0]][objectN[i[0]]].sound == 0) {
+						seflag |= SE_ARROW;
+					}
+					else {
+						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+					}
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1184,6 +1276,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo = 0;
 					life -= 20;
 				}
+				objectN[i[0]]++;
 			}
 			//ボムノーツ
 			else if (i[0] == charaput && note[i[0]][objectN[i[0]]].object == 7 &&
@@ -1192,11 +1285,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judghname[i[0]][1] = GetNowCount();
 				judghname[i[0]][2] = 7;
 				viewjudge[3] = GetNowCount();
-				objectN[i[0]]++;
 				combo = 0;
 				judge.miss++;
 				life -= 20;
-				seflag |= SE_BOMB;
+				if (note[i[0]][objectN[i[0]]].sound == 0) {
+					seflag |= SE_BOMB;
+				}
+				else {
+					PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
+				}
+				objectN[i[0]]++;
 			}
 			else if (note[i[0]][objectN[i[0]]].object == 7) {
 				while (note[i[0]][objectN[i[0]]].hittime - Ntime < -40) {
@@ -1368,7 +1466,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		fps[61] = Ntime;
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
-		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.2f", 60000.0 / notzero(G[0]));
+		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
 		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
@@ -1526,6 +1624,25 @@ void Getxxxpng(wchar_t *str, int num) {
 	*str = 'n';
 	str++;
 	*str = 'g';
+	str++;
+	*str = '\0';
+	return;
+}
+
+void Getxxxwav(wchar_t *str, int num) {
+	*str = num / 100 + '0';
+	str++;
+	*str = num / 10 % 10 + '0';
+	str++;
+	*str = num % 10 + '0';
+	str++;
+	*str = '.';
+	str++;
+	*str = 'w';
+	str++;
+	*str = 'a';
+	str++;
+	*str = 'v';
 	str++;
 	*str = '\0';
 	return;

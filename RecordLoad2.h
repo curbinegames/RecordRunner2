@@ -1,6 +1,8 @@
 #include "playing.h"
 #include "playbox.h"
 
+int IsNoteCode(wchar_t c);
+
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
@@ -89,6 +91,7 @@ void RecordLoad2(int p, int n, int o) {
 	camera[0].rot = 0;
 	camera[0].mode = 0;
 	short int cameraN = 1; //↑の番号
+	struct custom_note_box customnote[9];
 	struct scrool_box scrool[99];
 	scrool[0].starttime = 0;
 	scrool[0].basetime = 0;
@@ -143,13 +146,15 @@ void RecordLoad2(int p, int n, int o) {
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	wchar_t ST1[] = L"record/";
 	wchar_t ST2[] = L"list.txt";
-	wchar_t RecordCode[30][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
+	wchar_t RecordCode[31][13] = { L"#MUSIC:",L"#BPM:",L"#NOTEOFFSET:",L"#SKY:",L"#FIELD:",
 		L"#WATER:",L"#TITLE:",L"#LEVEL:",L"#ITEM:",L"#FALL:",
 		L"#MAP:",L"#END",L"#SPEED",L"#CHARA",L"#MOVE",
 		L"#XMOV",L"#GMOVE",L"#XLOCK",L"#YLOCK",L"#FALL",
 		L"#VIEW:",L"#E.TITLE:",L"#CARROW",L"#DIFBAR:",L"#DIV",
-		L"#ROT",L"#MOVIE:",L"#CAMERA:",L"#CAMMOVE:",L"#SCROOL:"
+		L"#ROT",L"#MOVIE:",L"#CAMERA:",L"#CAMMOVE:",L"#SCROOL:",
+		L"#CUSTOM:"
 	};
+	wchar_t CustomCode[3][13] = {L"NOTE=", L"SOUND=", L"COLOR="};
 	FILE *fp;
 	/*
 	songT = FileRead_open(L"song.txt");
@@ -681,6 +686,30 @@ void RecordLoad2(int p, int n, int o) {
 					scrool[scroolN].basetime = G[0] - scrool[scroolN].speed * scrool[scroolN].starttime;
 					scroolN++;
 				}
+				//カスタムノーツセット
+				else if (strands(GT1, RecordCode[30])) {
+					strmods(GT1, 8);
+					G[0] = strsans2(GT1) - 1;
+					strnex(GT1);
+					while (GT1[0] != L'\0') {
+						if (strands(GT1, CustomCode[0])) {
+							strmods(GT1, 5);
+							customnote[G[0]].note = GT1[0];
+						}
+						else if (strands(GT1, CustomCode[1])) {
+							strmods(GT1, 6);
+							customnote[G[0]].sound = strsans2(GT1);
+						}
+						else if (strands(GT1, CustomCode[2])) {
+							strmods(GT1, 6);
+							customnote[G[0]].color = strsans2(GT1);
+						}
+						else {
+							break;
+						}
+						strnex(GT1);
+					}
+				}
 				//終わり
 				else if (strands(GT1, RecordCode[11])) { break; }
 				//空白
@@ -691,13 +720,17 @@ void RecordLoad2(int p, int n, int o) {
 						G[0] = 0;
 						while (GT1[G[0]] != L'\0' && GT1[G[0]] != L',') G[0]++;
 						for (i[1] = 0; i[1] < G[0]; i[1]++) {
-							if (GT1[i[1]] != L'H' && GT1[i[1]] != L'C' && GT1[i[1]] != L'U' && GT1[i[1]] != L'D' &&
-								GT1[i[1]] != L'L' && GT1[i[1]] != L'R' && GT1[i[1]] != L'B' && GT1[i[1]] != L'G' &&
-								GT1[i[1]] != L'?' && GT1[i[1]] != L'!') {
+							if (IsNoteCode(GT1[i[1]]) == 0) {
 								continue;
 							}
 							note[i[0]][objectN[i[0]]].hittime = timer[i[0]] + 240000 * i[1] / (bpmG * G[0]);
-							switch (GT1[i[1]]) {
+							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
+								G[2] = (int)(customnote[GT1[i[1]] - L'1'].note);
+							}
+							else {
+								G[2] = (int)(GT1[i[1]]);
+							}
+							switch ((wchar_t)(G[2])) {
 							case L'H':
 								note[i[0]][objectN[i[0]]].object = 1;
 								break;
@@ -749,23 +782,10 @@ void RecordLoad2(int p, int n, int o) {
 							if (Ymove[i[0]][YmoveN2[i[0]]][0] >= 0 &&
 								Ymove[i[0]][YmoveN2[i[0]]][0] <= note[i[0]][objectN[i[0]]].hittime &&
 								Ymove[i[0]][YmoveN2[i[0]]][2] > note[i[0]][objectN[i[0]]].hittime) {
-								switch (Ymove[i[0]][YmoveN2[i[0]]][3]) {
-								case 1:
-									note[i[0]][objectN[i[0]]].ypos = lins(Ymove[i[0]][YmoveN2[i[0]]][0],
-										Ymove[i[0]][YmoveN2[i[0]] - 1][1], Ymove[i[0]][YmoveN2[i[0]]][2],
-										Ymove[i[0]][YmoveN2[i[0]]][1], note[i[0]][objectN[i[0]]].hittime);
-									break;
-								case 2:
-									note[i[0]][objectN[i[0]]].ypos = pals(Ymove[i[0]][YmoveN2[i[0]]][0],
-										Ymove[i[0]][YmoveN2[i[0]] - 1][1], Ymove[i[0]][YmoveN2[i[0]]][2],
-										Ymove[i[0]][YmoveN2[i[0]]][1], note[i[0]][objectN[i[0]]].hittime);
-									break;
-								case 3:
-									note[i[0]][objectN[i[0]]].ypos = pals(Ymove[i[0]][YmoveN2[i[0]]][2],
-										Ymove[i[0]][YmoveN2[i[0]]][1], Ymove[i[0]][YmoveN2[i[0]]][0],
-										Ymove[i[0]][YmoveN2[i[0]] - 1][1], note[i[0]][objectN[i[0]]].hittime);
-									break;
-								}
+								note[i[0]][objectN[i[0]]].ypos = movecal(Ymove[i[0]][YmoveN2[i[0]]][3],
+									Ymove[i[0]][YmoveN2[i[0]]][0], Ymove[i[0]][YmoveN2[i[0]] - 1][1],
+									Ymove[i[0]][YmoveN2[i[0]]][2], Ymove[i[0]][YmoveN2[i[0]]][1],
+									note[i[0]][objectN[i[0]]].hittime);
 							}
 							else {
 								note[i[0]][objectN[i[0]]].ypos = Ymove[i[0]][YmoveN2[i[0]] - 1][1];
@@ -778,26 +798,27 @@ void RecordLoad2(int p, int n, int o) {
 							if (Xmove[i[0]][XmoveN2[i[0]]][0] >= 0 &&
 								Xmove[i[0]][XmoveN2[i[0]]][0] <= note[i[0]][objectN[i[0]]].hittime &&
 								Xmove[i[0]][XmoveN2[i[0]]][2] > note[i[0]][objectN[i[0]]].hittime) {
-								switch (Xmove[i[0]][XmoveN2[i[0]]][3]) {
-								case 1:
-									note[i[0]][objectN[i[0]]].xpos = lins(Xmove[i[0]][XmoveN2[i[0]]][0],
-										Xmove[i[0]][XmoveN2[i[0]] - 1][1], Xmove[i[0]][XmoveN2[i[0]]][2],
-										Xmove[i[0]][XmoveN2[i[0]]][1], note[i[0]][objectN[i[0]]].hittime);
-									break;
-								case 2:
-									note[i[0]][objectN[i[0]]].xpos = pals(Xmove[i[0]][XmoveN2[i[0]]][0],
-										Xmove[i[0]][XmoveN2[i[0]] - 1][1], Xmove[i[0]][XmoveN2[i[0]]][2],
-										Xmove[i[0]][XmoveN2[i[0]]][1], note[i[0]][objectN[i[0]]].hittime);
-									break;
-								case 3:
-									note[i[0]][objectN[i[0]]].xpos = pals(Xmove[i[0]][XmoveN2[i[0]]][2],
-										Xmove[i[0]][XmoveN2[i[0]]][1], Xmove[i[0]][XmoveN2[i[0]]][0],
-										Xmove[i[0]][XmoveN2[i[0]] - 1][1], note[i[0]][objectN[i[0]]].hittime);
-									break;
-								}
+								note[i[0]][objectN[i[0]]].xpos = movecal(Xmove[i[0]][XmoveN2[i[0]]][3],
+									Xmove[i[0]][XmoveN2[i[0]]][0], Xmove[i[0]][XmoveN2[i[0]] - 1][1],
+									Xmove[i[0]][XmoveN2[i[0]]][2], Xmove[i[0]][XmoveN2[i[0]]][1],
+									note[i[0]][objectN[i[0]]].hittime);
 							}
 							else {
 								note[i[0]][objectN[i[0]]].xpos = Xmove[i[0]][XmoveN2[i[0]] - 1][1];
+							}
+							//効果音を設定する
+							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
+								note[i[0]][objectN[i[0]]].sound = customnote[GT1[i[1]] - L'1'].sound;
+							}
+							else {
+								note[i[0]][objectN[i[0]]].sound = 0;
+							}
+							//色を設定する
+							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
+								note[i[0]][objectN[i[0]]].color = customnote[GT1[i[1]] - L'1'].color;
+							}
+							else {
+								note[i[0]][objectN[i[0]]].color = 0;
 							}
 							if (note[i[0]][objectN[i[0]]].object != 8) {
 								notes++;
@@ -1074,4 +1095,12 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 	fclose(fp);
 	return;
+}
+
+int IsNoteCode(wchar_t c) {
+	if (c == L'H' || c == L'C' || c == L'U' || c == L'D' || c == L'L' || c == L'R' || c == L'B' ||
+		c == L'G' || c == L'?' || c == L'!' || (L'1' <= c && c <= L'9')) {
+		return 1;
+	}
+	return 0;
 }

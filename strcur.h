@@ -82,7 +82,7 @@ int strrans(wchar_t *p1) {
 void strnex(wchar_t *p1) {
 	wchar_t *p2 = p1;
 	short int a = 1;
-	while (*p1 >= L' ' && *p1 <= L'}' && *p1 != L'/' && *p1 != L':'&& *p1 != L'\0') {
+	while (*p1 >= L' ' && *p1 <= L'}' && *p1 != L'/' && *p1 != L':' && *p1 != L'\0') {
 		a++;
 		p1++;
 	}
