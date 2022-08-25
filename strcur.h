@@ -1,4 +1,4 @@
-int strands(wchar_t*, wchar_t*);
+int strands(const wchar_t *p1, const wchar_t *p2);
 void strcopy(wchar_t*, wchar_t*, int);
 void strmods(wchar_t*, int);
 void strcats(wchar_t*, wchar_t*);
@@ -10,17 +10,16 @@ int strsans(wchar_t*);
 double strsans2(wchar_t*);
 
 //p1の先頭にp2があるかどうかを調べる
-int strands(wchar_t *p1, wchar_t *p2) {
-	int j = 1;
-	while (*p2 != L'\0') {
-		if (*p1 != *p2) {
-			j = 0;
+int strands(const wchar_t *p1, const wchar_t *p2) {
+	for (int i = 0; i < 50; i++) {
+		if (p2[i] == L'\0') {
 			break;
 		}
-		p1++;
-		p2++;
+		if (p1[i] != p2[i]) {
+			return 0;
+		}
 	}
-	return j;
+	return 1;
 }
 
 //p1をp2にコピーする。cに1を入れると255桁まで初期化する(初期化推奨)

@@ -149,9 +149,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	wchar_t ST2[] = L"/list.txt";
 	wchar_t ST3[] = L".dat";
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	unsigned int Cr, Crb;
-	Cr = GetColor(255, 255, 255);
-	Crb = GetColor(0, 0, 0);
+	unsigned int Cr = GetColor(255, 255, 255);
+	unsigned int Crb = GetColor(0, 0, 0);
+	unsigned int CrR = GetColor(255, 0, 0);
 	FILE *fp;
 	//システムロード
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
@@ -1468,6 +1468,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
 		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
+		//データオーバーフローで警告文表示
+		if (0 <= note[0][998].hittime) {
+			DrawFormatString(20, 120, CrR, L"UPPER OVER");
+		}
+		else if (0 <= note[1][998].hittime) {
+			DrawFormatString(20, 120, CrR, L"MIDDLE OVER");
+		}
+		else if (0 <= note[2][998].hittime) {
+			DrawFormatString(20, 120, CrR, L"LOWER OVER");
+		}
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
