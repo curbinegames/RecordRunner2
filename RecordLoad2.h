@@ -616,7 +616,7 @@ void RecordLoad2(int p, int n, int o) {
 					strnex(GT1);
 					MovieN++;
 				}
-				//カメラ移動
+				//カメラ移動+ズーム+角度(未実装)
 				else if (strands(GT1, L"#CAMERA:")) {
 					strmods(GT1, 8);
 					camera[cameraN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
@@ -633,18 +633,18 @@ void RecordLoad2(int p, int n, int o) {
 					strnex(GT1);
 					switch (GT1[0]) {
 					case L'a':
-						camera[cameraN].mode = 1;
-						break;
-					case L'd':
 						camera[cameraN].mode = 2;
 						break;
+					case L'd':
+						camera[cameraN].mode = 3;
+						break;
 					default:
-						camera[cameraN].mode = 0;
+						camera[cameraN].mode = 1;
 						break;
 					}
 					cameraN++;
 				}
-				//カメラ移動+ズーム+角度(未実装)
+				//カメラ移動
 				else if (strands(GT1, L"#CAMMOVE:")) {
 					strmods(GT1, 9);
 					camera[cameraN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
