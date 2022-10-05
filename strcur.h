@@ -1,5 +1,5 @@
 int strands(const wchar_t *p1, const wchar_t *p2);
-void strcopy(wchar_t*, wchar_t*, int);
+void strcopy(const wchar_t*, wchar_t*, int);
 void strmods(wchar_t*, int);
 void strcats(wchar_t*, wchar_t*);
 int strrans(wchar_t*);
@@ -23,21 +23,15 @@ int strands(const wchar_t *p1, const wchar_t *p2) {
 }
 
 //p1をp2にコピーする。cに1を入れると255桁まで初期化する(初期化推奨)
-void strcopy(wchar_t *p1, wchar_t *p2, int c) {
+void strcopy(const wchar_t *p1, wchar_t *p2, int c) {
 	int a = 0;
-	while (*p2 != L'\0' && c == 1) {
-		*p2 = L'\0';
-		p2++;
-		a++;
-		if (a > 250) break;
+	for (int i = 0; i < 250; i++) {
+		p2[i] = L'\0';
 	}
-	p2 -= a;
-	while (*p1 != L'\0') {
-		*p2 = *p1;
-		p1++;
-		p2++;
+	for (int i = 0; i < 250 && p1[i] != L'\0'; i++) {
+		p2[i] = p1[i];
+		p2[i + 1] = L'\0';
 	}
-	*p2 = L'\0';
 	return;
 }
 

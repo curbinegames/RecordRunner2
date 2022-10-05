@@ -22,6 +22,8 @@ typedef struct music_box {
 
 void ChangeSortMode(int *mode);
 void DrawBackPicture(int img);
+void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
+	const int *difC);
 void DrawRate(double rate, int bar);
 double GetRate();
 int GetRateBarPic(const double rate);
@@ -106,17 +108,17 @@ int musicserect2(int *p1) {
 	CRankpic[3] = LoadGraph(L"picture/MiniB.png");
 	CRankpic[4] = LoadGraph(L"picture/MiniC.png");
 	CRankpic[5] = LoadGraph(L"picture/MiniD.png");
-	int difC[5][2];
-	difC[0][0] = LoadGraph(L"picture/dif0S.png");
-	difC[0][1] = LoadGraph(L"picture/dif0B.png");
-	difC[1][0] = LoadGraph(L"picture/dif1S.png");
-	difC[1][1] = LoadGraph(L"picture/dif1B.png");
-	difC[2][0] = LoadGraph(L"picture/dif2S.png");
-	difC[2][1] = LoadGraph(L"picture/dif2B.png");
-	difC[3][0] = LoadGraph(L"picture/dif3S.png");
-	difC[3][1] = LoadGraph(L"picture/dif3B.png");
-	difC[4][0] = LoadGraph(L"picture/dif4S.png");
-	difC[4][1] = LoadGraph(L"picture/dif4B.png");
+	int difC[10];
+	difC[0] = LoadGraph(L"picture/Dif0S.png");
+	difC[1] = LoadGraph(L"picture/Dif0B.png");
+	difC[2] = LoadGraph(L"picture/Dif1S.png");
+	difC[3] = LoadGraph(L"picture/Dif1B.png");
+	difC[4] = LoadGraph(L"picture/Dif2S.png");
+	difC[5] = LoadGraph(L"picture/Dif2B.png");
+	difC[6] = LoadGraph(L"picture/Dif3S.png");
+	difC[7] = LoadGraph(L"picture/Dif3B.png");
+	difC[8] = LoadGraph(L"picture/Dif4S.png");
+	difC[9] = LoadGraph(L"picture/Dif4B.png");
 	int difbar[6];
 	difbar[0] = LoadGraph(L"picture/difauto.png");
 	difbar[1] = LoadGraph(L"picture/difeasy.png");
@@ -211,10 +213,10 @@ int musicserect2(int *p1) {
 					//プレビュー時間を読み込む
 					if (strands(GT2, ST11)) {
 						strmods(GT2, 9);
-						songdata[G[2]].preview[j][0] = double(strsans(GT2)) / 1000 * 44100.0;
+						songdata[G[2]].preview[j][0] = (int)((double)strsans(GT2) / 1000.0 * 44100.0);
 						strnex(GT2);
 						if (L'0' <= GT2[1] && GT2[1] <= L'9') {
-							songdata[G[2]].preview[j][1] = double(strsans(GT2)) / 1000 * 44100.0;
+							songdata[G[2]].preview[j][1] = (int)((double)strsans(GT2) / 1000.0 * 44100.0);
 						}
 					}
 					//ジャケット写真を読み込む
@@ -254,9 +256,15 @@ int musicserect2(int *p1) {
 				fread(&songdata[G[2]].ClearRate, sizeof(int), 6, fp);
 				fclose(fp);
 			}
-			if (strands(songdata[G[2]].SongName[4], ST3) == 0 &&
-				(strands(songdata[G[2]].SongName[5], ST3)
-				|| songdata[G[2]].ClearRate[5] >= 1)) { songdata[G[2]].limit = 4; }
+			if (strands(songdata[G[2]].SongName[4], L"NULL") == 0 &&
+				(strands(songdata[G[2]].SongName[5], L"NULL") ||
+				songdata[G[2]].Hscore[5] >= 1)) {
+				songdata[G[2]].limit = 4;
+			}
+			if (songdata[G[2]].limit == 3) {
+				strcopy(L"NULL", songdata[G[2]].SongName[4], 1);
+				strcopy(L"NULL", songdata[G[2]].artist[4], 1);
+			}
 			Mapping[G[4]] = G[2];
 			SongNumCount++;
 			G[2]++;
@@ -305,16 +313,7 @@ int musicserect2(int *p1) {
 		}
 		DrawExtendGraph(305, 75, 545, 315, jacketpic, TRUE);
 		//難易度マーカーを表示する
-		G[1] = 0;
-		for (int i = 0; i < 4; i++) {
-			G[0] = 0;
-			if (command[1] == i) G[0] = 1;
-			if (command[1] < i) G[1] = 1;
-			if (strands(songdata[Mapping[command[0]]].SongFileName[i], ST3) == 0
-				&& i <= songdata[Mapping[command[0]]].limit) {
-				DrawGraph(550 + 11 * G[1] + 16 * i, 290 - 11 * G[0], difC[i][G[0]], TRUE);
-			}
-		}
+		DrawDifMaker(songdata[Mapping[command[0]]], command[1], command[0], difC);
 		//難易度バーを表示する
 		if (strands(viewingDifBar, songdata[Mapping[command[0]]].difP) == 0) {
 			DeleteGraph(difbar[4]);
@@ -394,11 +393,16 @@ int musicserect2(int *p1) {
 		if (CheckHitKey(KEY_INPUT_UP) == 1) {
 			if (key == 0) {
 				command[0]--;
+				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
+				if (command[0] < 0) command[0] = SongNumCount - 1;
+				if (command[1] > songdata[Mapping[command[0]]].limit) {
+					command[1] = songdata[Mapping[command[0]]].limit;
+					XstartC -= 250;
+					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+				}
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				UD = -1;
 				startC = GetNowCount();
-				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-				if (command[0] < 0) command[0] = SongNumCount - 1;
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
 				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
 					if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
@@ -415,11 +419,16 @@ int musicserect2(int *p1) {
 		else if (CheckHitKey(KEY_INPUT_DOWN) == 1) {
 			if (key == 0) {
 				command[0]++;
+				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
+				if (command[0] >= SongNumCount) command[0] = 0;
+				if (command[1] > songdata[Mapping[command[0]]].limit) {
+					command[1] = songdata[Mapping[command[0]]].limit;
+					XstartC -= 250;
+					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+				}
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				UD = 1;
 				startC = GetNowCount();
-				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-				if (command[0] >= SongNumCount) command[0] = 0;
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
 				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
 					if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
@@ -437,9 +446,13 @@ int musicserect2(int *p1) {
 			//左が押された
 			if (key == 0) {
 				command[1]--;
+				XstartC = GetNowCount();
+				if (command[1] < 0) {
+					command[1] = 0;
+					XstartC -= 250;
+				}
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				LR = 1;
-				XstartC = GetNowCount();
 				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
 					G[0] = Mapping[command[0]];
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
@@ -456,9 +469,13 @@ int musicserect2(int *p1) {
 			//右が押された
 			if (key == 0) {
 				command[1]++;
+				XstartC = GetNowCount();
+				if (command[1] > songdata[Mapping[command[0]]].limit) {
+					command[1] = songdata[Mapping[command[0]]].limit;
+					XstartC -= 250;
+				}
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				LR = -1;
-				XstartC = GetNowCount();
 				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
 					G[0] = Mapping[command[0]];
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
@@ -553,15 +570,6 @@ int musicserect2(int *p1) {
 			next = 5;
 			break;
 		}
-		//横コマンド(難易度)の端を過ぎないようにする
-		if (command[1] < 0) {
-			command[1] = 0;
-			XstartC -= 250;
-		}
-		else if (command[1] > songdata[Mapping[command[0]]].limit) {
-			command[1] = songdata[Mapping[command[0]]].limit;
-			XstartC -= 250;
-		}
 		WaitTimer(5);
 	}
 	//選択曲の保存
@@ -585,6 +593,22 @@ void DrawBackPicture(int img) {
 	DrawGraph(posx, 0, img, TRUE);
 	DrawGraph(posx + 640, 0, img, TRUE);
 	return;
+}
+
+void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
+	const int *difC) {
+	int posX = 0;
+	int posY = 0;
+	for (int i = 0; i < 5; i++) {
+		posY = 0;
+		if (comdif == i) posY = 1;
+		if (comdif < i) posX = 1;
+		if (strands(songdata.SongFileName[i], L"NULL") == 0
+			&& i <= songdata.limit) {
+			DrawGraph(550 + 11 * posX + 16 * i, 290 - 11 * posY,
+				difC[i * 2 + posY], TRUE);
+		}
+	}
 }
 
 void DrawRate(double rate, int bar) {

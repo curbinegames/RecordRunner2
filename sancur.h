@@ -132,9 +132,6 @@ double sinC(int a) {
 	while (a >= 360) {
 		a -= 360;
 	}
-	if (0 <= a && a <= 90) {
-		return sin[a];
-	}
 	if (91 <= a && a <= 179) {
 		return sin[-(a - 180)];
 	}
@@ -144,6 +141,7 @@ double sinC(int a) {
 	if (271 <= a && a <= 359) {
 		return -sin[-(a - 360)];
 	}
+	return sin[a];
 }
 //cos"a"‚ðo—Í‚·‚é
 double cosC(int a) {
@@ -192,7 +190,8 @@ void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int h
 		-PSizeX * sizeX, -PSizeY * sizeY,
 		PSizeX * sizeX, -PSizeY * sizeY,
 		PSizeX * sizeX, PSizeY * sizeY,
-		-PSizeX * sizeX, PSizeY * sizeY };
+		-PSizeX * sizeX, PSizeY * sizeY
+	};
 	int G = 0;
 	for (int i = 0; i < 8; i += 2) {
 		G = pos[i];

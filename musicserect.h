@@ -137,10 +137,10 @@ int musicserect(int *p1) {
 				//プレビュー時間を読み込む
 				if (strands(GT4, GT9)) {
 					strmods(GT4, 9);
-					preview[n][i][0] = double(strsans(GT4)) / 1000 * 44100.0;
+					preview[n][i][0] = (int)((double)strsans(GT4) / 1000 * 44100.0);
 					while (GT4[0] >= '0'&&GT4[0] <= '9') strmods(GT4, 1);
 					strmods(GT4, 1);
-					preview[n][i][1] = double(strsans(GT4)) / 1000 * 44100.0;
+					preview[n][i][1] = (int)((double)strsans(GT4) / 1000 * 44100.0);
 				}
 				//ジャケット写真を読み込む
 				if (strands(GT4, GT10)) {
@@ -247,11 +247,11 @@ int musicserect(int *p1) {
 		}
 		if (LR == 1) {
 			DrawGraph(460, 320, difbar[command[1]], TRUE);
-			DrawGraph(-0.00288*XmoveC*XmoveC + 640, 320, difbar[command[1] + 1], TRUE);
+			DrawGraph((int)(-0.00288 * XmoveC * XmoveC + 640), 320, difbar[command[1] + 1], TRUE);
 		}
 		else if (LR == -1) {
 			DrawGraph(460, 320, difbar[command[1] - 1], TRUE);
-			DrawGraph(0.00288*XmoveC*XmoveC + 460, 320, difbar[command[1]], TRUE);
+			DrawGraph((int)(0.00288 * XmoveC * XmoveC + 460), 320, difbar[command[1]], TRUE);
 		}
 		//詳細を表示する
 		DrawGraph(316, 370, detail, TRUE);

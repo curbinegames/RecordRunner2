@@ -34,7 +34,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		InitGraph();
 		if (mnom[next] != now) {
 			StopSoundMem(bgm);
-			InitSoundMem;
+			InitSoundMem();
 			now = mnom[next];
 			switch (mnom[next]) {
 			case 0:

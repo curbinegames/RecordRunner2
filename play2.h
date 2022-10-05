@@ -21,7 +21,7 @@
 struct judge_box AddHitJudge(struct judge_box ans, int gup);
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
 int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
-	struct note_box lownote, int keyu, int keyd, int hitatp, int hitatt);
+	struct note_box lownote, int keyu, int keyd, int keyl, int keyr, int hitatp, int hitatt);
 int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes2(struct judge_box judge, int Notes);
 struct score_box GetScore3(struct score_box score, struct judge_box judge, const int notes,
@@ -48,7 +48,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int i[3];
 	short int Lv = 0;
 	short int notes = 0;
-	short int bgp[3] = { 0,0,0 }; //[0:sky,1:ground,2:water]の横位置
+	int bgp[3] = { 0,0,0 }; //[0:sky,1:ground,2:water]の横位置
 	short int bgf[2] = { 0,0 }; //落ち物背景の[0:横位置,1:縦位置]
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
 	short int drop = 0;
@@ -123,8 +123,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
 	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
 	int Xline[3] = { 150,150,150 };//[上,中,下]レーンの横位置
-	double rate, SumRate[2] = { 0,0 }, bpm = 120, bpmG = 120;
-	double timer[3]; //[上, 中, 下]レーンの時間
+	double SumRate[2] = { 0,0 }, bpm = 120, bpmG = 120;
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
 	double DifRate; //譜面定数
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
@@ -134,7 +133,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	wchar_t songNE[255];
 	wchar_t fileN[255];
 	wchar_t dataE[255] = L"record/";
-	wchar_t RRS[255]; //PC用譜面データの保存場所
 	wchar_t mp3FN[255] = L"song/";
 	wchar_t DataFN[255] = L"score/";
 	wchar_t skyFN[255] = L"picture/backskynoamal.png";
@@ -144,7 +142,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	wchar_t GT1[255];
 	wchar_t GT2[255];
 	wchar_t GT3[] = L".png";
-	wchar_t GT4[255];
 	wchar_t ST1[] = L"record/";
 	wchar_t ST2[] = L"/list.txt";
 	wchar_t ST3[] = L".dat";
@@ -383,9 +380,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			cameraN++;
 		}
 		if (camera[cameraN].starttime <= Ntime && Ntime <= camera[cameraN].endtime) {
-			nowcamera[0] = movecal(camera[cameraN].mode, camera[cameraN].starttime,
+			nowcamera[0] = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
 				camera[cameraN - 1].xpos, camera[cameraN].endtime, camera[cameraN].xpos, Ntime);
-			nowcamera[1] = movecal(camera[cameraN].mode, camera[cameraN].starttime,
+			nowcamera[1] = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
 				camera[cameraN - 1].ypos, camera[cameraN].endtime, camera[cameraN].ypos, Ntime);
 		}
 		else {
@@ -401,21 +398,21 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) {
 				speedN[3]++;
 			}
-			bgp[0] -= speedt[3][speedN[3]][1] * scrool[scroolN].speed;
+			bgp[0] -= (int)(speedt[3][speedN[3]][1] * scrool[scroolN].speed);
 			if (bgp[0] < -700 + nowcamera[0] / 5) {
 				bgp[0] += 640;
 			}
 			else if (bgp[0] > 0 + nowcamera[0] / 5) {
 				bgp[0] -= 640;
 			}
-			bgp[1] -= speedt[3][speedN[3]][1] * 5 * scrool[scroolN].speed;
+			bgp[1] -= (int)(speedt[3][speedN[3]][1] * 5 * scrool[scroolN].speed);
 			if (bgp[1] < -700 + nowcamera[0]) {
 				bgp[1] += 640;
 			}
 			else if (bgp[1] > 0 + nowcamera[0]) {
 				bgp[1] -= 640;
 			}
-			bgp[2] -= speedt[4][speedN[4]][1] * 5 * scrool[scroolN].speed;
+			bgp[2] -= (int)(speedt[4][speedN[4]][1] * 5 * scrool[scroolN].speed);
 			if (bgp[2] < -700 + nowcamera[0]) {
 				bgp[2] += 640;
 			}
@@ -425,7 +422,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			//背景の縦位置計算
 			for (i[0] = 3; i[0] <= 4; i[0]++) {
 				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
-					Yline[i[0]] = movecal(Ymove[i[0]][YmoveN[i[0]]][3],
+					Yline[i[0]] = (int)movecal(Ymove[i[0]][YmoveN[i[0]]][3],
 						Ymove[i[0]][YmoveN[i[0]]][0],
 						Ymove[i[0]][YmoveN[i[0]] - 1][1],
 						Ymove[i[0]][YmoveN[i[0]]][2],
@@ -490,22 +487,22 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					G[0]++;
 					continue;
 				}
-				G[1] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+				G[1] = (int)movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[12][MovieN + G[0]], Movie[3][MovieN + G[0]],
 					Movie[13][MovieN + G[0]], Ntime);
-				G[2] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+				G[2] = (int)movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[4][MovieN + G[0]], Movie[3][MovieN + G[0]],
 					Movie[5][MovieN + G[0]], Ntime) + nowcamera[0];
-				G[3] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+				G[3] = (int)movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[6][MovieN + G[0]], Movie[3][MovieN + G[0]],
 					Movie[7][MovieN + G[0]], Ntime) + nowcamera[1];
-				G[4] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+				G[4] = (int)movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]],
 					Movie[9][MovieN + G[0]] / 100.0, Ntime);
-				G[5] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+				G[5] = (int)movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[8][MovieN + G[0]] / 100.0, Movie[3][MovieN + G[0]],
 					Movie[9][MovieN + G[0]] / 100.0, Ntime);
-				G[6] = movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
+				G[6] = (int)movecal(Movie[1][MovieN + G[0]], Movie[2][MovieN + G[0]],
 					Movie[10][MovieN + G[0]], Movie[3][MovieN + G[0]],
 					Movie[11][MovieN + G[0]], Ntime);
 				SetDrawBlendMode(DX_BLENDMODE_ALPHA, G[1]);
@@ -530,7 +527,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			//縦移動
 			if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
-				Yline[i[0]] = movecal(Ymove[i[0]][YmoveN[i[0]]][3], Ymove[i[0]][YmoveN[i[0]]][0],
+				Yline[i[0]] = (int)movecal(Ymove[i[0]][YmoveN[i[0]]][3], Ymove[i[0]][YmoveN[i[0]]][0],
 					Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2],
 					Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
 			}
@@ -540,7 +537,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			//横移動
 			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][0] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0]) {
-				Xline[i[0]] = movecal(Xmove[i[0]][XmoveN[i[0]]][3], Xmove[i[0]][XmoveN[i[0]]][0],
+				Xline[i[0]] = (int)movecal(Xmove[i[0]][XmoveN[i[0]]][3], Xmove[i[0]][XmoveN[i[0]]][0],
 					Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2],
 					Xmove[i[0]][XmoveN[i[0]]][1], Ntime);
 			}
@@ -564,8 +561,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		//get chara position
+		DrawFormatString(20, 120, Cr, L"DATA: %d", G[0]);
+		DrawFormatString(20, 140, Cr, L"DATA: %d", G[1]);
+		DrawFormatString(20, 160, Cr, L"DATA: %d", G[2]);
 		charaput = GetCharaPos(Ntime, note[0][G[0]], note[1][G[1]], note[2][G[2]], holdu, holdd,
-			hitatk[0], hitatk[1]);
+			holdl, holdr, hitatk[0], hitatk[1]);
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
 		if (GetNowCount() - charahit > 250) G[5] = 0;
@@ -1402,7 +1402,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			GD[0] = G[0] / 100000.0;
 			DrawFormatString(180, 45, Cr, L"%.3fkm", GD[0] + Dscore[1] / 1000.0);
 		}
-		Dscore[3] = GD[0] * 1000 + Dscore[1];
+		Dscore[3] = (int)(GD[0] * 1000 + Dscore[1]);
 		//スコアバー隠し表示
 		DrawGraph(0, 0, sbbarimg, TRUE);
 		//ランニングステータス表示
@@ -1553,13 +1553,14 @@ int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {
 }
 
 int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
-	struct note_box lownote, int keyu, int keyd, int hitatp, int hitatt) {
+	struct note_box lownote, int keyu, int keyd, int keyl, int keyr, int hitatp, int hitatt) {
 	int avoid = 0;
 	struct note_box note[3] = { highnote, midnote, lownote };
 	int ans = CHARA_POS_MID;
-	//キャッチノーツ避け
+	//キャッチ/ボムノーツ避け
 	for (int i = 0; i < 3; i++) {
-		if (note[i].object == 2 && note[i].hittime <= time + 16) {
+		if (note[i].object == 2 && note[i].hittime <= time + 40 ||
+				note[i].object == 7 && note[i].hittime <= time + 40) {
 			avoid = 1;
 			ans = CHARA_POS_MID;
 		}

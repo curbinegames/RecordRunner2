@@ -14,7 +14,6 @@ int SETLv(wchar_t *p1) {
 }
 
 int SETitem(wchar_t *p1, wchar_t *p2) {
-	int a;
 	wchar_t GT1[255] = L"record/";
 	wchar_t GT2[] = L"/";
 	strmods(p1, 6);
@@ -26,7 +25,7 @@ int SETitem(wchar_t *p1, wchar_t *p2) {
 }
 
 int shifttime(double n, double bpm, int time) {
-	return time + 240000.0 * (n - 1.0) / (bpm * 16.0);
+	return (int)(time + 240000.0 * (n - 1.0) / (bpm * 16.0));
 }
 
 int read(int a) {
@@ -34,8 +33,8 @@ int read(int a) {
 }
 
 void SETMove(double NowTime, double StartTime, double MovePoint, double MoveType, double EndTime, double bpm,int *StaetTimeBuff,int *MovePointBuff,int *EndTimeBuff,int *MoveTypeBuff) {
-	*StaetTimeBuff = shifttime(StartTime, bpm, NowTime);
-	*MovePointBuff = MovePoint * 50.0 + 100.0;
-	*EndTimeBuff = shifttime(EndTime, bpm, NowTime) - 5;
-	*MoveTypeBuff = MoveType;
+	*StaetTimeBuff = shifttime(StartTime, bpm, (int)NowTime);
+	*MovePointBuff = (int)(MovePoint * 50.0 + 100.0);
+	*EndTimeBuff = shifttime(EndTime, bpm, (int)NowTime) - 5;
+	*MoveTypeBuff = (int)MoveType;
 }

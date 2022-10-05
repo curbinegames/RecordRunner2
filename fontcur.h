@@ -31,7 +31,7 @@ void DrawCurFont(double dn, short int x, short int y, int sizeY, short int Cr, s
 	for (int i = a; i > 0; i--) {
 		dn *= 10;
 	}
-	n = dn;
+	n = (int)dn;
 	if (n != 0) {
 		for (int i = 10; i <= n; i *= 10) {
 			k++;

@@ -126,7 +126,6 @@ void RecordLoad2(int p, int n, int o) {
 	speedt[4][0][0] = 0;
 	speedt[4][0][1] = 1;
 	short int speedN[5] = { 1,1,1,1,1 }; //Å™ÇÃî‘çÜ
-	char key[256];
 	wchar_t songN[255];
 	wchar_t songNE[255];
 	songN[0] = L'\0';
@@ -140,7 +139,6 @@ void RecordLoad2(int p, int n, int o) {
 	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
 	wchar_t GT2[255];
-	wchar_t GT15[255];
 	wchar_t GT24[] = L"picture/";
 	wchar_t GT25[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
