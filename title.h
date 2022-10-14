@@ -69,7 +69,6 @@ void ShowTitle1(const int *pic, const int time) {
 }
 
 void ShowTitle2(const int back, const int string, const int white, const int time) {
-
 	DrawGraph(0, 0, back, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(-1, 0, 1, 255, sinC((GetNowCount() / 4) % 360)));
 	DrawGraph(0, 0, string, TRUE);

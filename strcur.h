@@ -1,7 +1,7 @@
 int strands(const wchar_t *p1, const wchar_t *p2);
 void strcopy(const wchar_t*, wchar_t*, int);
 void strmods(wchar_t*, int);
-void strcats(wchar_t*, wchar_t*);
+void strcats(wchar_t*, const wchar_t*);
 int strrans(wchar_t*);
 void strnex(wchar_t*);
 void strnex_EX(wchar_t*, wchar_t);
@@ -51,12 +51,11 @@ void strmods(wchar_t *p1, int a) {
 }
 
 //p1ÇÃç≈å„Ç…p2ÇïtÇØÇÈ
-void strcats(wchar_t *p1, wchar_t *p2) {
+void strcats(wchar_t *p1, const wchar_t *p2) {
 	while (*p1 != L'\0') p1++;
-	while (*p2 != L'\0') {
-		*p1 = *p2;
+	for (int i = 0; i < 64 && p2[i] != L'\0'; i++) {
+		*p1 = p2[i];
 		p1++;
-		p2++;
 	}
 	*p1 = L'\0';
 	return;

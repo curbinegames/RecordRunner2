@@ -71,6 +71,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int holdl = 0;
 	int holdr = 0;
 	int holdG = 0;
+	int key2 = 1;
+	int key3 = 1;
 	int combo = 0;
 	int AllNotesHitTime = -1;
 	int LaneTrack[3] = { -150,-150,-150 };
@@ -80,6 +82,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int life = 500;
 	int gap[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//gap = 判定ずれ
 	int gapa[3] = { 0,0,0 };//gapa = 判定ずれ[合計, 個数, 2乗の合計]
+	int StopFrag = -1;
 	struct camera_box camera[255];
 	short int cameraN = 0;
 	int nowcamera[2] = { 320,240 };
@@ -428,7 +431,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 						Ymove[i[0]][YmoveN[i[0]]][2],
 						Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
 				}
-				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] ||
+				while (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] ||
 					Ymove[i[0]][YmoveN[i[0]]][3] == 4) {
 					Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
 				}
@@ -531,7 +534,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2],
 					Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
 			}
-			if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] ||
+			while (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] ||
 				Ymove[i[0]][YmoveN[i[0]]][3] == 4) {
 				Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
 			}
@@ -541,7 +544,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2],
 					Xmove[i[0]][XmoveN[i[0]]][1], Ntime);
 			}
-			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][2] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0] ||
+			while (Ntime >= Xmove[i[0]][XmoveN[i[0]]][2] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0] ||
 				Xmove[i[0]][XmoveN[i[0]]][3] == 4) {
 				Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
 			}
@@ -561,9 +564,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		//get chara position
+#if 0
 		DrawFormatString(20, 120, Cr, L"DATA: %d", G[0]);
 		DrawFormatString(20, 140, Cr, L"DATA: %d", G[1]);
 		DrawFormatString(20, 160, Cr, L"DATA: %d", G[2]);
+#endif
 		charaput = GetCharaPos(Ntime, note[0][G[0]], note[1][G[1]], note[2][G[2]], holdu, holdd,
 			holdl, holdr, hitatk[0], hitatk[1]);
 		G[4] = Yline[charaput];
@@ -1410,7 +1415,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		G[1] = CalPosScore2(score, G[0], notes, combo, Mcombo);
 		RunningStats2(judge, G[1], HighSrore);
 		//部分難易度表示
-		if (holdG >= 1) {
+		if (holdG >= 1 && AutoFlag == 1) {
 			G[0] = ddif[0] * 20 / notzero(ddifG[1]) + 155;
 			G[1] = ddif[24] * 20 / notzero(ddifG[1]) + 447;
 			for (i[0] = 0; i[0] <= 23; i[0]++) DrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24, -ddif[i[0]] * 34 / notzero(ddifG[1]) + 72, (G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24, -ddif[i[0] + 1] * 34 / notzero(ddifG[1]) + 72, Cr);
@@ -1481,7 +1486,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
 		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
-		if (life <= 0 && drop == 0) {
+		if (life <= 0 && drop == 0 && AutoFlag == 0) {
 			drop = 1;
 			Dscore[1] = Dscore[0];
 			Dscore[2] = mins(Ntime - noteoff, 0);
@@ -1501,13 +1506,108 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			DeleteSoundMem(musicmp3);
 			break;
 		}
+		if (AutoFlag == 1) {
+			if (CheckHitKey(KEY_INPUT_SPACE)) {
+				if (key2 == 0) {
+					StopFrag *= -1;
+					if (StopFrag == 1) {
+						StopSoundMem(musicmp3);
+					}
+					else {
+						SetCurrentPositionSoundMem((int)((double)Ntime / 1000.0 * 44100.0), musicmp3);
+						PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK, FALSE);
+					}
+				}
+				key2 = 1;
+			}
+			else {
+				key2 = 0;
+			}
+		}
+		if (StopFrag == 1) {
+			if (CheckHitKey(KEY_INPUT_LEFT) == 1) {
+				if (key3 == 0) {
+					Ntime = mins(Ntime - 10000, 0);
+					objectN[0] = 0;
+					objectN[1] = 0;
+					objectN[2] = 0;
+					cameraN = 0;
+					scroolN = 0;
+					itemN = 0;
+					SitemN = 0;
+					chamoN[0] = 0;
+					chamoN[1] = 0;
+					chamoN[2] = 0;
+					fallN = 0;
+					YmoveN[0] = 0;
+					YmoveN[1] = 0;
+					YmoveN[2] = 0;
+					YmoveN[3] = 0;
+					YmoveN[4] = 0;
+					YmoveN2[0] = 0;
+					YmoveN2[1] = 0;
+					YmoveN2[2] = 0;
+					XmoveN[0] = 0;
+					XmoveN[1] = 0;
+					XmoveN[2] = 0;
+					lockN[0] = 0;
+					lockN[1] = 0;
+					carrowN = 0;
+					viewTN = 0;
+					MovieN = 0;
+				}
+				key3 = 1;
+			}
+			else if (CheckHitKey(KEY_INPUT_RIGHT) == 1) {
+				if (key3 == 0) {
+					Ntime += 10000;
+					objectN[0] = 0;
+					objectN[1] = 0;
+					objectN[2] = 0;
+					cameraN = 0;
+					scroolN = 0;
+					itemN = 0;
+					SitemN = 0;
+					chamoN[0] = 0;
+					chamoN[1] = 0;
+					chamoN[2] = 0;
+					fallN = 0;
+					YmoveN[0] = 0;
+					YmoveN[1] = 0;
+					YmoveN[2] = 0;
+					YmoveN[3] = 0;
+					YmoveN[4] = 0;
+					YmoveN2[0] = 0;
+					YmoveN2[1] = 0;
+					YmoveN2[2] = 0;
+					XmoveN[0] = 0;
+					XmoveN[1] = 0;
+					XmoveN[2] = 0;
+					lockN[0] = 0;
+					lockN[1] = 0;
+					carrowN = 0;
+					viewTN = 0;
+					MovieN = 0;
+				}
+				key3 = 1;
+			}
+			else {
+				key3 = 0;
+			}
+		}
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
 			return 2;
 		}
 		WaitTimer(5);
-		Ntime = GetNowCount() - Stime + system[1] * 5;
+		if (StopFrag == -1) {
+			Ntime = GetNowCount() - Stime + system[1] * 5;
+		}
+		else {
+			Stime = GetNowCount() - Ntime + system[1] * 5;
+		}
+		/*s:500 n:1000*/
 		ScreenFlip();
 	}
 	InitGraph();

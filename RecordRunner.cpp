@@ -8,6 +8,9 @@
 #include "play2.h"
 #include "collection.h"
 #include "option.h"
+#include "editserect.h"
+#include "serectbase.h"
+#include "edit.h"
 
 /* next = 0 = タイトル
 	= 1 = メニュー
@@ -49,23 +52,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//表示する画面を選択する
 		now = mnom[next];
 		switch (next) {
-		case(0):
+		case 0:
 			next = title();
 			break;
-		case(1):
+		case 1:
 			next = menu();
 			break;
-		case(2):
+		case 2:
 			next = musicserect2(&G[0]);
 			break;
-		case(3):
+		case 3:
 			next = collection();
 			break;
-		case(4):
+		case 4:
 			next = option();
 			break;
-		case(6):
+		case 6:
 			next = play3(G[0], G[1], G[2], G[3], G[4]);
+			break;
+		case 7:
+			next = editserect(&G[0]);
+			break;
+		case 8:
+			next = edit(G[0], G[1], G[2], G[3]);
 			break;
 		default:
 			ClearDrawScreen();

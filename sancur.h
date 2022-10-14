@@ -15,6 +15,8 @@ double sinC(int a);
 double cosC(int a);
 void DrawFixPic(int x1, int y1, int x2, int y2, int pic);
 void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle);
+void _DrawDeformationPic1(int x, int y, int handle);
+void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle);
 
 //aÇbÇ‹Ç≈à¯Ç´è„Ç∞ÇΩÇ‡ÇÃÇï‘Ç∑
 int mins(int a, int b) {
@@ -181,6 +183,26 @@ void DrawFixPic(int x1, int y1, int x2, int y2, int pic) {
 }
 
 void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle) {
+	if (sizeX == 1 && sizeY == 1 && rot % 360 == 0) {
+		_DrawDeformationPic1(x, y, handle);
+	}
+	else {
+		_DrawDeformationPic2(x, y, sizeX, sizeY, rot, handle);
+	}
+	return;
+}
+
+void _DrawDeformationPic1(int x, int y, int handle) {
+	int PSizeX = 1;
+	int PSizeY = 1;
+	GetGraphSize(handle, &PSizeX, &PSizeY);
+	x -= PSizeX / 2;
+	y -= PSizeY / 2;
+	DrawGraph(x, y, handle, TRUE);
+	return;
+}
+
+void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle) {
 	int PSizeX = 1;
 	int PSizeY = 1;
 	GetGraphSize(handle, &PSizeX, &PSizeY);

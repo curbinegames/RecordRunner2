@@ -1,4 +1,4 @@
-#define MENU_NUM 5
+#define MENU_NUM 4
 
 typedef struct _menu_item {
 	int card;
@@ -28,32 +28,26 @@ int menu(void) {
 	}
 	unsigned int Cr = GetColor(255, 255, 255);
 	menu_item[0] = { 
-		LoadGraph(L"picture/FREE PLAY.png"),
-		LoadGraph(L"picture/FREE PLAY G.png"),
+		LoadGraph(L"picture/menu/FREE PLAY.png"),
+		LoadGraph(L"picture/menu/FREE PLAY G.png"),
 		LoadGraph(L"picture/backskynoamal.png"),
 		2
 	};
 	menu_item[1] = { 
-		LoadGraph(L"picture/COLLECTION.png"),
-		LoadGraph(L"picture/COLLECT G.png"),
-		LoadGraph(L"picture/COLLECT W.png"),
+		LoadGraph(L"picture/menu/COLLECTION.png"),
+		LoadGraph(L"picture/menu/COLLECT G.png"),
+		LoadGraph(L"picture/menu/COLLECT W.png"),
 		3
 	};
 	menu_item[2] = {
-		LoadGraph(L"picture/OPTION.png"),
-		LoadGraph(L"picture/OPTION G.png"),
-		LoadGraph(L"picture/OPTION W.png"),
+		LoadGraph(L"picture/menu/OPTION.png"),
+		LoadGraph(L"picture/menu/OPTION G.png"),
+		LoadGraph(L"picture/menu/OPTION W.png"),
 		4
 	};
-	menu_item[3] = { /* edit */
-		LoadGraph(L"picture/OPTION.png"),
-		LoadGraph(L"picture/OPTION G.png"),
-		LoadGraph(L"picture/OPTION W.png"),
-		4 /* 6になる */
-	};
-	menu_item[4] = {
-		LoadGraph(L"picture/QUIT.png"),
-		LoadGraph(L"picture/QUIT G.png"),
+	menu_item[3] = {
+		LoadGraph(L"picture/menu/QUIT.png"),
+		LoadGraph(L"picture/menu/QUIT G.png"),
 		LoadGraph(L"picture/backstar.png"),
 		5
 	};
@@ -67,8 +61,6 @@ int menu(void) {
 		DrawGraph(0, 0, help, TRUE);
 		if (lan[4] == 0)DrawString(5, 460, L"左右キー:選択   Enterキー:決定", Cr);
 		else if (lan[4] == 1)DrawString(5, 460, L"←→key:choose   Enter key:enter", Cr);
-		DrawFormatString(5, 120, Cr, L"command: %d", command);
-		DrawFormatString(5, 140, Cr, L"before: %d", before);
 		ScreenFlip();
 		//ここからキー判定
 		if (CheckHitKey(KEY_INPUT_LEFT)) {
