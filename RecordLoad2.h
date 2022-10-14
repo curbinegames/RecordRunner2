@@ -132,7 +132,7 @@ void RecordLoad2(int p, int n, int o) {
 	wchar_t fileN[255];
 	wchar_t dataE[255] = L"record/";//フォルダの名前
 	wchar_t RRS[255]; //PC用譜面データの保存場所
-	wchar_t mp3FN[255] = L"song/";
+	wchar_t mp3FN[255];
 	wchar_t skyFN[255] = L"picture/backskynoamal.png";
 	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
 	wchar_t waterFN[255] = L"picture/waternormal.png";
@@ -177,6 +177,8 @@ void RecordLoad2(int p, int n, int o) {
 		//音楽ファイルを読み込む
 		if (strands(GT1, L"#MUSIC:")) {
 			strmods(GT1, 7);
+			strcopy(dataE, mp3FN, 1);
+			strcats(mp3FN, L"/");
 			strcats(mp3FN, GT1);
 		}
 		//BPMを読み込む

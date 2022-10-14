@@ -170,7 +170,7 @@ int musicserect2(int *p1) {
 					//曲ファイル名を読み込む
 					if (strands(GT2, ST8)) {
 						strmods(GT2, 7);
-						strcopy(ST9, songdata[G[2]].SongFileName[j], 1);
+						strcopy(GT3, songdata[G[2]].SongFileName[j], 1);
 						strcats(songdata[G[2]].SongFileName[j], GT2);
 					}
 					//難易度を読み込む

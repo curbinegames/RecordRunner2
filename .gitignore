@@ -1,5 +1,7 @@
 
 collection.h
+edit.h
+editserect.h
 RecordRunner2.vcxproj
 RecordRunner2.vcxproj.filters
 RecordRunner2.vcxproj.user

@@ -791,7 +791,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (holdr > 10) { holdr = 0; }
 		}
 		//キー押しヒット解除
-		if (holdu == 1 || holdd == 1) { hitatk[1] = -1000; }
+		if (1 <= holdu || 1 <= holdd || 1 <= holdl || 1 <= holdr) { hitatk[1] = -1000; }
 		if (key[KEY_INPUT_G] == 0) { holdG = 0; }
 		else if (key[KEY_INPUT_G] == 1) { holdG++; }
 		if (GetWindowUserCloseFlag(TRUE)) { return 5; }
@@ -1665,8 +1665,20 @@ int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
 			ans = CHARA_POS_MID;
 		}
 	}
+	//上が押されているとき
+	if (1 <= keyu && 0 == keyd) {
+		ans = CHARA_POS_UP;
+	}
+	//下が押されているとき
+	else if (0 == keyu && 1 <= keyd) {
+		ans = CHARA_POS_DOWN;
+	}
+	//上下同時に押されているとき
+	else if (1 <= keyu && 1 <= keyd) {
+		ans = CHARA_POS_MID;
+	}
 	//上ラインのヒットマーカーをたたいているとき
-	if (hitatp == CHARA_POS_UP && time - hitatt < 750 && avoid == 0) {
+	else if (hitatp == CHARA_POS_UP && time - hitatt < 750 && avoid == 0) {
 		ans = CHARA_POS_UP;
 	}
 	//中ラインのヒットマーカーをたたいているとき
@@ -1677,15 +1689,6 @@ int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
 	else if (hitatp == CHARA_POS_DOWN && time - hitatt < 750 && avoid == 0) {
 		ans = CHARA_POS_DOWN;
 	}
-	//上が押されて、直前のヒットマーカーをたたいていないとき
-	else if (keyu >= 1 && keyd == 0) {
-		ans = CHARA_POS_UP;
-	}
-	//下が押されて、直前のヒットマーカーをたたいていないとき
-	else if (keyu == 0 && keyd >= 1) {
-		ans = CHARA_POS_DOWN;
-	}
-	//何も押されていないか、上下同時に押されていて、直前のヒットマーカーをたたいていないとき
 	else {
 		ans = CHARA_POS_MID;
 	}
