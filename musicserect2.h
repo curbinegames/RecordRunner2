@@ -6,7 +6,7 @@ int musicserect2(int *p1) {
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
 	Cr[3] = GetColor(0, 0, 0);
 	int e;
-	int G[6];
+	int G[10];
 	int command[2] = { 0,1 };
 	int SongNumCount = 0;
 	int moveC = 250;
@@ -60,9 +60,9 @@ int musicserect2(int *p1) {
 	int detail = LoadGraph(L"picture/detail.png");
 	int disk = LoadGraph(L"picture/disk.png");
 	int help = LoadGraph(L"picture/help.png");
-	int bar[7];
-	bar[0] = bar[1] = bar[2] = bar[4] = bar[5] = bar[6] = LoadGraph(L"picture/songbarB.png");
-	bar[3] = LoadGraph(L"picture/songbarY.png");
+	int bar[2];
+	bar[0] = LoadGraph(L"picture/songbarB.png");
+	bar[1] = LoadGraph(L"picture/songbarY.png");
 	int CRatepic[5];
 	CRatepic[0] = LoadGraph(L"picture/MarkD.png");
 	CRatepic[1] = LoadGraph(L"picture/MarkC.png");
@@ -253,26 +253,12 @@ int musicserect2(int *p1) {
 		ClearDrawScreen();
 		//背景の表示
 		DrawBackPicture(back);
-		//曲一覧を作成する
+		//時間設定
 		moveC = mins(-1 * (GetNowCount() - startC) + 250, 0);
 		XmoveC = mins(-1 * (GetNowCount() - XstartC) + 250, 0);
-		picsong = (command[0] - 3) % SongNumCount;
-		if (picsong < 0) { picsong += SongNumCount; }
-		for (int i = 0; i < 7; i++) {
-			G[0] = (UD * moveC * moveC + 62500 * i) / 3125; //基準横位置
-			G[1] = (6 * UD * moveC * moveC + 375000 * i) / 3125; //基準縦位置
-			DrawGraph(G[0] - 120, G[1] - 170, bar[i], TRUE); //曲リストバー
-			DrawString(G[0] - 30, G[1] - 150, songdata[Mapping[picsong]].SongName[command[1]], Cr[i]); //曲名
-			DrawString(G[0] - 30, G[1] - 130, songdata[Mapping[picsong]].artist[command[1]], Cr[i]); //アーティスト名
-			if (1 <= songdata[Mapping[picsong]].ClearRate[command[1]]) {
-				DrawGraph(G[0] + 155, G[1] - 130, CRatepic[songdata[Mapping[picsong]].ClearRate[command[1]] - 1], TRUE);
-			}
-			if (0 <= songdata[Mapping[picsong]].ClearRank[command[1]]
-				&& songdata[Mapping[picsong]].ClearRank[command[1]] <= 5) {
-				DrawGraph(G[0] + 155, G[1] - 130, CRankpic[songdata[Mapping[picsong]].ClearRank[command[1]]], TRUE);
-			}
-			picsong = (picsong + 1) % SongNumCount;
-		}
+		//曲一覧を作成する
+		DrawSongBar(command[0], command[1], SongNumCount, UD, moveC, bar,
+			songdata, Mapping, CRatepic, CRankpic);
 		//ジャケット表示
 		if (strands(viewingjacket, songdata[Mapping[command[0]]].jacketP[command[1]]) == 0) {
 			DeleteGraph(jacketpic);
@@ -470,8 +456,13 @@ int musicserect2(int *p1) {
 			key = 1;
 		}
 		else if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
-			//エンターが押された(曲ファイル名がNULLの場合はスキップ)
+#if 0
+		//エンターが押された(曲ファイル名がNULLの場合はスキップ)
 			if (key == 0 && strands(songdata[Mapping[command[0]]].SongFileName[command[1]], ST3) == 0) {
+#else
+		//エンターが押された(Lvが0未満の場合はスキップ)
+			if (key == 0 && 0 <= songdata[Mapping[command[0]]].level[command[1]]) {
+#endif
 				//隠し曲用
 				if (command[1] == 3 && songdata[Mapping[command[0]]].Hscore[3] >= 90000
 					&& strands(songdata[Mapping[command[0]]].SongFileName[5], ST3) == 0

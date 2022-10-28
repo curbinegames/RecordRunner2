@@ -5,18 +5,21 @@
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
 #define CHARA_POS_DOWN 2
-#define NOTE_HIT 1
-#define NOTE_CATCH 2
-#define NOTE_UP 3
-#define NOTE_DOWN 4
-#define NOTE_LEFT 5
-#define NOTE_RIGHT 6
-#define NOTE_BOMB 7
-#define NOTE_GHOST 8
 #define SE_HIT 1
 #define SE_CATCH 2
 #define SE_ARROW 4
 #define SE_BOMB 8
+
+typedef enum note_material {
+	NOTE_HIT = 1,
+	NOTE_CATCH,
+	NOTE_UP,
+	NOTE_DOWN,
+	NOTE_LEFT,
+	NOTE_RIGHT,
+	NOTE_BOMB,
+	NOTE_GHOST
+} note_material;
 
 struct judge_box AddHitJudge(struct judge_box ans, int gup);
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
@@ -35,7 +38,8 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime, int *Snd, int *pic, 
 void ShowJudge(const int *viewjudge, const int *judgeimg, const int posX, const int posY);
 void ShowScore2(struct score_box score, int Hscore, int time);
 void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
-
+char PlayNoteHitSound(note_box note, int *MelodySnd, int *Sitem, char seflag,
+	int notemat);
 
 int play3(int p, int n, int o, int shift, int AutoFlag) {
 	/*---用語定義-----
@@ -219,6 +223,33 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	strcats(DataFN, ST3);
 	//ハイスコア取得
 	HighSrore = GetHighScore(DataFN, o);
+	//オルゴール音声
+	int MelodySnd[24] = {
+		LoadSoundMem(L"sound/melody/lowF.mp3"),
+		LoadSoundMem(L"sound/melody/lowF#.mp3"),
+		LoadSoundMem(L"sound/melody/lowG.mp3"),
+		LoadSoundMem(L"sound/melody/lowG#.mp3"),
+		LoadSoundMem(L"sound/melody/lowA.mp3"),
+		LoadSoundMem(L"sound/melody/lowA#.mp3"),
+		LoadSoundMem(L"sound/melody/lowB.mp3"),
+		LoadSoundMem(L"sound/melody/lowC.mp3"),
+		LoadSoundMem(L"sound/melody/lowC#.mp3"),
+		LoadSoundMem(L"sound/melody/lowD.mp3"),
+		LoadSoundMem(L"sound/melody/lowD#.mp3"),
+		LoadSoundMem(L"sound/melody/lowE.mp3"),
+		LoadSoundMem(L"sound/melody/highF.mp3"),
+		LoadSoundMem(L"sound/melody/highF#.mp3"),
+		LoadSoundMem(L"sound/melody/highG.mp3"),
+		LoadSoundMem(L"sound/melody/highG#.mp3"),
+		LoadSoundMem(L"sound/melody/highA.mp3"),
+		LoadSoundMem(L"sound/melody/highA#.mp3"),
+		LoadSoundMem(L"sound/melody/highB.mp3"),
+		LoadSoundMem(L"sound/melody/highC.mp3"),
+		LoadSoundMem(L"sound/melody/highC#.mp3"),
+		LoadSoundMem(L"sound/melody/highD.mp3"),
+		LoadSoundMem(L"sound/melody/highD#.mp3"),
+		LoadSoundMem(L"sound/melody/highE.mp3")
+	};
 	//ボーナス演出素材
 	int Bonusimg[3] = {
 		LoadGraph(L"picture/PERFECT.png"),
@@ -951,12 +982,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				combo++;
 				life += 2;
 				Dscore[0] += 2;
-				if (note[G[1]][objectN[G[1]]].sound == 0) {
-					seflag |= SE_HIT;
-				}
-				else {
-					PlaySoundMem(Sitem[note[G[1]][objectN[G[1]]].sound - 1], DX_PLAYTYPE_BACK);
-				}
+				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]],
+					MelodySnd, Sitem, seflag, SE_HIT);
 				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 				score.time = Ntime;
 			}
@@ -967,12 +994,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				combo++;
 				life++;
 				Dscore[0]++;
-				if (note[G[1]][objectN[G[1]]].sound == 0) {
-					seflag |= SE_HIT;
-				}
-				else {
-					PlaySoundMem(Sitem[note[G[1]][objectN[G[1]]].sound - 1], DX_PLAYTYPE_BACK);
-				}
+				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]],
+					MelodySnd, Sitem, seflag, SE_HIT);
 				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 				score.time = Ntime;
 			}
@@ -981,12 +1004,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				viewjudge[2] = GetNowCount();
 				judghname[G[1]][0] = 3;
 				life++;
-				if (note[G[1]][objectN[G[1]]].sound == 0) {
-					seflag |= SE_HIT;
-				}
-				else {
-					PlaySoundMem(Sitem[note[G[1]][objectN[G[1]]].sound - 1], DX_PLAYTYPE_BACK);
-				}
+				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]],
+					MelodySnd, Sitem, seflag, SE_HIT);
 				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 				score.time = Ntime;
 			}
@@ -1015,12 +1034,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judge.just++;
 					life += 2;
 					Dscore[0] += 2;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_CATCH;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_CATCH);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 					objectN[i[0]]++;
@@ -1043,12 +1058,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life += 2;
 					Dscore[0] += 2;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1059,12 +1070,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life++;
 					Dscore[0]++;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1073,12 +1080,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					life++;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1107,12 +1110,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life += 2;
 					Dscore[0] += 2;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1123,12 +1122,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life++;
 					Dscore[0]++;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1137,12 +1132,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					life++;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1171,12 +1162,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life += 2;
 					Dscore[0] += 2;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1187,12 +1174,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life++;
 					Dscore[0]++;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1201,12 +1184,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					life++;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1235,12 +1214,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life += 2;
 					Dscore[0] += 2;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1251,12 +1226,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					combo++;
 					life++;
 					Dscore[0]++;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1265,12 +1236,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					viewjudge[2] = GetNowCount();
 					judghname[i[0]][0] = 3;
 					life++;
-					if (note[i[0]][objectN[i[0]]].sound == 0) {
-						seflag |= SE_ARROW;
-					}
-					else {
-						PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-					}
+					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, seflag, SE_ARROW);
 					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
 					score.time = Ntime;
 				}
@@ -1293,12 +1260,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				combo = 0;
 				judge.miss++;
 				life -= 20;
-				if (note[i[0]][objectN[i[0]]].sound == 0) {
-					seflag |= SE_BOMB;
-				}
-				else {
-					PlaySoundMem(Sitem[note[i[0]][objectN[i[0]]].sound - 1], DX_PLAYTYPE_BACK);
-				}
+				seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+					MelodySnd, Sitem, seflag, SE_BOMB);
 				objectN[i[0]]++;
 			}
 			else if (note[i[0]][objectN[i[0]]].object == 7) {
@@ -1528,9 +1491,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (CheckHitKey(KEY_INPUT_LEFT) == 1) {
 				if (key3 == 0) {
 					Ntime = mins(Ntime - 10000, 0);
-					objectN[0] = 0;
-					objectN[1] = 0;
-					objectN[2] = 0;
+					for (i[0] = 0; i[0] < 3; i[0]++) {
+						while (Ntime < note[i[0]][objectN[i[0]]].hittime ||
+							note[i[0]][objectN[i[0]]].hittime < 0) {
+							objectN[i[0]]--;
+						}
+					}
 					cameraN = 0;
 					scroolN = 0;
 					itemN = 0;
@@ -1561,9 +1527,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			else if (CheckHitKey(KEY_INPUT_RIGHT) == 1) {
 				if (key3 == 0) {
 					Ntime += 10000;
-					objectN[0] = 0;
-					objectN[1] = 0;
-					objectN[2] = 0;
+					for (i[0] = 0; i[0] < 3; i[0]++) {
+						while (note[i[0]][objectN[i[0]]].hittime < Ntime) {
+							objectN[i[0]]++;
+						}
+					}
 					cameraN = 0;
 					scroolN = 0;
 					itemN = 0;
@@ -1909,6 +1877,20 @@ void ShowScore2(struct score_box score, int Hscore, int time) {
 		Cr = GetColor(255, 255, 0);
 	}
 	DrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
+}
+
+char PlayNoteHitSound(note_box note, int *MelodySnd, int *Sitem, char seflag,
+	int notemat) {
+	if (note.melody != MELODYSOUND_NONE) {
+		PlaySoundMem(MelodySnd[note.melody], DX_PLAYTYPE_BACK);
+	}
+	else if (note.sound != 0) {
+		PlaySoundMem(Sitem[note.sound - 1], DX_PLAYTYPE_BACK);
+	}
+	else {
+		seflag |= notemat;
+	}
+	return seflag;
 }
 
 void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {

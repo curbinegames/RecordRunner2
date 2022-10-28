@@ -23,6 +23,20 @@ typedef struct music_box {
 	wchar_t jacketP[6][256];
 }MUSIC_BOX;
 
+void ChangeSortMode(int *mode);
+void DrawBackPicture(int img);
+void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
+	const int *difC);
+void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
+	int *bar, MUSIC_BOX *songdata, int *Mapping, int *CRatepic, int *CRankpic);
+void DrawRate(double rate, int bar);
+double GetRate();
+int GetRateBarPic(const double rate);
+void ShowHelpBar(unsigned int Cr, int bar, int lan);
+void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
+	const int dif, const int SongNumCount);
+void ViewSortMode(const int mode);
+
 void ChangeSortMode(int *mode) {
 	*mode = *mode + 1;
 	if (*mode >= 3) {
@@ -51,6 +65,68 @@ void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
 				difC[i * 2 + posY], TRUE);
 		}
 	}
+}
+
+void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
+	int *bar, MUSIC_BOX *songdata, int *Mapping, int *CRatepic, int *CRankpic) {
+	int BasePosX = 0;
+	int BasePosY = 0;
+	int BarColor = 0;
+	int MarkPosX = 0;
+	int MarkPosY = 0;
+	unsigned int Cr[2] = {
+		GetColor(255, 255, 255),
+		GetColor(0, 0, 0)
+	};
+	int picsong = (cmd1 - 3) % SongNumCount;
+	if (picsong < 0) { picsong += SongNumCount; }
+	for (int i = 0; i < 7; i++) {
+		if (i < 3) {
+			BasePosY = pals(0, i * 80 + 120, 250, i * 80 + UD * 80 + 120,
+				moveC);
+			BarColor = 0;
+			MarkPosX = 152;
+			MarkPosY = 163;
+		}
+		else if (i == 3) {
+			BasePosY = pals(0, i * 120, 250, i * 120 + UD * 80, moveC);
+			BarColor = 1;
+			MarkPosX = 156;
+			MarkPosY = 132;
+		}
+		else {
+			BasePosY = pals(0, i * 80 + 160, 250, i * 80 + UD * 80 + 160,
+				moveC);
+			BarColor = 0;
+			MarkPosX = 152;
+			MarkPosY = 163;
+		}
+		BasePosX = lins(480, 80, 240, 40, BasePosY);
+		DrawGraph(BasePosX - 120, BasePosY - 170, bar[BarColor], TRUE);
+		DrawString(BasePosX - 30, BasePosY - 157,
+			songdata[Mapping[picsong]].SongName[cmd2], Cr[BarColor]);
+		DrawString(BasePosX - 30, BasePosY - 129,
+			songdata[Mapping[picsong]].artist[cmd2], Cr[BarColor]);
+		if (1 <= songdata[Mapping[picsong]].ClearRate[cmd2]) {
+			DrawGraph(BasePosX + MarkPosX, BasePosY - MarkPosY,
+				CRatepic[songdata[Mapping[picsong]].ClearRate[cmd2] - 1],
+				TRUE);
+		}
+		if (0 <= songdata[Mapping[picsong]].ClearRank[cmd2]
+			&& songdata[Mapping[picsong]].ClearRank[cmd2] <= 5) {
+			DrawGraph(BasePosX + MarkPosX, BasePosY - MarkPosY,
+				CRankpic[songdata[Mapping[picsong]].ClearRank[cmd2]],
+				TRUE);
+		}
+		if (i == 3) {
+			for (int j = 0; j < 3; j++) {
+				DrawFormatString(BasePosX - 25 + j * 70, BasePosY - 97, Cr[1],
+					L"%2d", songdata[Mapping[cmd1]].level[1 + j]);
+			}
+		}
+		picsong = (picsong + 1) % SongNumCount;
+	}
+	return;
 }
 
 void DrawRate(double rate, int bar) {

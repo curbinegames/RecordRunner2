@@ -682,6 +682,10 @@ void RecordLoad2(int p, int n, int o) {
 				else if (strands(GT1, L"#CUSTOM:")) {
 					strmods(GT1, 8);
 					G[0] = strsans2(GT1) - 1;
+					customnote[G[0]].color = 0;
+					customnote[G[0]].melody = MELODYSOUND_NONE;
+					customnote[G[0]].note = 0;
+					customnote[G[0]].sound = 0;
 					strnex(GT1);
 					while (GT1[0] != L'\0') {
 						if (strands(GT1, L"NOTE=")) {
@@ -690,7 +694,37 @@ void RecordLoad2(int p, int n, int o) {
 						}
 						else if (strands(GT1, L"SOUND=")) {
 							strmods(GT1, 6);
-							customnote[G[0]].sound = strsans2(GT1);
+							if (GT1[0] == L'L' || GT1[0] == L'H') {
+								switch (GT1[1]) {
+								case L'F':
+									customnote[G[0]].melody = (enum melodysound)(LOW_F + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
+									break;
+								case L'G':
+									customnote[G[0]].melody = (enum melodysound)(LOW_G + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
+									break;
+								case L'A':
+									customnote[G[0]].melody = (enum melodysound)(LOW_A + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
+									break;
+								case L'B':
+									customnote[G[0]].melody = (enum melodysound)(LOW_B + (GT1[0] == L'H' ? 12 : 0));
+									break;
+								case L'C':
+									customnote[G[0]].melody = (enum melodysound)(LOW_C + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
+									break;
+								case L'D':
+									customnote[G[0]].melody = (enum melodysound)(LOW_D + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
+									break;
+								case L'E':
+									customnote[G[0]].melody = (enum melodysound)(LOW_E + (GT1[0] == L'H' ? 12 : 0));
+									break;
+								default:
+									customnote[G[0]].melody = MELODYSOUND_NONE;
+									break;
+								}
+							}
+							else {
+								customnote[G[0]].sound = strsans2(GT1);
+							}
 						}
 						else if (strands(GT1, L"COLOR=")) {
 							strmods(GT1, 6);
@@ -801,6 +835,7 @@ void RecordLoad2(int p, int n, int o) {
 							//å¯â âπÇê›íËÇ∑ÇÈ
 							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
 								note[i[0]][objectN[i[0]]].sound = customnote[GT1[i[1]] - L'1'].sound;
+								note[i[0]][objectN[i[0]]].melody = customnote[GT1[i[1]] - L'1'].melody;
 							}
 							else {
 								note[i[0]][objectN[i[0]]].sound = 0;
