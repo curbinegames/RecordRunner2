@@ -853,7 +853,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			ShowJudge(viewjudge, judgeimg, 270, 260);
 			break;
 		case 4:
-			ShowJudge(viewjudge, judgeimg, Xline[charaput] - 120, Yline[charaput] - 100);
+			ShowJudge(viewjudge, judgeimg, Xline[charaput] + nowcamera[0] - 120,
+				Yline[charaput] + nowcamera[1] - 100);
 			break;
 		default:
 			break;
