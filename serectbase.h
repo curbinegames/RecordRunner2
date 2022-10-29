@@ -29,13 +29,15 @@ void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
 	const int *difC);
 void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
 	int *bar, MUSIC_BOX *songdata, int *Mapping, int *CRatepic, int *CRankpic);
-void DrawRate(double rate, int bar);
+void DrawRate(double rate, int bar, int chap, int charaimg);
 double GetRate();
 int GetRateBarPic(const double rate);
 void ShowHelpBar(unsigned int Cr, int bar, int lan);
 void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
 	const int dif, const int SongNumCount);
 void ViewSortMode(const int mode);
+
+/* +++++ */
 
 void ChangeSortMode(int *mode) {
 	*mode = *mode + 1;
@@ -129,9 +131,12 @@ void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
 	return;
 }
 
-void DrawRate(double rate, int bar) {
-	DrawGraph(320, 0, bar, TRUE);
-	DrawFormatString(360, 20, GetColor(0, 0, 0), L"RATE:%.2f", rate);
+/* ÉåÅ[ÉgÇæÇØÇ∂Ç·Ç»Ç≠Ç»Ç¡ÇƒÇÈw */
+void DrawRate(double rate, int bar, int chap, int charaimg) {
+	DrawGraph(250, 0, bar, TRUE);
+	DrawGraph(370, 0, charaimg, TRUE);
+	DrawFormatString(265, 12, GetColor(0, 0, 0), L"Lv:%2d", chap + 1);
+	DrawFormatString(270, 37, GetColor(0, 0, 0), L"RATE:%.2f", rate);
 	return;
 }
 

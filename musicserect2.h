@@ -25,7 +25,8 @@ int musicserect2(int *p1) {
 	int next = 5;
 	int PackFirstNum[PackNumLim];
 	int Mapping[SongNumLim];
-	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[4:言語]だけ
+	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[0:キャラ, 4:言語]だけ
+	int chap[3] = { 0,0,0 };
 	double rate = GetRate();
 	double diskr = 0;
 	//wchar_t変数定義
@@ -93,12 +94,18 @@ int musicserect2(int *p1) {
 	difbar[2] = LoadGraph(L"picture/difnormal.png");
 	difbar[3] = LoadGraph(L"picture/difhard.png");
 	difbar[4] = difbar[5] = LoadGraph(L"picture/difanother.png");
+	int charaimg = 0;
 	int ratebarimg = GetRateBarPic(rate);
 	int previewM = LoadSoundMem(L"null.mp3");
 	int select = LoadSoundMem(L"sound/arrow.ogg");
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&lan, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"rb");
+	if (G[0] == 0) {
+		fread(&chap, sizeof(chap), 3, fp);
 		fclose(fp);
 	}
 	G[0] = _wfopen_s(&fp, L"save/SongSelect2.dat", L"rb");
@@ -239,6 +246,12 @@ int musicserect2(int *p1) {
 			G[4]++;
 		}
 	}
+	switch (lan[0]) {
+		case 0: charaimg = LoadGraph(L"picture/Mpicker.png"); break;
+		case 1: charaimg = LoadGraph(L"picture/Mgator.png"); break;
+		case 2: charaimg = LoadGraph(L"picture/Mtaylor.png"); break;
+		default: charaimg = 0; break;
+	}
 	//ここまで、曲情報の読み込み
 	//曲のソート
 	G[0] = Mapping[command[0]];
@@ -328,7 +341,7 @@ int musicserect2(int *p1) {
 			SongPreSTime = GetNowCount();
 		}
 		//レートを表示する
-		DrawRate(rate, ratebarimg);
+		DrawRate(rate, ratebarimg, chap[lan[0]], charaimg);
 		//ディスクを表示する(レート表示場所)
 		DrawRotaGraph(610, 25, 1, diskr, disk, TRUE);
 		diskr += 0.02;
