@@ -130,6 +130,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
 	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
 	int Xline[3] = { 150,150,150 };//[上,中,下]レーンの横位置
+	int outpoint[2] = { -1,0 };
 	double SumRate[2] = { 0,0 }, bpm = 120, bpmG = 120;
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
 	double DifRate; //譜面定数
@@ -217,6 +218,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&Movie, sizeof(int), 13986, fp);//動画データ
 		fread(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 		fread(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+		fread(&outpoint, sizeof(int), 2, fp);//スクロールデータ
 	}
 	fclose(fp);
 	strcats(DataFN, fileN);
@@ -1382,10 +1384,20 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (holdG >= 1 && AutoFlag == 1) {
 			G[0] = ddif[0] * 20 / notzero(ddifG[1]) + 155;
 			G[1] = ddif[24] * 20 / notzero(ddifG[1]) + 447;
-			for (i[0] = 0; i[0] <= 23; i[0]++) DrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24, -ddif[i[0]] * 34 / notzero(ddifG[1]) + 72, (G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24, -ddif[i[0] + 1] * 34 / notzero(ddifG[1]) + 72, Cr);
+			for (i[0] = 0; i[0] <= 23; i[0]++)
+				DrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24,
+					-ddif[i[0]] * 34 / notzero(ddifG[1]) + 72,
+					(G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24,
+					-ddif[i[0] + 1] * 34 / notzero(ddifG[1]) + 72, Cr);
 			DrawFormatString(490, 80, Cr, L"mdif:%.2f", difkey[4][3] / 100.0);
 			DrawFormatString(490, 100, Cr, L"ldif:%.2f", difkey[6][3] / 100.0);
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
+			/* エラー表示 */
+			if (outpoint[1] != 0) {
+				DrawFormatString(20, 120, CrR, L"MAPERROR");
+				DrawLine(lins(noteoff, 155, Etime, 446, outpoint[0]), 71,
+					lins(noteoff, 175, Etime, 465, outpoint[0]), 38, CrR);
+			}
 		}
 		//判定ずれバー表示
 		DrawGraph(219, 460, gapbarimg, TRUE);

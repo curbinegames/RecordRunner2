@@ -3,6 +3,9 @@
 
 #define PLAY_BOX 1
 
+enum maperror_enum {
+	HITNOTETOONEAR = 1,
+};
 struct camera_box {
 	int starttime = -1;
 	int endtime = -1;

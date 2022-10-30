@@ -1,7 +1,15 @@
 #include "playing.h"
 #include "playbox.h"
 
+typedef struct ddef_box {
+	int maxdif = 0;
+	int lastdif = 0;
+	int nowdifsection = 1;
+	int datanum = -1;
+} ddef_box;
+
 int IsNoteCode(wchar_t c);
+int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif);
 
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
@@ -109,9 +117,10 @@ void RecordLoad2(int p, int n, int o) {
 	difkey[2][3] = -1;
 	difkey[3][3] = -2;
 	difkey[4][3] = 0;
-	difkey[5][3] = -1;
 	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
 	int ddifG[2] = { 1,1 };//0=今いる区間番号(1～25),1=最大値
+	ddef_box ddif2;
+	int outpoint[2] = { 0, 0 }; /* 0=時間, 1=エラー番号 */
 	double bpm = 120, bpmG = 120;
 	double timer[3]; //[上, 中, 下]レーンの時間
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
@@ -145,16 +154,6 @@ void RecordLoad2(int p, int n, int o) {
 	wchar_t ST1[] = L"record/";
 	wchar_t ST2[] = L"list.txt";
 	FILE *fp;
-	/*
-	songT = FileRead_open(L"song.txt");
-	for (i[0] = 0; i[0] <= n; i[0]++) FileRead_gets(GT1, 256, songT);
-	FileRead_close(songT);
-	strcopy(GT1, fileN, 1);
-	strcats(dataE, GT1);
-	strcopy(dataE, GT1, 1);
-	strcats(GT1, GT25[o]);
-	*/
-
 	songT = FileRead_open(L"RecordPack.txt");
 	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
 	FileRead_close(songT);
@@ -872,6 +871,7 @@ void RecordLoad2(int p, int n, int o) {
 	lock[1][0][lockN[1]] = -1;
 	lock[1][1][lockN[1]] = -1;
 	Etime = timer[0];
+
 	/*難易度計算
 	(3000000/ひとつ前のノーツとの間隔)を、そのノーツの難易度点数とする。
 	叩いたキーを50個記憶し、この組み合わせでできた最高値が曲の難易度。
@@ -893,11 +893,13 @@ void RecordLoad2(int p, int n, int o) {
 	difkey[7][3] = (Etime - noteoff) / 25 * 2;
 	if (difkey[7][3] < 10000)difkey[7][3] = 10000;
 	//ノーツがなくなるまで繰り返す
-	while (note[0][objectN[0]].hittime >= 0 || note[1][objectN[1]].hittime >= 0 ||
+	while (note[0][objectN[0]].hittime >= 0 ||
+		note[1][objectN[1]].hittime >= 0 ||
 		note[2][objectN[2]].hittime >= 0) {
 		//GHOSTノーツをスキップ
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			while (note[i[0]][objectN[i[0]]].object == 8 && note[i[0]][objectN[i[0]]].hittime >= 0) {
+			while (note[i[0]][objectN[i[0]]].object == 8 &&
+				note[i[0]][objectN[i[0]]].hittime >= 0) {
 				objectN[i[0]]++;
 			}
 		}
@@ -913,40 +915,55 @@ void RecordLoad2(int p, int n, int o) {
 		if (G[0] == -1) break;
 		//一番早いノーツを探してG[0]に代入
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (G[0] != i[0] && note[G[0]][objectN[G[0]]].hittime > note[i[0]][objectN[i[0]]].hittime &&
+			if (G[0] != i[0] && note[G[0]][objectN[G[0]]].hittime >
+				note[i[0]][objectN[i[0]]].hittime &&
 				note[i[0]][objectN[i[0]]].hittime >= 0) {
 				G[0] = i[0];
 			}
 			else if (G[0] != i[0] &&
-				note[G[0]][objectN[G[0]]].hittime == note[i[0]][objectN[i[0]]].hittime &&
-				note[G[0]][objectN[G[0]]].object == 2 && note[i[0]][objectN[i[0]]].object != 2 &&
+				note[G[0]][objectN[G[0]]].hittime ==
+				note[i[0]][objectN[i[0]]].hittime &&
+				note[G[0]][objectN[G[0]]].object == 2 &&
+				note[i[0]][objectN[i[0]]].object != 2 &&
 				note[i[0]][objectN[i[0]]].hittime >= 0) {
 				G[0] = i[0];
 			}
 		}
 		//ddifの計算
-		while (note[G[0]][objectN[G[0]]].hittime >= (Etime - noteoff) / 25 * ddifG[0] + noteoff) {
-			if (difkey[5][3] < 49) {
-				for (i[0] = 0; i[0] < difkey[5][3]; i[0]++) {
-					if (difkey[i[0]][1] > (Etime - noteoff) / 25 * ddifG[0] - difkey[7][3] + noteoff) {
-						ddif[ddifG[0] - 1] += difkey[i[0]][2];
+		while (note[G[0]][objectN[G[0]]].hittime >=
+			(Etime - noteoff) / 25 * ddif2.nowdifsection + noteoff) {
+			if (ddif2.datanum < 49) {
+				for (i[0] = 0; i[0] < ddif2.datanum; i[0]++) {
+					if (difkey[i[0]][1] > (Etime - noteoff) / 25 *
+						ddif2.nowdifsection - difkey[7][3] + noteoff) {
+						ddif[ddif2.nowdifsection - 1] += difkey[i[0]][2];
 					}
 				}
 			}
 			else {
 				for (i[0] = 0; i[0] <= 49; i[0]++) {
-					if (difkey[i[0]][1] > (Etime - noteoff) / 25 * ddifG[0] - difkey[7][3] + noteoff) {
-						ddif[ddifG[0] - 1] += difkey[i[0]][2];
+					if (difkey[i[0]][1] > (Etime - noteoff) / 25 *
+						ddif2.nowdifsection - difkey[7][3] + noteoff) {
+						ddif[ddif2.nowdifsection - 1] += difkey[i[0]][2];
 					}
 				}
 			}
-			ddifG[0]++;
+			ddif2.nowdifsection++;
 		}
 		difkey[difkey[1][3]][0] = note[G[0]][objectN[G[0]]].object;
 		difkey[difkey[1][3]][1] = note[G[0]][objectN[G[0]]].hittime;
+
+		G[2] = MapErrorCheck(difkey[difkey[1][3]][0], difkey[difkey[1][3]][1],
+			difkey[difkey[2][3]][0], difkey[difkey[2][3]][1], o);
+		if (G[2] != 0 && outpoint[1] == 0) {
+			outpoint[0] = difkey[difkey[1][3]][1];
+			outpoint[1] = G[2];
+		}
+
 		//hitノーツ補間
 		if (difkey[difkey[1][3]][0] == 1) {
-			if (difkey[difkey[2][3]][0] == 1 && difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
+			if (difkey[difkey[2][3]][0] == 1 &&
+				difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
 				difkey[difkey[2][3]][2] *= 1;
 				objectN[G[0]]++;
 				continue;
@@ -959,7 +976,9 @@ void RecordLoad2(int p, int n, int o) {
 				objectN[G[0]]++;
 				continue;
 			}
-			else if (difkey[difkey[1][3]][0] == 3 && (difkey[difkey[2][3]][0] == 8 || difkey[difkey[2][3]][0] == 9)) {
+			else if (difkey[difkey[1][3]][0] == 3 &&
+				(difkey[difkey[2][3]][0] == 8 ||
+				difkey[difkey[2][3]][0] == 9)) {
 				difkey[difkey[2][3]][0] = 3;
 				objectN[G[0]]++;
 				continue;
@@ -1031,7 +1050,9 @@ void RecordLoad2(int p, int n, int o) {
 		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
 			G[1] = difkey[difkey[1][3]][1] - difkey[difkey[2][3]][1];
 			if (G[1] == 0)G[1] = 1;
-			if (G[1] <= 5 && difkey[difkey[1][3]][0] != difkey[difkey[2][3]][0]) difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.3;
+			if (G[1] <= 5 && difkey[difkey[1][3]][0] != difkey[difkey[2][3]][0]) {
+				difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.3;
+			}
 			else {
 				difkey[difkey[1][3]][2] = 3000000 / G[1];
 				if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0] && difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6 && difkey[difkey[1][3]][2] >= 40000) difkey[difkey[1][3]][2] *= 2;
@@ -1048,7 +1069,7 @@ void RecordLoad2(int p, int n, int o) {
 			}
 		}
 		objectN[G[0]]++;
-		difkey[5][3]++;
+		ddif2.datanum++;
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= difkey[0][3]; i[0]++) {
 			if (difkey[i[0]][2] < 0) {
@@ -1058,34 +1079,35 @@ void RecordLoad2(int p, int n, int o) {
 				G[0] += difkey[i[0]][2];
 			}
 		}
-		if (difkey[4][3] < G[0]) {
-			difkey[4][3] = G[0];
+		if (ddif2.maxdif < G[0]) {
+			ddif2.maxdif = G[0];
 		}
 		for (i[0] = 1; i[0] < 4; i[0]++) {
 			difkey[i[0]][3]++;
 			if (difkey[i[0]][3] > difkey[0][3])difkey[i[0]][3] = 0;
 		}
 	}
-	difkey[5][3]++;
-	for (i[0] = 0; i[0] < 2; i[0]++)if (difkey[i[0]][2] == 0 && difkey[2][2] > 0)difkey[5][3]--;
-	if (difkey[5][3] < 1)difkey[5][3] = 1;
-	if (difkey[5][3] > 50)difkey[5][3] = 50;
-	ddifG[1] = difkey[4][3];
+	ddif2.datanum++;
+	for (i[0] = 0; i[0] < 2; i[0]++)if (difkey[i[0]][2] == 0 && difkey[2][2] > 0)ddif2.datanum--;
+	if (ddif2.datanum < 1)ddif2.datanum = 1;
+	if (ddif2.datanum > 50)ddif2.datanum = 50;
+	ddifG[1] = ddif2.maxdif;
 	if (ddifG[1] <= 0)ddifG[1] = 1;
-	difkey[4][3] /= 50;
-	ddif[ddifG[0] - 1] = 0;
-	for (i[0] = 0; i[0] < difkey[5][3]; i[0]++) {
+	ddif2.maxdif /= 50;
+	ddif[ddif2.nowdifsection - 1] = 0;
+	for (i[0] = 0; i[0] < ddif2.datanum; i[0]++) {
 		if (difkey[i[0]][1] > Etime - difkey[7][3]) {
-			ddif[ddifG[0] - 1] += difkey[i[0]][2];
+			ddif[ddif2.nowdifsection - 1] += difkey[i[0]][2];
 		}
 	}
-	for (i[0] = ddifG[0] - 1; i[0] <= 24; i[0]++) {
-		ddif[i[0]] = ddif[ddifG[0] - 1];
+	for (i[0] = ddif2.nowdifsection - 1; i[0] <= 24; i[0]++) {
+		ddif[i[0]] = ddif[ddif2.nowdifsection - 1];
 	}
-	difkey[6][3] = ddif[ddifG[0] - 1] / 50;
-	//NEEDYOULv.1->379, Co-op TaylorLv.9.9->40595, "測定"/31.8+47.1="Lv"*100
-	difkey[4][3] = lins(379, 100, 40595, 990, difkey[4][3]);
-	difkey[6][3] = lins(379, 100, 40595, 990, difkey[6][3]);
+	ddif2.lastdif = ddif[ddif2.nowdifsection - 1] / 50;
+	//NEEDYOU:Lv.1->379, Co-op Taylor:Lv.9.9->40595
+	ddif2.maxdif = lins(379, 100, 40595, 990, ddif2.maxdif);
+	ddif2.lastdif = lins(379, 100, 40595, 990, ddif2.lastdif);
+
 	//ここからPC用譜面データのファイルの作成(セーブ作業)
 	strcopy(dataE, RRS, 1);
 	strcats(RRS, GT26[o]);
@@ -1111,15 +1133,17 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&note, sizeof(struct note_box), 2997, fp);//ノーツデータ
 	fwrite(&notes, sizeof(short int), 1, fp);//ノーツ数
 	fwrite(&Etime, sizeof(int), 1, fp);//曲終了時間
-	G[0] = difkey[4][3];//最高難易度
-	G[1] = difkey[6][3];//最終難易度
+	G[0] = ddif2.maxdif;//最高難易度
+	G[1] = ddif2.lastdif;//最終難易度
 	fwrite(&G, sizeof(int), 2, fp);
 	fwrite(&ddif, sizeof(int), 25, fp);//各区間難易度データ
-	fwrite(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
+	fwrite(&ddif2.nowdifsection, sizeof(int), 1, fp);//各区間難易度データ
+	fwrite(&ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&DifFN, 255, 1, fp);//難易度バー名
 	fwrite(&Movie, sizeof(int), 13986, fp);//動画データ
 	fwrite(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 	fwrite(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+	fwrite(&outpoint, sizeof(int), 2, fp);//譜面エラー
 	fclose(fp);
 	return;
 }
@@ -1128,6 +1152,23 @@ int IsNoteCode(wchar_t c) {
 	if (c == L'H' || c == L'C' || c == L'U' || c == L'D' || c == L'L' || c == L'R' || c == L'B' ||
 		c == L'G' || c == L'?' || c == L'!' || (L'1' <= c && c <= L'9')) {
 		return 1;
+	}
+	return 0;
+}
+
+int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif) {
+	if (nowtime <= 0 || beftime <= 0) {
+		return 0;
+	}
+	switch (dif) {
+	case 1:
+		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 600) {
+			return HITNOTETOONEAR;
+		}
+		break;
+	case 2:
+		break;
+	default: break;
 	}
 	return 0;
 }
