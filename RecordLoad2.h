@@ -153,6 +153,7 @@ void RecordLoad2(int p, int n, int o) {
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	wchar_t ST1[] = L"record/";
 	wchar_t ST2[] = L"list.txt";
+	playnum_box allnum;
 	FILE *fp;
 	songT = FileRead_open(L"RecordPack.txt");
 	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
@@ -324,30 +325,77 @@ void RecordLoad2(int p, int n, int o) {
 						case 1:
 						case 2:
 						case 3:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], G[1], GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
+								G[1], GD[2], bpmG,
+								&Ymove[i[0]][YmoveN[i[0]]][0],
+								&Ymove[i[0]][YmoveN[i[0]]][1],
+								&Ymove[i[0]][YmoveN[i[0]]][2],
+								&Ymove[i[0]][YmoveN[i[0]]][3]);
 							break;
 						case 4:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 1, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
+								1, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0],
+								&Ymove[i[0]][YmoveN[i[0]]][1],
+								&Ymove[i[0]][YmoveN[i[0]]][2],
+								&Ymove[i[0]][YmoveN[i[0]]][3]);
 							Ymove[i[0]][YmoveN[i[0]]][0] -= 5;
 							Ymove[i[0]][YmoveN[i[0]]][2] -= 5;
 							break;
 						case 5:
-							SETMove(timer[0], GD[0], (Ymove[i[0]][YmoveN[i[0]] - 1][1] + (GD[1] + G[3] * i[0] - G[3]) * 50 - 100) / 100, 2, (GD[2] + GD[0]) / 2.0, bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							SETMove(timer[0], GD[0],
+								(Ymove[i[0]][YmoveN[i[0]] - 1][1] +
+								(GD[1] + G[3] * i[0] - G[3]) * 50 - 100) / 100,
+								2, (GD[2] + GD[0]) / 2.0, bpmG,
+								&Ymove[i[0]][YmoveN[i[0]]][0],
+								&Ymove[i[0]][YmoveN[i[0]]][1],
+								&Ymove[i[0]][YmoveN[i[0]]][2],
+								&Ymove[i[0]][YmoveN[i[0]]][3]);
 							YmoveN[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, GD[1] + G[3] * i[0] - G[3], 3, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							allnum.Ymovenum[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
+								GD[1] + G[3] * i[0] - G[3], 3, GD[2], bpmG,
+								&Ymove[i[0]][YmoveN[i[0]]][0],
+								&Ymove[i[0]][YmoveN[i[0]]][1],
+								&Ymove[i[0]][YmoveN[i[0]]][2],
+								&Ymove[i[0]][YmoveN[i[0]]][3]);
 							break;
 						case 6:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 3, (GD[2] + GD[0]) / 2.0, bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
+								3, (GD[2] + GD[0]) / 2.0, bpmG,
+								&Ymove[i[0]][YmoveN[i[0]]][0],
+								&Ymove[i[0]][YmoveN[i[0]]][1],
+								&Ymove[i[0]][YmoveN[i[0]]][2],
+								&Ymove[i[0]][YmoveN[i[0]]][3]);
 							YmoveN[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Ymove[i[0]][YmoveN[i[0]] - 2][1] - 100.0) / 50.0, 2, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							allnum.Ymovenum[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
+								(Ymove[i[0]][YmoveN[i[0]] - 2][1] - 100.0)
+								/ 50.0, 2, GD[2], bpmG,
+								&Ymove[i[0]][YmoveN[i[0]]][0],
+								&Ymove[i[0]][YmoveN[i[0]]][1],
+								&Ymove[i[0]][YmoveN[i[0]]][2],
+								&Ymove[i[0]][YmoveN[i[0]]][3]);
 							break;
 						case 7:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 2, (GD[2] + GD[0]) / 2.0, bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
+								2, (GD[2] + GD[0]) / 2.0, bpmG,
+								&Ymove[i[0]][YmoveN[i[0]]][0],
+								&Ymove[i[0]][YmoveN[i[0]]][1],
+								&Ymove[i[0]][YmoveN[i[0]]][2],
+								&Ymove[i[0]][YmoveN[i[0]]][3]);
 							YmoveN[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Ymove[i[0]][YmoveN[i[0]] - 2][1] - 100.0) / 50.0, 3, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0], &Ymove[i[0]][YmoveN[i[0]]][1], &Ymove[i[0]][YmoveN[i[0]]][2], &Ymove[i[0]][YmoveN[i[0]]][3]);
+							allnum.Ymovenum[i[0]]++;
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
+								(Ymove[i[0]][YmoveN[i[0]] - 2][1] - 100.0)
+								/ 50.0, 3, GD[2], bpmG,
+								&Ymove[i[0]][YmoveN[i[0]]][0],
+								&Ymove[i[0]][YmoveN[i[0]]][1],
+								&Ymove[i[0]][YmoveN[i[0]]][2],
+								&Ymove[i[0]][YmoveN[i[0]]][3]);
 							break;
 						}
 						YmoveN[i[0]]++;
+						allnum.Ymovenum[i[0]]++;
 					}
 				}
 				//横移動
@@ -420,20 +468,24 @@ void RecordLoad2(int p, int n, int o) {
 						case 5:
 							SETMove(timer[0], GD[0], (Xmove[i[0]][XmoveN[i[0]] - 1][1] + GD[1] * 50 - 100) / 100, 2, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
 							XmoveN[i[0]]++;
+							allnum.Xmovenum[i[0]]++;
 							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, GD[1] + G[3] * i[0] - G[3], 3, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
 							break;
 						case 6:
 							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 3, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
 							XmoveN[i[0]]++;
+							allnum.Xmovenum[i[0]]++;
 							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Xmove[i[0]][XmoveN[i[0]] - 2][1] - 100.0) / 50.0, 2, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
 							break;
 						case 7:
 							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 2, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
 							XmoveN[i[0]]++;
+							allnum.Xmovenum[i[0]]++;
 							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Xmove[i[0]][XmoveN[i[0]] - 2][1] - 100.0) / 50.0, 3, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
 							break;
 						}
 						XmoveN[i[0]]++;
+						allnum.Xmovenum[i[0]]++;
 					}
 				}
 				//振動
@@ -455,6 +507,7 @@ void RecordLoad2(int p, int n, int o) {
 							SETMove(timer[0], GD[0] + GD[2], (Ymove[G[0]][YmoveN[G[0]] - 1][1] - 100.0) / 50.0, 1, GD[0] + GD[2] * 2, bpmG, &Ymove[G[0]][YmoveN[G[0]] + 1][0], &Ymove[G[0]][YmoveN[G[0]] + 1][1], &Ymove[G[0]][YmoveN[G[0]] + 1][2], &Ymove[G[0]][YmoveN[G[0]] + 1][3]);
 							GD[0] += GD[2] * 2;
 							YmoveN[G[0]] += 2;
+							allnum.Ymovenum[i[0]] += 2;
 						}
 					}
 					else {
@@ -463,6 +516,7 @@ void RecordLoad2(int p, int n, int o) {
 							SETMove(timer[0], GD[0] + GD[2], (Xmove[G[0]][XmoveN[G[0]] - 1][1] - 100.0) / 50.0, 1, GD[0] + GD[2] * 2, bpmG, &Xmove[G[0]][XmoveN[G[0]] + 1][0], &Xmove[G[0]][XmoveN[G[0]] + 1][1], &Xmove[G[0]][XmoveN[G[0]] + 1][2], &Xmove[G[0]][XmoveN[G[0]] + 1][3]);
 							GD[0] += GD[2] * 2;
 							XmoveN[G[0]] += 2;
+							allnum.Xmovenum[i[0]] += 2;
 						}
 					}
 				}
@@ -520,6 +574,7 @@ void RecordLoad2(int p, int n, int o) {
 						Ymove[G[0]][YmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
 						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 3;
 						YmoveN[G[0]]++;
+						allnum.Ymovenum[i[0]]++;
 						break;
 					case 6:
 						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, timer[0]);
@@ -531,9 +586,11 @@ void RecordLoad2(int p, int n, int o) {
 						Ymove[G[0]][YmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, timer[0]) - 5;
 						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 2;
 						YmoveN[G[0]]++;
+						allnum.Ymovenum[i[0]]++;
 						break;
 					}
 					YmoveN[G[0]]++;
+					allnum.Ymovenum[i[0]]++;
 				}
 				//横ロック
 				else if (strands(GT1, L"#XLOCK")) {
@@ -614,6 +671,7 @@ void RecordLoad2(int p, int n, int o) {
 					Movie[13][MovieN] = strsans2(GT1)*255.0;
 					strnex(GT1);
 					MovieN++;
+					allnum.movienum++;
 				}
 				//カメラ移動+ズーム+角度(未実装)
 				else if (strands(GT1, L"#CAMERA:")) {
@@ -850,6 +908,7 @@ void RecordLoad2(int p, int n, int o) {
 								notes++;
 							}
 							objectN[i[0]]++;
+							allnum.notenum[i[0]]++;
 						}
 						if (i[0] <= 1) FileRead_gets(GT1, 256, songdata);
 					}
@@ -860,7 +919,7 @@ void RecordLoad2(int p, int n, int o) {
 	}
 	FileRead_close(songdata);
 	//譜面の最後にgoustを置く
-	for (i[0] = 0; i[0] <= 2; i[0]++) {
+	for (i[0] = 0; i[0] < 3; i[0]++) {
 		note[i[0]][objectN[i[0]]].hittime = timer[i[0]];
 		note[i[0]][objectN[i[0]] + 1].hittime = -1;
 		note[i[0]][objectN[i[0]]].object = 8;
@@ -870,6 +929,9 @@ void RecordLoad2(int p, int n, int o) {
 	lock[0][1][lockN[0]] = -1;
 	lock[1][0][lockN[1]] = -1;
 	lock[1][1][lockN[1]] = -1;
+	allnum.notenum[0]++;
+	allnum.notenum[1]++;
+	allnum.notenum[2]++;
 	Etime = timer[0];
 
 	/*難易度計算
@@ -1112,6 +1174,7 @@ void RecordLoad2(int p, int n, int o) {
 	strcopy(dataE, RRS, 1);
 	strcats(RRS, GT26[o]);
 	G[2] = _wfopen_s(&fp, RRS, L"wb");
+	fwrite(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
 	fwrite(&mp3FN, 255, 1, fp);//音楽ファイル名
 	fwrite(&bpm, sizeof(double), 1, fp);//BPM
 	fwrite(&noteoff, sizeof(int), 1, fp);//offset
@@ -1125,12 +1188,20 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 	fwrite(&speedt, sizeof(double), 990, fp);//レーン速度
 	fwrite(&chamo, sizeof(int), 594, fp);//キャラグラ変換タイミング
-	fwrite(&Ymove, sizeof(int), 19980, fp);//縦位置移動タイミング
-	fwrite(&Xmove, sizeof(int), 11988, fp);//横位置移動タイミング
+	fwrite(&Ymove[0], sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
+	fwrite(&Ymove[1], sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
+	fwrite(&Ymove[2], sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
+	fwrite(&Ymove[3], sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
+	fwrite(&Ymove[4], sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
+	fwrite(&Xmove[0], sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
+	fwrite(&Xmove[1], sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
+	fwrite(&Xmove[2], sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
 	fwrite(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 	fwrite(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 	fwrite(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-	fwrite(&note, sizeof(struct note_box), 2997, fp);//ノーツデータ
+	fwrite(&note[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
+	fwrite(&note[1], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
+	fwrite(&note[2], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
 	fwrite(&notes, sizeof(short int), 1, fp);//ノーツ数
 	fwrite(&Etime, sizeof(int), 1, fp);//曲終了時間
 	G[0] = ddif2.maxdif;//最高難易度
@@ -1140,7 +1211,7 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&ddif2.nowdifsection, sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&DifFN, 255, 1, fp);//難易度バー名
-	fwrite(&Movie, sizeof(int), 13986, fp);//動画データ
+	fwrite(&Movie, sizeof(int), allnum.movienum * 14, fp);//動画データ
 	fwrite(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 	fwrite(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 	fwrite(&outpoint, sizeof(int), 2, fp);//譜面エラー

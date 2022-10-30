@@ -157,6 +157,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	unsigned int Cr = GetColor(255, 255, 255);
 	unsigned int Crb = GetColor(0, 0, 0);
 	unsigned int CrR = GetColor(255, 0, 0);
+	playnum_box allnum;
 	FILE *fp;
 	//システムロード
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
@@ -188,6 +189,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
 	}
 	if (G[2] == 0) {
+		fread(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
 		fread(&mp3FN, 255, 1, fp);//音楽ファイル名
 		fread(&bpm, sizeof(double), 1, fp);//BPM
 		fread(&noteoff, sizeof(int), 1, fp);//offset
@@ -201,12 +203,20 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 		fread(&speedt, sizeof(double), 990, fp);//レーン速度
 		fread(&chamo, sizeof(int), 594, fp);//キャラグラ変換タイミング
-		fread(&Ymove, sizeof(int), 19980, fp);//縦位置移動タイミング
-		fread(&Xmove, sizeof(int), 11988, fp);//横位置移動タイミング
+		fread(&Ymove[0], sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
+		fread(&Ymove[1], sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
+		fread(&Ymove[2], sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
+		fread(&Ymove[3], sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
+		fread(&Ymove[4], sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
+		fread(&Xmove[0], sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
+		fread(&Xmove[1], sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
+		fread(&Xmove[2], sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
 		fread(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 		fread(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 		fread(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-		fread(&note, sizeof(struct note_box), 2997, fp);//ノーツデータ
+		fread(&note[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
+		fread(&note[1], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
+		fread(&note[2], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
 		fread(&notes, sizeof(short int), 1, fp);//ノーツ数
 		fread(&Etime, sizeof(int), 1, fp);//曲終了時間
 		fread(&G, sizeof(int), 2, fp);
@@ -215,7 +225,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 		fread(&DifFN, 255, 1, fp);//難易度バー名
-		fread(&Movie, sizeof(int), 13986, fp);//動画データ
+		fread(&Movie, sizeof(int), allnum.movienum * 14, fp);//動画データ
 		fread(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 		fread(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 		fread(&outpoint, sizeof(int), 2, fp);//スクロールデータ

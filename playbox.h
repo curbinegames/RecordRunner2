@@ -83,6 +83,12 @@ struct note_box {
 	enum melodysound melody = MELODYSOUND_NONE;
 	int color = 0;
 };
+typedef struct playnum_box {
+	unsigned int notenum[3] = { 0,0,0 };
+	unsigned int Ymovenum[5] = { 1,1,1,1,1 };
+	unsigned int Xmovenum[3] = { 1,1,1 };
+	unsigned int movienum = 0;
+} playnum_box;
 struct score_box {
 	int normal = 0;
 	int combo = 0;
