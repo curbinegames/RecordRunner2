@@ -22,6 +22,7 @@ typedef enum note_material {
 } note_material;
 
 struct judge_box AddHitJudge(struct judge_box ans, int gup);
+int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime);
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
 int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
 	struct note_box lownote, int keyu, int keyd, int keyl, int keyr, int hitatp, int hitatt);
@@ -1390,7 +1391,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		G[0] = GetRemainNotes2(judge, notes);
 		G[1] = CalPosScore2(score, G[0], notes, combo, Mcombo);
 		RunningStats2(judge, G[1], HighSrore);
-		//部分難易度表示
+		//部分難易度表示 (only auto mode)
 		if (holdG >= 1 && AutoFlag == 1) {
 			G[0] = ddif[0] * 20 / notzero(ddifG[1]) + 155;
 			G[1] = ddif[24] * 20 / notzero(ddifG[1]) + 447;
@@ -1402,6 +1403,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawFormatString(490, 80, Cr, L"mdif:%.2f", difkey[4][3] / 100.0);
 			DrawFormatString(490, 100, Cr, L"ldif:%.2f", difkey[6][3] / 100.0);
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
+			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
+				cal_nowdif_p(ddif, Ntime, noteoff, Etime) / 100.0);
 			/* エラー表示 */
 			if (outpoint[1] != 0) {
 				DrawFormatString(20, 120, CrR, L"MAPERROR");
@@ -1598,7 +1601,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		else {
 			Stime = GetNowCount() - Ntime + system[1] * 5;
 		}
-		/*s:500 n:1000*/
 		ScreenFlip();
 	}
 	InitGraph();
@@ -1623,6 +1625,25 @@ struct judge_box AddHitJudge(struct judge_box ans, int gup) {
 		ans.miss++;
 	}
 	return ans;
+}
+
+int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime) {
+	int ret = 0;
+	int sect = 0;
+	int stime = 0;
+	if (Ntime - noteoff <= 0) {
+		ret = ddif[0];
+	}
+	else if (Ntime - Etime >= 0) {
+		ret = ddif[24];
+	}
+	else {
+		sect = (Ntime - noteoff) * 24 / (Etime - noteoff);
+		stime = (Ntime - noteoff) % ((Etime - noteoff) / 24);
+		ret = lins(0, ddif[sect], (Etime - noteoff) / 24, ddif[sect + 1], stime);
+	}
+	ret = lins(379 * 50, 100, 40595 * 50, 990, ret);
+	return ret;
 }
 
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {

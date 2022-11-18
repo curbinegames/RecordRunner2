@@ -10,7 +10,7 @@ typedef struct ddef_box {
 
 int IsNoteCode(wchar_t c);
 int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
-int cal_nowdif(int *difkey, int num, int now, int voidtime);
+int cal_nowdif_m(int *difkey, int num, int now, int voidtime);
 int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
 void RecordLoad2(int p, int n, int o) {
@@ -1128,7 +1128,7 @@ void RecordLoad2(int p, int n, int o) {
 		ddif2.datanum++;
 		G[0] = 0;
 		ddif2.maxdif = mins(ddif2.maxdif,
-			cal_nowdif(difkey[0], difkey[0][3], difkey[1][3], difkey[7][3]));
+			cal_nowdif_m(difkey[0], difkey[0][3], difkey[1][3], difkey[7][3]));
 		for (i[0] = 1; i[0] < 4; i[0]++) {
 			difkey[i[0]][3]++;
 			if (difkey[i[0]][3] > difkey[0][3])difkey[i[0]][3] = 0;
@@ -1151,9 +1151,9 @@ void RecordLoad2(int p, int n, int o) {
 		ddif[i[0]] = ddif[ddif2.nowdifsection - 1];
 	}
 	ddif2.lastdif = ddif[ddif2.nowdifsection - 1] / 50;
-	//NEEDYOU:Lv.1->379, Co-op Taylor:Lv.9.9->40595
-	ddif2.maxdif = lins(379, 100, 40595, 990, ddif2.maxdif);
-	ddif2.lastdif = lins(379, 100, 40595, 990, ddif2.lastdif);
+	//NEEDYOU:Lv.1.0->2713, Co-op Taylor:Lv.9.9->51609
+	ddif2.maxdif = lins(2713, 100, 51609, 990, ddif2.maxdif);
+	ddif2.lastdif = lins(2713, 100, 51609, 990, ddif2.lastdif);
 
 	//ここからPC用譜面データのファイルの作成(セーブ作業)
 	strcopy(dataE, RRS, 1);
@@ -1233,7 +1233,7 @@ int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int
 	}
 }
 
-int cal_nowdif(int *difkey, int num, int now, int voidtime) {
+int cal_nowdif_m(int *difkey, int num, int now, int voidtime) {
 	int ret = 0;
 	int count = 0;
 	for (int i = 0; i <= num; i++) {
