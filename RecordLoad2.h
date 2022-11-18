@@ -9,7 +9,9 @@ typedef struct ddef_box {
 } ddef_box;
 
 int IsNoteCode(wchar_t c);
-int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif);
+int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
+int cal_nowdif(int *difkey, int num, int now, int voidtime);
+int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
@@ -21,6 +23,7 @@ void RecordLoad2(int p, int n, int o) {
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int songdata = 0;
+	int waningLv = 2;
 	double GD[5];
 	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
 	//short int itemN = 0; //↑の番号
@@ -235,6 +238,11 @@ void RecordLoad2(int p, int n, int o) {
 			strmods(GT1, 6);
 			fall[0][0] = strsans(GT1);
 			fall[0][1] = 0;
+		}
+		//譜面難易度フィルタのレベル
+		else if (strands(GT1, L"#WANING:")) {
+			strmods(GT1, 8);
+			waningLv = strsans(GT1);
 		}
 		//譜面を読み込む
 		else if (strands(GT1, L"#MAP:")) {
@@ -994,29 +1002,15 @@ void RecordLoad2(int p, int n, int o) {
 		//ddifの計算
 		while (note[G[0]][objectN[G[0]]].hittime >=
 			(Etime - noteoff) / 25 * ddif2.nowdifsection + noteoff) {
-			if (ddif2.datanum < 49) {
-				for (i[0] = 0; i[0] < ddif2.datanum; i[0]++) {
-					if (difkey[i[0]][1] > (Etime - noteoff) / 25 *
-						ddif2.nowdifsection - difkey[7][3] + noteoff) {
-						ddif[ddif2.nowdifsection - 1] += difkey[i[0]][2];
-					}
-				}
-			}
-			else {
-				for (i[0] = 0; i[0] <= 49; i[0]++) {
-					if (difkey[i[0]][1] > (Etime - noteoff) / 25 *
-						ddif2.nowdifsection - difkey[7][3] + noteoff) {
-						ddif[ddif2.nowdifsection - 1] += difkey[i[0]][2];
-					}
-				}
-			}
+			ddif[ddif2.nowdifsection - 1] = cal_ddif(ddif2.datanum, difkey[0],
+				Etime, noteoff, ddif2.nowdifsection, difkey[7][3]);
 			ddif2.nowdifsection++;
 		}
 		difkey[difkey[1][3]][0] = note[G[0]][objectN[G[0]]].object;
 		difkey[difkey[1][3]][1] = note[G[0]][objectN[G[0]]].hittime;
 
 		G[2] = MapErrorCheck(difkey[difkey[1][3]][0], difkey[difkey[1][3]][1],
-			difkey[difkey[2][3]][0], difkey[difkey[2][3]][1], o);
+			difkey[difkey[2][3]][0], difkey[difkey[2][3]][1], o, waningLv);
 		if (G[2] != 0 && outpoint[1] == 0) {
 			outpoint[0] = difkey[difkey[1][3]][1];
 			outpoint[1] = G[2];
@@ -1133,17 +1127,8 @@ void RecordLoad2(int p, int n, int o) {
 		objectN[G[0]]++;
 		ddif2.datanum++;
 		G[0] = 0;
-		for (i[0] = 0; i[0] <= difkey[0][3]; i[0]++) {
-			if (difkey[i[0]][2] < 0) {
-				break;
-			}
-			if (difkey[i[0]][1] > difkey[difkey[1][3]][1] - difkey[7][3]) {
-				G[0] += difkey[i[0]][2];
-			}
-		}
-		if (ddif2.maxdif < G[0]) {
-			ddif2.maxdif = G[0];
-		}
+		ddif2.maxdif = mins(ddif2.maxdif,
+			cal_nowdif(difkey[0], difkey[0][3], difkey[1][3], difkey[7][3]));
 		for (i[0] = 1; i[0] < 4; i[0]++) {
 			difkey[i[0]][3]++;
 			if (difkey[i[0]][3] > difkey[0][3])difkey[i[0]][3] = 0;
@@ -1227,17 +1212,81 @@ int IsNoteCode(wchar_t c) {
 	return 0;
 }
 
-int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif) {
+int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime) {
+	int ret = 0;
+	int count = 0;
+	if (num >= 50) {
+		num = 49;
+	}
+	for (int i = 0; i < num; i++) {
+		if (difkey[i * 4 + 1] > (Etime - noteoff) / 25 *
+			difsec - voidtime + noteoff) {
+			count++;
+			ret += difkey[i * 4 + 2];
+		}
+	}
+	if (count == 0) {
+		return 0;
+	}
+	else {
+		return ret * 50 / count;
+	}
+}
+
+int cal_nowdif(int *difkey, int num, int now, int voidtime) {
+	int ret = 0;
+	int count = 0;
+	for (int i = 0; i <= num; i++) {
+		if (difkey[i * 4 + 2] < 0) {
+			break;
+		}
+		if (difkey[i * 4 + 1] > difkey[now * 4 + 1] - voidtime) {
+			ret += difkey[i * 4 + 2];
+			count++;
+		}
+	}
+	if (count == 0) {
+		return 0;
+	}
+	else {
+		return ret * 50 / count;
+	}
+}
+
+int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl) {
 	if (nowtime <= 0 || beftime <= 0) {
 		return 0;
 	}
-	switch (dif) {
-	case 1:
+	switch (dif * 10 + wl) {
+	case 11:
+		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 1200) {
+			return HITNOTETOONEAR;
+		}
+		break;
+	case 12:
 		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 600) {
 			return HITNOTETOONEAR;
 		}
 		break;
-	case 2:
+	case 13:
+		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 300) {
+			return HITNOTETOONEAR;
+		}
+		break;
+	case 21:
+		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 600) {
+			return HITNOTETOONEAR;
+		}
+		break;
+	case 22:
+		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 300) {
+			return HITNOTETOONEAR;
+		}
+		break;
+	case 23:
+		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 150) {
+			return HITNOTETOONEAR;
+		}
 		break;
 	default: break;
 	}
