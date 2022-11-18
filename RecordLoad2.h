@@ -172,8 +172,10 @@ void RecordLoad2(int p, int n, int o) {
 	strcats(dataE, GT1); //"record/<パック名>/<曲名>"
 	strcopy(dataE, GT1, 1);
 	strcats(GT1, GT25[o]); //"record/<パック名>/<曲名>/<難易度>.txt"
-
 	songdata = FileRead_open(GT1);
+	if (songdata == 0) {
+		return;
+	}
 	//テキストデータを読む
 	while (FileRead_eof(songdata) == 0) {
 		FileRead_gets(GT1, 256, songdata);

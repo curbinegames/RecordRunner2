@@ -1,13 +1,22 @@
+
+typedef enum {
+	FILETYPE_TXT,
+	FILETYPE_RRS,
+} TXT_OR_RRS;
+
 int strands(const wchar_t *p1, const wchar_t *p2);
 void strcopy(const wchar_t*, wchar_t*, int);
 void strmods(wchar_t*, int);
 void strcats(wchar_t*, const wchar_t*);
+int strlens(const wchar_t* s);
+int strwlens(const wchar_t* s);
 int strrans(wchar_t*);
 void strnex(wchar_t*);
 void strnex_EX(wchar_t*, wchar_t);
 void stradds(wchar_t*, wchar_t);
 int strsans(wchar_t*);
 double strsans2(wchar_t*);
+void get_rec_file(wchar_t *s, int pack, int music, int dif, TXT_OR_RRS torr);
 
 //p1‚Ìæ“ª‚Ép2‚ª‚ ‚é‚©‚Ç‚¤‚©‚ğ’²‚×‚é
 int strands(const wchar_t *p1, const wchar_t *p2) {
@@ -59,6 +68,32 @@ void strcats(wchar_t *p1, const wchar_t *p2) {
 	}
 	*p1 = L'\0';
 	return;
+}
+
+int strlens(const wchar_t* s) {
+	int ret = 0;
+	for (ret = 0; ret < 255; ret++) {
+		if (s[ret] == L'\0') {
+			break;
+		}
+	}
+	return ret;
+}
+
+int strwlens(const wchar_t* s) {
+	int ret = 0;
+	for (int p = 0; p < 255; p++) {
+		if (s[p] == L'\0') {
+			break;
+		}
+		else if (L' ' <= s[p] && s[p] <= L'~') {
+			ret++;
+		}
+		else {
+			ret += 2;
+		}
+	}
+	return ret;
 }
 
 int strrans(wchar_t *p1) {
@@ -180,4 +215,45 @@ double strsans2(wchar_t *p1) {
 			p1++;
 		}
 	}
+}
+
+void get_rec_file(wchar_t *s, int pack, int music, int dif, TXT_OR_RRS torr) {
+	wchar_t ret[255] = L"record/";
+	wchar_t GT1[255];
+	int file;
+	file = FileRead_open(L"RecordPack.txt");
+	for (int i = 0; i <= pack; i++) {
+		if (FileRead_eof(file) != 0) {
+			s[0] = L'\0';
+			return;
+		}
+		FileRead_gets(GT1, 256, file); /* GT1 = "pask" */
+	}
+	FileRead_close(file);
+	strcats(ret, GT1); /* ret = "record/pask" */
+	strcats(ret, L"/");  /* ret = "record/pask/" */
+	strcopy(ret, GT1, 1); /* GT1 = "record/pask/" */
+	strcats(GT1, L"list.txt"); /* GT1 = "record/pask/list.txt" */
+	file = FileRead_open(GT1);
+	for (int i = 0; i <= music; i++) {
+		if (FileRead_eof(file) != 0) {
+			s[0] = L'\0';
+			return;
+		}
+		FileRead_gets(GT1, 256, file); /* GT1 = "music" */
+	}
+	FileRead_close(file);
+	strcats(ret, GT1); /* ret = "record/pask/music" */
+	strcats(ret, L"/");  /* ret = "record/pask/music/" */
+	GT1[0] = L'0' + dif;
+	GT1[1] = L'\0';
+	strcats(ret, GT1); /* ret = "record/pask/music/3" */
+	if (torr == FILETYPE_RRS) {
+		strcats(ret, L".rrs"); /* ret = "record/pask/music/3.rrs" */
+	}
+	else {
+		strcats(ret, L".txt"); /* ret = "record/pask/music/3.txt" */
+	}
+	strcopy(ret, s, 1);
+	return;
 }
