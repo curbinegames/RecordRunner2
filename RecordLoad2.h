@@ -1153,9 +1153,9 @@ void RecordLoad2(int p, int n, int o) {
 		ddif[i[0]] = ddif[ddif2.nowdifsection - 1];
 	}
 	ddif2.lastdif = ddif[ddif2.nowdifsection - 1] / 50;
-	//NEEDYOU:Lv.1.0->2713, Co-op Taylor:Lv.9.9->51609
-	ddif2.maxdif = lins(2713, 100, 51609, 990, ddif2.maxdif);
-	ddif2.lastdif = lins(2713, 100, 51609, 990, ddif2.lastdif);
+	//NEEDYOU:Lv.1.0->2713, Co-op katyohugetsu:Lv.8.0->34733
+	ddif2.maxdif = lins(2713, 100, 34733, 800, ddif2.maxdif);
+	ddif2.lastdif = lins(2713, 100, 34733, 800, ddif2.lastdif);
 
 	//ここからPC用譜面データのファイルの作成(セーブ作業)
 	strcopy(dataE, RRS, 1);

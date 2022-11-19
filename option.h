@@ -191,7 +191,7 @@ int option(void) {
 				G[1] = _wfopen_s(&ofp, L"difout.txt", L"w");
 				fwprintf(ofp, L"\t\t\tEASY\tNORMAL\tHARD\tANOTHER\n");
 				for (int i = 0; i < 10; i++) {
-					for (int j = 0; j < 10; j++) {
+					for (int j = 0; j < 20; j++) {
 						difl[0] = 0;
 						difl[1] = 0;
 						difl[2] = 0;

@@ -608,11 +608,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		//get chara position
-#if 0
-		DrawFormatString(20, 120, Cr, L"DATA: %d", G[0]);
-		DrawFormatString(20, 140, Cr, L"DATA: %d", G[1]);
-		DrawFormatString(20, 160, Cr, L"DATA: %d", G[2]);
-#endif
 		charaput = GetCharaPos(Ntime, note[0][G[0]], note[1][G[1]], note[2][G[2]], holdu, holdd,
 			holdl, holdr, hitatk[0], hitatk[1]);
 		G[4] = Yline[charaput];
@@ -699,6 +694,24 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (note[2][objectN[2]].object == 1 && note[2][objectN[2]].hittime - Ntime <= 8) {
 				G[0]++;
 			}
+			if (note[0][objectN[0] + 1].object == 1 && note[0][objectN[0] + 1].hittime - Ntime <= 8) {
+				G[0]++;
+			}
+			if (note[1][objectN[1] + 1].object == 1 && note[1][objectN[1] + 1].hittime - Ntime <= 8) {
+				G[0]++;
+			}
+			if (note[2][objectN[2] + 1].object == 1 && note[2][objectN[2] + 1].hittime - Ntime <= 8) {
+				G[0]++;
+			}
+			if (note[0][objectN[0] + 2].object == 1 && note[0][objectN[0] + 2].hittime - Ntime <= 8) {
+				G[0]++;
+			}
+			if (note[1][objectN[1] + 2].object == 1 && note[1][objectN[1] + 2].hittime - Ntime <= 8) {
+				G[0]++;
+			}
+			if (note[2][objectN[2] + 2].object == 1 && note[2][objectN[2] + 2].hittime - Ntime <= 8) {
+				G[0]++;
+			}
 			if (G[0] == 1) {
 				if (holdc == 0) {
 					holdc = 1;
@@ -723,7 +736,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					holdc = 0;
 				}
 			}
-			else if (G[0] == 3) {
+			else if (G[0] >= 3) {
 				holda = 1;
 				holdb = 1;
 				holdc = 1;
@@ -835,7 +848,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (holdr > 10) { holdr = 0; }
 		}
 		//キー押しヒット解除
-		if (1 <= holdu || 1 <= holdd || 1 <= holdl || 1 <= holdr) { hitatk[1] = -1000; }
+		if (1 == holdu || 1 == holdd || 1 == holdl || 1 == holdr || hitatk[1] + 750 < Ntime) {
+			hitatk[1] = -1000;
+		}
 		if (key[KEY_INPUT_G] == 0) { holdG = 0; }
 		else if (key[KEY_INPUT_G] == 1) { holdG++; }
 		if (GetWindowUserCloseFlag(TRUE)) { return 5; }
@@ -998,7 +1013,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				Dscore[0] += 2;
 				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]],
 					MelodySnd, Sitem, seflag, SE_HIT);
-				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+				score.before = pals(500, score.sum, 0, score.before,
+					maxs(Ntime - score.time, 500));
 				score.time = Ntime;
 			}
 			//good
@@ -1010,7 +1026,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				Dscore[0]++;
 				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]],
 					MelodySnd, Sitem, seflag, SE_HIT);
-				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+				score.before = pals(500, score.sum, 0, score.before,
+					maxs(Ntime - score.time, 500));
 				score.time = Ntime;
 			}
 			//safe
@@ -1020,7 +1037,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				life++;
 				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]],
 					MelodySnd, Sitem, seflag, SE_HIT);
-				score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+				score.before = pals(500, score.sum, 0, score.before,
+					maxs(Ntime - score.time, 500));
 				score.time = Ntime;
 			}
 			//fastmiss
@@ -1050,7 +1068,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0] += 2;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_CATCH);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 					objectN[i[0]]++;
 				}
@@ -1074,7 +1093,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0] += 2;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//good
@@ -1086,7 +1106,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0]++;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//safe
@@ -1096,7 +1117,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life++;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//fastmiss
@@ -1126,7 +1148,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0] += 2;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before, maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//good
@@ -1138,7 +1160,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0]++;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//safe
@@ -1148,7 +1171,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life++;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//fastmiss
@@ -1178,7 +1202,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0] += 2;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//good
@@ -1190,7 +1215,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0]++;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//safe
@@ -1200,7 +1226,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life++;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//fastmiss
@@ -1230,7 +1257,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0] += 2;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//good
@@ -1242,7 +1270,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Dscore[0]++;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//safe
@@ -1252,7 +1281,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					life++;
 					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//fastmiss
@@ -1290,7 +1320,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					judge.just++;
 					life += 2;
 					Dscore[0] += 2;
-					score.before = pals(500, score.sum, 0, score.before, Ntime - score.time);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 			}
@@ -1462,6 +1493,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (Ntime != 0) DrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
 		if (AutoFlag == 1) { DrawFormatString(20, 100, Cr, L"Autoplay"); }
+#if 0
+		DrawFormatString(20, 120, Cr, L"data: %d",
+			pals(500, score.sum, 0, score.before, Ntime - score.time));
+#endif
 		//データオーバーフローで警告文表示
 		if (0 <= note[0][998].hittime) {
 			DrawFormatString(20, 120, CrR, L"UPPER OVER");
@@ -1642,7 +1677,7 @@ int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime) {
 		stime = (Ntime - noteoff) % ((Etime - noteoff) / 24);
 		ret = lins(0, ddif[sect], (Etime - noteoff) / 24, ddif[sect + 1], stime);
 	}
-	ret = lins(379 * 50, 100, 40595 * 50, 990, ret);
+	ret = lins(379 * 50, 100, 34733 * 50, 800, ret);
 	return ret;
 }
 
@@ -1666,41 +1701,33 @@ int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {
 
 int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
 	struct note_box lownote, int keyu, int keyd, int keyl, int keyr, int hitatp, int hitatt) {
-	int avoid = 0;
 	struct note_box note[3] = { highnote, midnote, lownote };
 	int ans = CHARA_POS_MID;
-	//キャッチ/ボムノーツ避け
+	// near catch/bomb
 	for (int i = 0; i < 3; i++) {
-		if (note[i].object == 2 && note[i].hittime <= time + 40 ||
-				note[i].object == 7 && note[i].hittime <= time + 40) {
-			avoid = 1;
-			ans = CHARA_POS_MID;
+		if ((note[i].object == 2 && note[i].hittime <= time + 40 ||
+			note[i].object == 7 && note[i].hittime <= time + 40) &&
+			keyu == 0 && keyd == 0) {
+			return CHARA_POS_MID;
 		}
 	}
-	//上が押されているとき
+	// hit note
+	if (keyu != 1 && keyd != 1 && keyl != 1 && keyr != 1 && hitatt != -1000) {
+		return hitatp;
+	}
+	// push up
 	if (1 <= keyu && 0 == keyd) {
 		ans = CHARA_POS_UP;
 	}
-	//下が押されているとき
+	// push down
 	else if (0 == keyu && 1 <= keyd) {
 		ans = CHARA_POS_DOWN;
 	}
-	//上下同時に押されているとき
+	// push up and down
 	else if (1 <= keyu && 1 <= keyd) {
 		ans = CHARA_POS_MID;
 	}
-	//上ラインのヒットマーカーをたたいているとき
-	else if (hitatp == CHARA_POS_UP && time - hitatt < 750 && avoid == 0) {
-		ans = CHARA_POS_UP;
-	}
-	//中ラインのヒットマーカーをたたいているとき
-	else if (hitatp == CHARA_POS_MID && time - hitatt < 750 && avoid == 0) {
-		ans = CHARA_POS_MID;
-	}
-	//下ラインのヒットマーカーをたたいているとき
-	else if (hitatp == CHARA_POS_DOWN && time - hitatt < 750 && avoid == 0) {
-		ans = CHARA_POS_DOWN;
-	}
+	// not hit
 	else {
 		ans = CHARA_POS_MID;
 	}
