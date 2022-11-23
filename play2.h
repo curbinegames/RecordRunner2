@@ -22,6 +22,7 @@ typedef enum note_material {
 } note_material;
 
 struct judge_box AddHitJudge(struct judge_box ans, int gup);
+void cal_back_x(int *xpos, double speed, double scrool, int cam);
 int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime);
 int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
 int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
@@ -124,7 +125,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int viewTN = 0;
 	int Movie[14][999];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
 	short int MovieN = 0;
-	struct note_box note[3][999];
+	struct note_box note[3][2000];
 	short int objectN[3] = { 0,0,0 }; //↑の番号
 	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
 	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
@@ -441,31 +442,11 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			scroolN++;
 		}
 		if (system[3] != 0) {
-			//背景の横位置計算
 			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) {
 				speedN[3]++;
 			}
-			bgp[0] -= (int)(speedt[3][speedN[3]][1] * scrool[scroolN].speed);
-			if (bgp[0] < -700 + nowcamera[0] / 5) {
-				bgp[0] += 640;
-			}
-			else if (bgp[0] > 0 + nowcamera[0] / 5) {
-				bgp[0] -= 640;
-			}
-			bgp[1] -= (int)(speedt[3][speedN[3]][1] * 5 * scrool[scroolN].speed);
-			if (bgp[1] < -700 + nowcamera[0]) {
-				bgp[1] += 640;
-			}
-			else if (bgp[1] > 0 + nowcamera[0]) {
-				bgp[1] -= 640;
-			}
-			bgp[2] -= (int)(speedt[4][speedN[4]][1] * 5 * scrool[scroolN].speed);
-			if (bgp[2] < -700 + nowcamera[0]) {
-				bgp[2] += 640;
-			}
-			else if (bgp[2] > 0 + nowcamera[0]) {
-				bgp[2] -= 640;
-			}
+			cal_back_x(bgp, speedt[4][speedN[4]][1], scrool[scroolN].speed,
+				nowcamera[0]);
 			//背景の縦位置計算
 			for (i[0] = 3; i[0] <= 4; i[0]++) {
 				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
@@ -480,21 +461,23 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
 				}
 			}
-			//背景表示
-			for (i[0] = 0; i[0] < 2; i[0]++) {
-				G[0] = bgp[i[0]];
-				while (G[0] < 700) {
-					switch (i[0]) {
-					case(0):
-						DrawGraph(G[0] + nowcamera[0] / 5, Yline[3] / 5 - 160 + nowcamera[1] / 5, backskyimg, TRUE);
-						break;
-					case(1):
-						DrawGraph(G[0] + nowcamera[0], Yline[3] - 400 + nowcamera[1], backgroundimg, TRUE);
-						DrawGraph(G[0] + nowcamera[0], Yline[4] - 400 + nowcamera[1], backwaterimg, TRUE);
-						break;
-					}
-					G[0] += 640;
-				}
+			//draw background picture
+			G[0] = bgp[0];
+			while (G[0] + nowcamera[0] / 5 < 700) {
+				DrawGraph(G[0] + nowcamera[0] / 5,
+					Yline[3] / 5 - 160 + nowcamera[1] / 5,
+					backskyimg, TRUE);
+				G[0] += 640;
+			}
+			G[0] = bgp[1];
+			while (G[0] + nowcamera[0] < 700) {
+				DrawGraph(G[0] + nowcamera[0],
+					Yline[3] - 400 + nowcamera[1], backgroundimg,
+					TRUE);
+				DrawGraph(G[0] + nowcamera[0],
+					Yline[4] - 400 + nowcamera[1], backwaterimg,
+					TRUE);
+				G[0] += 640;
 			}
 			//落ち物背景表示
 			if (Ntime >= fall[fallN + 1][0] && fall[fallN + 1][0] >= 0) fallN++;
@@ -1436,12 +1419,14 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
 			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
 				cal_nowdif_p(ddif, Ntime, noteoff, Etime) / 100.0);
+#if 0
 			/* エラー表示 */
 			if (outpoint[1] != 0) {
 				DrawFormatString(20, 120, CrR, L"MAPERROR");
 				DrawLine(lins(noteoff, 155, Etime, 446, outpoint[0]), 71,
 					lins(noteoff, 175, Etime, 465, outpoint[0]), 38, CrR);
 			}
+#endif
 		}
 		//判定ずれバー表示
 		DrawGraph(219, 460, gapbarimg, TRUE);
@@ -1498,13 +1483,13 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			pals(500, score.sum, 0, score.before, Ntime - score.time));
 #endif
 		//データオーバーフローで警告文表示
-		if (0 <= note[0][998].hittime) {
+		if (0 <= note[0][1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"UPPER OVER");
 		}
-		else if (0 <= note[1][998].hittime) {
+		else if (0 <= note[1][1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"MIDDLE OVER");
 		}
-		else if (0 <= note[2][998].hittime) {
+		else if (0 <= note[2][1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"LOWER OVER");
 		}
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
@@ -1660,6 +1645,25 @@ struct judge_box AddHitJudge(struct judge_box ans, int gup) {
 		ans.miss++;
 	}
 	return ans;
+}
+
+void cal_back_x(int *xpos, double speed, double scrool, int cam) {
+	xpos[0] -= (int)(speed * scrool);
+	while (xpos[0] < -700 + cam / 5) {
+		xpos[0] += 640;
+	}
+	while (xpos[0] > 0 + cam / 5) {
+		xpos[0] -= 640;
+	}
+	xpos[1] -= (int)(speed * 5 * scrool);
+	while (xpos[1] < -700 + cam) {
+		xpos[1] += 640;
+	}
+	while (xpos[1] > 0 + cam) {
+		xpos[1] -= 640;
+	}
+	xpos[2] = xpos[1];
+	return;
 }
 
 int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime) {

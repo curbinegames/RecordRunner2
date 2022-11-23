@@ -108,7 +108,7 @@ void RecordLoad2(int p, int n, int o) {
 	scrool[0].basetime = 0;
 	scrool[0].speed = 1;
 	short int scroolN = 1;
-	struct note_box note[3][999];//[上,中,下]レーンのノーツ[番号]
+	struct note_box note[3][2000];//[上,中,下]レーンのノーツ[番号]
 	note[0][0].ypos = 300;
 	note[1][0].ypos = 350;
 	note[2][0].ypos = 400;

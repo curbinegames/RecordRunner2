@@ -27,6 +27,7 @@ int musicserect2(int *p1) {
 	int Mapping[SongNumLim];
 	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[0:キャラ, 4:言語]だけ
 	int chap[3] = { 0,0,0 };
+	int backpos = 0;
 	double rate = GetRate();
 	double diskr = 0;
 	//wchar_t変数定義
@@ -265,7 +266,9 @@ int musicserect2(int *p1) {
 	while (1) {
 		ClearDrawScreen();
 		//背景の表示
-		DrawBackPicture(back);
+		DrawGraph(backpos, 0, back, TRUE);
+		DrawGraph(backpos + 640, 0, back, TRUE);
+		backpos = (backpos - 2) % 640;
 		//時間設定
 		moveC = mins(-1 * (GetNowCount() - startC) + 250, 0);
 		XmoveC = mins(-1 * (GetNowCount() - XstartC) + 250, 0);
