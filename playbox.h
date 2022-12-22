@@ -6,15 +6,6 @@
 enum maperror_enum {
 	HITNOTETOONEAR = 1,
 };
-struct camera_box {
-	int starttime = -1;
-	int endtime = -1;
-	int xpos = -1;
-	int ypos = -1;
-	double zoom = -1;
-	int rot = -1;
-	int mode = -1;
-};
 enum melodysound {
 	MELODYSOUND_NONE = -1,
 	LOW_F,
@@ -41,6 +32,15 @@ enum melodysound {
 	HIGH_D,
 	HIGH_Ds,
 	HIGH_E
+};
+struct camera_box {
+	int starttime = -1;
+	int endtime = -1;
+	int xpos = -1;
+	int ypos = -1;
+	double zoom = -1;
+	int rot = -1;
+	int mode = -1;
 };
 struct custom_note_box {
 	wchar_t note = L'\0';
@@ -88,7 +88,62 @@ typedef struct playnum_box {
 	unsigned int Ymovenum[5] = { 1,1,1,1,1 };
 	unsigned int Xmovenum[3] = { 1,1,1 };
 	unsigned int movienum = 0;
+	unsigned int v_BPMnum = 1;
 } playnum_box;
+typedef struct item_eff_box {
+	unsigned char bpm_alphr = 0;
+	unsigned char bpm_size = 0;
+	unsigned char edge_size = 0;
+	unsigned char lock = 0;
+	unsigned char chara_alphr = 0;
+} item_eff_box;
+typedef struct item_box {
+	short ID = -1;
+	char movemode = 0;
+	item_eff_box eff;
+	int starttime = -1000;
+	int endtime = -1000;
+	int startXpos = 0;
+	int endXpos = 0;
+	int startYpos = 0;
+	int endYpos = 0;
+	int startsize = 100;
+	int endsize = 100;
+	int startrot = 0;
+	int endrot = 0;
+	int startalpha = 255;
+	int endalpha = 255;
+} item_box;
+typedef struct item_set_ID {
+	short picID = -1;
+	item_eff_box eff;
+	int Xpos = 0;
+	int Ypos = 0;
+	int size = 100;
+	int rot = 0;
+	int alpha = 255;
+} item_set_ID;
+typedef struct item_set_box {
+	item_set_ID picID[10];
+	unsigned char num = 0;
+	char movemode = 0;
+	int starttime = -1000;
+	int endtime = -1000;
+	int startXpos = 0;
+	int endXpos = 0;
+	int startYpos = 0;
+	int endYpos = 0;
+	int startsize = 100;
+	int endsize = 100;
+	int startrot = 0;
+	int endrot = 0;
+	int startalpha = 255;
+	int endalpha = 255;
+} item_set_box;
+typedef struct view_BPM_box {
+	int time = -1000;
+	unsigned short BPM = 1;
+} view_BPM_box;
 struct score_box {
 	int normal = 0;
 	int combo = 0;

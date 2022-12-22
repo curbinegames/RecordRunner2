@@ -11,6 +11,7 @@ typedef struct ddef_box {
 int IsNoteCode(wchar_t c);
 int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
 int cal_nowdif_m(int *difkey, int num, int now, int voidtime);
+item_eff_box set_pic_mat(wchar_t *s);
 int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
 void RecordLoad2(int p, int n, int o) {
@@ -19,7 +20,7 @@ void RecordLoad2(int p, int n, int o) {
 	short int i[2];
 	short int Lv = 0;
 	short int notes = 0;
-	int G[10], songT;
+	int G[20], songT;
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int songdata = 0;
@@ -91,7 +92,8 @@ void RecordLoad2(int p, int n, int o) {
 	viewT[0][0] = 0;
 	viewT[1][0] = 3000;
 	short int viewTN = 1;
-	int Movie[14][999];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
+	item_box Movie[999];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
+	item_set_box item_set[99];
 	short int MovieN = 0;
 	struct camera_box camera[255];
 	camera[0].starttime = 0;
@@ -124,6 +126,7 @@ void RecordLoad2(int p, int n, int o) {
 	int ddifG[2] = { 1,1 };//0=今いる区間番号(1～25),1=最大値
 	ddef_box ddif2;
 	int outpoint[2] = { 0, 0 }; /* 0=時間, 1=エラー番号 */
+	view_BPM_box v_bpm[100];
 	double bpm = 120, bpmG = 120;
 	double timer[3]; //[上, 中, 下]レーンの時間
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
@@ -187,7 +190,11 @@ void RecordLoad2(int p, int n, int o) {
 			strcats(mp3FN, GT1);
 		}
 		//BPMを読み込む
-		else if (strands(GT1, L"#BPM:")) bpmG = bpm = SETbpm(GT1);
+		else if (strands(GT1, L"#BPM:")) {
+			bpmG = bpm = SETbpm(GT1);
+			v_bpm[0].time = noteoff;
+			v_bpm[0].BPM = (unsigned short)bpm;
+		}
 		//ノートのオフセットを読み込む
 		else if (strands(GT1, L"#NOTEOFFSET:")) timer[0] = timer[1] = timer[2] = noteoff = SEToffset(GT1);
 		//空の背景を読み込む
@@ -257,7 +264,7 @@ void RecordLoad2(int p, int n, int o) {
 					speedt[G[0]][speedN[G[0]]][1] = strsans2(GT1);
 					strnex(GT1);
 					if (GT1[0] >= L'0' && GT1[0] <= L'9' || GT1[0] == L'-') {
-						speedt[G[0]][speedN[G[0]]][0] = timer[G[0]] + 240000 * (speedt[G[0]][speedN[G[0]]][1] - 1) / (bpm * 16) - 10;
+						speedt[G[0]][speedN[G[0]]][0] = timer[G[0]] + 240000 * (speedt[G[0]][speedN[G[0]]][1] - 1) / (bpmG * 16) - 10;
 						speedt[G[0]][speedN[G[0]]][1] = strsans2(GT1);
 					}
 					else {
@@ -265,8 +272,16 @@ void RecordLoad2(int p, int n, int o) {
 					}
 					speedN[G[0]]++;
 				}
-				//BPM変化
+				//データ処理のBPM変化
 				else if (strands(GT1, L"#BPM:")) bpmG = SETbpm(GT1);
+				//見た目のBPM変化
+				else if (strands(GT1, L"#V-BPM:")) {
+					strmods(GT1, 7);
+					v_bpm[allnum.v_BPMnum].time = shifttime(strsans(GT1), bpmG, timer[0]);
+					strnex(GT1);
+					v_bpm[allnum.v_BPMnum].BPM = strsans(GT1);
+					allnum.v_BPMnum++;
+				}
 				//キャラグラ変化
 				else if (strands(GT1, L"#CHARA")) {
 					G[0] = GT1[6] - 49;
@@ -500,7 +515,7 @@ void RecordLoad2(int p, int n, int o) {
 				}
 				//振動
 				else if (strands(GT1, L"#DIV")) {
-					G[0] = betweens(0, GT1[5] - 49, 2);
+					G[0] = betweens(0, GT1[5] - L'1', 2);
 					G[1] = 0;
 					if (GT1[4] == L'Y') { G[1] = 1; }
 					strmods(GT1, 7);
@@ -513,20 +528,42 @@ void RecordLoad2(int p, int n, int o) {
 					GD[3] = strsans2(GT1);//往復回数
 					if (G[1] == 1) {
 						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
-							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2], bpmG, &Ymove[G[0]][YmoveN[G[0]]][0], &Ymove[G[0]][YmoveN[G[0]]][1], &Ymove[G[0]][YmoveN[G[0]]][2], &Ymove[G[0]][YmoveN[G[0]]][3]);
-							SETMove(timer[0], GD[0] + GD[2], (Ymove[G[0]][YmoveN[G[0]] - 1][1] - 100.0) / 50.0, 1, GD[0] + GD[2] * 2, bpmG, &Ymove[G[0]][YmoveN[G[0]] + 1][0], &Ymove[G[0]][YmoveN[G[0]] + 1][1], &Ymove[G[0]][YmoveN[G[0]] + 1][2], &Ymove[G[0]][YmoveN[G[0]] + 1][3]);
+							SETMove(timer[0], GD[0],GD[1], 1, GD[0] + GD[2],
+								bpmG, &Ymove[G[0]][YmoveN[G[0]]][0],
+								&Ymove[G[0]][YmoveN[G[0]]][1],
+								&Ymove[G[0]][YmoveN[G[0]]][2],
+								&Ymove[G[0]][YmoveN[G[0]]][3]);
+							SETMove(timer[0], GD[0] + GD[2],
+								(Ymove[G[0]][YmoveN[G[0]] - 1][1] - 100.0) /
+								50.0, 1, GD[0] + GD[2] * 2, bpmG,
+								&Ymove[G[0]][YmoveN[G[0]] + 1][0],
+								&Ymove[G[0]][YmoveN[G[0]] + 1][1],
+								&Ymove[G[0]][YmoveN[G[0]] + 1][2],
+								&Ymove[G[0]][YmoveN[G[0]] + 1][3]);
 							GD[0] += GD[2] * 2;
 							YmoveN[G[0]] += 2;
-							allnum.Ymovenum[i[0]] += 2;
+							allnum.Ymovenum[G[0]] += 2;
 						}
 					}
 					else {
 						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
-							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2], bpmG, &Xmove[G[0]][XmoveN[G[0]]][0], &Xmove[G[0]][XmoveN[G[0]]][1], &Xmove[G[0]][XmoveN[G[0]]][2], &Xmove[G[0]][XmoveN[G[0]]][3]);
-							SETMove(timer[0], GD[0] + GD[2], (Xmove[G[0]][XmoveN[G[0]] - 1][1] - 100.0) / 50.0, 1, GD[0] + GD[2] * 2, bpmG, &Xmove[G[0]][XmoveN[G[0]] + 1][0], &Xmove[G[0]][XmoveN[G[0]] + 1][1], &Xmove[G[0]][XmoveN[G[0]] + 1][2], &Xmove[G[0]][XmoveN[G[0]] + 1][3]);
+							SETMove(timer[0], GD[0],
+								GD[1],
+								1, GD[0] + GD[2], bpmG,
+								&Xmove[G[0]][XmoveN[G[0]]][0],
+								&Xmove[G[0]][XmoveN[G[0]]][1],
+								&Xmove[G[0]][XmoveN[G[0]]][2],
+								&Xmove[G[0]][XmoveN[G[0]]][3]);
+							SETMove(timer[0], GD[0] + GD[2],
+								(Xmove[G[0]][XmoveN[G[0]] - 1][1] - 100.0) /
+								50.0, 1, GD[0] + GD[2] * 2, bpmG,
+								&Xmove[G[0]][XmoveN[G[0]] + 1][0],
+								&Xmove[G[0]][XmoveN[G[0]] + 1][1],
+								&Xmove[G[0]][XmoveN[G[0]] + 1][2],
+								&Xmove[G[0]][XmoveN[G[0]] + 1][3]);
 							GD[0] += GD[2] * 2;
 							XmoveN[G[0]] += 2;
-							allnum.Xmovenum[i[0]] += 2;
+							allnum.Xmovenum[G[0]] += 2;
 						}
 					}
 				}
@@ -642,46 +679,141 @@ void RecordLoad2(int p, int n, int o) {
 				//アイテム表示
 				else if (strands(GT1, L"#MOVIE:")) {
 					strmods(GT1, 7);
-					Movie[0][MovieN] = strsans(GT1);
+					Movie[MovieN].ID = strsans(GT1);
 					strnex(GT1);
 					switch (GT1[0]) {
 					case L'l':
-						Movie[1][MovieN] = 1;
+						Movie[MovieN].movemode = 1;
 						break;
 					case L'a':
-						Movie[1][MovieN] = 2;
+						Movie[MovieN].movemode = 2;
 						break;
 					case L'd':
-						Movie[1][MovieN] = 3;
+						Movie[MovieN].movemode = 3;
 						break;
 					}
 					strnex(GT1);
-					Movie[2][MovieN] = shifttime(strsans2(GT1), bpmG, timer[0]);
+					Movie[MovieN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
 					strnex(GT1);
-					Movie[3][MovieN] = shifttime(strsans2(GT1), bpmG, timer[0]);
+					Movie[MovieN].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
 					strnex(GT1);
-					Movie[4][MovieN] = strsans2(GT1) * 50 + 115;
+					Movie[MovieN].startXpos = strsans2(GT1) * 50 + 115;
 					strnex(GT1);
-					Movie[5][MovieN] = strsans2(GT1) * 50 + 115;
+					Movie[MovieN].endXpos = strsans2(GT1) * 50 + 115;
 					strnex(GT1);
-					Movie[6][MovieN] = strsans2(GT1) * 50 + 115;
+					Movie[MovieN].startYpos = strsans2(GT1) * 50 + 115;
 					strnex(GT1);
-					Movie[7][MovieN] = strsans2(GT1) * 50 + 115;
+					Movie[MovieN].endYpos = strsans2(GT1) * 50 + 115;
 					strnex(GT1);
-					Movie[8][MovieN] = strsans2(GT1) * 100;
+					Movie[MovieN].startsize = strsans2(GT1) * 100;
 					strnex(GT1);
-					Movie[9][MovieN] = strsans2(GT1) * 100;
+					Movie[MovieN].endsize = strsans2(GT1) * 100;
 					strnex(GT1);
-					Movie[10][MovieN] = strsans(GT1);
+					Movie[MovieN].startrot = strsans(GT1);
 					strnex(GT1);
-					Movie[11][MovieN] = strsans(GT1);
+					Movie[MovieN].endrot = strsans(GT1);
 					strnex(GT1);
-					Movie[12][MovieN] = strsans2(GT1)*255.0;
+					Movie[MovieN].startalpha = strsans2(GT1)*255.0;
 					strnex(GT1);
-					Movie[13][MovieN] = strsans2(GT1)*255.0;
+					Movie[MovieN].endalpha = strsans2(GT1)*255.0;
 					strnex(GT1);
+					Movie[MovieN].eff = set_pic_mat(GT1);
 					MovieN++;
 					allnum.movienum++;
+				}
+				//アイテムセット初期化
+				else if (strands(GT1, L"#INIT_ITEM_SET:")){
+					strmods(GT1, 15);
+					G[0] = strsans(GT1);
+					item_set[G[0]].num = 0;
+				}
+				//アイテムセット追加
+				else if (strands(GT1, L"#ADD_ITEM_SET:")) {
+					if (item_set[G[0]].num <= 10) {
+						strmods(GT1, 14);
+						G[0] = strsans(GT1); /* G[0] = item setの番号 */
+						strnex(GT1);
+						item_set[G[0]].picID[item_set[G[0]].num].picID = strsans(GT1);
+						strnex(GT1);
+						item_set[G[0]].picID[item_set[G[0]].num].Xpos = strsans2(GT1) * 50;
+						strnex(GT1);
+						item_set[G[0]].picID[item_set[G[0]].num].Ypos = strsans2(GT1) * 50;
+						strnex(GT1);
+						item_set[G[0]].picID[item_set[G[0]].num].size = strsans2(GT1) * 100;
+						strnex(GT1);
+						item_set[G[0]].picID[item_set[G[0]].num].rot = strsans(GT1);
+						strnex(GT1);
+						item_set[G[0]].picID[item_set[G[0]].num].alpha = strsans2(GT1) * 255;
+						strnex(GT1);
+						item_set[G[0]].picID[item_set[G[0]].num].eff = set_pic_mat(GT1);
+						item_set[G[0]].num++;
+					}
+				}
+				//アイテムセット表示
+				else if (strands(GT1, L"#ITEM_SET:")) {
+					strmods(GT1, 10);
+					G[0] = strsans(GT1); /* G[0] = item boxの番号 */
+					strnex(GT1);
+					switch (GT1[0]) {
+					case L'l':
+						G[1] = 1;
+						break;
+					case L'a':
+						G[1] = 2;
+						break;
+					case L'd':
+						G[1] = 3;
+						break;
+					} /* G[1] = 移動モード */
+					strnex(GT1);
+					G[2] = shifttime(strsans2(GT1), bpmG, timer[0]); /* stime */
+					strnex(GT1);
+					G[3] = shifttime(strsans2(GT1), bpmG, timer[0]); /* etime */
+					strnex(GT1);
+					G[4] = strsans2(GT1) * 50 + 115; /* sx */
+					strnex(GT1);
+					G[5] = strsans2(GT1) * 50 + 115; /* ex */
+					strnex(GT1);
+					G[6] = strsans2(GT1) * 50 + 115; /* sy */
+					strnex(GT1);
+					G[7] = strsans2(GT1) * 50 + 115; /* ey */
+					strnex(GT1);
+					G[8] = strsans2(GT1) * 100; /* ss */
+					strnex(GT1);
+					G[9] = strsans2(GT1) * 100; /* es */
+					strnex(GT1);
+					G[10] = strsans(GT1); /* sr */
+					strnex(GT1);
+					G[11] = strsans(GT1); /* er */
+					strnex(GT1);
+					G[12] = strsans2(GT1) * 255.0; /* sa */
+					strnex(GT1);
+					G[13] = strsans2(GT1) * 255.0; /* ea */
+					for (i[0] = 0; i[0] < item_set[G[0]].num; i[0]++) {
+						Movie[MovieN].ID = item_set[G[0]].picID[i[0]].picID;
+						Movie[MovieN].movemode = G[1];
+						Movie[MovieN].eff = item_set[G[0]].picID[i[0]].eff;
+						Movie[MovieN].starttime = G[2];
+						Movie[MovieN].endtime = G[3];
+						Movie[MovieN].startXpos = item_set[G[0]].picID[i[0]].Xpos * G[8] / 100;
+						Movie[MovieN].endXpos = item_set[G[0]].picID[i[0]].Xpos * G[9] / 100;
+						Movie[MovieN].startYpos = item_set[G[0]].picID[i[0]].Ypos * G[8] / 100;
+						Movie[MovieN].endYpos = item_set[G[0]].picID[i[0]].Ypos * G[9] / 100;
+						rot_xy_pos(G[10], &Movie[MovieN].startXpos, &Movie[MovieN].startYpos);
+						rot_xy_pos(G[10], &Movie[MovieN].endXpos, &Movie[MovieN].endYpos);
+						Movie[MovieN].startXpos += G[4];
+						Movie[MovieN].endXpos += G[5];
+						Movie[MovieN].startYpos += G[6];
+						Movie[MovieN].endYpos += G[7];
+						Movie[MovieN].startsize = G[8] * item_set[G[0]].picID[i[0]].size / 100;
+						Movie[MovieN].endsize = G[9] * item_set[G[0]].picID[i[0]].size / 100;
+						Movie[MovieN].startrot = G[10] + item_set[G[0]].picID[i[0]].rot;
+						Movie[MovieN].endrot = G[11] + item_set[G[0]].picID[i[0]].rot;
+						Movie[MovieN].startalpha = G[12] * item_set[G[0]].picID[i[0]].alpha / 255;
+						Movie[MovieN].endalpha = G[13] * item_set[G[0]].picID[i[0]].alpha / 255;
+						MovieN++;
+						allnum.movienum++;
+					}
 				}
 				//カメラ移動+ズーム+角度(未実装)
 				else if (strands(GT1, L"#CAMERA:")) {
@@ -1198,9 +1330,10 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&ddif2.nowdifsection, sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&DifFN, 255, 1, fp);//難易度バー名
-	fwrite(&Movie, sizeof(int), allnum.movienum * 14, fp);//動画データ
+	fwrite(&Movie, sizeof(item_box), allnum.movienum, fp);//動画データ
 	fwrite(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 	fwrite(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+	fwrite(&v_bpm, sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
 	fwrite(&outpoint, sizeof(int), 2, fp);//譜面エラー
 	fclose(fp);
 	return;
@@ -1253,6 +1386,32 @@ int cal_nowdif_m(int *difkey, int num, int now, int voidtime) {
 	else {
 		return ret * 50 / count;
 	}
+}
+
+item_eff_box set_pic_mat(wchar_t *s) {
+	item_eff_box eff;
+	while (s[0] != L'\0' && s[0] != L'\n') {
+		if (strands(s, L"bpm_a")) {
+			eff.bpm_alphr = 1;
+		}
+		else if (strands(s, L"bpm_s")) {
+			eff.bpm_size = 1;
+		}
+		else if (strands(s, L"lock")) {
+			eff.lock = 1;
+		}
+		else if (strands(s, L"cha_a")) {
+			eff.chara_alphr = 1;
+		}
+		else if (strands(s, L"edge_s")) {
+			eff.edge_size = 1;
+		}
+		else {
+			break;
+		}
+		strnex(s);
+	}
+	return eff;
 }
 
 int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl) {

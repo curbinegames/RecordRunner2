@@ -350,7 +350,7 @@ int musicserect2(int *p1) {
 		diskr += 0.02;
 		if (diskr > 6.28) diskr -= 6.28;
 		//今のソート内容を表示する
-		ViewSortMode(SortMode);
+		ViewSortMode(SortMode, lan[4]);
 		//操作説明を表示する
 		ShowHelpBar(Cr[0], help, lan[4]);
 		//デバッグ(320,410スタート)

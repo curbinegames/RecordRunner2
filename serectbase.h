@@ -35,7 +35,7 @@ int GetRateBarPic(const double rate);
 void ShowHelpBar(unsigned int Cr, int bar, int lan);
 void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
 	const int dif, const int SongNumCount);
-void ViewSortMode(const int mode);
+void ViewSortMode(int mode, int lan);
 
 /* +++++ */
 
@@ -261,19 +261,34 @@ void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
 	return;
 }
 
-void ViewSortMode(const int mode) {
+void ViewSortMode(int mode, int lan) {
 #define POS_X 550
 #define POS_Y 110
-	switch (mode) {
-	case SORT_DEFAULT:
-		DrawString(POS_X, POS_Y, L"デフォルト", GetColor(255, 255, 255));
-		break;
-	case SORT_LEVEL:
-		DrawString(POS_X, POS_Y, L"レベル順", GetColor(255, 255, 255));
-		break;
-	case SORT_SCORE:
-		DrawString(POS_X, POS_Y, L"スコア順", GetColor(255, 255, 255));
-		break;
+	if (lan == 1) {
+		switch (mode) {
+		case SORT_DEFAULT:
+			DrawString(POS_X, POS_Y, L"default", GetColor(255, 255, 255));
+			break;
+		case SORT_LEVEL:
+			DrawString(POS_X, POS_Y, L"level", GetColor(255, 255, 255));
+			break;
+		case SORT_SCORE:
+			DrawString(POS_X, POS_Y, L"score", GetColor(255, 255, 255));
+			break;
+		}
+	}
+	else {
+		switch (mode) {
+		case SORT_DEFAULT:
+			DrawString(POS_X, POS_Y, L"デフォルト", GetColor(255, 255, 255));
+			break;
+		case SORT_LEVEL:
+			DrawString(POS_X, POS_Y, L"レベル順", GetColor(255, 255, 255));
+			break;
+		case SORT_SCORE:
+			DrawString(POS_X, POS_Y, L"スコア順", GetColor(255, 255, 255));
+			break;
+		}
 	}
 }
 

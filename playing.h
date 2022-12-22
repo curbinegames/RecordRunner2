@@ -32,7 +32,9 @@ int read(int a) {
 	return LoadGraph(L"picture/backskynoamal.png");
 }
 
-void SETMove(double NowTime, double StartTime, double MovePoint, double MoveType, double EndTime, double bpm,int *StaetTimeBuff,int *MovePointBuff,int *EndTimeBuff,int *MoveTypeBuff) {
+void SETMove(double NowTime, double StartTime, double MovePoint,
+	double MoveType, double EndTime, double bpm,int *StaetTimeBuff,
+	int *MovePointBuff,int *EndTimeBuff,int *MoveTypeBuff) {
 	*StaetTimeBuff = shifttime(StartTime, bpm, (int)NowTime);
 	*MovePointBuff = (int)(MovePoint * 50.0 + 100.0);
 	*EndTimeBuff = shifttime(EndTime, bpm, (int)NowTime) - 5;

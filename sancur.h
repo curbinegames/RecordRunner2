@@ -13,9 +13,12 @@ int abss(int a, int b);
 int NumLoop(int a, int b);
 double sinC(int a);
 double cosC(int a);
+void rot_xy_pos(int rot, int *x, int *y);
 void DrawFixPic(int x1, int y1, int x2, int y2, int pic);
 void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle);
 void _DrawDeformationPic1(int x, int y, int handle);
+void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle);
+void _DrawDeformationPic3(int x, int y, double size, int rot, int handle);
 void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle);
 
 //aÇbÇ‹Ç≈à¯Ç´è„Ç∞ÇΩÇ‡ÇÃÇï‘Ç∑
@@ -151,6 +154,12 @@ double cosC(int a) {
 	return sinC(a);
 }
 
+void rot_xy_pos(int rot, int *x, int *y) {
+	int G = *x;
+	*x = *x * cosC(rot) - *y * sinC(rot) + *x;
+	*y = G * sinC(rot) + *y * cosC(rot) + *y;
+}
+
 void DrawFixPic(int x1, int y1, int x2, int y2, int pic) {
 	int SizeX = 640;
 	int SizeY = 480;
@@ -186,6 +195,12 @@ void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int h
 	if (sizeX == 1 && sizeY == 1 && rot % 360 == 0) {
 		_DrawDeformationPic1(x, y, handle);
 	}
+	else if ((sizeX != 1 || sizeY != 1) && rot % 360 == 0) {
+		_DrawDeformationPic4(x, y, sizeX, sizeY, handle);
+	}
+	else if (sizeX == sizeY && rot % 360 != 0) {
+		_DrawDeformationPic3(x, y, sizeX, rot, handle);
+	}
 	else {
 		_DrawDeformationPic2(x, y, sizeX, sizeY, rot, handle);
 	}
@@ -202,12 +217,37 @@ void _DrawDeformationPic1(int x, int y, int handle) {
 	return;
 }
 
-void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle) {
+void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle) {
+	int TSizeX = 1;
+	int TSizeY = 1;
+	GetGraphSize(handle, &TSizeX, &TSizeY);
+	TSizeX *= sizeX;
+	TSizeY *= sizeY;
+	int pos[4] = {
+		x - TSizeX / 2, y - TSizeY / 2, 0, 0
+	};
+	pos[2] = pos[0] + TSizeX + 1;
+	pos[3] = pos[1] + TSizeY + 1;
+	DrawExtendGraph(pos[0], pos[1], pos[2], pos[3], handle, TRUE);
+	return;
+}
+
+void _DrawDeformationPic3(int x, int y, double size, int rot, int handle) {
 	int PSizeX = 1;
 	int PSizeY = 1;
 	GetGraphSize(handle, &PSizeX, &PSizeY);
 	PSizeX /= 2;
 	PSizeY /= 2;
+	DrawRotaGraph2(x, y, PSizeX, PSizeY, size, 3.14 * rot / 180, handle, TRUE);
+	return;
+}
+
+void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle) {
+	int TSizeX = 1;
+	int TSizeY = 1;
+	GetGraphSize(handle, &TSizeX, &TSizeY);
+	int PSizeX = TSizeX / 2;
+	int PSizeY = TSizeY / 2;
 	int pos[8] = {
 		-PSizeX * sizeX, -PSizeY * sizeY,
 		PSizeX * sizeX, -PSizeY * sizeY,

@@ -11,6 +11,7 @@
 #include "editserect.h"
 #include "serectbase.h"
 #include "edit.h"
+#include "recr_cutin.h"
 
 /* next = 0 = タイトル
 	= 1 = メニュー

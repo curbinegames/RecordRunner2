@@ -46,6 +46,21 @@ void strcopy(const wchar_t *p1, wchar_t *p2, int c) {
 
 //p1‚©‚çæ“ªa•¶š‚ğÁ‚·
 void strmods(wchar_t *p1, int a) {
+#if 1
+	int i;
+	wchar_t *p2 = p1;
+	for (i = 0; i < a; i++) {
+		if (p1[i] == L'\0') {
+			p1[0] = L'\0';
+			return;
+		}
+	}
+	for (i = 0; p2[i + a] != L'\0'; i++) {
+		p1[i] = p2[i + a];
+	}
+	p1[i] = L'\0';
+	return;
+#else
 	int b;
 	wchar_t *p2;
 	p2 = p1;
@@ -57,6 +72,7 @@ void strmods(wchar_t *p1, int a) {
 	}
 	*p2 = L'\0';
 	return;
+#endif
 }
 
 //p1‚ÌÅŒã‚Ép2‚ğ•t‚¯‚é
@@ -107,6 +123,17 @@ int strrans(wchar_t *p1) {
 
 //Ÿ‚Ì'/'‚©':'‚ª‚ ‚é‚Æ‚±‚ë‚Ü‚ÅÁ‚·
 void strnex(wchar_t *p1) {
+#if 1
+	int i = 1;
+	for (i = 0; p1[i] >= L' ' && p1[i] <= L'}' && p1[i] != L'/' && p1[i] != L':' && p1[i] != L'\0'; i++) {
+		;
+	}
+	if (p1[i] == L'/' || p1[i] == L':') {
+		i++;
+	}
+	strmods(p1, i);
+	return;
+#else
 	wchar_t *p2 = p1;
 	short int a = 1;
 	while (*p1 >= L' ' && *p1 <= L'}' && *p1 != L'/' && *p1 != L':' && *p1 != L'\0') {
@@ -115,6 +142,7 @@ void strnex(wchar_t *p1) {
 	}
 	strmods(p2, a);
 	return;
+#endif
 }
 
 //w’è‚Ì•¶šp3‚ª‚ ‚é‚Æ‚±‚ë‚Ü‚ÅÁ‚·
