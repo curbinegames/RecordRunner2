@@ -1,25 +1,34 @@
-int mins(int a, int b);
-int maxs(int a, int b);
-double mins_D(double a, double b);
-double maxs_D(double a, double b);
-int betweens(int a, int b, int c);
-double betweens_D(double a, double b, double c);
-int notzero(int a);
-int lins(double x1, double y1, double x2, double y2, double x);
-int pals(double x1, double y1, double x2, double y2, double x);
-double movecal(int mode, double x1, double y1, double x2, double y2, double x);
-double sanrute(double c);
-int abss(int a, int b);
-int NumLoop(int a, int b);
-double sinC(int a);
-double cosC(int a);
-void rot_xy_pos(int rot, int *x, int *y);
-void DrawFixPic(int x1, int y1, int x2, int y2, int pic);
-void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle);
-void _DrawDeformationPic1(int x, int y, int handle);
-void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle);
-void _DrawDeformationPic3(int x, int y, double size, int rot, int handle);
-void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle);
+
+#ifndef SANCUR_H
+#define SANCUR_H
+
+#ifndef DX_LIB_H
+#define DX_LIB_H
+#include "DxLib.h"
+#endif
+
+static int mins(int a, int b);
+static int maxs(int a, int b);
+static double mins_D(double a, double b);
+static double maxs_D(double a, double b);
+static int betweens(int a, int b, int c);
+static double betweens_D(double a, double b, double c);
+static int notzero(int a);
+static int lins(double x1, double y1, double x2, double y2, double x);
+static int pals(double x1, double y1, double x2, double y2, double x);
+static double movecal(int mode, double x1, double y1, double x2, double y2, double x);
+static double sanrute(double c);
+static int abss(int a, int b);
+static int NumLoop(int a, int b);
+static double sinC(int a);
+static double cosC(int a);
+static void rot_xy_pos(int rot, int *x, int *y);
+static void DrawFixPic(int x1, int y1, int x2, int y2, int pic);
+static void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle);
+static void _DrawDeformationPic1(int x, int y, int handle);
+static void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle);
+static void _DrawDeformationPic3(int x, int y, double size, int rot, int handle);
+static void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle);
 
 //aÇbÇ‹Ç≈à¯Ç´è„Ç∞ÇΩÇ‡ÇÃÇï‘Ç∑
 int mins(int a, int b) {
@@ -156,8 +165,8 @@ double cosC(int a) {
 
 void rot_xy_pos(int rot, int *x, int *y) {
 	int G = *x;
-	*x = *x * cosC(rot) - *y * sinC(rot) + *x;
-	*y = G * sinC(rot) + *y * cosC(rot) + *y;
+	*x = *x * cosC(rot) - *y * sinC(rot);
+	*y = G * sinC(rot) + *y * cosC(rot);
 }
 
 void DrawFixPic(int x1, int y1, int x2, int y2, int pic) {
@@ -263,3 +272,5 @@ void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int
 	DrawModiGraph(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7], handle, TRUE);
 	return;
 }
+
+#endif

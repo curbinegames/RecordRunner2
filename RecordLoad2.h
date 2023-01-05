@@ -1,5 +1,6 @@
 #include "playing.h"
 #include "playbox.h"
+#include "recp_cal_ddif.h"
 
 typedef struct ddef_box {
 	int maxdif = 0;
@@ -1080,15 +1081,18 @@ void RecordLoad2(int p, int n, int o) {
 	(3000000/ひとつ前のノーツとの間隔)を、そのノーツの難易度点数とする。
 	叩いたキーを50個記憶し、この組み合わせでできた最高値が曲の難易度。
 	1個前と同じキーの時は(対象のキーはarrowのみ)
-	┣間隔が150ms以上の時は変動なし
+	┣間隔が150ms以上の時は変動なし(BPM200の8分)
 	┣間隔が150ms以下75ms以上の時は得点("間隔"/(-75)+3)倍(1～2倍)
-	┗間隔が75ms以下の時は得点2倍
-	間隔が20ms以下のhitノーツは同時押し扱い、1.2倍
-	arrowひっかけは1.8倍
-	2個前と違うキーの時は得点1.2倍(全キー対象)
-	arrowキーは得点1.2倍
+	┗間隔が75ms以下の時は得点2倍(BPM200の16分)
 	1=hit,2=non,3=up,4=down,5=left,6=right,7=non or down,8=up or down,9=up or non
 	*/
+
+#define ARROW_TRICK_MLP(base) (base * 18 / 10) /* arrowひっかけは1.8倍 */
+#define DIF_BBEF_MLP(base) (base * 12 / 10) /* 2個前と違うキーの時は得点1.2倍(全キー対象) */
+#define ARROW_MLP(base) (base * 12 / 10) /* arrowキーは得点1.2倍 */
+
+	/* その他倍率はrecp_cal_ddif.cppに記載 */
+
 	objectN[0] = 0;
 	objectN[1] = 0;
 	objectN[2] = 0;
@@ -1237,11 +1241,25 @@ void RecordLoad2(int p, int n, int o) {
 				continue;
 			}
 		}
+		/* calculate difkey */
 		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
+#if 0
+			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
+				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
+				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
+				difkey[difkey[2][3]][2]);
+#else
 			G[1] = difkey[difkey[1][3]][1] - difkey[difkey[2][3]][1];
 			if (G[1] == 0)G[1] = 1;
-			if (G[1] <= 5 && difkey[difkey[1][3]][0] != difkey[difkey[2][3]][0]) {
-				difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.3;
+			if (G[1] <= 5 &&
+				(difkey[difkey[1][3]][0] != difkey[difkey[2][3]][0] ||
+				(difkey[difkey[1][3]][0] == 1 && difkey[difkey[2][3]][0] == 1))) {
+				if (3 <= difkey[difkey[1][3]][0] && difkey[difkey[1][3]][0] <= 6) {
+					difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.6;
+				}
+				else {
+					difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.3;
+				}
 			}
 			else {
 				difkey[difkey[1][3]][2] = 3000000 / G[1];
@@ -1250,6 +1268,7 @@ void RecordLoad2(int p, int n, int o) {
 				if (difkey[difkey[1][3]][0] != difkey[difkey[3][3]][0]) difkey[difkey[1][3]][2] *= 1.2;
 				if (difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6)difkey[difkey[1][3]][2] *= 1.2;
 			}
+#endif
 		}
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			if (note[G[0]][objectN[G[0]]].object >= 3 && note[G[0]][objectN[G[0]]].object <= 6 &&

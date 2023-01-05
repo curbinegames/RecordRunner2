@@ -3,6 +3,17 @@
 
 #define PLAY_BOX 1
 
+typedef enum note_material {
+	NOTE_NONE = -1,
+	NOTE_HIT = 1,
+	NOTE_CATCH,
+	NOTE_UP,
+	NOTE_DOWN,
+	NOTE_LEFT,
+	NOTE_RIGHT,
+	NOTE_BOMB,
+	NOTE_GHOST
+} note_material;
 enum maperror_enum {
 	HITNOTETOONEAR = 1,
 };
@@ -76,13 +87,22 @@ struct note_img {
 struct note_box {
 	int hittime = -1;
 	int viewtime = -1;
-	int object = -1;
+	int object = NOTE_NONE;
 	int xpos = -1;
 	int ypos = -1;
 	int sound = 0;
 	enum melodysound melody = MELODYSOUND_NONE;
 	int color = 0;
 };
+typedef struct play_key_stat_s {
+	char z = 0;
+	char x = 0;
+	char c = 0;
+	char up = 0;
+	char down = 0;
+	char left = 0;
+	char right = 0;
+} play_key_stat_t;
 typedef struct playnum_box {
 	unsigned int notenum[3] = { 0,0,0 };
 	unsigned int Ymovenum[5] = { 1,1,1,1,1 };

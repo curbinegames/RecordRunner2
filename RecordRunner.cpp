@@ -1,4 +1,9 @@
+
+#ifndef DX_LIB_H
+#define DX_LIB_H
 #include "DxLib.h"
+#endif
+
 #include "sancur.h"
 #include "strcur.h"
 #include "title.h"
