@@ -1243,7 +1243,7 @@ void RecordLoad2(int p, int n, int o) {
 		}
 		/* calculate difkey */
 		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
-#if 0
+#if 1
 			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
 				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
 				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],

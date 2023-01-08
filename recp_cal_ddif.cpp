@@ -62,8 +62,8 @@ int cal_difkey(int n_time, int b_time, int n_note, int b_note, int bb_note, int
 	b_ddif.note = b_note;
 	b_ddif.dif = b_dif;
 	bb_ddif.note = bb_note;
-	ddif.bbef = &b_ddif;
-	ddif.bef = &bb_ddif;
+	ddif.bef = &b_ddif;
+	ddif.bbef = &bb_ddif;
 	/* ŠÔŠu‚ª5msˆÈ‰º‚ÅA‚Ð‚Æ‚Â‘O‚Æˆá‚¤ƒm[ƒc‚Ü‚½‚Í—¼•ûhit‚È‚ç“¯Žž‰Ÿ‚µ”»’è */
 	if (ddif.time - ddif.bef->time <= 5 &&
 		(ddif.note != ddif.bef->note ||

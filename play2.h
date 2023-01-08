@@ -20,11 +20,16 @@
 #define RECR_DEBUG(n, data_a, data_b)
 #endif
 
+typedef enum chara_pos_e {
+	RECR_CHARP_U = 0,
+	RECR_CHARP_M,
+	RECR_CHARP_D
+} chara_pos_t;
 typedef enum note_judge {
 	NOTE_JUDGE_JUST = 0,
 	NOTE_JUDGE_GOOD,
 	NOTE_JUDGE_SAFE,
-	NOTE_JUDGE_MISS,
+	NOTE_JUDGE_MISS
 } note_judge;
 
 struct judge_box AddHitJudge(struct judge_box ans, int gup);
@@ -45,6 +50,7 @@ void note_judge_event(note_judge judge, note_material note, int *viewjudge,
 	int *judgename, int *combo, int *life, int *Dscore);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo,
 	int MaxCombo);
+void SetHitPosByHit(int *const hitatk, char const hitflag, int Ntime);
 void ShowCombo(int combo, int *pic);
 void ShowBonusEff(struct judge_box judge, int EffStartTime, int *Snd, int *pic,
 	int filter, int biglight, int *smalllight, int flash, int ring);
@@ -112,6 +118,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int HighSrore; //ハイスコア
 	int viewjudge[4] = { 0,0,0,0 };
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
+	char hitatk2 = 0; //hit event, bit unit: 0: upper hit, 1: middle hit, 2: lower hit, 3~7: reserved
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	for (i[0] = 0; i[0] <= 59; i[0]++)fps[i[0]] = 17;
 	fps[60] = 0;
@@ -866,18 +873,40 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 			}
 			//キャッチノーツ処理
-			if (note[0][objectNG[0]].object == 2 && note[0][objectNG[0]].hittime - Ntime <= 8) {
-				holdu++;
-				holdd = 0;
+#if 1
+			if (holdu > 0) {
+#else
+#endif
+				if (note[2][objectNG[2]].object == 2 && note[2][objectNG[2]].hittime - Ntime <= 8) {
+					holdu = 0;
+					holdd++;
+				}
+				if (note[1][objectNG[1]].object == 2 && note[1][objectNG[1]].hittime - Ntime <= 8) {
+					holdu = 0;
+					holdd = 0;
+				}
+				if (note[0][objectNG[0]].object == 2 && note[0][objectNG[0]].hittime - Ntime <= 8) {
+					holdu++;
+					holdd = 0;
+				}
+#if 1
 			}
-			if (note[1][objectNG[1]].object == 2 && note[1][objectNG[1]].hittime - Ntime <= 8) {
-				holdu = 0;
-				holdd = 0;
+			else {
+				if (note[0][objectNG[0]].object == 2 && note[0][objectNG[0]].hittime - Ntime <= 8) {
+					holdu++;
+					holdd = 0;
+				}
+				if (note[1][objectNG[1]].object == 2 && note[1][objectNG[1]].hittime - Ntime <= 8) {
+					holdu = 0;
+					holdd = 0;
+				}
+				if (note[2][objectNG[2]].object == 2 && note[2][objectNG[2]].hittime - Ntime <= 8) {
+					holdu = 0;
+					holdd++;
+				}
 			}
-			if (note[2][objectNG[2]].object == 2 && note[2][objectNG[2]].hittime - Ntime <= 8) {
-				holdu = 0;
-				holdd++;
-			}
+#else
+#endif
 			if (holdc > 10) { holdc = 0; }
 			if (holda > 10) { holda = 0; }
 			if (holdb > 10) { holdb = 0; }
@@ -1035,24 +1064,19 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (holda == 1) { G[0]++; }
 		if (holdb == 1) { G[0]++; }
 		if (holdc == 1) { G[0]++; }
+		hitatk2 = 0;
 		for (i[0] = 0; i[0] < G[0]; i[0]++) {
-			if (i[0] > 0) {
-				hitatk[0] = 1; /* これが誤爆かましてる? */
-				hitatk[1] = Ntime;
-			}
-			G[1] = CheckNearHitNote(note[0][objectN[0]].object, note[1][objectN[1]].object,
-				note[2][objectN[2]].object, note[0][objectN[0]].hittime - Ntime,
-				note[1][objectN[1]].hittime - Ntime, note[2][objectN[2]].hittime - Ntime);
+			G[1] = CheckNearHitNote(note[0][objectN[0]].object,
+				note[1][objectN[1]].object, note[2][objectN[2]].object,
+				note[0][objectN[0]].hittime - Ntime, note[1][objectN[1]].hittime
+				- Ntime, note[2][objectN[2]].hittime - Ntime);
 			if (G[1] == -1) { break; }
 			G[2] = note[G[1]][objectN[G[1]]].hittime - Ntime;
 			gap[gapa[1] % 30] = G[2];
 			gapa[0] += G[2];
 			gapa[2] += G[2] * G[2];
 			gapa[1]++;
-			if (i[0] == 0) {
-				hitatk[0] = G[1];
-				hitatk[1] = Ntime;
-			}
+			hitatk2 |= 1 << G[1];
 			judge = AddHitJudge(judge, G[2]);
 			//just
 			if (G[2] <= 40 && G[2] >= -40) {
@@ -1128,6 +1152,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			objectN[G[1]]++;
 		}
+		SetHitPosByHit(&hitatk[0], hitatk2, Ntime);
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
 			//キャッチノーツ(pjustのみ)
@@ -2069,6 +2094,38 @@ void note_judge_event(note_judge judge, note_material note, int *viewjudge,
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
 	int PosCombo = mins(combo + RemainNotes, MaxCombo);
 	return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
+}
+
+void SetHitPosByHit(int *const hitatk, char const hitflag, int Ntime) {
+	int n = 0;
+	int ret = 0;
+	for (int i = 0; i < 3; i++) {
+		if (hitflag & 1 << i) {
+			n++;
+			ret = i;
+		}
+	}
+	if (n == 0) {
+		return;
+	}
+	if (n >= 2) {
+		hitatk[0] = RECR_CHARP_M;
+		hitatk[1] = Ntime;
+		return;
+	}
+	switch (ret) {
+	case 0:
+		hitatk[0] = RECR_CHARP_U;
+		break;
+	case 1:
+		hitatk[0] = RECR_CHARP_M;
+		break;
+	case 2:
+		hitatk[0] = RECR_CHARP_D;
+		break;
+	}
+	hitatk[1] = Ntime;
+	return;
 }
 
 void ShowCombo(int combo, int *pic) {
