@@ -2,6 +2,33 @@
 #include "playbox.h"
 #include "recp_cal_ddif.h"
 
+typedef enum rrs_obj_code_e {
+	OBJ_CODE_MEMO = 0,
+	OBJ_CODE_SPEED,
+	OBJ_CODE_BPM,
+	OBJ_CODE_VBPM,
+	OBJ_CODE_CHARA,
+	OBJ_CODE_MOVE,
+	OBJ_CODE_XMOV,
+	OBJ_CODE_DIV,
+	OBJ_CODE_GMOVE,
+	OBJ_CODE_XLOCK,
+	OBJ_CODE_YLOCK,
+	OBJ_CODE_CARROW,
+	OBJ_CODE_FALL,
+	OBJ_CODE_VIEW,
+	OBJ_CODE_MOVIE,
+	OBJ_CODE_INIT_ITEM_SET,
+	OBJ_CODE_ADD_ITEM_SET,
+	OBJ_CODE_ITEM_SET,
+	OBJ_CODE_CAMERA,
+	OBJ_CODE_CAMMOVE,
+	OBJ_CODE_SCROOL,
+	OBJ_CODE_CUSTOM,
+	OBJ_CODE_END,
+	OBJ_CODE_SPACE,
+} rrs_obj_code_t;
+
 typedef struct ddef_box {
 	int maxdif = 0;
 	int lastdif = 0;
@@ -12,6 +39,7 @@ typedef struct ddef_box {
 int IsNoteCode(wchar_t c);
 int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
 int cal_nowdif_m(int *difkey, int num, int now, int voidtime);
+rrs_obj_code_t check_obj_code(wchar_t const *const s);
 item_eff_box set_pic_mat(wchar_t *s);
 int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
@@ -256,10 +284,13 @@ void RecordLoad2(int p, int n, int o) {
 		}
 		//譜面を読み込む
 		else if (strands(GT1, L"#MAP:")) {
+			FileRead_gets(GT1, 256, songdata);
 			while (FileRead_eof(songdata) == 0 && strands(GT1, L"#END") == 0) {
-				FileRead_gets(GT1, 256, songdata);
-				//横ノーツ速度変化
-				if (strands(GT1, L"#SPEED")) {
+				switch (check_obj_code(GT1)) {
+				case OBJ_CODE_MEMO: //コメント
+				case OBJ_CODE_SPACE: //空白
+					break;
+				case OBJ_CODE_SPEED: //ノーツの速度変化
 					G[0] = maxs(mins(GT1[6] - 49, 0), 4);
 					strmods(GT1, 8);
 					speedt[G[0]][speedN[G[0]]][1] = strsans2(GT1);
@@ -272,27 +303,25 @@ void RecordLoad2(int p, int n, int o) {
 						speedt[G[0]][speedN[G[0]]][0] = timer[G[0]] - 10;
 					}
 					speedN[G[0]]++;
-				}
-				//データ処理のBPM変化
-				else if (strands(GT1, L"#BPM:")) bpmG = SETbpm(GT1);
-				//見た目のBPM変化
-				else if (strands(GT1, L"#V-BPM:")) {
+					break;
+				case OBJ_CODE_BPM: //データ処理のBPM変化
+					bpmG = SETbpm(GT1);
+					break;
+				case OBJ_CODE_VBPM: //見た目のBPM変化
 					strmods(GT1, 7);
 					v_bpm[allnum.v_BPMnum].time = shifttime(strsans(GT1), bpmG, timer[0]);
 					strnex(GT1);
 					v_bpm[allnum.v_BPMnum].BPM = strsans(GT1);
 					allnum.v_BPMnum++;
-				}
-				//キャラグラ変化
-				else if (strands(GT1, L"#CHARA")) {
+					break;
+				case OBJ_CODE_CHARA: //キャラグラ変化
 					G[0] = GT1[6] - 49;
 					strmods(GT1, 8);
 					chamo[G[0]][chamoN[G[0]]][0] = maxs(mins(strsans(GT1), 0), 2);
 					chamo[G[0]][chamoN[G[0]]][1] = timer[G[0]];
 					chamoN[G[0]]++;
-				}
-				//縦移動
-				else if (strands(GT1, L"#MOVE")) {
+					break;
+				case OBJ_CODE_MOVE: //縦移動
 					if (GT1[8] == L'A') {
 						G[0] = 0;
 						G[2] = 2;
@@ -423,9 +452,8 @@ void RecordLoad2(int p, int n, int o) {
 						YmoveN[i[0]]++;
 						allnum.Ymovenum[i[0]]++;
 					}
-				}
-				//横移動
-				else if (strands(GT1, L"#XMOV")) {
+					break;
+				case OBJ_CODE_XMOV: //横移動
 					if (GT1[8] == L'A') {
 						G[0] = 0;
 						G[2] = 2;
@@ -513,9 +541,8 @@ void RecordLoad2(int p, int n, int o) {
 						XmoveN[i[0]]++;
 						allnum.Xmovenum[i[0]]++;
 					}
-				}
-				//振動
-				else if (strands(GT1, L"#DIV")) {
+					break;
+				case OBJ_CODE_DIV: //振動
 					G[0] = betweens(0, GT1[5] - L'1', 2);
 					G[1] = 0;
 					if (GT1[4] == L'Y') { G[1] = 1; }
@@ -529,7 +556,7 @@ void RecordLoad2(int p, int n, int o) {
 					GD[3] = strsans2(GT1);//往復回数
 					if (G[1] == 1) {
 						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
-							SETMove(timer[0], GD[0],GD[1], 1, GD[0] + GD[2],
+							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2],
 								bpmG, &Ymove[G[0]][YmoveN[G[0]]][0],
 								&Ymove[G[0]][YmoveN[G[0]]][1],
 								&Ymove[G[0]][YmoveN[G[0]]][2],
@@ -567,9 +594,8 @@ void RecordLoad2(int p, int n, int o) {
 							allnum.Xmovenum[G[0]] += 2;
 						}
 					}
-				}
-				//GMOVE
-				else if (strands(GT1, L"#GMOVE")) {
+					break;
+				case OBJ_CODE_GMOVE: //GMOVE
 					G[0] = 3;
 					switch (GT1[6]) {
 					case('l'):
@@ -639,46 +665,40 @@ void RecordLoad2(int p, int n, int o) {
 					}
 					YmoveN[G[0]]++;
 					allnum.Ymovenum[i[0]]++;
-				}
-				//横ロック
-				else if (strands(GT1, L"#XLOCK")) {
+					break;
+				case OBJ_CODE_XLOCK: //横ロック
 					strmods(GT1, 7);
 					lock[0][0][lockN[0]] = lock[0][0][lockN[0] - 1] * -1;
 					lock[0][1][lockN[0]] = shifttime(strsans(GT1), bpmG, timer[0]);
 					lockN[0]++;
-				}
-				//縦ロック
-				else if (strands(GT1, L"#YLOCK")) {
+					break;
+				case OBJ_CODE_YLOCK: //縦ロック
 					strmods(GT1, 7);
 					lock[1][0][lockN[1]] = lock[1][0][lockN[1] - 1] * -1;
 					lock[1][1][lockN[1]] = shifttime(strsans(GT1), bpmG, timer[0]);
 					lockN[1]++;
-				}
-				//キャラ向き変化
-				else if (strands(GT1, L"#CARROW")) {
+					break;
+				case OBJ_CODE_CARROW: //キャラ向き変化
 					strmods(GT1, 8);
 					carrow[0][carrowN] = carrow[0][carrowN - 1] * -1;
 					carrow[1][carrowN] = shifttime(strsans(GT1), bpmG, timer[0]);
 					carrowN++;
-				}
-				//落ち物背景切り替え
-				else if (strands(GT1, L"#FALL")) {
+					break;
+				case OBJ_CODE_FALL: //落ち物背景切り替え
 					strmods(GT1, 6);
 					fall[fallN][0] = strsans(GT1);
 					strnex(GT1);
 					fall[fallN][1] = strsans(GT1);
 					fallN++;
-				}
-				//音符表示時間
-				else if (strands(GT1, L"#VIEW:")) {
+					break;
+				case OBJ_CODE_VIEW: //音符表示時間
 					strmods(GT1, 6);
 					viewT[0][viewTN] = shifttime(strsans(GT1), bpmG, timer[0]);
 					strnex(GT1);
 					viewT[1][viewTN] = strsans(GT1);
 					viewTN++;
-				}
-				//アイテム表示
-				else if (strands(GT1, L"#MOVIE:")) {
+					break;
+				case OBJ_CODE_MOVIE: //アイテム表示
 					strmods(GT1, 7);
 					Movie[MovieN].ID = strsans(GT1);
 					strnex(GT1);
@@ -721,15 +741,13 @@ void RecordLoad2(int p, int n, int o) {
 					Movie[MovieN].eff = set_pic_mat(GT1);
 					MovieN++;
 					allnum.movienum++;
-				}
-				//アイテムセット初期化
-				else if (strands(GT1, L"#INIT_ITEM_SET:")){
+					break;
+				case OBJ_CODE_INIT_ITEM_SET: //アイテムセット初期化
 					strmods(GT1, 15);
 					G[0] = strsans(GT1);
 					item_set[G[0]].num = 0;
-				}
-				//アイテムセット追加
-				else if (strands(GT1, L"#ADD_ITEM_SET:")) {
+					break;
+				case OBJ_CODE_ADD_ITEM_SET: //アイテムセット追加
 					if (item_set[G[0]].num <= 10) {
 						strmods(GT1, 14);
 						G[0] = strsans(GT1); /* G[0] = item setの番号 */
@@ -749,9 +767,8 @@ void RecordLoad2(int p, int n, int o) {
 						item_set[G[0]].picID[item_set[G[0]].num].eff = set_pic_mat(GT1);
 						item_set[G[0]].num++;
 					}
-				}
-				//アイテムセット表示
-				else if (strands(GT1, L"#ITEM_SET:")) {
+					break;
+				case OBJ_CODE_ITEM_SET: //アイテムセット表示
 					strmods(GT1, 10);
 					G[0] = strsans(GT1); /* G[0] = item boxの番号 */
 					strnex(GT1);
@@ -815,9 +832,8 @@ void RecordLoad2(int p, int n, int o) {
 						MovieN++;
 						allnum.movienum++;
 					}
-				}
-				//カメラ移動+ズーム+角度(未実装)
-				else if (strands(GT1, L"#CAMERA:")) {
+					break;
+				case OBJ_CODE_CAMERA: //カメラ移動+ズーム+角度(未実装)
 					strmods(GT1, 8);
 					camera[cameraN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
 					strnex(GT1);
@@ -843,9 +859,8 @@ void RecordLoad2(int p, int n, int o) {
 						break;
 					}
 					cameraN++;
-				}
-				//カメラ移動
-				else if (strands(GT1, L"#CAMMOVE:")) {
+					break;
+				case OBJ_CODE_CAMMOVE: //カメラ移動
 					strmods(GT1, 9);
 					camera[cameraN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
 					strnex(GT1);
@@ -867,19 +882,19 @@ void RecordLoad2(int p, int n, int o) {
 						break;
 					}
 					cameraN++;
-				}
-				//スクロール
-				else if (strands(GT1, L"#SCROOL:")) {
+					break;
+				case OBJ_CODE_SCROOL: //スクロール
 					strmods(GT1, 8);
 					scrool[scroolN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
 					strnex(GT1);
 					scrool[scroolN].speed = strsans2(GT1);
-					G[0]= scrool[scroolN - 1].speed * scrool[scroolN].starttime + scrool[scroolN - 1].basetime;
-					scrool[scroolN].basetime = G[0] - scrool[scroolN].speed * scrool[scroolN].starttime;
+					G[0] = scrool[scroolN - 1].speed *
+						scrool[scroolN].starttime + scrool[scroolN - 1].basetime;
+					scrool[scroolN].basetime = G[0] - scrool[scroolN].speed *
+						scrool[scroolN].starttime;
 					scroolN++;
-				}
-				//カスタムノーツセット
-				else if (strands(GT1, L"#CUSTOM:")) {
+					break;
+				case OBJ_CODE_CUSTOM: //カスタムノーツセット
 					strmods(GT1, 8);
 					G[0] = strsans2(GT1) - 1;
 					customnote[G[0]].color = 0;
@@ -935,13 +950,9 @@ void RecordLoad2(int p, int n, int o) {
 						}
 						strnex(GT1);
 					}
-				}
-				//終わり
-				else if (strands(GT1, L"#END")) { break; }
-				//空白
-				else if (GT1[0] == L'\0') {}
-				//これ以外
-				else {
+					break;
+				default:
+					//これ以外
 					for (i[0] = 0; i[0] <= 2; i[0]++) {
 						G[0] = 0;
 						while (GT1[G[0]] != L'\0' && GT1[G[0]] != L',') G[0]++;
@@ -1056,7 +1067,9 @@ void RecordLoad2(int p, int n, int o) {
 						if (i[0] <= 1) FileRead_gets(GT1, 256, songdata);
 					}
 					timer[0] = timer[1] = timer[2] += 240000.0 / bpmG;
+					break;
 				}
+				FileRead_gets(GT1, 256, songdata);
 			}
 		}
 	}
@@ -1405,6 +1418,33 @@ int cal_nowdif_m(int *difkey, int num, int now, int voidtime) {
 	else {
 		return ret * 50 / count;
 	}
+}
+
+rrs_obj_code_t check_obj_code(wchar_t const *const s) {
+	if (s[0] == L';') { return OBJ_CODE_MEMO; }
+	if (strands(s, L"#SPEED")) { return OBJ_CODE_SPEED; }
+	if (strands(s, L"#BPM:")) { return OBJ_CODE_BPM; }
+	if (strands(s, L"#V-BPM:")) { return OBJ_CODE_VBPM; }
+	if (strands(s, L"#CHARA")) { return OBJ_CODE_CHARA; }
+	if (strands(s, L"#MOVE")) { return OBJ_CODE_MOVE; }
+	if (strands(s, L"#XMOV")) { return OBJ_CODE_XMOV; }
+	if (strands(s, L"#DIV")) { return OBJ_CODE_DIV; }
+	if (strands(s, L"#GMOVE")) { return OBJ_CODE_GMOVE; }
+	if (strands(s, L"#XLOCK")) { return OBJ_CODE_XLOCK; }
+	if (strands(s, L"#YLOCK")) { return OBJ_CODE_YLOCK; }
+	if (strands(s, L"#CARROW")) { return OBJ_CODE_CARROW; }
+	if (strands(s, L"#FALL")) { return OBJ_CODE_FALL; }
+	if (strands(s, L"#VIEW:")) { return OBJ_CODE_VIEW; }
+	if (strands(s, L"#MOVIE:")) { return OBJ_CODE_MOVIE; }
+	if (strands(s, L"#INIT_ITEM_SET:")) { return OBJ_CODE_INIT_ITEM_SET; }
+	if (strands(s, L"#ADD_ITEM_SET:")) { return OBJ_CODE_ADD_ITEM_SET; }
+	if (strands(s, L"#ITEM_SET:")) { return OBJ_CODE_ITEM_SET; }
+	if (strands(s, L"#CAMERA:")) { return OBJ_CODE_CAMERA; }
+	if (strands(s, L"#CAMMOVE:")) { return OBJ_CODE_CAMMOVE; }
+	if (strands(s, L"#SCROOL:")) { return OBJ_CODE_SCROOL; }
+	if (strands(s, L"#CUSTOM:")) { return OBJ_CODE_CUSTOM; }
+	if (strands(s, L"#END")) { return OBJ_CODE_END; }
+	if (s[0] == L'\0') { return OBJ_CODE_SPACE; }
 }
 
 item_eff_box set_pic_mat(wchar_t *s) {

@@ -656,20 +656,14 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			chamoN[i[0]]++;
 		}
 		G[3] = 0;
-		//ghost back
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			G[i[0]] = objectN[i[0]] - 1;
-			while (note[i[0]][G[i[0]]].object == 8 && G[i[0]] >= 1) {
-				G[i[0]]--;
-			}
-		}
 		//get chara position
-		charaput = GetCharaPos(Ntime, note[0][G[0]], note[1][G[1]], note[2][G[2]], holdu, holdd,
-			holdl, holdr, hitatk[0], hitatk[1]);
+		charaput = GetCharaPos(Ntime, note[0][objectNG[0]], note[1][objectNG[1]],
+			note[2][objectNG[2]], holdu, holdd, holdl, holdr, hitatk[0],
+			hitatk[1]);
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
-		if (GetNowCount() - charahit > 250) G[5] = 0;
-		else G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit);
+		if (GetNowCount() - charahit > 250) { G[5] = 0; }
+		else { G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit); }
 		if (charahit > 0) {
 			if (carrow[0][carrowN] == 1) {
 				DrawGraph(Xline[charaput] + G[5] - 160 + nowcamera[0], G[4] - 75 + nowcamera[1],
@@ -824,21 +818,42 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				holdr = 1;
 			}
 			//ボムノーツ処理
-			if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40) {
-				holdu = 0;
-			}
-			if (note[2][objectNG[2]].object == 7 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-				holdd = 0;
-			}
-			if (note[1][objectNG[1]].object == 7 && note[1][objectNG[1]].hittime - Ntime <= 40) {
-				if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
-					note[2][objectNG[2]].object == 2 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-					holdu = 0;
-					holdd++;
-				}
-				else {
-					holdu++;
+			if (holdd > 0) {
+				if (note[2][objectNG[2]].object == 7 && note[2][objectNG[2]].hittime - Ntime <= 40) {
 					holdd = 0;
+				}
+				if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40) {
+					holdu = 0;
+				}
+				if (note[1][objectNG[1]].object == 7 && note[1][objectNG[1]].hittime - Ntime <= 40) {
+					if (note[0][objectNG[0]].object == 2 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
+						note[2][objectNG[2]].object == 7 && note[2][objectNG[2]].hittime - Ntime <= 40) {
+						holdu++;
+						holdd = 0;
+					}
+					else {
+						holdu = 0;
+						holdd++;
+					}
+				}
+			}
+			else {
+				if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40) {
+					holdu = 0;
+				}
+				if (note[2][objectNG[2]].object == 7 && note[2][objectNG[2]].hittime - Ntime <= 40) {
+					holdd = 0;
+				}
+				if (note[1][objectNG[1]].object == 7 && note[1][objectNG[1]].hittime - Ntime <= 40) {
+					if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
+						note[2][objectNG[2]].object == 2 && note[2][objectNG[2]].hittime - Ntime <= 40) {
+						holdu = 0;
+						holdd++;
+					}
+					else {
+						holdu++;
+						holdd = 0;
+					}
 				}
 			}
 			//上下アローノーツ処理
