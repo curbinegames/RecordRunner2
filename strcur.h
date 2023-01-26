@@ -46,7 +46,6 @@ void strcopy(const wchar_t *p1, wchar_t *p2, int c) {
 
 //p1‚©‚çæ“ªa•¶š‚ğÁ‚·
 void strmods(wchar_t *p1, int a) {
-#if 1
 	int i;
 	wchar_t *p2 = p1;
 	for (i = 0; i < a; i++) {
@@ -60,19 +59,6 @@ void strmods(wchar_t *p1, int a) {
 	}
 	p1[i] = L'\0';
 	return;
-#else
-	int b;
-	wchar_t *p2;
-	p2 = p1;
-	for (b = 0; b < a; b++) p1++;
-	while (*p1 != L'\0') {
-		*p2 = *p1;
-		p1++;
-		p2++;
-	}
-	*p2 = L'\0';
-	return;
-#endif
 }
 
 //p1‚ÌÅŒã‚Ép2‚ğ•t‚¯‚é

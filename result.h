@@ -204,9 +204,11 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	SumRate[1] = SumRate[0];
 	G[0] = -1;
 	//“¯‚¶‹ÈA‚Ü‚½‚Í–¢û˜^‚ğ’T‚·
-	for (i[0] = 0; i[0] < 10; i[0]++)if (strands(fileN, savec[i[0]]) || savec[i[0]] == '\0') {
-		G[0] = i[0];
-		break;
+	for (i[0] = 0; i[0] < 10; i[0]++) {
+		if (strands(fileN, savec[i[0]]) || (savec[i[0]][0] == L'\0')) {
+			G[0] = i[0];
+			break;
+		}
 	}
 	//‚È‚©‚Á‚½‚çAˆê”Ô’á‚¢ƒŒ[ƒg‚ğ’T‚·
 	if (G[0] == -1) {

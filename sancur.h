@@ -2,10 +2,7 @@
 #ifndef SANCUR_H
 #define SANCUR_H
 
-#ifndef DX_LIB_H
-#define DX_LIB_H
 #include "DxLib.h"
-#endif
 
 static int mins(int a, int b);
 static int maxs(int a, int b);
