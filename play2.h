@@ -981,13 +981,25 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		default:
 			break;
 		}
-		//音符表示
+		/* lock 移動 */
 		for (i[0] = 0; i[0] < 2; i[0]++) {
 			if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0){
 				lockN[i[0]]++;
 			}
 		}
+		/* view 移動 */
 		if (viewT[0][viewTN + 1] <= Ntime && viewT[0][viewTN + 1] >= 0) viewTN++;
+		/* 音符表示 */
+		/* G[0] = viewN+
+		 * G[1] = 横位置
+		 * G[2] = 縦位置
+		 * G[3] = XlockN+
+		 * G[4] = YlockN+
+		 * G[5] = speedN+
+		 * G[6] = color
+		 * i[0] = レーンループ
+		 * i[1] = ノーツループ
+		 */
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			if (speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime &&
 				speedt[i[0]][speedN[i[0]] + 1][0] >= 0) {
@@ -1038,14 +1050,14 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				if (lock[0][0][lockN[0] + G[3]] == 1) G[1] += note[i[0]][i[1]].xpos - 150;
 				else G[1] += Xline[i[0]] - 150;
 				//色
-				G[3] = note[i[0]][i[1]].color;
+				G[6] = note[i[0]][i[1]].color;
 				//カメラ補正
 				G[1] += nowcamera[0];
 				G[2] += nowcamera[1];
 				switch (note[i[0]][i[1]].object) {
 				case 1:
 					DrawGraph(G[1], G[2], noteimg.notebase, TRUE);
-					DrawGraph(G[1], G[2], noteimg.hitcircle[G[3]], TRUE);
+					DrawGraph(G[1], G[2], noteimg.hitcircle[G[6]], TRUE);
 					break;
 				case 2:
 					DrawGraph(G[1], G[2], noteimg.catchi, TRUE);
