@@ -17,6 +17,7 @@ typedef struct music_box {
 	int ClearRate[6];//0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
 	double Hacc[6];
 	wchar_t difP[256];
+	wchar_t packName[256];
 	wchar_t SongName[6][256];
 	wchar_t artist[6][256];
 	wchar_t SongFileName[6][256];

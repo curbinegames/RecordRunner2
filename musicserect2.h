@@ -13,7 +13,6 @@ int musicserect2(int *p1) {
 	int startC = -250;
 	int XmoveC = 250;
 	int XstartC = -250;
-	int picsong;
 	int UD = 1;
 	int LR = 1;
 	int ShiftKey = 0;
@@ -28,6 +27,10 @@ int musicserect2(int *p1) {
 	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[0:キャラ, 4:言語]だけ
 	int chap[3] = { 0,0,0 };
 	int backpos = 0;
+	const int keyCB[6] = {
+		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_UP,
+		KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT
+	};
 	double rate = GetRate();
 	double diskr = 0;
 	//wchar_t変数定義
@@ -148,6 +151,7 @@ int musicserect2(int *p1) {
 				strcopy(ST3, songdata[G[2]].artist[j], 1);
 				strcopy(ST3, songdata[G[2]].SongFileName[j], 1);
 				strcopy(ST5, songdata[G[2]].jacketP[j], 1);
+				strcopy(PackName[i], songdata[G[2]].packName, 1);
 				songdata[G[2]].level[j] = -1;
 				songdata[G[2]].preview[j][0] = 441000;
 				songdata[G[2]].preview[j][1] = 2646000;
@@ -298,18 +302,31 @@ int musicserect2(int *p1) {
 		}
 		if (LR == 1) {
 			DrawGraph(460, 320, difbar[command[1]], TRUE);
-			DrawGraph(-0.00288*XmoveC*XmoveC + 640, 320, difbar[command[1] + 1], TRUE);
+			DrawGraph(pals(0, 640, 250, 460, XmoveC), 320, difbar[command[1] + 1], TRUE);
 		}
 		else if (LR == -1) {
 			DrawGraph(460, 320, difbar[command[1] - 1], TRUE);
-			DrawGraph(0.00288*XmoveC*XmoveC + 460, 320, difbar[command[1]], TRUE);
+			DrawGraph(pals(0, 460, 250, 640, XmoveC), 320, difbar[command[1]], TRUE);
 		}
 		//詳細を表示する
 		DrawGraph(316, 370, detail, TRUE);
-		DrawFormatString(500, 380, Cr[3], L"LEVEL:%d", songdata[Mapping[command[0]]].level[command[1]]);
-		DrawFormatString(340, 410, Cr[3], L"HighSCORE:%d", songdata[Mapping[command[0]]].Hscore[command[1]]);
-		DrawFormatString(500, 410, Cr[3], L"HighACC:%.2f%%", songdata[Mapping[command[0]]].Hacc[command[1]]);
-		DrawFormatString(350, 430, Cr[3], L"HighDis:%.3fkm", songdata[Mapping[command[0]]].Hdis[command[1]] / 1000.0);
+		DrawFormatString(330, 380, Cr[3], L"%s", songdata[Mapping[command[0]]].packName);
+		DrawFormatString(335, 405, Cr[3], L"Lv.%2d", songdata[Mapping[command[0]]].level[command[1]]);
+		for (int i = 0; i < 15; i++) {
+			if (10 <= i && songdata[Mapping[command[0]]].level[command[1]] <= i) {
+				break;
+			}
+			if (i < songdata[Mapping[command[0]]].level[command[1]]) {
+				DrawString(16 * i + 390, 405, L"★", Cr[3]);
+			}
+			else {
+				DrawString(16 * i + 390, 405, L"☆", Cr[3]);
+			}
+		}
+		DrawFormatString(340, 430, Cr[3], L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
+			songdata[Mapping[command[0]]].Hscore[command[1]],
+			songdata[Mapping[command[0]]].Hacc[command[1]],
+			songdata[Mapping[command[0]]].Hdis[command[1]] / 1000.0);
 		//プレビューを流す
 		if (moveC == 0 && XmoveC == 0
 			&& strands(songdata[Mapping[command[0]]].SongFileName[command[1]], ST3) == 0
@@ -360,6 +377,169 @@ int musicserect2(int *p1) {
 		else { ShiftKey = 0; }
 		if (CheckHitKey(KEY_INPUT_P) == 1) { AutoFlag = 1; }
 		else { AutoFlag = 0; }
+#if 1
+		G[0] = keycur(keyCB, 6);
+		/* 曲決定 */
+		if (G[0] == KEY_INPUT_RETURN) {
+			//Lvが0以上であるか
+			if (0 <= songdata[Mapping[command[0]]].level[command[1]]) {
+				//隠し曲用
+				if (command[1] == 3 && songdata[Mapping[command[0]]].Hscore[3] >= 90000
+					&& strands(songdata[Mapping[command[0]]].SongFileName[5], ST3) == 0
+					&& songdata[Mapping[command[0]]].Hscore[5] <= 0) {
+					G[0] = 0;
+					if (songdata[Mapping[command[0]]].Hscore[3] >= 90000
+						&& songdata[Mapping[command[0]]].Hscore[3] < 92500) {
+						G[0] = pals(90000, 0, 92500, 25, songdata[Mapping[command[0]]].Hscore[3]);
+					}
+					else if (songdata[Mapping[command[0]]].Hscore[3] >= 92500
+						&& songdata[Mapping[command[0]]].Hscore[3] < 95000) {
+						G[0] = pals(95000, 50, 92500, 25, songdata[Mapping[command[0]]].Hscore[3]);
+					}
+					else if (songdata[Mapping[command[0]]].Hscore[3] >= 95000
+						&& songdata[Mapping[command[0]]].Hscore[3] < 98000) {
+						G[0] = pals(95000, 50, 98000, 750, songdata[Mapping[command[0]]].Hscore[3]);
+					}
+					else if (songdata[Mapping[command[0]]].Hscore[3] >= 98000
+						&& songdata[Mapping[command[0]]].Hscore[3] < 99000) {
+						G[0] = pals(99000, 1000, 98000, 750, songdata[Mapping[command[0]]].Hscore[3]);
+					}
+					else if (songdata[Mapping[command[0]]].Hscore[3] >= 99000) {
+						G[0] = 1000;
+					}
+					if (GetRand(1000) <= G[0]) { command[1] = 5; }
+				}
+				StopSoundMem(previewM);
+				ClearDrawScreen();
+				InitSoundMem();
+				InitGraph();
+				G[0] = 0;
+				for (G[0] = PackNumLim; G[0] >= 0; G[0]--) {
+					if (PackFirstNum[G[0]] >= 0 && PackFirstNum[G[0]] <= Mapping[command[0]]) {
+						*p1 = G[0];
+						break;
+					}
+				}
+				p1++;
+				*p1 = Mapping[command[0]] - PackFirstNum[G[0]];
+				p1++;
+				*p1 = command[1];
+				p1++;
+				*p1 = ShiftKey;
+				p1++;
+				*p1 = AutoFlag;
+				next = 6;
+				break;
+			}
+		}
+		/* 戻る */
+		else if (G[0] == KEY_INPUT_BACK) {
+			StopSoundMem(previewM);
+			ClearDrawScreen();
+			InitSoundMem();
+			InitGraph();
+			next = 1;
+			break;
+		}
+		switch (G[0]) {
+		case KEY_INPUT_UP: /* 曲選択上 */
+			command[0]--;
+			//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
+			if (command[0] < 0) command[0] = SongNumCount - 1;
+			if (command[1] > songdata[Mapping[command[0]]].limit) {
+				command[1] = songdata[Mapping[command[0]]].limit;
+				XstartC -= 250;
+				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+			}
+			PlaySoundMem(select, DX_PLAYTYPE_BACK);
+			UD = -1;
+			startC = GetNowCount();
+			//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
+			if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
+				if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
+				for (int i = 1; i <= 3; i++) {
+					if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
+						command[1] = i;
+						break;
+					}
+				}
+			}
+			break;
+		case KEY_INPUT_DOWN: /* 曲選択下 */
+			command[0]++;
+			//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
+			if (command[0] >= SongNumCount) command[0] = 0;
+			if (command[1] > songdata[Mapping[command[0]]].limit) {
+				command[1] = songdata[Mapping[command[0]]].limit;
+				XstartC -= 250;
+				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+			}
+			PlaySoundMem(select, DX_PLAYTYPE_BACK);
+			UD = 1;
+			startC = GetNowCount();
+			//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
+			if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
+				if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
+				for (int i = 1; i <= 3; i++) {
+					if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
+						command[1] = i;
+						break;
+					}
+				}
+			}
+			break;
+		case KEY_INPUT_LEFT: /* 難易度下降 */
+			command[1]--;
+			XstartC = GetNowCount();
+			if (command[1] < 0) {
+				command[1] = 0;
+				XstartC -= 250;
+			}
+			PlaySoundMem(select, DX_PLAYTYPE_BACK);
+			LR = 1;
+			if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
+				G[0] = Mapping[command[0]];
+				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+				for (int i = 0; i < SongNumCount; i++) {
+					if (Mapping[i] == G[0]) {
+						command[0] = i;
+					}
+				}
+			}
+			break;
+		case KEY_INPUT_RIGHT: /* 難易度上昇 */
+			command[1]++;
+			XstartC = GetNowCount();
+			if (command[1] > songdata[Mapping[command[0]]].limit) {
+				command[1] = songdata[Mapping[command[0]]].limit;
+				XstartC -= 250;
+			}
+			PlaySoundMem(select, DX_PLAYTYPE_BACK);
+			LR = -1;
+			if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
+				G[0] = Mapping[command[0]];
+				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+				for (int i = 0; i < SongNumCount; i++) {
+					if (Mapping[i] == G[0]) {
+						command[0] = i;
+					}
+				}
+			}
+			break;
+		case KEY_INPUT_Z: /* 曲並び替え */
+			ChangeSortMode(&SortMode);
+			G[0] = Mapping[command[0]];
+			SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+			for (int i = 0; i < SongNumCount; i++) {
+				if (Mapping[i] == G[0]) {
+					command[0] = i;
+				}
+			}
+			break;
+		default:
+			break;
+		}
+#else
 		if (CheckHitKey(KEY_INPUT_UP) == 1) {
 			if (key == 0) {
 				command[0]--;
@@ -472,13 +652,8 @@ int musicserect2(int *p1) {
 			key = 1;
 		}
 		else if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
-#if 0
-		//エンターが押された(曲ファイル名がNULLの場合はスキップ)
-			if (key == 0 && strands(songdata[Mapping[command[0]]].SongFileName[command[1]], ST3) == 0) {
-#else
-		//エンターが押された(Lvが0未満の場合はスキップ)
+			//エンターが押された(Lvが0未満の場合はスキップ)
 			if (key == 0 && 0 <= songdata[Mapping[command[0]]].level[command[1]]) {
-#endif
 				//隠し曲用
 				if (command[1] == 3 && songdata[Mapping[command[0]]].Hscore[3] >= 90000
 					&& strands(songdata[Mapping[command[0]]].SongFileName[5], ST3) == 0
@@ -541,6 +716,7 @@ int musicserect2(int *p1) {
 			key = 1;
 		}
 		else { key = 0; }
+#endif
 		if (GetWindowUserCloseFlag(TRUE)) {
 			next = 5;
 			break;
