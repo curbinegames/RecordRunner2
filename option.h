@@ -10,7 +10,7 @@ int option(void) {
 		fclose(fp);
 	}
 	//ˆ—
-	int key;
+	int key = 1;
 	int command = 0;
 	unsigned int Cr;
 	int backimg, cimg, help;

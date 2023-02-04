@@ -5,7 +5,6 @@
 #include "keycur.h"
 #include "title.h"
 #include "menu.h"
-#include "musicserect.h"
 #include "musicserect2.h"
 #include "play2.h"
 #include "collection.h"
