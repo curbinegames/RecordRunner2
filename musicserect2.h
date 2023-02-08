@@ -27,9 +27,9 @@ int musicserect2(int *p1) {
 	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[0:キャラ, 4:言語]だけ
 	int chap[3] = { 0,0,0 };
 	int backpos = 0;
-	const int keyCB[6] = {
+	const int keyCB[7] = {
 		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_UP,
-		KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT
+		KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_Z
 	};
 	double rate = GetRate();
 	double diskr = 0;
@@ -267,6 +267,8 @@ int musicserect2(int *p1) {
 		}
 	}
 	G[0] += 0;
+	GetMouseWheelRotVol();
+	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
 	while (1) {
 		ClearDrawScreen();
 		//背景の表示
@@ -362,12 +364,18 @@ int musicserect2(int *p1) {
 		}
 		//レートを表示する
 		DrawRate(rate, ratebarimg, chap[lan[0]], charaimg);
-		//ディスクを表示する(レート表示場所)
+		//ディスクを表示する(ソート表示場所)
+		if (UD == 1) { diskr += pals(0, 2, 250, -48, moveC) / 100.0; }
+		else { diskr += pals(0, 2, 250, 50, moveC) / 100.0; }
+		if (diskr > 6.28) { diskr -= 6.28; }
+		else if (diskr < 0) { diskr += 6.28; }
 		DrawRotaGraph(610, 25, 1, diskr, disk, TRUE);
-		diskr += 0.02;
-		if (diskr > 6.28) diskr -= 6.28;
 		//今のソート内容を表示する
 		ViewSortMode(SortMode, lan[4]);
+
+		GetMousePoint(&G[0], &G[1]);
+		DrawFormatString(325, 360, Cr[3], L"%d,%d", G[0], G[1]);
+
 		//操作説明を表示する
 		ShowHelpBar(Cr[0], help, lan[4]);
 		//デバッグ(320,410スタート)
@@ -378,9 +386,64 @@ int musicserect2(int *p1) {
 		if (CheckHitKey(KEY_INPUT_P) == 1) { AutoFlag = 1; }
 		else { AutoFlag = 0; }
 #if 1
-		G[0] = keycur(keyCB, 6);
-		/* 曲決定 */
-		if (G[0] == KEY_INPUT_RETURN) {
+		G[0] = 0;
+		/* マウス入力 */
+		G[1] = 0;
+		G[2] = 0;
+		G[3] = 0;
+		G[4] = 0;
+		while (GetMouseInputLog2(&G[1], &G[2], &G[3], &G[4], true) == 0) {}
+		if (G[1] == MOUSE_INPUT_LEFT && G[4] == MOUSE_INPUT_LOG_UP) {
+			if (5 <= G[2] && G[2] <= 280 && 195 <= G[3] && G[3] <= 290) {
+				G[0] = 1;
+			}
+			if (5 <= G[2] && G[2] <= 245 && 5 <= G[3] && G[3] <= 175) {
+				G[0] = 3;
+			}
+			if (5 <= G[2] && G[2] <= 305 && 310 <= G[3] && G[3] <= 475) {
+				G[0] = 4;
+			}
+			if (505 <= G[2] && G[2] <= 635 && 5 <= G[3] && G[3] <= 130) {
+				G[0] = 7;
+			}
+		}
+		/* ホイール入力 */
+		G[1] = GetMouseWheelRotVol();
+		if (1 <= G[1]) { /* 奥回し */
+			G[0] = 3;
+		}
+		if (G[1] <= -1) { /* 手前回し */
+			G[0] = 4;
+		}
+		/* キー入力 */
+		G[1] = keycur(keyCB, sizeof(keyCB) / sizeof(keyCB[0]));
+		switch (G[1]) {
+		case KEY_INPUT_RETURN:
+			G[0] = 1;
+			break;
+		case KEY_INPUT_BACK:
+			G[0] = 2;
+			break;
+		case KEY_INPUT_UP:
+			G[0] = 3;
+			break;
+		case KEY_INPUT_DOWN:
+			G[0] = 4;
+			break;
+		case KEY_INPUT_LEFT:
+			G[0] = 5;
+			break;
+		case KEY_INPUT_RIGHT:
+			G[0] = 6;
+			break;
+		case KEY_INPUT_Z:
+			G[0] = 7;
+			break;
+		default:
+			break;
+		}
+		/* 操作の結果反映 */
+		if (G[0] == 1) { /* 曲決定 */
 			//Lvが0以上であるか
 			if (0 <= songdata[Mapping[command[0]]].level[command[1]]) {
 				//隠し曲用
@@ -432,8 +495,7 @@ int musicserect2(int *p1) {
 				break;
 			}
 		}
-		/* 戻る */
-		else if (G[0] == KEY_INPUT_BACK) {
+		else if (G[0] == 2) { /* 戻る */
 			StopSoundMem(previewM);
 			ClearDrawScreen();
 			InitSoundMem();
@@ -442,7 +504,7 @@ int musicserect2(int *p1) {
 			break;
 		}
 		switch (G[0]) {
-		case KEY_INPUT_UP: /* 曲選択上 */
+		case 3: /* 曲選択上 */
 			command[0]--;
 			//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
 			if (command[0] < 0) command[0] = SongNumCount - 1;
@@ -465,7 +527,7 @@ int musicserect2(int *p1) {
 				}
 			}
 			break;
-		case KEY_INPUT_DOWN: /* 曲選択下 */
+		case 4: /* 曲選択下 */
 			command[0]++;
 			//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
 			if (command[0] >= SongNumCount) command[0] = 0;
@@ -488,7 +550,7 @@ int musicserect2(int *p1) {
 				}
 			}
 			break;
-		case KEY_INPUT_LEFT: /* 難易度下降 */
+		case 5: /* 難易度下降 */
 			command[1]--;
 			XstartC = GetNowCount();
 			if (command[1] < 0) {
@@ -507,7 +569,7 @@ int musicserect2(int *p1) {
 				}
 			}
 			break;
-		case KEY_INPUT_RIGHT: /* 難易度上昇 */
+		case 6: /* 難易度上昇 */
 			command[1]++;
 			XstartC = GetNowCount();
 			if (command[1] > songdata[Mapping[command[0]]].limit) {
@@ -526,7 +588,7 @@ int musicserect2(int *p1) {
 				}
 			}
 			break;
-		case KEY_INPUT_Z: /* 曲並び替え */
+		case 7: /* 曲並び替え */
 			ChangeSortMode(&SortMode);
 			G[0] = Mapping[command[0]];
 			SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);

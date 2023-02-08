@@ -41,21 +41,29 @@ int IsNoteCode(wchar_t c);
 int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
 int cal_nowdif_m(int *difkey, int num, int now, int voidtime);
 rrs_obj_code_t check_obj_code(wchar_t const *const s);
+void set_item_set(item_box* const Movie, short* const MovieN,
+	playnum_box* allnum, wchar_t* const s, item_set_box const* const item_set,
+	double bpmG, double timer);
 item_eff_box set_pic_mat(wchar_t *s);
 int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
-	short int i[2];
+	short int i[2] = { 0,0 };
 	short int Lv = 0;
 	short int notes = 0;
-	int G[20], songT;
+#if 0 /* fixing... */
+	int G[4] = { 0,0,0,0 };
+#else
+	int G[14] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+#endif
+	int songT;
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int songdata = 0;
 	int waningLv = 2;
-	double GD[5];
+	double GD[5] = { 0,0,0,0,0 };
 	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
 	//short int itemN = 0; //↑の番号
 	int chamo[3][99][2]; //キャラの[0:上,1:中,2:下]の[0:グラフィック,1:切り替え時間]
@@ -770,6 +778,9 @@ void RecordLoad2(int p, int n, int o) {
 					}
 					break;
 				case OBJ_CODE_ITEM_SET: //アイテムセット表示
+#if 0 /* fixing... */
+					set_item_set(&Movie[MovieN], &MovieN, &allnum, &GT1[0], item_set, bpmG, timer[0]);
+#else
 					strmods(GT1, 10);
 					G[0] = strsans(GT1); /* G[0] = item boxの番号 */
 					strnex(GT1);
@@ -833,6 +844,7 @@ void RecordLoad2(int p, int n, int o) {
 						MovieN++;
 						allnum.movienum++;
 					}
+#endif
 					break;
 				case OBJ_CODE_CAMERA: //カメラ移動+ズーム+角度(未実装)
 					strmods(GT1, 8);
@@ -1449,6 +1461,89 @@ rrs_obj_code_t check_obj_code(wchar_t const *const s) {
 	if (strands(s, L"#END")) { return OBJ_CODE_END; }
 	if (s[0] == L'\0') { return OBJ_CODE_SPACE; }
 	return OBJ_CODE_NONE;
+}
+
+void set_item_set(item_box* const Movie, short* const MovieN,
+	playnum_box* allnum, wchar_t* const s, item_set_box const* const item_set,
+	double bpmG, double timer) {
+	int itemN = 0;
+	int moveM = 1;
+	int BStime = 0;
+	int BEtime = 0;
+	int BSXpos = 0;
+	int BEXpos = 0;
+	int BSYpos = 0;
+	int BEYpos = 0;
+	int BSsize = 100;
+	int BEsize = 100;
+	int BSrot = 0;
+	int BErot = 0;
+	int BSalpha = 255;
+	int BEalpha = 255;
+	strmods(s, 10);
+	itemN = strsans(s);
+	strnex(s);
+	switch (s[0]) {
+	case L'l':
+		moveM = 1;
+		break;
+	case L'a':
+		moveM = 2;
+		break;
+	case L'd':
+		moveM = 3;
+		break;
+	}
+	strnex(s);
+	BStime = shifttime(strsans2(s), bpmG, (int)timer);
+	strnex(s);
+	BEtime = shifttime(strsans2(s), bpmG, (int)timer);
+	strnex(s);
+	BSXpos = (int)(strsans2(s) * 50 + 115);
+	strnex(s);
+	BEXpos = strsans2(s) * 50 + 115;
+	strnex(s);
+	BSYpos = strsans2(s) * 50 + 115;
+	strnex(s);
+	BEYpos = strsans2(s) * 50 + 115;
+	strnex(s);
+	BSsize = strsans2(s) * 100;
+	strnex(s);
+	BEsize = strsans2(s) * 100;
+	strnex(s);
+	BSrot = strsans(s);
+	strnex(s);
+	BErot = strsans(s);
+	strnex(s);
+	BSalpha = strsans2(s) * 255.0;
+	strnex(s);
+	BEalpha = strsans2(s) * 255.0;
+	for (int i = 0; i < item_set[itemN].num; i++) {
+		Movie[*MovieN].ID = item_set[itemN].picID[i].picID;
+		Movie[*MovieN].movemode = moveM;
+		Movie[*MovieN].eff = item_set[itemN].picID[i].eff;
+		Movie[*MovieN].starttime = BStime;
+		Movie[*MovieN].endtime = BEtime;
+		Movie[*MovieN].startXpos = item_set[itemN].picID[i].Xpos * BSsize / 100;
+		Movie[*MovieN].endXpos = item_set[itemN].picID[i].Xpos * BEsize / 100;
+		Movie[*MovieN].startYpos = item_set[itemN].picID[i].Ypos * BSsize / 100;
+		Movie[*MovieN].endYpos = item_set[itemN].picID[i].Ypos * BEsize / 100;
+		rot_xy_pos(BSrot, &Movie[*MovieN].startXpos, &Movie[*MovieN].startYpos);
+		rot_xy_pos(BSrot, &Movie[*MovieN].endXpos, &Movie[*MovieN].endYpos);
+		Movie[*MovieN].startXpos += BSXpos;
+		Movie[*MovieN].endXpos += BEXpos;
+		Movie[*MovieN].startYpos += BSYpos;
+		Movie[*MovieN].endYpos += BEYpos;
+		Movie[*MovieN].startsize = BSsize * item_set[itemN].picID[i].size / 100;
+		Movie[*MovieN].endsize = BEsize * item_set[itemN].picID[i].size / 100;
+		Movie[*MovieN].startrot = BSrot + item_set[itemN].picID[i].rot;
+		Movie[*MovieN].endrot = BErot + item_set[itemN].picID[i].rot;
+		Movie[*MovieN].startalpha = BSalpha * item_set[itemN].picID[i].alpha / 255;
+		Movie[*MovieN].endalpha = BEalpha * item_set[itemN].picID[i].alpha / 255;
+		(*MovieN)++;
+		(allnum->movienum)++;
+	}
+	return;
 }
 
 item_eff_box set_pic_mat(wchar_t *s) {
