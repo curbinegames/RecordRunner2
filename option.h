@@ -17,7 +17,7 @@ int option(void) {
 	backimg = LoadGraph(L"picture/OPTION back.png");
 	cimg = LoadGraph(L"picture/OC.png");
 	help = LoadGraph(L"picture/help.png");
-	sel = LoadSoundMem(L"sound/select.ogg");
+	sel = LoadSoundMem(L"sound/select.wav");
 	Cr = GetColor(255, 255, 255);
 	while (1) {
 		ClearDrawScreen();

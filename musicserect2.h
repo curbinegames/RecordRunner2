@@ -101,7 +101,7 @@ int musicserect2(int *p1) {
 	int charaimg = 0;
 	int ratebarimg = GetRateBarPic(rate);
 	int previewM = LoadSoundMem(L"null.mp3");
-	int select = LoadSoundMem(L"sound/arrow.ogg");
+	int select = LoadSoundMem(L"sound/arrow.wav");
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&lan, sizeof(int), 6, fp);

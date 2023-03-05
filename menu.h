@@ -52,7 +52,7 @@ int menu(void) {
 		5
 	};
 	help = LoadGraph(L"picture/help.png");
-	select = LoadSoundMem(L"sound/arrow.ogg");
+	select = LoadSoundMem(L"sound/arrow.wav");
 	while (1) {
 		ClearDrawScreen();
 		//îwåiï\é¶

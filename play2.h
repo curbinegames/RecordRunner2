@@ -33,6 +33,13 @@ typedef enum note_judge {
 	NOTE_JUDGE_MISS
 } note_judge;
 
+typedef struct play_sound_s{
+	int att;
+	int cat;
+	int arw;
+	int bom;
+} play_sound_t;
+
 struct judge_box AddHitJudge(struct judge_box ans, int gup);
 void cal_back_x(int *xpos, double Gspeed, double Wspeed, double scrool,
 	int cam);
@@ -360,7 +367,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int ComboFontimg[10];
 	//ノーツの画像
 	struct note_img noteimg;
-	int musicmp3, attack, catchs, arrow, bomb;
+	play_sound_t p_sound;
+	int musicmp3;
 	switch (o) {
 	case 0:
 		difberimg = LoadGraph(L"picture/difauto.png");
@@ -423,16 +431,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	}
 	musicmp3 = LoadSoundMem(mp3FN);
 	if (system[2] == 0) {
-		attack = LoadSoundMem(L"sound/attack.mp3");
-		catchs = LoadSoundMem(L"sound/catch.mp3");
-		arrow = LoadSoundMem(L"sound/arrow.ogg");
-		bomb = LoadSoundMem(L"sound/bomb.wav");
+		p_sound.att = LoadSoundMem(L"sound/attack.wav");
+		p_sound.cat = LoadSoundMem(L"sound/catch.wav");
+		p_sound.arw = LoadSoundMem(L"sound/arrow.wav");
+		p_sound.bom = LoadSoundMem(L"sound/bomb.wav");
 	}
 	else {
-		attack = LoadSoundMem(L"sound/non.wav");
-		catchs = LoadSoundMem(L"sound/non.wav");
-		arrow = LoadSoundMem(L"sound/non.wav");
-		bomb = LoadSoundMem(L"sound/non.wav");
+		p_sound.att = LoadSoundMem(L"sound/non.wav");
+		p_sound.cat = LoadSoundMem(L"sound/non.wav");
+		p_sound.arw = LoadSoundMem(L"sound/non.wav");
+		p_sound.bom = LoadSoundMem(L"sound/non.wav");
 	}
 	//ゲーム開始前の下準備
 	notes = notzero(notes);
@@ -1388,16 +1396,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		if ((seflag & SE_HIT) != 0) {
-			PlaySoundMem(attack, DX_PLAYTYPE_BACK);
+			PlaySoundMem(p_sound.att, DX_PLAYTYPE_BACK);
 		}
 		if ((seflag & SE_CATCH) != 0) {
-			PlaySoundMem(catchs, DX_PLAYTYPE_BACK);
+			PlaySoundMem(p_sound.cat, DX_PLAYTYPE_BACK);
 		}
 		if ((seflag & SE_ARROW) != 0) {
-			PlaySoundMem(arrow, DX_PLAYTYPE_BACK);
+			PlaySoundMem(p_sound.arw, DX_PLAYTYPE_BACK);
 		}
 		if ((seflag & SE_BOMB) != 0) {
-			PlaySoundMem(bomb, DX_PLAYTYPE_BACK);
+			PlaySoundMem(p_sound.bom, DX_PLAYTYPE_BACK);
 		}
 		seflag = 0;
 		if (gapa[2] > 2140000000) {
