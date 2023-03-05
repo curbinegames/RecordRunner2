@@ -372,10 +372,6 @@ int musicserect2(int *p1) {
 		DrawRotaGraph(610, 25, 1, diskr, disk, TRUE);
 		//今のソート内容を表示する
 		ViewSortMode(SortMode, lan[4]);
-
-		GetMousePoint(&G[0], &G[1]);
-		DrawFormatString(325, 360, Cr[3], L"%d,%d", G[0], G[1]);
-
 		//操作説明を表示する
 		ShowHelpBar(Cr[0], help, lan[4]);
 		//デバッグ(320,410スタート)
@@ -385,7 +381,6 @@ int musicserect2(int *p1) {
 		else { ShiftKey = 0; }
 		if (CheckHitKey(KEY_INPUT_P) == 1) { AutoFlag = 1; }
 		else { AutoFlag = 0; }
-#if 1
 		G[0] = 0;
 		/* マウス入力 */
 		G[1] = 0;
@@ -601,184 +596,6 @@ int musicserect2(int *p1) {
 		default:
 			break;
 		}
-#else
-		if (CheckHitKey(KEY_INPUT_UP) == 1) {
-			if (key == 0) {
-				command[0]--;
-				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-				if (command[0] < 0) command[0] = SongNumCount - 1;
-				if (command[1] > songdata[Mapping[command[0]]].limit) {
-					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= 250;
-					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-				}
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				UD = -1;
-				startC = GetNowCount();
-				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
-					if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
-					for (int i = 1; i <= 3; i++) {
-						if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
-							command[1] = i;
-							break;
-						}
-					}
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_DOWN) == 1) {
-			if (key == 0) {
-				command[0]++;
-				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-				if (command[0] >= SongNumCount) command[0] = 0;
-				if (command[1] > songdata[Mapping[command[0]]].limit) {
-					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= 250;
-					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-				}
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				UD = 1;
-				startC = GetNowCount();
-				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
-					if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
-					for (int i = 1; i <= 3; i++) {
-						if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
-							command[1] = i;
-							break;
-						}
-					}
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_LEFT) == 1) {
-			//左が押された
-			if (key == 0) {
-				command[1]--;
-				XstartC = GetNowCount();
-				if (command[1] < 0) {
-					command[1] = 0;
-					XstartC -= 250;
-				}
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				LR = 1;
-				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
-					G[0] = Mapping[command[0]];
-					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-					for (int i = 0; i < SongNumCount; i++) {
-						if (Mapping[i] == G[0]) {
-							command[0] = i;
-						}
-					}
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_RIGHT) == 1) {
-			//右が押された
-			if (key == 0) {
-				command[1]++;
-				XstartC = GetNowCount();
-				if (command[1] > songdata[Mapping[command[0]]].limit) {
-					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= 250;
-				}
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				LR = -1;
-				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
-					G[0] = Mapping[command[0]];
-					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-					for (int i = 0; i < SongNumCount; i++) {
-						if (Mapping[i] == G[0]) {
-							command[0] = i;
-						}
-					}
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_Z) == 1) {
-			if (key == 0) {
-				ChangeSortMode(&SortMode);
-				G[0] = Mapping[command[0]];
-				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-				for (int i = 0; i < SongNumCount; i++) {
-					if (Mapping[i] == G[0]) {
-						command[0] = i;
-					}
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
-			//エンターが押された(Lvが0未満の場合はスキップ)
-			if (key == 0 && 0 <= songdata[Mapping[command[0]]].level[command[1]]) {
-				//隠し曲用
-				if (command[1] == 3 && songdata[Mapping[command[0]]].Hscore[3] >= 90000
-					&& strands(songdata[Mapping[command[0]]].SongFileName[5], ST3) == 0
-					&& songdata[Mapping[command[0]]].Hscore[5] <= 0) {
-					G[0] = 0;
-					if (songdata[Mapping[command[0]]].Hscore[3] >= 90000
-						&& songdata[Mapping[command[0]]].Hscore[3] < 92500) {
-						G[0] = pals(90000, 0, 92500, 25, songdata[Mapping[command[0]]].Hscore[3]);
-					}
-					else if (songdata[Mapping[command[0]]].Hscore[3] >= 92500
-						&& songdata[Mapping[command[0]]].Hscore[3] < 95000) {
-						G[0] = pals(95000, 50, 92500, 25, songdata[Mapping[command[0]]].Hscore[3]);
-					}
-					else if (songdata[Mapping[command[0]]].Hscore[3] >= 95000
-						&& songdata[Mapping[command[0]]].Hscore[3] < 98000) {
-						G[0] = pals(95000, 50, 98000, 750, songdata[Mapping[command[0]]].Hscore[3]);
-					}
-					else if (songdata[Mapping[command[0]]].Hscore[3] >= 98000
-						&& songdata[Mapping[command[0]]].Hscore[3] < 99000) {
-						G[0] = pals(99000, 1000, 98000, 750, songdata[Mapping[command[0]]].Hscore[3]);
-					}
-					else if (songdata[Mapping[command[0]]].Hscore[3] >= 99000) {
-						G[0] = 1000;
-					}
-					if (GetRand(1000) <= G[0]) { command[1] = 5; }
-				}
-				StopSoundMem(previewM);
-				ClearDrawScreen();
-				InitSoundMem();
-				InitGraph();
-				G[0] = 0;
-				for (G[0] = PackNumLim; G[0] >= 0; G[0]--) {
-					if (PackFirstNum[G[0]] >= 0 && PackFirstNum[G[0]] <= Mapping[command[0]]) {
-						*p1 = G[0];
-						break;
-					}
-				}
-				p1++;
-				*p1 = Mapping[command[0]] - PackFirstNum[G[0]];
-				p1++;
-				*p1 = command[1];
-				p1++;
-				*p1 = ShiftKey;
-				p1++;
-				*p1 = AutoFlag;
-				next = 6;
-				break;
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_BACK) == 1) {
-			if (key == 0) {
-				StopSoundMem(previewM);
-				ClearDrawScreen();
-				InitSoundMem();
-				InitGraph();
-				next = 1;
-				break;
-			}
-			key = 1;
-		}
-		else { key = 0; }
-#endif
 		if (GetWindowUserCloseFlag(TRUE)) {
 			next = 5;
 			break;
