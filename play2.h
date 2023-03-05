@@ -38,6 +38,7 @@ typedef struct play_sound_s{
 	int cat;
 	int arw;
 	int bom;
+	char flag = 0;//reserved, reserved, reserved, reserved, bomb, arrow, catch, hit
 } play_sound_t;
 
 struct judge_box AddHitJudge(struct judge_box ans, int gup);
@@ -54,8 +55,10 @@ struct score_box GetScore3(struct score_box score, struct judge_box judge,
 	const int notes, const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
 void Getxxxwav(wchar_t *str, int num);
-void note_judge_event(note_judge judge, note_material note, int *viewjudge,
-	int *judgename, int *combo, int *life, int *Dscore);
+void note_judge_event(note_judge judge, note_material note, int* viewjudge,
+	int* judgename, int* combo, int* life, int* Dscore,
+	note_box const* const noteinfo, int* const MelodySnd, int* const Sitem,
+	play_sound_t* const sound);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo,
 	int MaxCombo);
 void SetHitPosByHit(int *const hitatk, char const hitflag, int Ntime);
@@ -68,6 +71,7 @@ void ShowScore2(struct score_box score, int Hscore, int time);
 void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
 char PlayNoteHitSound(note_box note, int *MelodySnd, int *Sitem, char seflag,
 	int notemat);
+void PlayNoteHitSound2(play_sound_t* const sound);
 
 int play3(int p, int n, int o, int shift, int AutoFlag) {
 	/*---用語定義-----
@@ -169,7 +173,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	double DifRate; //譜面定数
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
 	char key[256];
-	char seflag = 0;//reserved, reserved, reserved, reserved, bomb, arrow, catch, hit
 	wchar_t songN[255];
 	wchar_t songNE[255];
 	wchar_t fileN[255];
@@ -1117,9 +1120,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			//just
 			if (G[2] <= 40 && G[2] >= -40) {
 				note_judge_event(NOTE_JUDGE_JUST, NOTE_HIT, &viewjudge[0],
-					&judghname[G[1]][0], &combo, &life, &Dscore[0]);
-				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]], MelodySnd,
-					Sitem, seflag, SE_HIT);
+					&judghname[G[1]][0], &combo, &life, &Dscore[0],
+					&note[G[1]][objectN[G[1]]], MelodySnd, Sitem, &p_sound);
 				score.before = pals(500, score.sum, 0, score.before,
 					maxs(Ntime - score.time, 500));
 				score.time = Ntime;
@@ -1127,9 +1129,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			//good
 			else if (G[2] <= 70 && G[2] >= -70) {
 				note_judge_event(NOTE_JUDGE_GOOD, NOTE_HIT, &viewjudge[0],
-					&judghname[G[1]][0], &combo, &life, &Dscore[0]);
-				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]],
-					MelodySnd, Sitem, seflag, SE_HIT);
+					&judghname[G[1]][0], &combo, &life, &Dscore[0],
+					&note[G[1]][objectN[G[1]]], MelodySnd, Sitem, &p_sound);
 				score.before = pals(500, score.sum, 0, score.before,
 					maxs(Ntime - score.time, 500));
 				score.time = Ntime;
@@ -1137,9 +1138,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			//safe
 			else if (G[2] <= 100 && G[2] >= -100) {
 				note_judge_event(NOTE_JUDGE_SAFE, NOTE_HIT, &viewjudge[0],
-					&judghname[G[1]][0], &combo, &life, &Dscore[0]);
-				seflag = PlayNoteHitSound(note[G[1]][objectN[G[1]]],
-					MelodySnd, Sitem, seflag, SE_HIT);
+					&judghname[G[1]][0], &combo, &life, &Dscore[0],
+					&note[G[1]][objectN[G[1]]], MelodySnd, Sitem, &p_sound);
 				score.before = pals(500, score.sum, 0, score.before,
 					maxs(Ntime - score.time, 500));
 				score.time = Ntime;
@@ -1147,7 +1147,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			//fastmiss
 			else if (G[2] <= 200) {
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_HIT, &viewjudge[0],
-					&judghname[G[1]][0], &combo, &life, &Dscore[0]);
+					&judghname[G[1]][0], &combo, &life, &Dscore[0],
+					&note[G[1]][objectN[G[1]]], MelodySnd, Sitem, &p_sound);
 			}
 			objectN[G[1]]++;
 		}
@@ -1159,9 +1160,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				note[i[0]][objectN[i[0]]].object == 2) {
 				while (note[i[0]][objectN[i[0]]].hittime - Ntime <= 0) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_CATCH, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_CATCH);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1183,9 +1183,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_UP, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1193,9 +1192,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
 					note_judge_event(NOTE_JUDGE_GOOD, NOTE_UP, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1203,9 +1201,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
 					note_judge_event(NOTE_JUDGE_SAFE, NOTE_UP, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1213,7 +1210,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//fastmiss
 				else if (judgh <= 125) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_UP, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 				}
 				objectN[i[0]]++;
 			}
@@ -1227,18 +1225,17 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_DOWN, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
-					score.before = pals(500, score.sum, 0, score.before, maxs(Ntime - score.time, 500));
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
+					score.before = pals(500, score.sum, 0, score.before,
+						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
 					note_judge_event(NOTE_JUDGE_GOOD, NOTE_DOWN, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1246,9 +1243,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
 					note_judge_event(NOTE_JUDGE_SAFE, NOTE_DOWN, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1256,7 +1252,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//fastmiss
 				else if (judgh <= 125) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_DOWN, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 				}
 				objectN[i[0]]++;
 			}
@@ -1270,9 +1267,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_LEFT, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1280,9 +1276,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
 					note_judge_event(NOTE_JUDGE_GOOD, NOTE_LEFT, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1290,9 +1285,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
 					note_judge_event(NOTE_JUDGE_SAFE, NOTE_LEFT, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1300,7 +1294,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//fastmiss
 				else if (judgh <= 125) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_LEFT, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 				}
 				objectN[i[0]]++;
 			}
@@ -1314,9 +1309,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_RIGHT, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1324,9 +1318,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
 					note_judge_event(NOTE_JUDGE_GOOD, NOTE_RIGHT, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1334,9 +1327,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
 					note_judge_event(NOTE_JUDGE_SAFE, NOTE_RIGHT, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-					seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-						MelodySnd, Sitem, seflag, SE_ARROW);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					score.before = pals(500, score.sum, 0, score.before,
 						maxs(Ntime - score.time, 500));
 					score.time = Ntime;
@@ -1344,7 +1336,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				//fastmiss
 				else if (judgh <= 125) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_RIGHT, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 				}
 				objectN[i[0]]++;
 			}
@@ -1352,16 +1345,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			else if (i[0] == charaput && note[i[0]][objectN[i[0]]].object == 7 &&
 				judgh <= 0 && judgh >= -40) {
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_BOMB, &viewjudge[0],
-					&judghname[i[0]][0], &combo, &life, &Dscore[0]);
+					&judghname[i[0]][0], &combo, &life, &Dscore[0],
+					&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 				judge.miss++;
-				seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-					MelodySnd, Sitem, seflag, SE_BOMB);
 				objectN[i[0]]++;
 			}
 			else if (note[i[0]][objectN[i[0]]].object == 7) {
 				while (note[i[0]][objectN[i[0]]].hittime - Ntime < -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_BOMB, &viewjudge[0],
-						&judghname[i[0]][0], &combo, &life, &Dscore[0]);
+						&judghname[i[0]][0], &combo, &life, &Dscore[0],
+						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 					objectN[i[0]]++;
 					judge.pjust++;
 					judge.just++;
@@ -1372,42 +1365,22 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			//ゴーストノーツ
 			else if (note[i[0]][objectN[i[0]]].object == 8 && judgh < 16) {
-				seflag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-					MelodySnd, Sitem, seflag, SE_GHOST);
+				p_sound.flag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+					MelodySnd, Sitem, p_sound.flag, SE_GHOST);
 				objectN[i[0]]++;
 			}
 			//全ノーツslowmiss
 			else while (judgh <= -100 && judgh >= -100000 &&
 			note[i[0]][objectN[i[0]]].object >= 1 && note[i[0]][objectN[i[0]]].object <= 6) {
-#if 1
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_HIT, &viewjudge[0],
-					&judghname[i[0]][0], &combo, &life, &Dscore[0]);
-#else
-				viewjudge[3] = GetNowCount();
-				judghname[i[0]][0] = 4;
-				judghname[i[0]][1] = GetNowCount();
-				judghname[i[0]][2] = 0;
-				combo = 0;
-				life -= 20;
-#endif
+					&judghname[i[0]][0], &combo, &life, &Dscore[0],
+					&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
 				objectN[i[0]]++;
 				judge.miss++;
 				judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
 			}
 		}
-		if ((seflag & SE_HIT) != 0) {
-			PlaySoundMem(p_sound.att, DX_PLAYTYPE_BACK);
-		}
-		if ((seflag & SE_CATCH) != 0) {
-			PlaySoundMem(p_sound.cat, DX_PLAYTYPE_BACK);
-		}
-		if ((seflag & SE_ARROW) != 0) {
-			PlaySoundMem(p_sound.arw, DX_PLAYTYPE_BACK);
-		}
-		if ((seflag & SE_BOMB) != 0) {
-			PlaySoundMem(p_sound.bom, DX_PLAYTYPE_BACK);
-		}
-		seflag = 0;
+		PlayNoteHitSound2(&p_sound);
 		if (gapa[2] > 2140000000) {
 			gapa[0] /= 2;
 			gapa[1] /= 2;
@@ -1886,8 +1859,10 @@ void Getxxxwav(wchar_t *str, int num) {
 	return;
 }
 
-void note_judge_event(note_judge judge, note_material note, int *viewjudge,
-	int *judgename, int *combo, int *life, int *Dscore){
+void note_judge_event(note_judge judge, note_material note, int* viewjudge,
+	int* judgename, int* combo, int* life, int* Dscore,
+	note_box const* const noteinfo, int* const MelodySnd, int* const Sitem,
+	play_sound_t* const sound) {
 	const int Ncount = GetNowCount();
 	viewjudge[judge] = Ncount;
 	judgename[0] = judge + 1;
@@ -1898,19 +1873,74 @@ void note_judge_event(note_judge judge, note_material note, int *viewjudge,
 		*combo += 1;
 		*life += 2;
 		*Dscore += 1;
+		switch (note) {
+		case NOTE_HIT:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_HIT);
+			break;
+		case NOTE_CATCH:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_CATCH);
+			break;
+		case NOTE_UP:
+		case NOTE_DOWN:
+		case NOTE_LEFT:
+		case NOTE_RIGHT:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_ARROW);
+			break;
+		default:
+			break;
+		}
 		break;
 	case NOTE_JUDGE_GOOD:
 		judgename[2] = note;
 		*combo += 1;
 		*life += 1;
+		switch (note) {
+		case NOTE_HIT:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_HIT);
+			break;
+		case NOTE_CATCH:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_CATCH);
+			break;
+		case NOTE_UP:
+		case NOTE_DOWN:
+		case NOTE_LEFT:
+		case NOTE_RIGHT:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_ARROW);
+			break;
+		default:
+			break;
+		}
 		break;
 	case NOTE_JUDGE_SAFE:
 		judgename[2] = note;
+		switch (note) {
+		case NOTE_HIT:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_HIT);
+			break;
+		case NOTE_CATCH:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_CATCH);
+			break;
+		case NOTE_UP:
+		case NOTE_DOWN:
+		case NOTE_LEFT:
+		case NOTE_RIGHT:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_ARROW);
+			break;
+		default:
+			break;
+		}
 		break;
 	case NOTE_JUDGE_MISS:
 		judgename[2] = ((note == NOTE_BOMB) ? NOTE_BOMB : 0);
 		*combo = 0;
 		*life -= 20;
+		switch (note) {
+		case NOTE_BOMB:
+			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_BOMB);
+			break;
+		default:
+			break;
+		}
 		break;
 	default:
 		break;
@@ -2110,6 +2140,23 @@ char PlayNoteHitSound(note_box note, int *MelodySnd, int *Sitem, char seflag,
 		seflag |= notemat;
 	}
 	return seflag;
+}
+
+void PlayNoteHitSound2(play_sound_t* const sound) {
+	if ((sound->flag & SE_HIT) != 0) {
+		PlaySoundMem(sound->att, DX_PLAYTYPE_BACK);
+	}
+	if ((sound->flag & SE_CATCH) != 0) {
+		PlaySoundMem(sound->cat, DX_PLAYTYPE_BACK);
+	}
+	if ((sound->flag & SE_ARROW) != 0) {
+		PlaySoundMem(sound->arw, DX_PLAYTYPE_BACK);
+	}
+	if ((sound->flag & SE_BOMB) != 0) {
+		PlaySoundMem(sound->bom, DX_PLAYTYPE_BACK);
+	}
+	sound->flag = 0;
+	return;
 }
 
 void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {
