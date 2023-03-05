@@ -5,11 +5,12 @@
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
 #define CHARA_POS_DOWN 2
-#define SE_HIT 1
-#define SE_CATCH 2
-#define SE_ARROW 4
-#define SE_BOMB 8
-#define SE_GHOST 16
+#define SE_HIT (1 << 0)
+#define SE_CATCH (1 << 1)
+#define SE_ARROW (1 << 2)
+#define SE_BOMB (1 << 3)
+#define SE_GHOST (1 << 4)
+#define SE_SWING (1 << 5)
 
 #if 0
 #define RECR_DEBUG(ofs, n, data_a, data_b)						\
@@ -38,6 +39,7 @@ typedef struct play_sound_s{
 	int cat;
 	int arw;
 	int bom;
+	int swi;
 	char flag = 0;//reserved, reserved, reserved, reserved, bomb, arrow, catch, hit
 } play_sound_t;
 
@@ -437,12 +439,14 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		p_sound.att = LoadSoundMem(L"sound/attack.wav");
 		p_sound.cat = LoadSoundMem(L"sound/catch.wav");
 		p_sound.arw = LoadSoundMem(L"sound/arrow.wav");
+		p_sound.swi = LoadSoundMem(L"sound/swing.wav");
 		p_sound.bom = LoadSoundMem(L"sound/bomb.wav");
 	}
 	else {
 		p_sound.att = LoadSoundMem(L"sound/non.wav");
 		p_sound.cat = LoadSoundMem(L"sound/non.wav");
 		p_sound.arw = LoadSoundMem(L"sound/non.wav");
+		p_sound.swi = LoadSoundMem(L"sound/non.wav");
 		p_sound.bom = LoadSoundMem(L"sound/non.wav");
 	}
 	//ゲーム開始前の下準備
@@ -1109,7 +1113,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				note[1][objectN[1]].object, note[2][objectN[2]].object,
 				note[0][objectN[0]].hittime - Ntime, note[1][objectN[1]].hittime
 				- Ntime, note[2][objectN[2]].hittime - Ntime);
-			if (G[1] == -1) { break; }
+			if (G[1] == -1) {
+				if (i[0] == 0) {
+					p_sound.flag |= SE_SWING;
+				}
+				break;
+			}
 			G[2] = note[G[1]][objectN[G[1]]].hittime - Ntime;
 			gap[gapa[1] % 30] = G[2];
 			gapa[0] += G[2];
@@ -2154,6 +2163,9 @@ void PlayNoteHitSound2(play_sound_t* const sound) {
 	}
 	if ((sound->flag & SE_BOMB) != 0) {
 		PlaySoundMem(sound->bom, DX_PLAYTYPE_BACK);
+	}
+	if ((sound->flag & SE_SWING) != 0) {
+		PlaySoundMem(sound->swi, DX_PLAYTYPE_BACK);
 	}
 	sound->flag = 0;
 	return;
