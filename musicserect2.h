@@ -27,11 +27,11 @@ int musicserect2(int *p1) {
 	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[0:キャラ, 4:言語]だけ
 	int chap[3] = { 0,0,0 };
 	int backpos = 0;
+	int rate = GetRate();
 	const int keyCB[7] = {
 		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_UP,
 		KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_Z
 	};
-	double rate = GetRate();
 	double diskr = 0;
 	//wchar_t変数定義
 	wchar_t PackName[PackNumLim][256];
@@ -604,9 +604,11 @@ int musicserect2(int *p1) {
 	}
 	//選択曲の保存
 	G[0] = _wfopen_s(&fp, L"save/SongSelect2.dat", L"wb");
-	fwrite(&Mapping[command[0]], sizeof(int), 1, fp);
-	fwrite(&command[1], sizeof(int), 1, fp);
-	fwrite(&SortMode, sizeof(int), 1, fp);
-	fclose(fp);
+	if (fp != NULL) {
+		fwrite(&Mapping[command[0]], sizeof(int), 1, fp);
+		fwrite(&command[1], sizeof(int), 1, fp);
+		fwrite(&SortMode, sizeof(int), 1, fp);
+		fclose(fp);
+	}
 	return next;
 }

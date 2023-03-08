@@ -1,3 +1,4 @@
+#include "define.h"
 #include "fontcur.h"
 #include "playbox.h"
 
@@ -104,11 +105,10 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
 	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
 	int chap[3] = { 0,0,0 };
-	double readR[10] = { 0,0,0,0,0,0,0,0,0,0 };
 	double acc = (judge.just * 10000 + judge.good * 9500 + judge.safe * 5500) / (notes*100.0);
-	wchar_t savec[10][255];
 	wchar_t save[255] = L"score/";
 	wchar_t save2[255] = L".dat";
+	play_rate_t prate[RATE_NUM];
 	//ランク判定
 	if (score >= 98000) rank = 0;
 	else if (score >= 95000) rank = 1;
@@ -190,22 +190,22 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	//PERFECT, "譜面定数" + 2
 	else if (judge.miss == 0 && judge.safe == 0 && judge.good == 0) rate = DifRate + 2;
 	//レート保存
-	G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"rb");
+	G[0] = _wfopen_s(&fp, RATE_FILE_NAME, L"rb");
 	if (G[0] == 0) {
-		fread(&savec, 255, 10, fp);
+		fread(&prate, sizeof(play_rate_t), RATE_NUM, fp);
 		fclose(fp);
 	}
-	G[0] = _wfopen_s(&fp, L"save/rateN.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&readR, sizeof(readR), 10, fp);
-		fclose(fp);
+	for (i[0] = 0; i[0] < RATE_NUM; i[0]++) { //プレイ前のレートを計算
+		SumRate[0] += mins_D(prate[i[0]].num, 0);
 	}
-	for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[0] += mins_D(readR[i[0]], 0); } //プレイ前のレートを計算
+	SumRate[0] /= 2;
 	SumRate[1] = SumRate[0];
 	G[0] = -1;
 	//同じ曲、または未収録を探す
-	for (i[0] = 0; i[0] < 10; i[0]++) {
-		if (strands(fileN, savec[i[0]]) || (savec[i[0]][0] == L'\0')) {
+	for (i[0] = 0; i[0] < RATE_NUM; i[0]++) {
+		if ((strands(fileN, prate[i[0]].name) ||
+			(prate[i[0]].name[0] == L'\0')) &&
+			prate[i[0]].num == 0) {
 			G[0] = i[0];
 			break;
 		}
@@ -213,19 +213,23 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	//なかったら、一番低いレートを探す
 	if (G[0] == -1) {
 		G[0] = 0;
-		for (i[0] = 1; i[0] < 10; i[0]++)if (readR[G[0]] > readR[i[0]]) G[0] = i[0];
+		for (i[0] = 1; i[0] < RATE_NUM; i[0]++) {
+			if (prate[G[0]].num > prate[i[0]].num) {
+				G[0] = i[0];
+			}
+		}
 	}
 	//レートが高かったら更新する
-	if (readR[G[0]] < rate) {
-		readR[G[0]] = rate;
+	if (prate[G[0]].num < rate) {
+		prate[G[0]].num = rate;
 		SumRate[1] = 0;
-		strcopy(fileN, savec[G[0]], 1);
-		for (i[0] = 0; i[0] < 10; i[0]++) { SumRate[1] += mins_D(readR[i[0]], 0); } //変化後のレートを計算
-		G[0] = _wfopen_s(&fp, L"save/rateS.dat", L"wb");
-		fwrite(&savec, 255, 10, fp);
-		fclose(fp);
-		G[0] = _wfopen_s(&fp, L"save/rateN.dat", L"wb");
-		fwrite(&readR, sizeof(double), 10, fp);
+		strcopy(fileN, prate[G[0]].name, 1);
+		for (i[0] = 0; i[0] < RATE_NUM; i[0]++) { //変化後のレートを計算
+			SumRate[1] += mins_D(prate[i[0]].num, 0);
+		}
+		SumRate[1] /= 2;
+		G[0] = _wfopen_s(&fp, RATE_FILE_NAME, L"wb");
+		fwrite(&prate, sizeof(play_rate_t), RATE_NUM, fp);
 		fclose(fp);
 	}
 	//リザルト画面

@@ -13,6 +13,7 @@
 #include "serectbase.h"
 #include "edit.h"
 #include "recr_cutin.h"
+#include "versionup.h"
 
 /* next = 0 = タイトル
 	= 1 = メニュー
@@ -31,9 +32,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (DxLib_Init() == -1)return -1;
 	SetDrawScreen(DX_SCREEN_BACK);
 	int next = 0, now = 0, bgm, mnom[7] = { 0,1,0,1,1,0,0 };
-	int G[5];
+	int G[5] = { 0,0,0,0,0 };
 	unsigned int Cr = GetColor(255, 255, 255);
 	bgm = LoadSoundMem(L"song/no.mp3");
+	upgrade_rate_f();
 	//ゲーム終了(nextが5のとき)までの間、処理を繰り返す
 	while (next != 5) {
 		InitGraph();

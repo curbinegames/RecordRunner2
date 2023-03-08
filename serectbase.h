@@ -1,4 +1,6 @@
 #ifndef SECERT_BASE
+#include "define.h"
+
 #define SECERT_BASE
 
 #define PackNumLim 8
@@ -30,9 +32,9 @@ void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
 	const int *difC);
 void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
 	int *bar, MUSIC_BOX *songdata, int *Mapping, int *CRatepic, int *CRankpic);
-void DrawRate(double rate, int bar, int chap, int charaimg);
-double GetRate();
-int GetRateBarPic(const double rate);
+void DrawRate(int rate, int bar, int chap, int charaimg);
+int GetRate();
+int GetRateBarPic(int rate);
 void ShowHelpBar(unsigned int Cr, int bar, int lan);
 void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
 	const int dif, const int SongNumCount);
@@ -133,43 +135,45 @@ void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
 }
 
 /* ÉåÅ[ÉgÇæÇØÇ∂Ç·Ç»Ç≠Ç»Ç¡ÇƒÇÈw */
-void DrawRate(double rate, int bar, int chap, int charaimg) {
+void DrawRate(int rate, int bar, int chap, int charaimg) {
 	DrawGraph(250, 0, bar, TRUE);
 	DrawGraph(370, 0, charaimg, TRUE);
 	DrawFormatString(265, 12, GetColor(0, 0, 0), L"Lv:%2d", chap + 1);
-	DrawFormatString(270, 37, GetColor(0, 0, 0), L"RATE:%.2f", rate);
+	DrawFormatString(270, 37, GetColor(0, 0, 0), L"RATE:%d.%02d", rate / 100, rate % 100);
 	return;
 }
 
-double GetRate() {
-	double ans[10] = { 0,0,0,0,0,0,0,0,0,0 };
+int GetRate() {
 	int e;
+	int ans = 0;
+	play_rate_t prate[RATE_NUM];
 	FILE *fp;
-	e = _wfopen_s(&fp, L"save/rateN.dat", L"rb");
-	if (e == 0) {
-		fread(&ans, sizeof(double), 10, fp);
-		fclose(fp);
+	e = _wfopen_s(&fp, RATE_FILE_NAME, L"rb");
+	if (fp == NULL) {
+		return 0;
 	}
-	for (int i = 0; i < 10; i++) {
-		if (ans[i] < 0) {
-			ans[i] = 0;
+	fread(&prate, sizeof(play_rate_t), RATE_NUM, fp);
+	fclose(fp);
+	for (int i = 0; i < RATE_NUM; i++) {
+		if (0 < prate[i].num) {
+			ans += prate[i].num * 100;
 		}
 	}
-	return ans[0] + ans[1] + ans[2] + ans[3] + ans[4] + ans[5] + ans[6] + ans[7] + ans[8] + ans[9];
+	return ans / 2;
 }
 
-int GetRateBarPic(const double rate) {
+int GetRateBarPic(int rate) {
 	int pic = NULL;
-	if (rate < 25) {
+	if (rate < 2500) {
 		pic = LoadGraph(L"picture/MSrate1.png");
 	}
-	else if (25 <= rate && rate < 55) {
+	else if (2500 <= rate && rate < 5500) {
 		pic = LoadGraph(L"picture/MSrate2.png");
 	}
-	else if (55 <= rate && rate < 90) {
+	else if (5500 <= rate && rate < 9000) {
 		pic = LoadGraph(L"picture/MSrate3.png");
 	}
-	else if (90 <= rate && rate < 120) {
+	else if (9000 <= rate && rate < 12000) {
 		pic = LoadGraph(L"picture/MSrate4.png");
 	}
 	else {
