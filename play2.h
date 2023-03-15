@@ -122,6 +122,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int gap[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//gap = 判定ずれ
 	int gapa[3] = { 0,0,0 };//gapa = 判定ずれ[合計, 個数, 2乗の合計]
 	int StopFrag = -1;
+	int hitpose = 0;
 	struct camera_box camera[255];
 	short int cameraN = 0;
 	int nowcamera[2] = { 320,240 };
@@ -350,7 +351,6 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		LoadGraph(L"picture/TIMEbar.png"),
 		LoadGraph(L"picture/TIMEbar2.png")
 	};
-	int	charaimg[30];
 	int rankimg[6] = {
 		LoadGraph(L"picture/rankEX.png"),
 		LoadGraph(L"picture/rankS.png"),
@@ -420,20 +420,31 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
 		KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
 	}
+#define DIV_X 6
+#define DIV_Y 6
+#define PIC_NUM (DIV_X * DIV_Y)
+#define PIC_SIZE_X 160
+#define PIC_SIZE_Y 160
+	int	charaimg[PIC_NUM];
 	switch (system[0]) {
 	case 0:
-		LoadDivGraph(L"picture/Picker.png", 24, 6, 4, 160, 160, charaimg);
+		LoadDivGraph(L"picture/Picker.png", PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
 		Rchaimg = LoadGraph(L"picture/RePicker.png");
 		break;
 	case 1:
-		LoadDivGraph(L"picture/Gator.png", 24, 6, 4, 160, 160, charaimg);
+		LoadDivGraph(L"picture/Gator.png", PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
 		Rchaimg = LoadGraph(L"picture/ReGator.png");
 		break;
 	case 2:
-		LoadDivGraph(L"picture/Taylor.png", 24, 6, 4, 160, 160, charaimg);
+		LoadDivGraph(L"picture/Taylor.png", PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
 		Rchaimg = LoadGraph(L"picture/ReTaylor.png");
 		break;
 	}
+#undef DIV_X
+#undef DIV_Y
+#undef PIC_NUM
+#undef PIC_SIZE_X
+#undef PIC_SIZE_Y
 	musicmp3 = LoadSoundMem(mp3FN);
 	if (system[2] == 0) {
 		p_sound.att = LoadSoundMem(L"sound/attack.wav");
@@ -678,16 +689,30 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			hitatk[1]);
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
+		if (holda == 1) {
+			hitpose = (hitpose + 1) % 2;
+		}
+		if (holdb == 1) {
+			hitpose = (hitpose + 1) % 2;
+		}
+		if (holdc == 1) {
+			hitpose = (hitpose + 1) % 2;
+		}
+		if ((GetNowCount() - charahit > 50) &&
+			(holdu == 1 || holdd == 1 || holdl == 1 || holdr == 1)) {
+			charahit = 0;
+		}
 		if (GetNowCount() - charahit > 250) { G[5] = 0; }
 		else { G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit); }
 		if (charahit > 0) {
+			G[0] = Xline[charaput] + G[5] + nowcamera[0];
+			G[1] = G[4] - 75 + nowcamera[1];
+			G[2] = betweens(24 + hitpose * 6, (GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
 			if (carrow[0][carrowN] == 1) {
-				DrawGraph(Xline[charaput] + G[5] - 160 + nowcamera[0], G[4] - 75 + nowcamera[1],
-					charaimg[maxs(mins((GetNowCount() - charahit) / 125 + 18, 18), 23)], TRUE);
+				DrawGraph(G[0] - 160, G[1], charaimg[G[2]], TRUE);
 			}
 			else {
-				DrawTurnGraph(Xline[charaput] - G[5] + 30 + nowcamera[0], G[4] - 75 + nowcamera[1],
-					charaimg[maxs(mins((GetNowCount() - charahit) / 125 + 18, 18), 23)], TRUE);
+				DrawTurnGraph(G[0] + 30, G[1], charaimg[G[2]], TRUE);
 			}
 		}
 		else {
@@ -1057,10 +1082,10 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					G[2] = Yline[i[0]];
 				}
 				//横位置
-				G[1] = (speedt[i[0]][speedN[i[0]] + G[5]][1] * 20 *
-					(note[i[0]][i[1]].viewtime - 
+				G[1] = (int)((speedt[i[0]][speedN[i[0]] + G[5]][1] * 20 *
+					(note[i[0]][i[1]].viewtime -
 					(scrool[scroolN].speed * Ntime + scrool[scroolN].basetime))
-					+ 5000) / 50;
+					+ 5000) / 50);
 				G[1] += 50;
 				if (lock[0][0][lockN[0] + G[3]] == 1) G[1] += note[i[0]][i[1]].xpos - 150;
 				else G[1] += Xline[i[0]] - 150;
