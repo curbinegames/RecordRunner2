@@ -981,39 +981,81 @@ void RecordLoad2(int p, int n, int o) {
 							else {
 								G[2] = (int)(GT1[i[1]]);
 							}
+							if ((wchar_t)(G[2]) == L'?') {
+								switch (GetRand(4)) {
+								case 0:
+									G[2] = L'H';
+									break;
+								case 1:
+									G[2] = L'U';
+									break;
+								case 2:
+									G[2] = L'D';
+									break;
+								case 3:
+									G[2] = L'L';
+									break;
+								case 4:
+									G[2] = L'R';
+									break;
+								}
+								GetRand(4);
+							}
+							if ((wchar_t)(G[2]) == L'!') {
+								switch (GetRand(7)) {
+								case 0:
+									G[2] = L'H';
+									break;
+								case 1:
+									G[2] = L'U';
+									break;
+								case 2:
+									G[2] = L'D';
+									break;
+								case 3:
+									G[2] = L'L';
+									break;
+								case 4:
+									G[2] = L'R';
+									break;
+								case 5:
+									G[2] = L'C';
+									break;
+								case 6:
+									G[2] = L'B';
+									break;
+								case 7:
+									G[2] = L'G';
+									break;
+								}
+							}
 							switch ((wchar_t)(G[2])) {
 							case L'H':
-								note[i[0]][objectN[i[0]]].object = 1;
+								note[i[0]][objectN[i[0]]].object = NOTE_HIT;
 								break;
 							case L'C':
-								note[i[0]][objectN[i[0]]].object = 2;
+								note[i[0]][objectN[i[0]]].object = NOTE_CATCH;
 								break;
 							case L'U':
-								note[i[0]][objectN[i[0]]].object = 3;
+								note[i[0]][objectN[i[0]]].object = NOTE_UP;
 								break;
 							case L'D':
-								note[i[0]][objectN[i[0]]].object = 4;
+								note[i[0]][objectN[i[0]]].object = NOTE_DOWN;
 								break;
 							case L'L':
-								note[i[0]][objectN[i[0]]].object = 5;
+								note[i[0]][objectN[i[0]]].object = NOTE_LEFT;
 								break;
 							case L'R':
-								note[i[0]][objectN[i[0]]].object = 6;
+								note[i[0]][objectN[i[0]]].object = NOTE_RIGHT;
 								break;
 							case L'B':
-								note[i[0]][objectN[i[0]]].object = 7;
+								note[i[0]][objectN[i[0]]].object = NOTE_BOMB;
 								break;
 							case L'G':
-								note[i[0]][objectN[i[0]]].object = 8;
+								note[i[0]][objectN[i[0]]].object = NOTE_GHOST;
 								break;
-							case L'?':
-								note[i[0]][objectN[i[0]]].object = GetRand(4) + 2;
-								if (note[i[0]][objectN[i[0]]].object == 2) {
-									note[i[0]][objectN[i[0]]].object = 1;
-								}
-								break;
-							case L'!':
-								note[i[0]][objectN[i[0]]].object = GetRand(7) + 1;
+							default:
+								/* none */
 								break;
 							}
 							//viewtime‚ðŒvŽZ‚·‚é
@@ -1092,7 +1134,7 @@ void RecordLoad2(int p, int n, int o) {
 	for (i[0] = 0; i[0] < 3; i[0]++) {
 		note[i[0]][objectN[i[0]]].hittime = timer[i[0]];
 		note[i[0]][objectN[i[0]] + 1].hittime = -1;
-		note[i[0]][objectN[i[0]]].object = 8;
+		note[i[0]][objectN[i[0]]].object = NOTE_GHOST;
 		note[i[0]][objectN[i[0]]].ypos = 1000;
 	}
 	lock[0][0][lockN[0]] = 1;

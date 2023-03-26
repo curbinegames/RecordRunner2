@@ -87,7 +87,7 @@ struct note_img {
 struct note_box {
 	int hittime = -1;
 	int viewtime = -1;
-	int object = NOTE_NONE;
+	note_material object = NOTE_NONE;
 	int xpos = -1;
 	int ypos = -1;
 	int sound = 0;
