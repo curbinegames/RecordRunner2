@@ -58,9 +58,9 @@ struct score_box GetScore3(struct score_box score, struct judge_box judge,
 	const int notes, const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
 void Getxxxwav(wchar_t *str, int num);
-void note_judge_event(note_judge judge, note_material note, int* viewjudge,
-	int* judgename, int* Dscore, note_box const* const noteinfo,
-	int* const Sitem, int Ntime, int Jtime, judge_action_box* const judgeA);
+void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
+	int* Dscore, note_box const* const noteinfo, int* const Sitem, int Ntime,
+	int Jtime, judge_action_box* const judgeA);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo,
 	int MaxCombo);
 void SetHitPosByHit(int *const hitatk, char const hitflag, int Ntime);
@@ -1159,9 +1159,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			hitatk2 |= 1 << G[1];
 			NJ = CheckJudge(G[2]);
 			if (NJ == NOTE_JUDGE_MISS) { p_sound.flag |= SE_SWING; }
-			note_judge_event(NJ, NOTE_HIT, &viewjudge[0], &judghname[G[1]][0],
-				&Dscore[0], &note[G[1]][objectN[G[1]]], Sitem, Ntime, G[2],
-				&judgeA);
+			note_judge_event(NJ, &viewjudge[0], &judghname[G[1]][0], &Dscore[0],
+				&note[G[1]][objectN[G[1]]], Sitem, Ntime, G[2], &judgeA);
 			objectN[G[1]]++;
 		}
 		SetHitPosByHit(&hitatk[0], hitatk2, Ntime);
@@ -1173,8 +1172,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				if (LaneTrack[i[0]] + SAFE_TIME >=
 					note[i[0]][objectN[i[0]]].hittime) {
 					while (note[i[0]][objectN[i[0]]].hittime - Ntime <= 0) {
-						note_judge_event(NOTE_JUDGE_JUST, NOTE_CATCH,
-							&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+						note_judge_event(NOTE_JUDGE_JUST, &viewjudge[0],
+							&judghname[i[0]][0], &Dscore[0],
 							&note[i[0]][objectN[i[0]]], Sitem, Ntime, 0,
 							&judgeA);
 						charahit = 0;
@@ -1185,8 +1184,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			case NOTE_UP:
 				if ((holdu == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-					note_judge_event(CheckJudge(judgh), NOTE_UP,
-						&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+					note_judge_event(CheckJudge(judgh), &viewjudge[0],
+						&judghname[i[0]][0], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
 						&judgeA);
 					objectN[i[0]]++;
@@ -1194,8 +1193,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			case NOTE_DOWN:
 				if ((holdd == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-					note_judge_event(CheckJudge(judgh), NOTE_DOWN,
-						&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+					note_judge_event(CheckJudge(judgh), &viewjudge[0],
+						&judghname[i[0]][0], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
 						&judgeA);
 					objectN[i[0]]++;
@@ -1203,8 +1202,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			case NOTE_LEFT:
 				if ((holdl == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-					note_judge_event(CheckJudge(judgh), NOTE_LEFT,
-						&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+					note_judge_event(CheckJudge(judgh), &viewjudge[0],
+						&judghname[i[0]][0], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
 						&judgeA);
 					objectN[i[0]]++;
@@ -1212,8 +1211,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			case NOTE_RIGHT:
 				if ((holdr == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-					note_judge_event(CheckJudge(judgh), NOTE_RIGHT,
-						&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+					note_judge_event(CheckJudge(judgh), &viewjudge[0],
+						&judghname[i[0]][0], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
 						&judgeA);
 					objectN[i[0]]++;
@@ -1221,13 +1220,13 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			case NOTE_BOMB:
 				if (i[0] == charaput && judgh <= 0) {
-					note_judge_event(NOTE_JUDGE_MISS, NOTE_BOMB, &viewjudge[0],
+					note_judge_event(NOTE_JUDGE_MISS, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, 0, &judgeA);
 					objectN[i[0]]++;
 				}
 				else while (note[i[0]][objectN[i[0]]].hittime - Ntime < 0) {
-					note_judge_event(NOTE_JUDGE_JUST, NOTE_BOMB, &viewjudge[0],
+					note_judge_event(NOTE_JUDGE_JUST, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime,
 						-JUST_TIME - 1, &judgeA);
@@ -1250,7 +1249,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			while (judgh <= -SAFE_TIME && judgh >= -1000000 &&
 				note[i[0]][objectN[i[0]]].object >= NOTE_HIT &&
 				note[i[0]][objectN[i[0]]].object <= NOTE_RIGHT) {
-				note_judge_event(NOTE_JUDGE_MISS, NOTE_HIT, &viewjudge[0],
+				note_judge_event(NOTE_JUDGE_MISS, &viewjudge[0],
 					&judghname[i[0]][0], &Dscore[0], &note[i[0]][objectN[i[0]]],
 					Sitem, Ntime, -SAFE_TIME, &judgeA);
 				objectN[i[0]]++;
@@ -1769,9 +1768,9 @@ void Getxxxwav(wchar_t *str, int num) {
 	return;
 }
 
-void note_judge_event(note_judge judge, note_material note, int* viewjudge,
-	int* judgename, int* Dscore, note_box const* const noteinfo,
-	int* const Sitem, int Ntime, int Jtime, judge_action_box* const judgeA) {
+void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
+	int* Dscore, note_box const* const noteinfo, int* const Sitem, int Ntime,
+	int Jtime, judge_action_box* const judgeA) {
 	const int Ncount = GetNowCount();
 	int* combo = judgeA->combo;
 	gap_box* gap = judgeA->gap;
@@ -1780,6 +1779,7 @@ void note_judge_event(note_judge judge, note_material note, int* viewjudge,
 	int* MelodySnd = judgeA->melody_snd;
 	play_sound_t* sound = judgeA->p_sound;
 	struct score_box* score = judgeA->score;
+	note_material note = noteinfo->object;
 	viewjudge[judge] = Ncount;
 	judgename[0] = judge + 1;
 	judgename[1] = Ncount;
