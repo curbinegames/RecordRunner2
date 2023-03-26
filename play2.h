@@ -58,9 +58,10 @@ struct score_box GetScore3(struct score_box score, struct judge_box judge,
 	const int notes, const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
 void Getxxxwav(wchar_t *str, int num);
-void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
-	int* Dscore, note_box const* const noteinfo, int* const Sitem, int Ntime,
-	int Jtime, judge_action_box* const judgeA);
+void note_judge_event(note_judge judge, int* const viewjudge,
+	view_jug_eff_t* const judgename, int* const Dscore,
+	note_box const* const noteinfo, int* const Sitem, int Ntime, int Jtime,
+	judge_action_box* const judgeA);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo,
 	int MaxCombo);
 void SetHitPosByHit(int *const hitatk, char const hitflag, int Ntime);
@@ -100,7 +101,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int Ntime = 0;
-	int judghname[3][3]{ 0,0,0,0,0,0,0,0,0 };
+	view_jug_eff_t judge_eff[3];
 	play_key_stat_t key_stat;
 	int holda = 0;
 	int holdb = 0;
@@ -1159,7 +1160,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			hitatk2 |= 1 << G[1];
 			NJ = CheckJudge(G[2]);
 			if (NJ == NOTE_JUDGE_MISS) { p_sound.flag |= SE_SWING; }
-			note_judge_event(NJ, &viewjudge[0], &judghname[G[1]][0], &Dscore[0],
+			note_judge_event(NJ, &viewjudge[0], &judge_eff[G[1]], &Dscore[0],
 				&note[G[1]][objectN[G[1]]], Sitem, Ntime, G[2], &judgeA);
 			objectN[G[1]]++;
 		}
@@ -1173,7 +1174,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					note[i[0]][objectN[i[0]]].hittime) {
 					while (note[i[0]][objectN[i[0]]].hittime - Ntime <= 0) {
 						note_judge_event(NOTE_JUDGE_JUST, &viewjudge[0],
-							&judghname[i[0]][0], &Dscore[0],
+							&judge_eff[i[0]], &Dscore[0],
 							&note[i[0]][objectN[i[0]]], Sitem, Ntime, 0,
 							&judgeA);
 						charahit = 0;
@@ -1196,7 +1197,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 					(holdr == 1 &&
 					note[i[0]][objectN[i[0]]].object == NOTE_RIGHT))) {
 					note_judge_event(CheckJudge(judgh), &viewjudge[0],
-						&judghname[i[0]][0], &Dscore[0],
+						&judge_eff[i[0]], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
 						&judgeA);
 					objectN[i[0]]++;
@@ -1205,13 +1206,13 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			case NOTE_BOMB:
 				if (i[0] == charaput && judgh <= 0) {
 					note_judge_event(NOTE_JUDGE_MISS, &viewjudge[0],
-						&judghname[i[0]][0], &Dscore[0],
+						&judge_eff[i[0]], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, 0, &judgeA);
 					objectN[i[0]]++;
 				}
 				else while (note[i[0]][objectN[i[0]]].hittime - Ntime < 0) {
 					note_judge_event(NOTE_JUDGE_JUST, &viewjudge[0],
-						&judghname[i[0]][0], &Dscore[0],
+						&judge_eff[i[0]], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime,
 						-JUST_TIME - 1, &judgeA);
 					objectN[i[0]]++;
@@ -1234,7 +1235,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				note[i[0]][objectN[i[0]]].object >= NOTE_HIT &&
 				note[i[0]][objectN[i[0]]].object <= NOTE_RIGHT) {
 				note_judge_event(NOTE_JUDGE_MISS, &viewjudge[0],
-					&judghname[i[0]][0], &Dscore[0], &note[i[0]][objectN[i[0]]],
+					&judge_eff[i[0]], &Dscore[0], &note[i[0]][objectN[i[0]]],
 					Sitem, Ntime, -SAFE_TIME, &judgeA);
 				objectN[i[0]]++;
 				judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
@@ -1245,21 +1246,31 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		Mcombo = mins(Mcombo, combo);
 		//ヒットエフェクト表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] >= 1 &&
-				judghname[i[0]][0] <= 3 && judghname[i[0]][2] >= 1 && judghname[i[0]][2] <= 6) {
-				DrawGraph(Xline[i[0]] - 10 + nowcamera[0], Yline[i[0]] - 10 + nowcamera[1],
-					effimg[judghname[i[0]][2] - 1][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5],
+			/* i[0] = レーンループ
+			 * G[0] = X位置
+			 * G[1] = Y位置
+			 * G[2] = アニメフレーム
+			 */
+			G[0] = Xline[i[0]] - 10 + nowcamera[0];
+			G[1] = Yline[i[0]] - 10 + nowcamera[1];
+			G[2] = (GetNowCount() - judge_eff[i[0]].time + 250) / 50 % 5;
+			if (judge_eff[i[0]].time + 250 > GetNowCount() &&
+				judge_eff[i[0]].judge >= NOTE_JUDGE_JUST &&
+				judge_eff[i[0]].judge <= NOTE_JUDGE_SAFE &&
+				judge_eff[i[0]].note >= NOTE_HIT &&
+				judge_eff[i[0]].note <= NOTE_RIGHT) {
+				DrawGraph(G[0], G[1], effimg[judge_eff[i[0]].note - 1][G[2]],
 					TRUE);
 			}
-			else if (judghname[i[0]][1] + 250 > GetNowCount() && judghname[i[0]][0] == 4 &&
-				judghname[i[0]][2] == 7) {
-				DrawGraph(Xline[i[0]] - 10 + nowcamera[0], Yline[i[0]] - 10 + nowcamera[1],
-					effimg[6][(GetNowCount() - judghname[i[0]][1] + 250) / 50 % 5], TRUE);
+			else if (judge_eff[i[0]].time + 250 > GetNowCount() &&
+				judge_eff[i[0]].judge == NOTE_JUDGE_MISS &&
+				judge_eff[i[0]].note == NOTE_BOMB) {
+				DrawGraph(G[0], G[1], effimg[6][G[2]], TRUE);
 			}
-			if (judghname[i[0]][1] + 750 < GetNowCount()) {
-				judghname[i[0]][0] = 0;
-				judghname[i[0]][1] = 0;
-				judghname[i[0]][2] = 0;
+			if (judge_eff[i[0]].time + 750 < GetNowCount()) {
+				judge_eff[i[0]].time = 0;
+				judge_eff[i[0]].judge = 0;
+				judge_eff[i[0]].note = 0;
 			}
 		}
 		//ライフが0未満の時、1毎に減点スコアを20増やす。
@@ -1758,10 +1769,10 @@ void Getxxxwav(wchar_t *str, int num) {
  * slow miss は別関数で判定している。
  * (そのうち slow miss もこっちで判定するようにしたい)
  */
-void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
-	int* Dscore, note_box const* const noteinfo, int* const Sitem, int Ntime,
-	int Jtime, judge_action_box* const judgeA) {
-	const int Ncount = GetNowCount();
+void note_judge_event(note_judge judge, int* const viewjudge,
+	view_jug_eff_t* const judgename, int* const Dscore,
+	note_box const* const noteinfo, int* const Sitem, int Ntime, int Jtime,
+	judge_action_box* const judgeA) {
 	int* const combo = judgeA->combo;
 	gap_box* const gap = judgeA->gap;
 	struct judge_box* const judge_b = judgeA->judge;
@@ -1770,14 +1781,14 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 	play_sound_t* const sound = judgeA->p_sound;
 	struct score_box* const score = judgeA->score;
 	note_material note = noteinfo->object;
-	viewjudge[judge] = Ncount;
-	judgename[0] = judge + 1;
-	judgename[1] = Ncount;
+	viewjudge[judge] = GetNowCount();
+	judgename->time = viewjudge[judge];
+	judgename->judge = judge;
+	judgename->note = note;
 	switch (note) {
 	case NOTE_HIT:
 		switch (judge) {
 		case NOTE_JUDGE_JUST:
-			judgename[2] = NOTE_HIT;
 			(*combo)++;
 			*life += 2;
 			(*Dscore)++;
@@ -1793,7 +1804,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 				sound->flag, SE_HIT);
 			break;
 		case NOTE_JUDGE_GOOD:
-			judgename[2] = NOTE_HIT;
 			(*combo)++;
 			(*life)++;
 			score->before = pals(500, score->sum, 0, score->before,
@@ -1805,7 +1815,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 				sound->flag, SE_HIT);
 			break;
 		case NOTE_JUDGE_SAFE:
-			judgename[2] = NOTE_HIT;
 			score->before = pals(500, score->sum, 0, score->before,
 				maxs(Ntime - score->time, 500));
 			score->time = Ntime;
@@ -1815,7 +1824,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 				sound->flag, SE_HIT);
 			break;
 		case NOTE_JUDGE_MISS:
-			judgename[2] = 0;
 			*combo = 0;
 			*life -= 20;
 			(judge_b->miss)++;
@@ -1829,7 +1837,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 	case NOTE_CATCH:
 		switch (judge) {
 		case NOTE_JUDGE_JUST:
-			judgename[2] = note;
 			(*combo)++;
 			*life += 2;
 			(*Dscore)++;
@@ -1852,7 +1859,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 	case NOTE_RIGHT:
 		switch (judge) {
 		case NOTE_JUDGE_JUST:
-			judgename[2] = note;
 			(*combo)++;
 			*life += 2;
 			(*Dscore)++;
@@ -1868,7 +1874,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 				sound->flag, SE_ARROW);
 			break;
 		case NOTE_JUDGE_GOOD:
-			judgename[2] = note;
 			(*combo)++;
 			(*life)++;
 			score->before = pals(500, score->sum, 0, score->before,
@@ -1880,7 +1885,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 				sound->flag, SE_ARROW);
 			break;
 		case NOTE_JUDGE_SAFE:
-			judgename[2] = note;
 			score->before = pals(500, score->sum, 0, score->before,
 				maxs(Ntime - score->time, 500));
 			score->time = Ntime;
@@ -1890,7 +1894,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 				sound->flag, SE_ARROW);
 			break;
 		case NOTE_JUDGE_MISS:
-			judgename[2] = 0;
 			*combo = 0;
 			*life -= 20;
 			(judge_b->miss)++;
@@ -1904,7 +1907,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 	case NOTE_BOMB:
 		switch (judge) {
 		case NOTE_JUDGE_JUST:
-			judgename[2] = 0;
 			(*combo)++;
 			*life += 2;
 			(*Dscore)++;
@@ -1915,7 +1917,6 @@ void note_judge_event(note_judge judge, int* viewjudge, int* judgename,
 			(judge_b->just)++;
 			break;
 		case NOTE_JUDGE_MISS:
-			judgename[2] = NOTE_BOMB;
 			*combo = 0;
 			*life -= 20;
 			(judge_b->miss)++;
