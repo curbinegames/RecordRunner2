@@ -94,6 +94,14 @@ struct note_box {
 	enum melodysound melody = MELODYSOUND_NONE;
 	int color = 0;
 };
+typedef struct play_sound_s {
+	int att;
+	int cat;
+	int arw;
+	int bom;
+	int swi;
+	char flag = 0;//reserved, reserved, reserved, reserved, bomb, arrow, catch, hit
+} play_sound_t;
 typedef struct play_key_stat_s {
 	char z = 0;
 	char x = 0;
@@ -164,6 +172,12 @@ typedef struct view_BPM_box {
 	int time = -1000;
 	unsigned short BPM = 1;
 } view_BPM_box;
+typedef struct gap_box_t {
+	int view[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+	int sum = 0;
+	int ssum = 0;
+	int count = 0;
+} gap_box;
 struct score_box {
 	int normal = 0;
 	int combo = 0;
@@ -178,5 +192,15 @@ struct scrool_box {
 	double basetime = -1;
 	double speed = -1;
 };
+
+typedef struct judge_action_box_t {
+	int* combo;
+	gap_box* gap;
+	struct judge_box* judge;
+	int* life;
+	int* melody_snd;
+	play_sound_t* p_sound;
+	struct score_box* score;
+} judge_action_box;
 
 #endif // PLAY_BOX

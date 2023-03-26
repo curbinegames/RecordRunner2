@@ -12,6 +12,12 @@
 #define SE_GHOST (1 << 4)
 #define SE_SWING (1 << 5)
 
+#define P_JUST_TIME 15
+#define JUST_TIME 40
+#define GOOD_TIME 70
+#define SAFE_TIME 100
+#define F_MISS_TIME 200
+
 #if 0
 #define RECR_DEBUG(ofs, n, data_a, data_b)						\
 	for (int _rep = 0; _rep < n; _rep++) {						\
@@ -28,26 +34,21 @@ typedef enum chara_pos_e {
 	RECR_CHARP_D
 } chara_pos_t;
 typedef enum note_judge {
+	NOTE_JUDGE_NONE = -1,
 	NOTE_JUDGE_JUST = 0,
 	NOTE_JUDGE_GOOD,
 	NOTE_JUDGE_SAFE,
 	NOTE_JUDGE_MISS
 } note_judge;
 
-typedef struct play_sound_s{
-	int att;
-	int cat;
-	int arw;
-	int bom;
-	int swi;
-	char flag = 0;//reserved, reserved, reserved, reserved, bomb, arrow, catch, hit
-} play_sound_t;
-
-struct judge_box AddHitJudge(struct judge_box ans, int gup);
+void AddGap(gap_box* const box, int data);
+void AddHitJudge(struct judge_box* const ans, int gup);
 void cal_back_x(int *xpos, double Gspeed, double Wspeed, double scrool,
 	int cam);
 int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime);
-int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt);
+note_judge CheckJudge(int gap);
+int CheckNearHitNote(struct note_box* const unote, struct note_box* const mnote,
+	struct note_box* const dnote, int Ntime);
 int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
 	struct note_box lownote, int keyu, int keyd, int keyl, int keyr, int hitatp,
 	int hitatt);
@@ -119,8 +120,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	int Dscore[4] = { 0,0,0,0 }; //距離に当たる部分[加点用,加点保存用,距離保存用,実点数]
 	int judghcount[4] = { 0,0,0,0 };
 	int life = 500;
-	int gap[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//gap = 判定ずれ
-	int gapa[3] = { 0,0,0 };//gapa = 判定ずれ[合計, 個数, 2乗の合計]
+	int ret_gap[3] = { 0,0,0 };
+	gap_box gap2;
 	int StopFrag = -1;
 	int hitpose = 0;
 	struct camera_box camera[255];
@@ -374,6 +375,14 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	struct note_img noteimg;
 	play_sound_t p_sound;
 	int musicmp3;
+	judge_action_box judgeA;
+	judgeA.combo = &combo;
+	judgeA.gap = &gap2;
+	judgeA.judge = &judge;
+	judgeA.life = &life;
+	judgeA.p_sound = &p_sound;
+	judgeA.score = &score;
+	judgeA.melody_snd = &MelodySnd[0];
 	switch (o) {
 	case 0:
 		difberimg = LoadGraph(L"picture/difauto.png");
@@ -1127,17 +1136,22 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 			}
 		}
-		//判定、ヒットノーツ
+
+		//判定
+		//ヒットノーツ
 		G[0] = 0;//押したボタンの数
 		if (holda == 1) { G[0]++; }
 		if (holdb == 1) { G[0]++; }
 		if (holdc == 1) { G[0]++; }
 		hitatk2 = 0;
 		for (i[0] = 0; i[0] < G[0]; i[0]++) {
-			G[1] = CheckNearHitNote(note[0][objectN[0]].object,
-				note[1][objectN[1]].object, note[2][objectN[2]].object,
-				note[0][objectN[0]].hittime - Ntime, note[1][objectN[1]].hittime
-				- Ntime, note[2][objectN[2]].hittime - Ntime);
+			/* i[0] = 押しボタンループ
+			 * G[1] = 一番近いHITノーツの位置
+			 * G[2] = 一番近いHITノーツのギャップ
+			 */
+			note_judge NJ = NOTE_JUDGE_JUST;
+			G[1] = CheckNearHitNote(&note[0][objectN[0]], &note[1][objectN[1]],
+				&note[2][objectN[2]], Ntime);
 			if (G[1] == -1) {
 				if (i[0] == 0) {
 					p_sound.flag |= SE_SWING;
@@ -1145,12 +1159,9 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			}
 			G[2] = note[G[1]][objectN[G[1]]].hittime - Ntime;
-			gap[gapa[1] % 30] = G[2];
-			gapa[0] += G[2];
-			gapa[2] += G[2] * G[2];
-			gapa[1]++;
+			AddGap(&gap2,G[2]);
 			hitatk2 |= 1 << G[1];
-			judge = AddHitJudge(judge, G[2]);
+			AddHitJudge(&judge, G[2]);
 			//just
 			if (G[2] <= 40 && G[2] >= -40) {
 				note_judge_event(NOTE_JUDGE_JUST, NOTE_HIT, &viewjudge[0],
@@ -1188,10 +1199,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		SetHitPosByHit(&hitatk[0], hitatk2, Ntime);
 		for (i[0] = 0; i[0] < 3; i[0]++) {
+			/* i[0] = レーンループ */
 			judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
 			//キャッチノーツ(pjustのみ)
-			if (LaneTrack[i[0]] + 100 >= note[i[0]][objectN[i[0]]].hittime &&
-				note[i[0]][objectN[i[0]]].object == 2) {
+			if (LaneTrack[i[0]] + SAFE_TIME >=
+				note[i[0]][objectN[i[0]]].hittime &&
+				note[i[0]][objectN[i[0]]].object == NOTE_CATCH) {
 				while (note[i[0]][objectN[i[0]]].hittime - Ntime <= 0) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_CATCH, &viewjudge[0],
 						&judghname[i[0]][0], &combo, &life, &Dscore[0],
@@ -1209,11 +1222,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			//アローノーツ各種
 			else if ((holdu == 1) && note[i[0]][objectN[i[0]]].object == 3 &&
 				judgh <= 125 && judgh >= -100) {
-				gap[gapa[1] % 30] = judgh;
-				gapa[0] += judgh;
-				gapa[2] += judgh * judgh;
-				gapa[1]++;
-				judge = AddHitJudge(judge, judgh);
+				AddGap(&gap2, judgh);
+				AddHitJudge(&judge, judgh);
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_UP, &viewjudge[0],
@@ -1251,11 +1261,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			else if ((holdd == 1) && note[i[0]][objectN[i[0]]].object == 4 &&
 				judgh <= 125 && judgh >= -100) {
-				gap[gapa[1] % 30] = judgh;
-				gapa[0] += judgh;
-				gapa[2] += judgh * judgh;
-				gapa[1]++;
-				judge = AddHitJudge(judge, judgh);
+				AddGap(&gap2, judgh);
+				AddHitJudge(&judge, judgh);
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_DOWN, &viewjudge[0],
@@ -1293,11 +1300,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			else if ((holdl == 1) && note[i[0]][objectN[i[0]]].object == 5 &&
 				judgh <= 125 && judgh >= -100) {
-				gap[gapa[1] % 30] = judgh;
-				gapa[0] += judgh;
-				gapa[2] += judgh * judgh;
-				gapa[1]++;
-				judge = AddHitJudge(judge, judgh);
+				AddGap(&gap2, judgh);
+				AddHitJudge(&judge, judgh);
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_LEFT, &viewjudge[0],
@@ -1335,11 +1339,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			else if ((holdr == 1) && note[i[0]][objectN[i[0]]].object == 6 &&
 				judgh <= 125 && judgh >= -100) {
-				gap[gapa[1] % 30] = judgh;
-				gapa[0] += judgh;
-				gapa[2] += judgh * judgh;
-				gapa[1]++;
-				judge = AddHitJudge(judge, judgh);
+				AddGap(&gap2, judgh);
+				AddHitJudge(&judge, judgh);
 				//just
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_RIGHT, &viewjudge[0],
@@ -1376,7 +1377,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				objectN[i[0]]++;
 			}
 			//ボムノーツ
-			else if (i[0] == charaput && note[i[0]][objectN[i[0]]].object == 7 &&
+			else if (i[0] == charaput &&
+				note[i[0]][objectN[i[0]]].object == NOTE_BOMB &&
 				judgh <= 0 && judgh >= -40) {
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_BOMB, &viewjudge[0],
 					&judghname[i[0]][0], &combo, &life, &Dscore[0],
@@ -1384,8 +1386,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judge.miss++;
 				objectN[i[0]]++;
 			}
-			else if (note[i[0]][objectN[i[0]]].object == 7) {
-				while (note[i[0]][objectN[i[0]]].hittime - Ntime < -40) {
+			else if (note[i[0]][objectN[i[0]]].object == NOTE_BOMB) {
+				while (note[i[0]][objectN[i[0]]].hittime - Ntime < -JUST_TIME) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_BOMB, &viewjudge[0],
 						&judghname[i[0]][0], &combo, &life, &Dscore[0],
 						&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
@@ -1398,14 +1400,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 			}
 			//ゴーストノーツ
-			else if (note[i[0]][objectN[i[0]]].object == 8 && judgh < 16) {
+			else if (note[i[0]][objectN[i[0]]].object == NOTE_GHOST &&
+				judgh < P_JUST_TIME) {
 				p_sound.flag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 					MelodySnd, Sitem, p_sound.flag, SE_GHOST);
 				objectN[i[0]]++;
 			}
 			//全ノーツslowmiss
-			else while (judgh <= -100 && judgh >= -100000 &&
-			note[i[0]][objectN[i[0]]].object >= 1 && note[i[0]][objectN[i[0]]].object <= 6) {
+			else while (judgh <= -SAFE_TIME && judgh >= -1000000 &&
+				note[i[0]][objectN[i[0]]].object >= NOTE_HIT &&
+				note[i[0]][objectN[i[0]]].object <= NOTE_RIGHT) {
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_HIT, &viewjudge[0],
 					&judghname[i[0]][0], &combo, &life, &Dscore[0],
 					&note[i[0]][objectN[i[0]]], MelodySnd, Sitem, &p_sound);
@@ -1414,12 +1418,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
 			}
 		}
+
 		PlayNoteHitSound2(&p_sound);
-		if (gapa[2] > 2140000000) {
-			gapa[0] /= 2;
-			gapa[1] /= 2;
-			gapa[2] /= 2;
-		}
 		Mcombo = mins(Mcombo, combo);
 		//ヒットエフェクト表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
@@ -1508,12 +1508,12 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//判定ずれバー表示
 		DrawGraph(219, 460, gapbarimg, TRUE);
-		G[0] = gapa[1] % 30;
+		G[0] = gap2.count % 30;
 		for (i[0] = 0; i[0] < 30; i[0]++) {
 			G[0]--;
 			if (G[0] < 0) G[0] += 30;
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (510 - G[0] * 17) / 2);
-			DrawGraph(318 - gap[i[0]], 460, gaplineimg, TRUE);
+			DrawGraph(318 - gap2.view[i[0]], 460, gaplineimg, TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
 		}
 		//キー押し状況表示(オプション)
@@ -1558,8 +1558,8 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
 			DrawFormatString(20, 100, Cr, L"Autoplay");
 		}
-		RECR_DEBUG(0, 3, objectNG, );
-		RECR_DEBUG(3, 3, objectN, );
+		RECR_DEBUG(0, 3, objectNG);
+		RECR_DEBUG(3, 3, objectN);
 		//データオーバーフローで警告文表示
 		if (0 <= note[0][1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"UPPER OVER");
@@ -1710,26 +1710,44 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 	}
 	InitGraph();
 	if (AutoFlag == 1) { return 2; }
-	else { return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judge, score.sum, Mcombo, notes, gapa, Dscore[3]); }
+	else {
+		ret_gap[0] = gap2.sum;
+		ret_gap[1] = gap2.count;
+		ret_gap[2] = gap2.ssum;
+		return result(p, n, o, Lv, drop, difkey[4][3], songN, DifFN, judge, score.sum, Mcombo, notes, ret_gap, Dscore[3]);
+	}
 }
 
-struct judge_box AddHitJudge(struct judge_box ans, int gup) {
-	if (-10 <= gup && gup <= 10) {
-		ans.pjust++;
+void AddGap(gap_box* const box, int data){
+	box->view[box->count % 30] = data;
+	if (box->ssum + data * data < box->ssum) {
+		box->sum /= 2;
+		box->ssum /= 2;
+		box->count /= 2;
 	}
-	if (-40 <= gup && gup <= 40) {
-		ans.just++;
+	box->sum += data;
+	box->ssum += data * data;
+	box->count++;
+	return;
+}
+
+void AddHitJudge(struct judge_box* const ans, int gup) {
+	if (-P_JUST_TIME <= gup && gup <= P_JUST_TIME) {
+		(ans->pjust)++;
 	}
-	else if (-70 <= gup && gup <= 70) {
-		ans.good++;
+	if (-JUST_TIME <= gup && gup <= JUST_TIME) {
+		(ans->just)++;
 	}
-	else if (-100 <= gup && gup <= 100) {
-		ans.safe++;
+	else if (-GOOD_TIME <= gup && gup <= GOOD_TIME) {
+		(ans->good)++;
 	}
-	else if (gup <= 200) {
-		ans.miss++;
+	else if (-SAFE_TIME <= gup && gup <= SAFE_TIME) {
+		(ans->safe)++;
 	}
-	return ans;
+	else if (gup <= F_MISS_TIME) {
+		(ans->miss)++;
+	}
+	return;
 }
 
 /* (ret / 100) */
@@ -1753,7 +1771,7 @@ void cal_back_x(int *xpos, double Gspeed, double Wspeed, double scrool,
 	return;
 }
 
-int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime) {
+int cal_nowdif_p(int* ddif, int Ntime, int noteoff, int Etime) {
 	int ret = 0;
 	int sect = 0;
 	int stime = 0;
@@ -1772,22 +1790,41 @@ int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime) {
 	return ret;
 }
 
-int CheckNearHitNote(int un, int mn, int dn, int ut, int mt, int dt) {
+int CheckNearHitNote(struct note_box* const unote, struct note_box* const mnote,
+	struct note_box* const dnote, int Ntime) {
 	int ans = -1;
 	int mintime = 200;
-	if (un == NOTE_HIT && ut < mintime) {
+	if (unote->object == NOTE_HIT && unote->hittime - Ntime < mintime) {
 		ans = 0;
-		mintime = ut;
+		mintime = unote->hittime - Ntime;
 	}
-	if (mn == NOTE_HIT && mt < mintime) {
+	if (mnote->object == NOTE_HIT && mnote->hittime - Ntime < mintime) {
 		ans = 1;
-		mintime = mt;
+		mintime = mnote->hittime - Ntime;
 	}
-	if (dn == NOTE_HIT && dt < mintime) {
+	if (dnote->object == NOTE_HIT && dnote->hittime - Ntime < mintime) {
 		ans = 2;
-		mintime = dt;
+		mintime = dnote->hittime - Ntime;
 	}
 	return ans;
+}
+
+note_judge CheckJudge(int gap) {
+	if (-JUST_TIME <= gap && gap <= JUST_TIME) {
+		return NOTE_JUDGE_JUST;
+	}
+	else if (-JUST_TIME <= gap && gap <= GOOD_TIME) {
+		return NOTE_JUDGE_GOOD;
+	}
+	else if (-JUST_TIME <= gap && gap <= SAFE_TIME) {
+		return NOTE_JUDGE_SAFE;
+	}
+	else if (gap <= F_MISS_TIME) {
+		return NOTE_JUDGE_MISS;
+	}
+	else {
+		return NOTE_JUDGE_NONE;
+	}
 }
 
 int GetCharaPos(int time, struct note_box highnote, struct note_box midnote,
