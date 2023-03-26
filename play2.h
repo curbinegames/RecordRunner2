@@ -1773,6 +1773,7 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 	view_jug_eff_t* const judgename, int* const Dscore,
 	note_box const* const noteinfo, int* const Sitem, int Ntime, int Jtime,
 	judge_action_box* const judgeA) {
+	if (judge == NOTE_JUDGE_NONE) { return; }
 	int* const combo = judgeA->combo;
 	gap_box* const gap = judgeA->gap;
 	struct judge_box* const judge_b = judgeA->judge;
@@ -1785,141 +1786,78 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 	judgename->time = viewjudge[judge];
 	judgename->judge = judge;
 	judgename->note = note;
+	/* 全ノーツ共通 */
+	if (judge != NOTE_JUDGE_MISS) {
+		score->before = pals(500, score->sum, 0, score->before,
+			maxs(Ntime - score->time, 500));
+		score->time = Ntime;
+	}
+	switch (judge) {
+	case NOTE_JUDGE_JUST:
+		(*combo)++;
+		*life += 2;
+		(*Dscore)++;
+		(judge_b->just)++;
+		break;
+	case NOTE_JUDGE_GOOD:
+		(*combo)++;
+		(*life)++;
+		// *Dscore += 0;
+		(judge_b->good)++;
+		break;
+	case NOTE_JUDGE_SAFE:
+		// *combo += 0;
+		// *life += 0;
+		// *Dscore += 0;
+		(judge_b->safe)++;
+		break;
+	case NOTE_JUDGE_MISS:
+		*combo = 0;
+		*life -= 20;
+		// *Dscore += 0;
+		(judge_b->miss)++;
+		break;
+	default:
+		/* none */
+		break;
+	}
+	/* ノートごとの処理 */
 	switch (note) {
 	case NOTE_HIT:
-		switch (judge) {
-		case NOTE_JUDGE_JUST:
-			(*combo)++;
-			*life += 2;
-			(*Dscore)++;
-			score->before = pals(500, score->sum, 0, score->before,
-				maxs(Ntime - score->time, 500));
-			score->time = Ntime;
-			if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
-				(judge_b->pjust)++;
-			}
-			(judge_b->just)++;
-			AddGap(gap, Jtime);
+		AddGap(gap, Jtime); // slow miss はやらない
+		if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
+			(judge_b->pjust)++;
+		}
+		if (judge != NOTE_JUDGE_MISS) {
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
 				sound->flag, SE_HIT);
-			break;
-		case NOTE_JUDGE_GOOD:
-			(*combo)++;
-			(*life)++;
-			score->before = pals(500, score->sum, 0, score->before,
-				maxs(Ntime - score->time, 500));
-			score->time = Ntime;
-			(judge_b->good)++;
-			AddGap(gap, Jtime);
-			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-				sound->flag, SE_HIT);
-			break;
-		case NOTE_JUDGE_SAFE:
-			score->before = pals(500, score->sum, 0, score->before,
-				maxs(Ntime - score->time, 500));
-			score->time = Ntime;
-			(judge_b->safe)++;
-			AddGap(gap, Jtime);
-			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-				sound->flag, SE_HIT);
-			break;
-		case NOTE_JUDGE_MISS:
-			*combo = 0;
-			*life -= 20;
-			(judge_b->miss)++;
-			AddGap(gap, Jtime);
-			break;
-		default:
-			/* none */
-			break;
 		}
 		break;
 	case NOTE_CATCH:
-		switch (judge) {
-		case NOTE_JUDGE_JUST:
-			(*combo)++;
-			*life += 2;
-			(*Dscore)++;
-			score->before = pals(500, score->sum, 0, score->before,
-				maxs(Ntime - score->time, 500));
-			score->time = Ntime;
+		if (judge == NOTE_JUDGE_JUST) {
 			(judge_b->pjust)++;
-			(judge_b->just)++;
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
 				sound->flag, SE_CATCH);
-			break;
-		default:
-			/* none */
-			break;
 		}
-		break;
 	case NOTE_UP:
 	case NOTE_DOWN:
 	case NOTE_LEFT:
 	case NOTE_RIGHT:
-		switch (judge) {
-		case NOTE_JUDGE_JUST:
-			(*combo)++;
-			*life += 2;
-			(*Dscore)++;
-			score->before = pals(500, score->sum, 0, score->before,
-				maxs(Ntime - score->time, 500));
-			score->time = Ntime;
-			if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
-				(judge_b->pjust)++;
-			}
-			(judge_b->just)++;
-			AddGap(gap, Jtime);
+		AddGap(gap, Jtime); // slow miss はやらない
+		if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
+			(judge_b->pjust)++;
+		}
+		if (judge != NOTE_JUDGE_MISS) {
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
 				sound->flag, SE_ARROW);
-			break;
-		case NOTE_JUDGE_GOOD:
-			(*combo)++;
-			(*life)++;
-			score->before = pals(500, score->sum, 0, score->before,
-				maxs(Ntime - score->time, 500));
-			score->time = Ntime;
-			(judge_b->good)++;
-			AddGap(gap, Jtime);
-			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-				sound->flag, SE_ARROW);
-			break;
-		case NOTE_JUDGE_SAFE:
-			score->before = pals(500, score->sum, 0, score->before,
-				maxs(Ntime - score->time, 500));
-			score->time = Ntime;
-			(judge_b->safe)++;
-			AddGap(gap, Jtime);
-			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-				sound->flag, SE_ARROW);
-			break;
-		case NOTE_JUDGE_MISS:
-			*combo = 0;
-			*life -= 20;
-			(judge_b->miss)++;
-			AddGap(gap, Jtime);
-			break;
-		default:
-			/* nope */
-			break;
 		}
 		break;
 	case NOTE_BOMB:
 		switch (judge) {
 		case NOTE_JUDGE_JUST:
-			(*combo)++;
-			*life += 2;
-			(*Dscore)++;
-			score->before = pals(500, score->sum, 0, score->before,
-				maxs(Ntime - score->time, 500));
-			score->time = Ntime;
 			(judge_b->pjust)++;
-			(judge_b->just)++;
 			break;
 		case NOTE_JUDGE_MISS:
-			*combo = 0;
-			*life -= 20;
-			(judge_b->miss)++;
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
 				sound->flag, SE_BOMB);
 			break;
