@@ -1183,34 +1183,18 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				break;
 			case NOTE_UP:
-				if ((holdu == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-					note_judge_event(CheckJudge(judgh), &viewjudge[0],
-						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
-						&judgeA);
-					objectN[i[0]]++;
-				}
-				break;
 			case NOTE_DOWN:
-				if ((holdd == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-					note_judge_event(CheckJudge(judgh), &viewjudge[0],
-						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
-						&judgeA);
-					objectN[i[0]]++;
-				}
-				break;
 			case NOTE_LEFT:
-				if ((holdl == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-					note_judge_event(CheckJudge(judgh), &viewjudge[0],
-						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
-						&judgeA);
-					objectN[i[0]]++;
-				}
-				break;
 			case NOTE_RIGHT:
-				if ((holdr == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
+				if ((CheckJudge(judgh) != NOTE_JUDGE_NONE) && (
+					(holdu == 1 &&
+					note[i[0]][objectN[i[0]]].object == NOTE_UP) ||
+					(holdd == 1 &&
+					note[i[0]][objectN[i[0]]].object == NOTE_DOWN) ||
+					(holdl == 1 &&
+					note[i[0]][objectN[i[0]]].object == NOTE_LEFT) ||
+					(holdr == 1 &&
+					note[i[0]][objectN[i[0]]].object == NOTE_RIGHT))) {
 					note_judge_event(CheckJudge(judgh), &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
