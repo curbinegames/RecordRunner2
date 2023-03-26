@@ -1168,54 +1168,58 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			/* i[0] = レーンループ */
 			judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
-			//キャッチノーツ(pjustのみ)
-			if (LaneTrack[i[0]] + SAFE_TIME >=
-				note[i[0]][objectN[i[0]]].hittime &&
-				note[i[0]][objectN[i[0]]].object == NOTE_CATCH) {
-				while (note[i[0]][objectN[i[0]]].hittime - Ntime <= 0) {
-					note_judge_event(NOTE_JUDGE_JUST, NOTE_CATCH, &viewjudge[0],
-						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, Ntime, 0, &judgeA);
-					charahit = 0;
-					hitatk[1] = -1000;
+			switch (note[i[0]][objectN[i[0]]].object) {
+			case NOTE_CATCH:
+				if (LaneTrack[i[0]] + SAFE_TIME >=
+					note[i[0]][objectN[i[0]]].hittime) {
+					while (note[i[0]][objectN[i[0]]].hittime - Ntime <= 0) {
+						note_judge_event(NOTE_JUDGE_JUST, NOTE_CATCH,
+							&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+							&note[i[0]][objectN[i[0]]], Sitem, Ntime, 0,
+							&judgeA);
+						charahit = 0;
+						hitatk[1] = -1000;
+						objectN[i[0]]++;
+					}
+				}
+				break;
+			case NOTE_UP:
+				if ((holdu == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
+					note_judge_event(CheckJudge(judgh), NOTE_UP,
+						&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 					objectN[i[0]]++;
 				}
-			}
-			//アローノーツ各種
-			else if ((holdu == 1) &&
-				note[i[0]][objectN[i[0]]].object == NOTE_UP &&
-				CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-				note_judge_event(CheckJudge(judgh), NOTE_UP, &viewjudge[0],
-					&judghname[i[0]][0], &Dscore[0], &note[i[0]][objectN[i[0]]],
-					Sitem, Ntime, judgh, &judgeA);
-				objectN[i[0]]++;
-			}
-			else if ((holdd == 1) &&
-				note[i[0]][objectN[i[0]]].object == NOTE_DOWN &&
-				CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-				note_judge_event(CheckJudge(judgh), NOTE_DOWN, &viewjudge[0],
-					&judghname[i[0]][0], &Dscore[0], &note[i[0]][objectN[i[0]]],
-					Sitem, Ntime, judgh, &judgeA);
-				objectN[i[0]]++;
-			}
-			else if ((holdl == 1) &&
-				note[i[0]][objectN[i[0]]].object == NOTE_LEFT &&
-				CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-				note_judge_event(CheckJudge(judgh), NOTE_LEFT, &viewjudge[0],
-					&judghname[i[0]][0], &Dscore[0], &note[i[0]][objectN[i[0]]],
-					Sitem, Ntime, judgh, &judgeA);
-				objectN[i[0]]++;
-			}
-			else if ((holdr == 1) &&
-				note[i[0]][objectN[i[0]]].object == NOTE_RIGHT &&
-				CheckJudge(judgh) != NOTE_JUDGE_NONE) {
-				note_judge_event(CheckJudge(judgh), NOTE_RIGHT, &viewjudge[0],
-					&judghname[i[0]][0], &Dscore[0], &note[i[0]][objectN[i[0]]],
-					Sitem, Ntime, judgh, &judgeA);
-				objectN[i[0]]++;
-			}
-			//ボムノーツ
-			else if (note[i[0]][objectN[i[0]]].object == NOTE_BOMB) {
+				break;
+			case NOTE_DOWN:
+				if ((holdd == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
+					note_judge_event(CheckJudge(judgh), NOTE_DOWN,
+						&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
+					objectN[i[0]]++;
+				}
+				break;
+			case NOTE_LEFT:
+				if ((holdl == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
+					note_judge_event(CheckJudge(judgh), NOTE_LEFT,
+						&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
+					objectN[i[0]]++;
+				}
+				break;
+			case NOTE_RIGHT:
+				if ((holdr == 1) && CheckJudge(judgh) != NOTE_JUDGE_NONE) {
+					note_judge_event(CheckJudge(judgh), NOTE_RIGHT,
+						&viewjudge[0], &judghname[i[0]][0], &Dscore[0],
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
+					objectN[i[0]]++;
+				}
+				break;
+			case NOTE_BOMB:
 				if (i[0] == charaput && judgh <= 0) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_BOMB, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
@@ -1229,16 +1233,21 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 						-JUST_TIME - 1, &judgeA);
 					objectN[i[0]]++;
 				}
-			}
-			//ゴーストノーツ
-			else if (note[i[0]][objectN[i[0]]].object == NOTE_GHOST &&
-				judgh < 0) {
-				p_sound.flag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
-					MelodySnd, Sitem, p_sound.flag, SE_GHOST);
-				objectN[i[0]]++;
+				break;
+			case NOTE_GHOST:
+				if (judgh < 0) {
+					p_sound.flag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
+						MelodySnd, Sitem, p_sound.flag, SE_GHOST);
+					objectN[i[0]]++;
+				}
+				break;
+			case NOTE_HIT:
+			default:
+				/* none */
+				break;
 			}
 			//全ノーツslowmiss
-			else while (judgh <= -SAFE_TIME && judgh >= -1000000 &&
+			while (judgh <= -SAFE_TIME && judgh >= -1000000 &&
 				note[i[0]][objectN[i[0]]].object >= NOTE_HIT &&
 				note[i[0]][objectN[i[0]]].object <= NOTE_RIGHT) {
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_HIT, &viewjudge[0],
