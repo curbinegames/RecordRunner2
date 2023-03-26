@@ -1139,16 +1139,16 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 
 		//判定
 		//ヒットノーツ
-		G[0] = 0;//押したボタンの数
+		G[0] = 0;
 		if (holda == 1) { G[0]++; }
 		if (holdb == 1) { G[0]++; }
 		if (holdc == 1) { G[0]++; }
 		hitatk2 = 0;
 		for (i[0] = 0; i[0] < G[0]; i[0]++) {
 			/* i[0] = 押しボタンループ
+			 * G[0] = 押したボタンの数
 			 * G[1] = 一番近いHITノーツの位置
-			 * G[2] = 一番近いHITノーツのギャップ
-			 */
+			 * G[2] = 一番近いHITノーツのギャップ */
 			note_judge NJ = NOTE_JUDGE_JUST;
 			G[1] = CheckNearHitNote(&note[0][objectN[0]], &note[1][objectN[1]],
 				&note[2][objectN[2]], Ntime);
@@ -1870,6 +1870,7 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 		/* nope */
 		break;
 	}
+	return;
 }
 
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
