@@ -60,7 +60,7 @@ void Getxxxpng(wchar_t *str, int num);
 void Getxxxwav(wchar_t *str, int num);
 void note_judge_event(note_judge judge, note_material note, int* viewjudge,
 	int* judgename, int* Dscore, note_box const* const noteinfo,
-	int* const Sitem, judge_action_box* const judgeA);
+	int* const Sitem, int Ntime, int Jtime, judge_action_box* const judgeA);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo,
 	int MaxCombo);
 void SetHitPosByHit(int *const hitatk, char const hitflag, int Ntime);
@@ -1163,34 +1163,25 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (G[2] <= 40 && G[2] >= -40) {
 				note_judge_event(NOTE_JUDGE_JUST, NOTE_HIT, &viewjudge[0],
 					&judghname[G[1]][0], &Dscore[0], &note[G[1]][objectN[G[1]]],
-					Sitem, &judgeA);
-				score.before = pals(500, score.sum, 0, score.before,
-					maxs(Ntime - score.time, 500));
-				score.time = Ntime;
+					Sitem, Ntime, G[2], &judgeA);
 			}
 			//good
 			else if (G[2] <= 70 && G[2] >= -70) {
 				note_judge_event(NOTE_JUDGE_GOOD, NOTE_HIT, &viewjudge[0],
 					&judghname[G[1]][0], &Dscore[0], &note[G[1]][objectN[G[1]]],
-					Sitem, &judgeA);
-				score.before = pals(500, score.sum, 0, score.before,
-					maxs(Ntime - score.time, 500));
-				score.time = Ntime;
+					Sitem, Ntime, G[2], &judgeA);
 			}
 			//safe
 			else if (G[2] <= 100 && G[2] >= -100) {
 				note_judge_event(NOTE_JUDGE_SAFE, NOTE_HIT, &viewjudge[0],
 					&judghname[G[1]][0], &Dscore[0], &note[G[1]][objectN[G[1]]],
-					Sitem, &judgeA);
-				score.before = pals(500, score.sum, 0, score.before,
-					maxs(Ntime - score.time, 500));
-				score.time = Ntime;
+					Sitem, Ntime, G[2], &judgeA);
 			}
 			//fastmiss
 			else if (G[2] <= 200) {
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_HIT, &viewjudge[0],
 					&judghname[G[1]][0], &Dscore[0], &note[G[1]][objectN[G[1]]],
-					Sitem, &judgeA);
+					Sitem, Ntime, G[2], &judgeA);
 			}
 			objectN[G[1]]++;
 		}
@@ -1205,10 +1196,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				while (note[i[0]][objectN[i[0]]].hittime - Ntime <= 0) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_CATCH, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, 0, &judgeA);
 					charahit = 0;
 					judge.pjust++;
 					judge.just++;
@@ -1225,34 +1213,29 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_UP, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
 					note_judge_event(NOTE_JUDGE_GOOD, NOTE_UP, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
 					note_judge_event(NOTE_JUDGE_SAFE, NOTE_UP, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//fastmiss
 				else if (judgh <= 125) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_UP, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				objectN[i[0]]++;
 			}
@@ -1264,34 +1247,29 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_DOWN, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
 					note_judge_event(NOTE_JUDGE_GOOD, NOTE_DOWN, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
 					note_judge_event(NOTE_JUDGE_SAFE, NOTE_DOWN, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//fastmiss
 				else if (judgh <= 125) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_DOWN, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				objectN[i[0]]++;
 			}
@@ -1303,34 +1281,29 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_LEFT, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
 					note_judge_event(NOTE_JUDGE_GOOD, NOTE_LEFT, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
 					note_judge_event(NOTE_JUDGE_SAFE, NOTE_LEFT, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//fastmiss
 				else if (judgh <= 125) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_LEFT, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				objectN[i[0]]++;
 			}
@@ -1342,34 +1315,29 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				if (judgh <= 40 && judgh >= -40) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_RIGHT, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//good
 				else if (judgh <= 70 && judgh >= -70) {
 					note_judge_event(NOTE_JUDGE_GOOD, NOTE_RIGHT, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//safe
 				else if (judgh <= 100 && judgh >= -100) {
 					note_judge_event(NOTE_JUDGE_SAFE, NOTE_RIGHT, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				//fastmiss
 				else if (judgh <= 125) {
 					note_judge_event(NOTE_JUDGE_MISS, NOTE_RIGHT, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
+						&judgeA);
 				}
 				objectN[i[0]]++;
 			}
@@ -1379,26 +1347,23 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				judgh <= 0) {
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_BOMB, &viewjudge[0],
 					&judghname[i[0]][0], &Dscore[0],
-					&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
-				judge.miss++;
+					&note[i[0]][objectN[i[0]]], Sitem, Ntime, 0, &judgeA);
 				objectN[i[0]]++;
 			}
 			else if (note[i[0]][objectN[i[0]]].object == NOTE_BOMB) {
 				while (note[i[0]][objectN[i[0]]].hittime - Ntime < -JUST_TIME) {
 					note_judge_event(NOTE_JUDGE_JUST, NOTE_BOMB, &viewjudge[0],
 						&judghname[i[0]][0], &Dscore[0],
-						&note[i[0]][objectN[i[0]]], Sitem, &judgeA);
+						&note[i[0]][objectN[i[0]]], Sitem, Ntime,
+						-JUST_TIME - 1, &judgeA);
 					objectN[i[0]]++;
 					judge.pjust++;
 					judge.just++;
-					score.before = pals(500, score.sum, 0, score.before,
-						maxs(Ntime - score.time, 500));
-					score.time = Ntime;
 				}
 			}
 			//ゴーストノーツ
 			else if (note[i[0]][objectN[i[0]]].object == NOTE_GHOST &&
-				judgh < P_JUST_TIME) {
+				judgh < 0) {
 				p_sound.flag = PlayNoteHitSound(note[i[0]][objectN[i[0]]],
 					MelodySnd, Sitem, p_sound.flag, SE_GHOST);
 				objectN[i[0]]++;
@@ -1409,7 +1374,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 				note[i[0]][objectN[i[0]]].object <= NOTE_RIGHT) {
 				note_judge_event(NOTE_JUDGE_MISS, NOTE_HIT, &viewjudge[0],
 					&judghname[i[0]][0], &Dscore[0], &note[i[0]][objectN[i[0]]],
-					Sitem, &judgeA);
+					Sitem, Ntime, -SAFE_TIME, &judgeA);
 				objectN[i[0]]++;
 				judge.miss++;
 				judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
@@ -1929,12 +1894,13 @@ void Getxxxwav(wchar_t *str, int num) {
 
 void note_judge_event(note_judge judge, note_material note, int* viewjudge,
 	int* judgename, int* Dscore, note_box const* const noteinfo,
-	int* const Sitem, judge_action_box* const judgeA) {
+	int* const Sitem, int Ntime, int Jtime, judge_action_box* const judgeA) {
 	const int Ncount = GetNowCount();
 	int* combo = judgeA->combo;
 	int* life = judgeA->life;
 	int* MelodySnd = judgeA->melody_snd;
 	play_sound_t* sound = judgeA->p_sound;
+	struct score_box* score = judgeA->score;
 	viewjudge[judge] = Ncount;
 	judgename[0] = judge + 1;
 	judgename[1] = Ncount;
@@ -1944,6 +1910,8 @@ void note_judge_event(note_judge judge, note_material note, int* viewjudge,
 		*combo += 1;
 		*life += 2;
 		*Dscore += 1;
+		score->before = pals(500, score->sum, 0, score->before, maxs(Ntime - score->time, 500));
+		score->time = Ntime;
 		switch (note) {
 		case NOTE_HIT:
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_HIT);
@@ -1967,6 +1935,8 @@ void note_judge_event(note_judge judge, note_material note, int* viewjudge,
 		judgename[2] = note;
 		*combo += 1;
 		*life += 1;
+		score->before = pals(500, score->sum, 0, score->before, maxs(Ntime - score->time, 500));
+		score->time = Ntime;
 		switch (note) {
 		case NOTE_HIT:
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_HIT);
@@ -1986,6 +1956,8 @@ void note_judge_event(note_judge judge, note_material note, int* viewjudge,
 		break;
 	case NOTE_JUDGE_SAFE:
 		judgename[2] = note;
+		score->before = pals(500, score->sum, 0, score->before, maxs(Ntime - score->time, 500));
+		score->time = Ntime;
 		switch (note) {
 		case NOTE_HIT:
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem, sound->flag, SE_HIT);
