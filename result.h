@@ -2,7 +2,15 @@
 #include "fontcur.h"
 #include "playbox.h"
 
+#define CAL_ACC(judge, notes)												\
+	(((judge).just * 10000 + (judge).good * 9500 +							\
+	(judge).safe * 5500) / ((notes) * 100.0))
+#define CAL_DIF_RATE(mdif, Lv)												\
+	((Lv) == 0 ? 0 : maxs((mdif), (Lv) * 100 + 90))
+
+char CalScoreRank(int score);
 int CalPlayRate(judge_box judge, double DifRate);
+char JudgeClearRank(char drop, judge_box judge);
 
 void ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	struct judge_box* const judge, int Mcombo, short int notes,
@@ -160,85 +168,43 @@ void ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	return;
 }
 
-int result(int p, int n, int o, short int Lv, short int drop, int difkey,
+int result(int o, short int Lv, char drop, int difkey,
 	wchar_t songN[255], wchar_t DifFN[255], struct judge_box judge, int score,
 	int Mcombo, short int notes, int gapa[3], int Dscore) {
+	/* char */
+	char Clear = JudgeClearRank(drop, judge);
+	/* short */
 	short int i[3];
-	short int rank;
-	short int Clear;
-	int G[20], songT;
+	short int rank = CalScoreRank(score);
+	/* int */
+	int G[20];
 	int system[6] = { 0,0,0,2,0,0 };
-	double GD[5];
-	double rate = 0;
-	double DifRate; //譜面定数
+	int	read[7] = { 0,0,0,0,0,0,0 };
+	int	Readdis[7] = { 0,0,0,0,0,0,0 };
+	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
+	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
+	int chap[3] = { 0,0,0 };
+	/* double */
+	double DifRate = CAL_DIF_RATE(difkey, Lv) / 100; //譜面定数
+	double rate = (double)CalPlayRate(judge, DifRate) / 100.0;
 	double SumRate[2] = { 0,0 };
-	wchar_t dataE[255] = L"record/";
-	wchar_t fileN[255];
-	wchar_t GT1[255];
-	wchar_t GT2[255];
-	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	wchar_t ST1[] = L"record/";
-	wchar_t ST2[] = L"/list.txt";
-	unsigned int Cr, Crb;
-	Cr = GetColor(255, 255, 255);
-	Crb = GetColor(0, 0, 0);
+	double ReadAcc[7] = { 0,0,0,0,0,0,0 };
+	double acc = CAL_ACC(judge, notes);
+	/* wchar_t */
+	wchar_t save[255] = L"score/";
+	/* struct */
+	play_rate_t prate[RATE_NUM];
+	/* FILE */
 	FILE *fp;
-	//システムロード
+	// システムロード
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&system, sizeof(int), 6, fp);
 		fclose(fp);
 	}
-	songT = FileRead_open(L"RecordPack.txt");
-	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
-	FileRead_close(songT);
-	strcats(dataE, GT1);
-	stradds(dataE, L'/');
-	strcopy(ST1, GT2, 1);
-	strcats(GT2, GT1);
-	strcats(GT2, ST2);
-	songT = FileRead_open(GT2);
-	for (i[0] = 0; i[0] <= n; i[0]++) FileRead_gets(GT1, 256, songT);//GT1に曲のフォルダ名を入れる
-	FileRead_close(songT);
-	strcopy(GT1, fileN, 1);//fileNに曲のフォルダ名を入れる
-	strcats(dataE, GT1);//dataEに"record/曲のフォルダ名"を入れる
-	strcopy(dataE, GT1, 1);//GT1に"record/'曲のフォルダ名'"を入れる
-	strcats(GT1, GT26[o]);//GT1に"record/'曲のフォルダ名'/.'難易度番号'rrs"を入れる
-	//ゲーム開始前の下準備
-	GD[0] = difkey / 100.0 - Lv;//mdifと難易度表記の差
-	if (Lv == 0) { DifRate = 0; }
-	else if (2 <= GD[0]) { DifRate = Lv + 0.9; }
-	else if (0 <= GD[0] && GD[0] < 2) { DifRate = Lv + 0.45 * GD[0]; }
-	else { DifRate = difkey / 100.0; }
-
-	//ゲーム処理だった場所
-
-	int	read[7] = { 0,0,0,0,0,0,0 };
-	double ReadAcc[7] = { 0,0,0,0,0,0,0 };
-	int	Readdis[7] = { 0,0,0,0,0,0,0 };
-	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
-	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
-	int chap[3] = { 0,0,0 };
-	double acc = (judge.just * 10000 + judge.good * 9500 + judge.safe * 5500) / (notes*100.0);
-	wchar_t save[255] = L"score/";
-	wchar_t save2[255] = L".dat";
-	play_rate_t prate[RATE_NUM];
-	//ランク判定
-	if (score >= 98000) rank = 0;
-	else if (score >= 95000) rank = 1;
-	else if (score >= 90000) rank = 2;
-	else if (score >= 85000) rank = 3;
-	else if (score >= 80000) rank = 4;
-	else rank = 5;
-	//クリアレート判定
-	if (drop == 1) { Clear = 1; }
-	else if (drop == 0 && judge.miss > 0) { Clear = 2; }
-	else if (drop == 0 && judge.miss == 0 && judge.safe > 0) { Clear = 3; }
-	else if (drop == 0 && judge.miss == 0 && judge.safe == 0 && judge.good > 0) { Clear = 4; }
-	else Clear = 5;
-	strcats(save, fileN);
-	strcats(save, save2);
-	G[0] = _wfopen_s(&fp, save, L"rb"); //記録読み込み
+	strcats(save, songN); // save = score/<曲名>
+	strcats(save, L".dat"); // save = score/<曲名>.dat
+	G[0] = _wfopen_s(&fp, save, L"rb"); // 記録読み込み
 	if (G[0] == 0) {
 		fread(&read, sizeof(int), 6, fp);
 		fread(&ReadAcc, sizeof(double), 6, fp);
@@ -269,9 +235,9 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey,
 	read[0]++;
 	if (drop == 1) read[1]++;
 	else read[3]++;
-	if (judge.miss == 0)read[4]++;
-	if (judge.miss == 0 && judge.safe == 0)read[5]++;
-	if (judge.miss == 0 && judge.safe == 0 && judge.good == 0)read[6]++;
+	if (judge.miss == 0) read[4]++;
+	if (judge.miss == 0 && judge.safe == 0) read[5]++;
+	if (judge.miss == 0 && judge.safe == 0 && judge.good == 0) read[6]++;
 	G[0] = _wfopen_s(&fp, L"save/data.dat", L"wb");
 	fwrite(&read, sizeof(int), 7, fp);
 	fclose(fp);
@@ -285,7 +251,6 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey,
 	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"wb");
 	fwrite(&chap, sizeof(int), 3, fp);
 	fclose(fp);
-	rate = (int)CalPlayRate(judge, DifRate);
 	//レート保存
 	G[0] = _wfopen_s(&fp, RATE_FILE_NAME, L"rb");
 	if (fp != NULL) {
@@ -300,7 +265,7 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey,
 	G[0] = -1;
 	//同じ曲、または未収録を探す
 	for (i[0] = 0; i[0] < RATE_NUM; i[0]++) {
-		if ((strands(fileN, prate[i[0]].name) ||
+		if ((strands(songN, prate[i[0]].name) ||
 			(prate[i[0]].name[0] == L'\0')) &&
 			prate[i[0]].num == 0) {
 			G[0] = i[0];
@@ -320,10 +285,10 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey,
 	if (prate[G[0]].num < rate) {
 		prate[G[0]].num = rate;
 		SumRate[1] = 0;
-		strcopy(fileN, prate[G[0]].name, 1);
+		strcopy(songN, prate[G[0]].name, 1);
 		for (i[0] = 0; i[0] < RATE_NUM; i[0]++) { //変化後のレートを計算
-		SumRate[1] += mins_D(prate[i[0]].num, 0);
-	}
+			SumRate[1] += mins_D(prate[i[0]].num, 0);
+		}
 	SumRate[1] /= 2;
 		G[0] = _wfopen_s(&fp, RATE_FILE_NAME, L"wb");
 		fwrite(&prate, sizeof(play_rate_t), RATE_NUM, fp);
@@ -359,4 +324,21 @@ int CalPlayRate(judge_box judge, double DifRate) {
 		rate = DifRate + 2;
 	}
 	return (int)(rate * 100);
+}
+
+char CalScoreRank(int score) {
+	if (score >= 98000) { return 0; }
+	if (score >= 95000) { return 1; }
+	if (score >= 90000) { return 2; }
+	if (score >= 85000) { return 3; }
+	if (score >= 80000) { return 4; }
+	return 5;
+}
+
+char JudgeClearRank(char drop, judge_box judge) {
+	if (drop == 1) { return 1; }
+	if (0 < judge.miss) { return 2; }
+	if (0 < judge.safe) { return 3; }
+	if (0 < judge.good) { return 4; }
+	return 5;
 }
