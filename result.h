@@ -2,14 +2,174 @@
 #include "fontcur.h"
 #include "playbox.h"
 
-int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_t songN[255], wchar_t DifFN[255], struct judge_box judge, int score, int Mcombo, short int notes, int gapa[3], int Dscore) {
+int CalPlayRate(judge_box judge, double DifRate);
+
+void ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
+	struct judge_box* const judge, int Mcombo, short int notes,
+	double SumRate[], short int rank, int score, double acc, int gapa[],
+	short int Clear, char charNo) {
+	/* num */
+	short int fontNo;
+	switch (rank) {
+	case 0:
+		fontNo = 6;
+		break;
+	case 1:
+		fontNo = 4;
+		break;
+	case 2:
+		fontNo = 2;
+		break;
+	case 3:
+		fontNo = 3;
+		break;
+	case 4:
+		fontNo = 5;
+		break;
+	case 5:
+		fontNo = 1;
+		break;
+	default:
+		fontNo = 4;
+		break;
+	}
+	int G[10] = { 0,0,0,0,0,0,0,0,0,0 };
+	/* image */
+	int coleimg;
+	switch (Clear) {
+	case 0:
+		coleimg = LoadGraph(L"picture/DROPED.png");
+		break;
+	case 1:
+		coleimg = LoadGraph(L"picture/CLEARED.png");
+		break;
+	case 2:
+		coleimg = LoadGraph(L"picture/NOMISS.png");
+		break;
+	case 3:
+		coleimg = LoadGraph(L"picture/FULLCOMBO.png");
+		break;
+	case 4:
+		coleimg = LoadGraph(L"picture/PERFECT.png");
+		break;
+	default:
+		coleimg = LoadGraph(L"picture/DROPED.png");
+		break;
+	}
+	int	difberimg;
+	switch (dif) {
+	case 0:
+		difberimg = LoadGraph(L"picture/difauto.png");
+		break;
+	case 1:
+		difberimg = LoadGraph(L"picture/difeasy.png");
+		break;
+	case 2:
+		difberimg = LoadGraph(L"picture/difnormal.png");
+		break;
+	case 3:
+		difberimg = LoadGraph(L"picture/difhard.png");
+		break;
+	case 4:
+	case 5:
+		difberimg = LoadGraph(DifFN);
+		break;
+	default:
+		difberimg = LoadGraph(L"picture/difeasy.png");
+		break;
+	}
+	int rankimg;
+	switch (rank) {
+	case 0:
+		rankimg = LoadGraph(L"picture/rankEX.png");
+		break;
+	case 1:
+		rankimg = LoadGraph(L"picture/rankS.png");
+		break;
+	case 2:
+		rankimg = LoadGraph(L"picture/rankA.png");
+		break;
+	case 3:
+		rankimg = LoadGraph(L"picture/rankB.png");
+		break;
+	case 4:
+		rankimg = LoadGraph(L"picture/rankC.png");
+		break;
+	case 5:
+	default:
+		rankimg = LoadGraph(L"picture/rankD.png");
+		break;
+	}
+	int Rchaimg;
+	switch (charNo) {
+	case 0:
+		Rchaimg = LoadGraph(L"picture/RePicker.png");
+		break;
+	case 1:
+		Rchaimg = LoadGraph(L"picture/ReGator.png");
+		break;
+	case 2:
+		Rchaimg = LoadGraph(L"picture/ReTaylor.png");
+		break;
+	default:
+		Rchaimg = LoadGraph(L"picture/RePicker.png");
+		break;
+	}
+	int resultimg = LoadGraph(L"picture/result.png");
+	/* audio */
+	int musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
+	PlaySoundMem(musicmp3, DX_PLAYTYPE_LOOP);
+	WaitTimer(10);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	while (1) {
+		ClearDrawScreen();
+		DrawGraph(0, 0, resultimg, TRUE);
+		DrawGraph(460, 20, difberimg, TRUE);
+		DrawString(100, 13, songN, 0xFFFFFFFF);
+		DrawCurFont(judge->just, 140, 52, 30, 4);
+		DrawCurFont(judge->good, 140, 93, 30, 2);
+		DrawCurFont(judge->safe, 140, 134, 30, 3);
+		DrawCurFont(judge->miss, 140, 175, 30, 1);
+		DrawCurFont(Mcombo, 155, 215, 30, 4);
+		DrawCurFont(notes, 265, 215, 30, 5);
+		DrawFormatString(10, 320, 0xFFFFFFFF, L"%.2f", SumRate[1]);
+		if (SumRate[1] != SumRate[0]) {
+			DrawFormatString(10, 340, 0xFFFFFFFF, L"+%.2f",
+				SumRate[1] - SumRate[0]);
+		}
+		else { DrawString(10, 340, L"not rise", 0xFFFFFFFF); }
+		DrawCurFont(score, 310, 75, 55, fontNo);
+		DrawCurFont(acc, 430, 150, 30, fontNo, 2);
+		if (gapa[1] == 0) gapa[1] = 1;
+		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
+		DrawCurFont((gapa[2] / gapa[1]) - (gapa[0] * gapa[0]) / (gapa[1] * gapa[1]),
+			500, 230, 20, 0);
+		DrawGraph(140, 260, rankimg, TRUE);
+		DrawGraph(5, 420, coleimg, TRUE);
+		DrawGraph(336, 252, Rchaimg, TRUE);
+		ScreenFlip();
+		//エンターが押された
+		if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
+			StopSoundMem(musicmp3);
+			DeleteSoundMem(musicmp3);
+			break;
+		}
+		else if (GetWindowUserCloseFlag(TRUE)) return;
+	}
+	InitGraph();
+	return;
+}
+
+int result(int p, int n, int o, short int Lv, short int drop, int difkey,
+	wchar_t songN[255], wchar_t DifFN[255], struct judge_box judge, int score,
+	int Mcombo, short int notes, int gapa[3], int Dscore) {
 	short int i[3];
 	short int rank;
 	short int Clear;
 	int G[20], songT;
 	int system[6] = { 0,0,0,2,0,0 };
 	double GD[5];
-	double rate;
+	double rate = 0;
 	double DifRate; //譜面定数
 	double SumRate[2] = { 0,0 };
 	wchar_t dataE[255] = L"record/";
@@ -44,58 +204,12 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	strcats(dataE, GT1);//dataEに"record/曲のフォルダ名"を入れる
 	strcopy(dataE, GT1, 1);//GT1に"record/'曲のフォルダ名'"を入れる
 	strcats(GT1, GT26[o]);//GT1に"record/'曲のフォルダ名'/.'難易度番号'rrs"を入れる
-	//グラフィックと効果音の準備
-	int resultimg, difberimg, rankimg[6], coleimg[5], Rchaimg, musicmp3;
-	switch (o) {
-	case 0:
-		difberimg = LoadGraph(L"picture/difauto.png");
-		break;
-	case 1:
-		difberimg = LoadGraph(L"picture/difeasy.png");
-		break;
-	case 2:
-		difberimg = LoadGraph(L"picture/difnormal.png");
-		break;
-	case 3:
-		difberimg = LoadGraph(L"picture/difhard.png");
-		break;
-	case 4:
-	case 5:
-		difberimg = LoadGraph(DifFN);
-		break;
-	}
-	resultimg = LoadGraph(L"picture/result.png");
-	rankimg[0] = LoadGraph(L"picture/rankEX.png");
-	rankimg[1] = LoadGraph(L"picture/rankS.png");
-	rankimg[2] = LoadGraph(L"picture/rankA.png");
-	rankimg[3] = LoadGraph(L"picture/rankB.png");
-	rankimg[4] = LoadGraph(L"picture/rankC.png");
-	rankimg[5] = LoadGraph(L"picture/rankD.png");
-	coleimg[0] = LoadGraph(L"picture/DROPED.png");
-	coleimg[1] = LoadGraph(L"picture/CLEARED.png");
-	coleimg[2] = LoadGraph(L"picture/NOMISS.png");
-	coleimg[3] = LoadGraph(L"picture/FULLCOMBO.png");
-	coleimg[4] = LoadGraph(L"picture/PERFECT.png");
-	switch (system[0]) {
-	case 0:
-		Rchaimg = LoadGraph(L"picture/RePicker.png");
-		break;
-	case 1:
-		Rchaimg = LoadGraph(L"picture/ReGator.png");
-		break;
-	case 2:
-		Rchaimg = LoadGraph(L"picture/ReTaylor.png");
-		break;
-	}
-	musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
 	//ゲーム開始前の下準備
 	GD[0] = difkey / 100.0 - Lv;//mdifと難易度表記の差
 	if (Lv == 0) { DifRate = 0; }
 	else if (2 <= GD[0]) { DifRate = Lv + 0.9; }
 	else if (0 <= GD[0] && GD[0] < 2) { DifRate = Lv + 0.45 * GD[0]; }
 	else { DifRate = difkey / 100.0; }
-	PlaySoundMem(musicmp3, DX_PLAYTYPE_LOOP);
-	WaitTimer(10);
 
 	//ゲーム処理だった場所
 
@@ -171,27 +285,10 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"wb");
 	fwrite(&chap, sizeof(int), 3, fp);
 	fclose(fp);
-	//レート計算(level0なら0固定)"譜面定数" - "miss数" x "譜面定数" x 0.03(下限=0)
-	if (DifRate == 0) rate = 0;
-	else if (judge.miss > 0) {
-		rate = DifRate - judge.miss * DifRate*0.03;
-		rate = mins_D(rate, 0);
-	}
-	//NO MISS,"譜面定数" + 1 - "safe数" x 0.05(下限="譜面定数")
-	else if (judge.miss == 0 && judge.safe > 0) {
-		rate = DifRate + 1 - judge.safe * 0.05;
-		rate = mins_D(rate, DifRate);
-	}
-	//FULL COMBO,"譜面定数" + 2 - "good数" x 0.01(下限="譜面定数" + 1)
-	else if (judge.miss == 0 && judge.safe == 0 && judge.good > 0) {
-		rate = DifRate + 2 - judge.good * 0.01;
-		rate = mins_D(rate, DifRate + 1);
-	}
-	//PERFECT, "譜面定数" + 2
-	else if (judge.miss == 0 && judge.safe == 0 && judge.good == 0) rate = DifRate + 2;
+	rate = (int)CalPlayRate(judge, DifRate);
 	//レート保存
 	G[0] = _wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (G[0] == 0) {
+	if (fp != NULL) {
 		fread(&prate, sizeof(play_rate_t), RATE_NUM, fp);
 		fclose(fp);
 	}
@@ -225,66 +322,41 @@ int result(int p, int n, int o, short int Lv, short int drop, int difkey, wchar_
 		SumRate[1] = 0;
 		strcopy(fileN, prate[G[0]].name, 1);
 		for (i[0] = 0; i[0] < RATE_NUM; i[0]++) { //変化後のレートを計算
-			SumRate[1] += mins_D(prate[i[0]].num, 0);
-		}
-		SumRate[1] /= 2;
+		SumRate[1] += mins_D(prate[i[0]].num, 0);
+	}
+	SumRate[1] /= 2;
 		G[0] = _wfopen_s(&fp, RATE_FILE_NAME, L"wb");
 		fwrite(&prate, sizeof(play_rate_t), RATE_NUM, fp);
 		fclose(fp);
 	}
 	//リザルト画面
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-	while (1) {
-		ClearDrawScreen();
-		DrawGraph(0, 0, resultimg, TRUE);
-		DrawGraph(460, 20, difberimg, TRUE);
-		DrawString(100, 13, songN, Cr);
-		DrawCurFont(judge.just, 140, 52, 30, 4);
-		DrawCurFont(judge.good, 140, 93, 30, 2);
-		DrawCurFont(judge.safe, 140, 134, 30, 3);
-		DrawCurFont(judge.miss, 140, 175, 30, 1);
-		DrawCurFont(Mcombo, 155, 215, 30, 4);
-		DrawCurFont(notes, 265, 215, 30, 5);
-		DrawFormatString(10, 320, Cr, L"%.2f", SumRate[1]);
-		if (SumRate[1] != SumRate[0]) { DrawFormatString(10, 340, Cr, L"+%.2f", SumRate[1] - SumRate[0]); }
-		else { DrawString(10, 340, L"not rise", Cr); }
-		switch (rank) {
-		case 0:
-			G[0] = 6;
-			break;
-		case 1:
-			G[0] = 4;
-			break;
-		case 2:
-			G[0] = 2;
-			break;
-		case 3:
-			G[0] = 3;
-			break;
-		case 4:
-			G[0] = 5;
-			break;
-		case 5:
-			G[0] = 1;
-			break;
-		}
-		DrawCurFont(score, 310, 75, 55, G[0]);
-		DrawCurFont(acc, 430, 150, 30, G[0], 2);
-		if (gapa[1] == 0) gapa[1] = 1;
-		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
-		DrawCurFont(gapa[2] / gapa[1] - gapa[0] * gapa[0] / gapa[1] / gapa[1], 500, 230, 20, 0);
-		DrawGraph(140, 260, rankimg[rank], TRUE);
-		DrawGraph(5, 420, coleimg[Clear - 1], TRUE);
-		DrawGraph(336, 252, Rchaimg, TRUE);
-		ScreenFlip();
-		//エンターが押された
-		if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
-			StopSoundMem(musicmp3);
-			DeleteSoundMem(musicmp3);
-			break;
-		}
-		else if (GetWindowUserCloseFlag(TRUE)) return 5;
-	}
-	InitGraph();
+	ViewResult(o, DifFN, songN, &judge, Mcombo, notes, SumRate, rank, score,
+		acc, gapa, Clear - 1, (char)system[0]);
 	return 2;
+}
+
+int CalPlayRate(judge_box judge, double DifRate) {
+	double rate = 0;
+	// level0なら0固定
+	if (DifRate == 0) rate = 0;
+	// "譜面定数" - "miss数" x "譜面定数" x 0.03 (下限=0)
+	else if (judge.miss > 0) {
+		rate = DifRate - judge.miss * DifRate * 0.03;
+		rate = mins_D(rate, 0);
+	}
+	// NO MISS,"譜面定数" + 1 - "safe数" x 0.05 (下限="譜面定数")
+	else if (judge.miss == 0 && judge.safe > 0) {
+		rate = DifRate + 1 - judge.safe * 0.05;
+		rate = mins_D(rate, DifRate);
+	}
+	// FULL COMBO,"譜面定数" + 2 - "good数" x 0.01 (下限="譜面定数" + 1)
+	else if (judge.miss == 0 && judge.safe == 0 && judge.good > 0) {
+		rate = DifRate + 2 - judge.good * 0.01;
+		rate = mins_D(rate, DifRate + 1);
+	}
+	// PERFECT, "譜面定数" + 2
+	else if (judge.miss == 0 && judge.safe == 0 && judge.good == 0) {
+		rate = DifRate + 2;
+	}
+	return (int)(rate * 100);
 }
