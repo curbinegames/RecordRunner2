@@ -1,6 +1,7 @@
 #include "define.h"
 #include "fontcur.h"
 #include "playbox.h"
+#include "system.h"
 
 #define CAL_ACC(judge, notes)												\
 	(((judge).just * 10000 + (judge).good * 9500 +							\
@@ -10,10 +11,16 @@
 
 char CalScoreRank(int score);
 int CalPlayRate(judge_box judge, double DifRate);
+int GetFullRate();
 char JudgeClearRank(char drop, judge_box judge);
+void SaveCharPlayCount(char charaNo);
+void SavePlayCount(char drop, struct judge_box const* const judge);
+void SaveRate(wchar_t songN[], double rate);
+void SaveScore(wchar_t songN[], char dif,
+	int score, double acc, int Dscore, short rank, char Clear);
 
 void ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
-	struct judge_box* const judge, int Mcombo, short int notes,
+	struct judge_box const* const judge, int Mcombo, short int notes,
 	double SumRate[], short int rank, int score, double acc, int gapa[],
 	short int Clear, char charNo) {
 	/* num */
@@ -168,135 +175,23 @@ void ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	return;
 }
 
-int result(int o, short int Lv, char drop, int difkey,
-	wchar_t songN[255], wchar_t DifFN[255], struct judge_box judge, int score,
-	int Mcombo, short int notes, int gapa[3], int Dscore) {
-	/* char */
+int result(int dif, short Lv, char drop, int difkey, wchar_t songN[255],
+	wchar_t DifFN[255], struct judge_box judge, int score, int Mcombo,
+	short notes, int gapa[3], int Dscore) {
 	char Clear = JudgeClearRank(drop, judge);
-	/* short */
-	short int i[3];
-	short int rank = CalScoreRank(score);
-	/* int */
-	int G[20];
-	int system[6] = { 0,0,0,2,0,0 };
-	int	read[7] = { 0,0,0,0,0,0,0 };
-	int	Readdis[7] = { 0,0,0,0,0,0,0 };
-	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
-	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
-	int chap[3] = { 0,0,0 };
-	/* double */
+	char CharNo = GetCharNo();
+	char rank = CalScoreRank(score);
+	double acc = CAL_ACC(judge, notes);
 	double DifRate = CAL_DIF_RATE(difkey, Lv) / 100; //譜面定数
 	double rate = (double)CalPlayRate(judge, DifRate) / 100.0;
-	double SumRate[2] = { 0,0 };
-	double ReadAcc[7] = { 0,0,0,0,0,0,0 };
-	double acc = CAL_ACC(judge, notes);
-	/* wchar_t */
-	wchar_t save[255] = L"score/";
-	/* struct */
-	play_rate_t prate[RATE_NUM];
-	/* FILE */
-	FILE *fp;
-	// システムロード
-	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&system, sizeof(int), 6, fp);
-		fclose(fp);
-	}
-	strcats(save, songN); // save = score/<曲名>
-	strcats(save, L".dat"); // save = score/<曲名>.dat
-	G[0] = _wfopen_s(&fp, save, L"rb"); // 記録読み込み
-	if (G[0] == 0) {
-		fread(&read, sizeof(int), 6, fp);
-		fread(&ReadAcc, sizeof(double), 6, fp);
-		fread(&Readdis, sizeof(int), 6, fp);
-		fread(&ReadRank, sizeof(int), 6, fp);
-		fread(&ReadClear, sizeof(int), 6, fp);
-		fclose(fp);
-	}
-	G[9] = 0;
-	if (read[o] < score) { read[o] = score; } //ハイスコア保存
-	if (ReadAcc[o] < acc) { ReadAcc[o] = acc; } //ACC保存
-	if (Readdis[o] < Dscore) { Readdis[o] = Dscore; } //最長走行距離保存
-	if (ReadRank[o] > rank || ReadRank[o] < 0) { ReadRank[o] = rank; } //ランク保存
-	if (ReadClear[o] < Clear) { ReadClear[o] = Clear; } //クリアレート保存
-	G[0] = _wfopen_s(&fp, save, L"wb");
-	fwrite(&read, sizeof(int), 6, fp);
-	fwrite(&ReadAcc, sizeof(double), 6, fp);
-	fwrite(&Readdis, sizeof(int), 6, fp);
-	fwrite(&ReadRank, sizeof(int), 6, fp);
-	fwrite(&ReadClear, sizeof(int), 6, fp);
-	fclose(fp);
-	//プレイ回数保存
-	G[0] = _wfopen_s(&fp, L"save/data.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&read, sizeof(read), 7, fp);
-		fclose(fp);
-	}
-	read[0]++;
-	if (drop == 1) read[1]++;
-	else read[3]++;
-	if (judge.miss == 0) read[4]++;
-	if (judge.miss == 0 && judge.safe == 0) read[5]++;
-	if (judge.miss == 0 && judge.safe == 0 && judge.good == 0) read[6]++;
-	G[0] = _wfopen_s(&fp, L"save/data.dat", L"wb");
-	fwrite(&read, sizeof(int), 7, fp);
-	fclose(fp);
-	//キャラプレイ数保存
-	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&chap, sizeof(chap), 3, fp);
-		fclose(fp);
-	}
-	chap[system[0]]++;
-	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"wb");
-	fwrite(&chap, sizeof(int), 3, fp);
-	fclose(fp);
-	//レート保存
-	G[0] = _wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp != NULL) {
-		fread(&prate, sizeof(play_rate_t), RATE_NUM, fp);
-		fclose(fp);
-	}
-	for (i[0] = 0; i[0] < RATE_NUM; i[0]++) { //プレイ前のレートを計算
-		SumRate[0] += mins_D(prate[i[0]].num, 0);
-	}
-	SumRate[0] /= 2;
-	SumRate[1] = SumRate[0];
-	G[0] = -1;
-	//同じ曲、または未収録を探す
-	for (i[0] = 0; i[0] < RATE_NUM; i[0]++) {
-		if ((strands(songN, prate[i[0]].name) ||
-			(prate[i[0]].name[0] == L'\0')) &&
-			prate[i[0]].num == 0) {
-			G[0] = i[0];
-			break;
-		}
-	}
-	//なかったら、一番低いレートを探す
-	if (G[0] == -1) {
-		G[0] = 0;
-		for (i[0] = 1; i[0] < RATE_NUM; i[0]++) {
-			if (prate[G[0]].num > prate[i[0]].num) {
-				G[0] = i[0];
-			}
-		}
-	}
-	//レートが高かったら更新する
-	if (prate[G[0]].num < rate) {
-		prate[G[0]].num = rate;
-		SumRate[1] = 0;
-		strcopy(songN, prate[G[0]].name, 1);
-		for (i[0] = 0; i[0] < RATE_NUM; i[0]++) { //変化後のレートを計算
-			SumRate[1] += mins_D(prate[i[0]].num, 0);
-		}
-	SumRate[1] /= 2;
-		G[0] = _wfopen_s(&fp, RATE_FILE_NAME, L"wb");
-		fwrite(&prate, sizeof(play_rate_t), RATE_NUM, fp);
-		fclose(fp);
-	}
-	//リザルト画面
-	ViewResult(o, DifFN, songN, &judge, Mcombo, notes, SumRate, rank, score,
-		acc, gapa, Clear - 1, (char)system[0]);
+	double SumRate[2] = { (double)GetFullRate() / 100.0, 0 };
+	SaveScore(songN, (char)dif, score, acc, Dscore, (short)rank, Clear); // スコア保存
+	SavePlayCount(drop, &judge); // プレイ回数保存
+	SaveCharPlayCount(CharNo); // キャラプレイ数保存
+	SaveRate(songN, rate); // レート保存
+	SumRate[1] = (double)GetFullRate() / 100.0; // 保存後のレート
+	ViewResult(dif, DifFN, songN, &judge, Mcombo, notes, SumRate, (short)rank,
+		score, acc, gapa, Clear - 1, CharNo);// リザルト画面
 	return 2;
 }
 
@@ -335,10 +230,130 @@ char CalScoreRank(int score) {
 	return 5;
 }
 
+int GetFullRate() {
+	int ret = 0;
+	play_rate_t data[RATE_NUM];
+	FILE* fp;
+	(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
+	if (fp != NULL) {
+		fread(&data, sizeof(play_rate_t), RATE_NUM, fp);
+		fclose(fp);
+	}
+	for (int i = 0; i < RATE_NUM; i++) {
+		ret += (int)mins_D(data[i].num * 100, 0);
+	}
+	return ret / 2;
+}
+
 char JudgeClearRank(char drop, judge_box judge) {
 	if (drop == 1) { return 1; }
 	if (0 < judge.miss) { return 2; }
 	if (0 < judge.safe) { return 3; }
 	if (0 < judge.good) { return 4; }
 	return 5;
+}
+
+void SaveCharPlayCount(char charaNo) {
+	int chap[3] = { 0,0,0 };
+	FILE* fp;
+	(void)_wfopen_s(&fp, L"save/chap.dat", L"rb");
+	if (fp == NULL) {
+		fread(&chap, sizeof(chap), 3, fp);
+		fclose(fp);
+	}
+	chap[charaNo]++;
+	_wfopen_s(&fp, L"save/chap.dat", L"wb");
+	fwrite(&chap, sizeof(int), 3, fp);
+	fclose(fp);
+	return;
+}
+
+void SavePlayCount(char drop, struct judge_box const* const judge) {
+	int	data[7] = { 0,0,0,0,0,0,0 };
+	FILE* fp;
+	(void)_wfopen_s(&fp, L"save/data.dat", L"rb");
+	if (fp != NULL) {
+		(void)fread(&data, sizeof(data), 7, fp);
+		(void)fclose(fp);
+	}
+	data[0]++;
+	if (drop == 1) { data[1]++; }
+	else { data[3]++; }
+	if (judge->miss == 0) {
+		data[4]++;
+		if (judge->safe == 0) {
+			data[5]++;
+			if (judge->good == 0) { data[6]++; }
+		}
+	}
+	(void)_wfopen_s(&fp, L"save/data.dat", L"wb");
+	(void)fwrite(&data, sizeof(int), 7, fp);
+	(void)fclose(fp);
+	return;
+}
+
+void SaveRate(wchar_t songN[], double rate) {
+	char num = -1;
+	play_rate_t data[RATE_NUM];
+	FILE* fp;
+	// 同じ曲、または未収録を探す
+	for (char i = 0; i < RATE_NUM; i++) {
+		if ((strands(songN, data[i].name) || (data[i].name[0] == L'\0')) &&
+			data[i].num == 0) {
+			num = i;
+			break;
+		}
+	}
+	// なかったら、一番低いレートを探す
+	if (num == -1) {
+		num = 0;
+		for (char i = 1; i < RATE_NUM; i++) {
+			if (data[num].num > data[i].num) { num = i; }
+		}
+	}
+	// レートが高かったら更新する
+	if (data[num].num < rate) {
+		data[num].num = rate;
+		strcopy(songN, data[num].name, 1);
+		_wfopen_s(&fp, RATE_FILE_NAME, L"wb");
+		fwrite(&data, sizeof(play_rate_t), RATE_NUM, fp);
+		fclose(fp);
+	}
+}
+
+void SaveScore(wchar_t songN[], char dif,
+	int score, double acc, int Dscore, short rank, char Clear) {
+	int	read[7] = { 0,0,0,0,0,0,0 };
+	int	Readdis[7] = { 0,0,0,0,0,0,0 };
+	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
+	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
+	double ReadAcc[7] = { 0,0,0,0,0,0,0 };
+	wchar_t save[255] = L"score/";
+	strcats(save, songN); // save = score/<曲名>
+	strcats(save, L".dat"); // save = score/<曲名>.dat
+	FILE* fp;
+	(void)_wfopen_s(&fp, save, L"rb");
+	if (fp != NULL) {
+		fread(&read, sizeof(int), 6, fp);
+		fread(&ReadAcc, sizeof(double), 6, fp);
+		fread(&Readdis, sizeof(int), 6, fp);
+		fread(&ReadRank, sizeof(int), 6, fp);
+		fread(&ReadClear, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+	if (read[dif] < score) { read[dif] = score; } //ハイスコア保存
+	if (ReadAcc[dif] < acc) { ReadAcc[dif] = acc; } //ACC保存
+	if (Readdis[dif] < Dscore) { Readdis[dif] = Dscore; } //最長走行距離保存
+	if (ReadRank[dif] > rank || ReadRank[dif] < 0) {
+		ReadRank[dif] = rank; //ランク保存
+	}
+	if (ReadClear[dif] < Clear) { ReadClear[dif] = Clear; } //クリアレート保存
+	_wfopen_s(&fp, save, L"wb");
+	fwrite(&read, sizeof(int), 6, fp);
+	fwrite(&ReadAcc, sizeof(double), 6, fp);
+	fwrite(&Readdis, sizeof(int), 6, fp);
+	fwrite(&ReadRank, sizeof(int), 6, fp);
+	fwrite(&ReadClear, sizeof(int), 6, fp);
+	fclose(fp);
+	return;
 }
