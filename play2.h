@@ -1839,6 +1839,7 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
 				sound->flag, SE_CATCH);
 		}
+		break;
 	case NOTE_UP:
 	case NOTE_DOWN:
 	case NOTE_LEFT:

@@ -257,7 +257,7 @@ void SaveCharPlayCount(char charaNo) {
 	int chap[3] = { 0,0,0 };
 	FILE* fp;
 	(void)_wfopen_s(&fp, L"save/chap.dat", L"rb");
-	if (fp == NULL) {
+	if (fp != NULL) {
 		fread(&chap, sizeof(chap), 3, fp);
 		fclose(fp);
 	}
