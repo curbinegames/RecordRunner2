@@ -4,14 +4,13 @@ typedef struct _menu_item {
 	int card;
 	int ground;
 	int back;
-	int num;
+	now_scene_t num;
 } _menu_item;
 
 void DrawBack(_menu_item now, _menu_item before, int time);
 void DrawCard(_menu_item *card, int num, int LR, int time);
 
-int menu(void) {
-	int next = 1; //次のモード
+now_scene_t menu(void) {
 	int command = 0; //選択中のモード
 	int before = 0; //前に選んでたモード
 	int LR = 1;
@@ -19,6 +18,7 @@ int menu(void) {
 	int help, goust, select;
 	int key = 1;
 	int	lan[7] = { 0,0,0,2,0,0,0 };//使うのは[4,言語]だけ
+	now_scene_t next = SCENE_MENU; //次のモード
 	_menu_item menu_item[MENU_NUM];
 	FILE *fp;
 	goust = _wfopen_s(&fp, L"save/system.dat", L"rb");
@@ -31,25 +31,25 @@ int menu(void) {
 		LoadGraph(L"picture/menu/FREE PLAY.png"),
 		LoadGraph(L"picture/menu/FREE PLAY G.png"),
 		LoadGraph(L"picture/backskynoamal.png"),
-		2
+		SCENE_SERECT
 	};
 	menu_item[1] = { 
 		LoadGraph(L"picture/menu/COLLECTION.png"),
 		LoadGraph(L"picture/menu/COLLECT G.png"),
 		LoadGraph(L"picture/menu/COLLECT W.png"),
-		3
+		SCENE_COLLECTION
 	};
 	menu_item[2] = {
 		LoadGraph(L"picture/menu/OPTION.png"),
 		LoadGraph(L"picture/menu/OPTION G.png"),
 		LoadGraph(L"picture/menu/OPTION W.png"),
-		4
+		SCENE_OPTION
 	};
 	menu_item[3] = {
 		LoadGraph(L"picture/menu/QUIT.png"),
 		LoadGraph(L"picture/menu/QUIT G.png"),
 		LoadGraph(L"picture/backstar.png"),
-		5
+		SCENE_EXIT
 	};
 	help = LoadGraph(L"picture/help.png");
 	select = LoadSoundMem(L"sound/arrow.wav");
@@ -97,7 +97,7 @@ int menu(void) {
 		}
 		else if (GetWindowUserCloseFlag(TRUE)) {
 			//閉じるボタンが押された
-			next = 5;
+			next = SCENE_EXIT;
 			break;
 		}
 		//特定のキーが押されていない

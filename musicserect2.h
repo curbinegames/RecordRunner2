@@ -1,6 +1,6 @@
 #include "serectbase.h"
 
-int musicserect2(int *p1) {
+now_scene_t musicserect2(int *p1) {
 	FILE *fp;
 	unsigned int Cr[7];
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
@@ -21,7 +21,6 @@ int musicserect2(int *p1) {
 	int SongPreSTime = 0;
 	int SongPrePat = 0;
 	int SortMode = SORT_DEFAULT;
-	int next = 5;
 	int PackFirstNum[PackNumLim];
 	int Mapping[SongNumLim];
 	int	lan[6] = { 0,0,0,2,0,0 }; //Žg‚¤‚Ì‚Í[0:ƒLƒƒƒ‰, 4:Œ¾Œê]‚¾‚¯
@@ -59,6 +58,7 @@ int musicserect2(int *p1) {
 	wchar_t ST14[] = { L"#MAP:" };
 	wchar_t ST15[] = { L"score/" };
 	wchar_t ST16[] = { L".dat" };
+	now_scene_t next = SCENE_EXIT;
 	MUSIC_BOX songdata[SongNumLim];
 	int back = LoadGraph(L"picture/MSback.png");
 	int jacketpic = LoadGraph(L"picture/NULL jucket.png");
@@ -486,7 +486,7 @@ int musicserect2(int *p1) {
 				*p1 = ShiftKey;
 				p1++;
 				*p1 = AutoFlag;
-				next = 6;
+				next = SCENE_MUSIC;
 				break;
 			}
 		}
@@ -495,7 +495,7 @@ int musicserect2(int *p1) {
 			ClearDrawScreen();
 			InitSoundMem();
 			InitGraph();
-			next = 1;
+			next = SCENE_MENU;
 			break;
 		}
 		switch (G[0]) {
@@ -597,7 +597,8 @@ int musicserect2(int *p1) {
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) {
-			next = 5;
+			next = next = SCENE_MENU;
+			;
 			break;
 		}
 		WaitTimer(5);

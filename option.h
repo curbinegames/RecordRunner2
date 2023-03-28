@@ -1,4 +1,4 @@
-int option(void) {
+now_scene_t option(void) {
 	//ロード
 	//data = [キャラ,オフセット,SE,背景明るさ,言語]
 	int e, sel;
@@ -258,7 +258,7 @@ int option(void) {
 #endif
 		else if (GetWindowUserCloseFlag(TRUE)) {
 			//閉じるボタンが押された
-			return 5;
+			return SCENE_EXIT;
 		}
 		else {
 			//特定のキーが押されていない
@@ -313,5 +313,5 @@ int option(void) {
 			data[6] = 0;
 		}
 	}
-	return 1;
+	return SCENE_MENU;
 }

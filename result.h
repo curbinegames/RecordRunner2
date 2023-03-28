@@ -19,10 +19,10 @@ void SaveRate(wchar_t songN[], double rate);
 void SaveScore(wchar_t songN[], char dif,
 	int score, double acc, int Dscore, short rank, char Clear);
 
-void ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
+now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	struct judge_box const* const judge, int Mcombo, short int notes,
-	double SumRate[], short int rank, int score, double acc, int gapa[],
-	short int Clear, char charNo) {
+	int NewRate, int RateSub, char rank, int score, double acc,
+	int gapa[], short int Clear, char charNo) {
 	/* num */
 	short int fontNo;
 	switch (rank) {
@@ -140,22 +140,23 @@ void ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		ClearDrawScreen();
 		DrawGraph(0, 0, resultimg, TRUE);
 		DrawGraph(460, 20, difberimg, TRUE);
-		DrawString(100, 13, songN, 0xFFFFFFFF);
+		DrawString(100, 13, songN, COLOR_WHITE);
 		DrawCurFont(judge->just, 140, 52, 30, 4);
 		DrawCurFont(judge->good, 140, 93, 30, 2);
 		DrawCurFont(judge->safe, 140, 134, 30, 3);
 		DrawCurFont(judge->miss, 140, 175, 30, 1);
 		DrawCurFont(Mcombo, 155, 215, 30, 4);
 		DrawCurFont(notes, 265, 215, 30, 5);
-		DrawFormatString(10, 320, 0xFFFFFFFF, L"%.2f", SumRate[1]);
-		if (SumRate[1] != SumRate[0]) {
-			DrawFormatString(10, 340, 0xFFFFFFFF, L"+%.2f",
-				SumRate[1] - SumRate[0]);
+		DrawFormatString(10, 320, COLOR_WHITE, L"%d.%2d",
+			NewRate / 100, NewRate % 100);
+		if (RateSub != 0) {
+			DrawFormatString(10, 340, COLOR_WHITE, L"+%d.%2d",
+				RateSub / 100, RateSub % 100);
 		}
-		else { DrawString(10, 340, L"not rise", 0xFFFFFFFF); }
+		else { DrawString(10, 340, L"not rise", COLOR_WHITE); }
 		DrawCurFont(score, 310, 75, 55, fontNo);
 		DrawCurFont(acc, 430, 150, 30, fontNo, 2);
-		if (gapa[1] == 0) gapa[1] = 1;
+		if (gapa[1] == 0) { gapa[1] = 1; }
 		DrawCurFont(gapa[0] / gapa[1], 510, 205, 20, 0);
 		DrawCurFont((gapa[2] / gapa[1]) - (gapa[0] * gapa[0]) / (gapa[1] * gapa[1]),
 			500, 230, 20, 0);
@@ -169,30 +170,32 @@ void ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 			DeleteSoundMem(musicmp3);
 			break;
 		}
-		else if (GetWindowUserCloseFlag(TRUE)) return;
+		else if (GetWindowUserCloseFlag(TRUE)) return SCENE_EXIT;
 	}
 	InitGraph();
-	return;
+	return SCENE_SERECT;
 }
 
-int result(int dif, short Lv, char drop, int difkey, wchar_t songN[255],
-	wchar_t DifFN[255], struct judge_box judge, int score, int Mcombo,
-	short notes, int gapa[3], int Dscore) {
+now_scene_t result(int dif, short Lv, char drop, int difkey,
+	wchar_t songN[255], wchar_t DifFN[255], struct judge_box judge,
+	int score, int Mcombo, short notes, int gapa[3], int Dscore) {
 	char Clear = JudgeClearRank(drop, judge);
 	char CharNo = GetCharNo();
 	char rank = CalScoreRank(score);
+	int OldRate = GetFullRate();
+	int NewRate = 0;
+	int RateSub = 0;
 	double acc = CAL_ACC(judge, notes);
 	double DifRate = CAL_DIF_RATE(difkey, Lv) / 100; //譜面定数
 	double rate = (double)CalPlayRate(judge, DifRate) / 100.0;
-	double SumRate[2] = { (double)GetFullRate() / 100.0, 0 };
 	SaveScore(songN, (char)dif, score, acc, Dscore, (short)rank, Clear); // スコア保存
 	SavePlayCount(drop, &judge); // プレイ回数保存
 	SaveCharPlayCount(CharNo); // キャラプレイ数保存
 	SaveRate(songN, rate); // レート保存
-	SumRate[1] = (double)GetFullRate() / 100.0; // 保存後のレート
-	ViewResult(dif, DifFN, songN, &judge, Mcombo, notes, SumRate, (short)rank,
-		score, acc, gapa, Clear - 1, CharNo);// リザルト画面
-	return 2;
+	NewRate = GetFullRate(); // 保存後のレート
+	RateSub = NewRate - OldRate; // レートの差
+	return ViewResult(dif, DifFN, songN, &judge, Mcombo, notes, NewRate,
+		RateSub, (short)rank, score, acc, gapa, Clear - 1, CharNo); // リザルト画面
 }
 
 int CalPlayRate(judge_box judge, double DifRate) {
@@ -240,7 +243,7 @@ int GetFullRate() {
 		fclose(fp);
 	}
 	for (int i = 0; i < RATE_NUM; i++) {
-		ret += (int)mins_D(data[i].num * 100, 0);
+		ret += mins((int)(data[i].num * 100), 0);
 	}
 	return ret / 2;
 }

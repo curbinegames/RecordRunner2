@@ -76,7 +76,7 @@ char PlayNoteHitSound(note_box note, int *MelodySnd, int *Sitem, char seflag,
 	int notemat);
 void PlayNoteHitSound2(play_sound_t* const sound);
 
-int play3(int p, int n, int o, int shift, int AutoFlag) {
+now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/*---用語定義-----
 	ユーザー用譜面データ: ユーザーが作った譜面データ。ユーザーに分かりやすい。
 	PC用譜面データ: ユーザー用譜面データから計算で作られた、PC専用の譜面データ。PCに分かりやすい。
@@ -996,7 +996,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		if (key[KEY_INPUT_G] == 0) { holdG = 0; }
 		else if (key[KEY_INPUT_G] == 1) { holdG++; }
-		if (GetWindowUserCloseFlag(TRUE)) { return 5; }
+		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		//キャッチ判定に使う数値を計算
 		LaneTrack[charaput] = Ntime;
 		if (holdu == 0 && holdd == 0 || holdu > 0 && holdd > 0) { LaneTrack[1] = Ntime; }
@@ -1530,7 +1530,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
 			InitGraph();
-			return 2;
+			return SCENE_SERECT;
 		}
 		WaitTimer(5);
 		if (StopFrag == -1) {
@@ -1542,7 +1542,7 @@ int play3(int p, int n, int o, int shift, int AutoFlag) {
 		ScreenFlip();
 	}
 	InitGraph();
-	if (AutoFlag == 1) { return 2; }
+	if (AutoFlag == 1) { return SCENE_SERECT; }
 	else {
 		ret_gap[0] = gap2.sum;
 		ret_gap[1] = gap2.count;

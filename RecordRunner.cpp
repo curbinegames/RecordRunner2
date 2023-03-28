@@ -1,5 +1,6 @@
 
 #include "DxLib.h"
+#include "system.h"
 #include "sancur.h"
 #include "strcur.h"
 #include "keycur.h"
@@ -15,27 +16,25 @@
 #include "recr_cutin.h"
 #include "versionup.h"
 
-/* next = 0 = タイトル
-	= 1 = メニュー
-	= 2 = 曲選択画面
-	= 3 = コレクション画面
-	= 4 = オプション画面
-	= 6 = 演奏画面
-	= 5 = 終了処理*/
-
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+	LPSTR lpCmdLine, int nCmdShow) {
+	now_scene_t next = SCENE_TITLE;
+	int now = 0, bgm, mnom[7] = { 0,1,0,1,1,0,0 };
+	int G[5] = { 0,0,0,0,0 };
+	unsigned int Cr = GetColor(255, 255, 255);
+	(void)hInstance;
+	(void)hPrevInstance;
+	(void)lpCmdLine;
+	(void)nCmdShow;
 	ChangeWindowMode(TRUE);
 	SetAlwaysRunFlag(TRUE);
 	SetWindowUserCloseEnableFlag(FALSE);
 	SetMainWindowText(L"Record Runner");
 	SetWindowSizeChangeEnableFlag(TRUE);
-	if (DxLib_Init() == -1)return -1;
+	if (DxLib_Init() == -1) { return -1; }
 	SetDrawScreen(DX_SCREEN_BACK);
-	int next = 0, now = 0, bgm, mnom[7] = { 0,1,0,1,1,0,0 };
-	int G[5] = { 0,0,0,0,0 };
-	unsigned int Cr = GetColor(255, 255, 255);
 	bgm = LoadSoundMem(L"song/no.mp3");
-	upgrade_rate_f();
+	upgrade_rate_f(); // レートのセーブデータ更新(Ver.1.04 -> Ver.1.05)
 	//ゲーム終了(nextが5のとき)までの間、処理を繰り返す
 	while (next != 5) {
 		InitGraph();
@@ -56,37 +55,41 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//表示する画面を選択する
 		now = mnom[next];
 		switch (next) {
-		case 0:
+		case SCENE_TITLE:
 			next = title();
 			break;
-		case 1:
+		case SCENE_MENU:
 			next = menu();
 			break;
-		case 2:
+		case SCENE_SERECT:
 			next = musicserect2(&G[0]);
 			break;
-		case 3:
+		case SCENE_COLLECTION:
 			next = collection();
 			break;
-		case 4:
+		case SCENE_OPTION:
 			next = option();
 			break;
-		case 6:
+		case SCENE_MUSIC:
 			next = play3(G[0], G[1], G[2], G[3], G[4]);
 			break;
+#if 0
 		case 7:
 			next = editserect(&G[0]);
 			break;
 		case 8:
 			next = edit(G[0], G[1], G[2], G[3]);
 			break;
+#endif
 		default:
+#if 0
 			ClearDrawScreen();
 			DrawString(200, 200, L"error:001\n予期されない数値", Cr);
 			ScreenFlip();
-			next = 5;
 			WaitTimer(100);
 			WaitKey();
+#endif
+			next = SCENE_EXIT;
 			break;
 		}
 	}

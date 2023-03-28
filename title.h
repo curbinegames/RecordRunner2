@@ -4,8 +4,9 @@
 void ShowTitle1(const int *pic, const int time);
 void ShowTitle2(const int back, const int string, const int white, const int time);
 
-int title(void) {
-	int next = 1, alpha[2] = { 255,-1 };
+now_scene_t title(void) {
+	now_scene_t next = SCENE_MENU;
+	int alpha[2] = { 255,-1 };
 	int StartTime = -1;
 	int TitleChar[12] = {
 		LoadGraph(L"picture/Title-1.png"),
@@ -42,7 +43,7 @@ int title(void) {
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) {
-			next = 5;
+			next = SCENE_EXIT;
 			break;
 		}
 		WaitTimer(5);
