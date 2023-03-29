@@ -1,7 +1,9 @@
 #include "serectbase.h"
+#include "recr_cutin.h"
 
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
+	char closeFg = 0;
 	unsigned int Cr[7];
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
 	Cr[3] = GetColor(0, 0, 0);
@@ -27,6 +29,7 @@ now_scene_t musicserect2(int *p1) {
 	int chap[3] = { 0,0,0 };
 	int backpos = 0;
 	int rate = GetRate();
+	int CutTime = 0;
 	const int keyCB[7] = {
 		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_UP,
 		KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_Z
@@ -269,6 +272,8 @@ now_scene_t musicserect2(int *p1) {
 	G[0] += 0;
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
+	CutinReady();
+	CutTime = GetNowCount();
 	while (1) {
 		ClearDrawScreen();
 		//背景の表示
@@ -376,6 +381,12 @@ now_scene_t musicserect2(int *p1) {
 		ShowHelpBar(Cr[0], help, lan[4]);
 		//デバッグ(320,410スタート)
 		//DrawFormatString(320, 410, Cr[0], L"%d", SortMode);
+		if (closeFg == 0) {
+			ViewCutOut(CutTime);
+		}
+		if (closeFg == 1) {
+			ViewCutIn(CutTime);
+		}
 		ScreenFlip();
 		if (CheckHitKey(KEY_INPUT_LSHIFT) == 1 || CheckHitKey(KEY_INPUT_RSHIFT) == 1) { ShiftKey = 1; }
 		else { ShiftKey = 0; }
@@ -467,10 +478,6 @@ now_scene_t musicserect2(int *p1) {
 					}
 					if (GetRand(1000) <= G[0]) { command[1] = 5; }
 				}
-				StopSoundMem(previewM);
-				ClearDrawScreen();
-				InitSoundMem();
-				InitGraph();
 				G[0] = 0;
 				for (G[0] = PackNumLim; G[0] >= 0; G[0]--) {
 					if (PackFirstNum[G[0]] >= 0 && PackFirstNum[G[0]] <= Mapping[command[0]]) {
@@ -487,118 +494,124 @@ now_scene_t musicserect2(int *p1) {
 				p1++;
 				*p1 = AutoFlag;
 				next = SCENE_MUSIC;
-				break;
+				closeFg = 1;
+				CutTime = GetNowCount();
 			}
 		}
 		else if (G[0] == 2) { /* 戻る */
+			next = SCENE_MENU;
+			closeFg = 1;
+			CutTime = GetNowCount();
+		}
+		else {
+			switch (G[0]) {
+			case 3: /* 曲選択上 */
+				command[0]--;
+				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
+				if (command[0] < 0) command[0] = SongNumCount - 1;
+				if (command[1] > songdata[Mapping[command[0]]].limit) {
+					command[1] = songdata[Mapping[command[0]]].limit;
+					XstartC -= 250;
+					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+				}
+				PlaySoundMem(select, DX_PLAYTYPE_BACK);
+				UD = -1;
+				startC = GetNowCount();
+				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
+				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
+					if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
+					for (int i = 1; i <= 3; i++) {
+						if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
+							command[1] = i;
+							break;
+						}
+					}
+				}
+				break;
+			case 4: /* 曲選択下 */
+				command[0]++;
+				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
+				if (command[0] >= SongNumCount) command[0] = 0;
+				if (command[1] > songdata[Mapping[command[0]]].limit) {
+					command[1] = songdata[Mapping[command[0]]].limit;
+					XstartC -= 250;
+					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+				}
+				PlaySoundMem(select, DX_PLAYTYPE_BACK);
+				UD = 1;
+				startC = GetNowCount();
+				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
+				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
+					if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
+					for (int i = 1; i <= 3; i++) {
+						if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
+							command[1] = i;
+							break;
+						}
+					}
+				}
+				break;
+			case 5: /* 難易度下降 */
+				command[1]--;
+				XstartC = GetNowCount();
+				if (command[1] < 0) {
+					command[1] = 0;
+					XstartC -= 250;
+				}
+				PlaySoundMem(select, DX_PLAYTYPE_BACK);
+				LR = 1;
+				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
+					G[0] = Mapping[command[0]];
+					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+					for (int i = 0; i < SongNumCount; i++) {
+						if (Mapping[i] == G[0]) {
+							command[0] = i;
+						}
+					}
+				}
+				break;
+			case 6: /* 難易度上昇 */
+				command[1]++;
+				XstartC = GetNowCount();
+				if (command[1] > songdata[Mapping[command[0]]].limit) {
+					command[1] = songdata[Mapping[command[0]]].limit;
+					XstartC -= 250;
+				}
+				PlaySoundMem(select, DX_PLAYTYPE_BACK);
+				LR = -1;
+				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
+					G[0] = Mapping[command[0]];
+					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+					for (int i = 0; i < SongNumCount; i++) {
+						if (Mapping[i] == G[0]) {
+							command[0] = i;
+						}
+					}
+				}
+				break;
+			case 7: /* 曲並び替え */
+				ChangeSortMode(&SortMode);
+				G[0] = Mapping[command[0]];
+				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
+				for (int i = 0; i < SongNumCount; i++) {
+					if (Mapping[i] == G[0]) {
+						command[0] = i;
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
 			StopSoundMem(previewM);
 			ClearDrawScreen();
 			InitSoundMem();
 			InitGraph();
-			next = SCENE_MENU;
-			break;
-		}
-		switch (G[0]) {
-		case 3: /* 曲選択上 */
-			command[0]--;
-			//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-			if (command[0] < 0) command[0] = SongNumCount - 1;
-			if (command[1] > songdata[Mapping[command[0]]].limit) {
-				command[1] = songdata[Mapping[command[0]]].limit;
-				XstartC -= 250;
-				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-			}
-			PlaySoundMem(select, DX_PLAYTYPE_BACK);
-			UD = -1;
-			startC = GetNowCount();
-			//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-			if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
-				if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
-				for (int i = 1; i <= 3; i++) {
-					if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
-						command[1] = i;
-						break;
-					}
-				}
-			}
-			break;
-		case 4: /* 曲選択下 */
-			command[0]++;
-			//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-			if (command[0] >= SongNumCount) command[0] = 0;
-			if (command[1] > songdata[Mapping[command[0]]].limit) {
-				command[1] = songdata[Mapping[command[0]]].limit;
-				XstartC -= 250;
-				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-			}
-			PlaySoundMem(select, DX_PLAYTYPE_BACK);
-			UD = 1;
-			startC = GetNowCount();
-			//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-			if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
-				if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
-				for (int i = 1; i <= 3; i++) {
-					if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
-						command[1] = i;
-						break;
-					}
-				}
-			}
-			break;
-		case 5: /* 難易度下降 */
-			command[1]--;
-			XstartC = GetNowCount();
-			if (command[1] < 0) {
-				command[1] = 0;
-				XstartC -= 250;
-			}
-			PlaySoundMem(select, DX_PLAYTYPE_BACK);
-			LR = 1;
-			if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
-				G[0] = Mapping[command[0]];
-				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-				for (int i = 0; i < SongNumCount; i++) {
-					if (Mapping[i] == G[0]) {
-						command[0] = i;
-					}
-				}
-			}
-			break;
-		case 6: /* 難易度上昇 */
-			command[1]++;
-			XstartC = GetNowCount();
-			if (command[1] > songdata[Mapping[command[0]]].limit) {
-				command[1] = songdata[Mapping[command[0]]].limit;
-				XstartC -= 250;
-			}
-			PlaySoundMem(select, DX_PLAYTYPE_BACK);
-			LR = -1;
-			if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
-				G[0] = Mapping[command[0]];
-				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-				for (int i = 0; i < SongNumCount; i++) {
-					if (Mapping[i] == G[0]) {
-						command[0] = i;
-					}
-				}
-			}
-			break;
-		case 7: /* 曲並び替え */
-			ChangeSortMode(&SortMode);
-			G[0] = Mapping[command[0]];
-			SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-			for (int i = 0; i < SongNumCount; i++) {
-				if (Mapping[i] == G[0]) {
-					command[0] = i;
-				}
-			}
-			break;
-		default:
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) {
-			next = next = SCENE_MENU;
-			;
+			next = SCENE_EXIT;
 			break;
 		}
 		WaitTimer(5);

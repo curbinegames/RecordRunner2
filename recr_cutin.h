@@ -1,7 +1,5 @@
+#pragma once
 
-#ifndef RECR_CUTIN_H
-#define RECR_CUTIN_H
-
-extern void view_cut_in();
-
-#endif
+extern void CutinReady();
+extern void ViewCutIn(int Stime);
+extern void ViewCutOut(int Stime);

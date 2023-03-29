@@ -2,6 +2,7 @@
 #include "fontcur.h"
 #include "playbox.h"
 #include "system.h"
+#include "recr_cutin.h"
 
 #define CAL_ACC(judge, notes)												\
 	(((judge).just * 10000 + (judge).good * 9500 +							\
@@ -24,6 +25,7 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	int NewRate, int RateSub, char rank, int score, double acc,
 	int gapa[], short int Clear, char charNo) {
 	/* num */
+	char closeFg = 0;
 	short int fontNo;
 	switch (rank) {
 	case 0:
@@ -49,6 +51,7 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		break;
 	}
 	int G[10] = { 0,0,0,0,0,0,0,0,0,0 };
+	int CutTime = 0;
 	/* image */
 	int coleimg;
 	switch (Clear) {
@@ -133,9 +136,11 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	int resultimg = LoadGraph(L"picture/result.png");
 	/* audio */
 	int musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
+	CutinReady();
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_LOOP);
 	WaitTimer(10);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	CutTime = GetNowCount();
 	while (1) {
 		ClearDrawScreen();
 		DrawGraph(0, 0, resultimg, TRUE);
@@ -149,7 +154,7 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		DrawCurFont(notes, 265, 215, 30, 5);
 		DrawFormatString(10, 320, COLOR_WHITE, L"%d.%2d",
 			NewRate / 100, NewRate % 100);
-		if (RateSub != 0) {
+		if (0 < RateSub) {
 			DrawFormatString(10, 340, COLOR_WHITE, L"+%d.%2d",
 				RateSub / 100, RateSub % 100);
 		}
@@ -163,14 +168,24 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		DrawGraph(140, 260, rankimg, TRUE);
 		DrawGraph(5, 420, coleimg, TRUE);
 		DrawGraph(336, 252, Rchaimg, TRUE);
+		if (closeFg == 0) {
+			ViewCutOut(CutTime);
+		}
+		if (closeFg == 1) {
+			ViewCutIn(CutTime);
+		}
 		ScreenFlip();
 		//ƒGƒ“ƒ^[‚ª‰Ÿ‚³‚ê‚½
 		if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
+			closeFg = 1;
+			CutTime = GetNowCount();
+		}
+		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
 			break;
 		}
-		else if (GetWindowUserCloseFlag(TRUE)) return SCENE_EXIT;
+		if (GetWindowUserCloseFlag(TRUE)) return SCENE_EXIT;
 	}
 	InitGraph();
 	return SCENE_SERECT;

@@ -1,6 +1,7 @@
 #include "RecordLoad2.h"
 #include "result.h"
 #include "playbox.h"
+#include "recr_cutin.h"
 
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
@@ -19,13 +20,16 @@
 #define F_MISS_TIME 200
 
 #if 0
-#define RECR_DEBUG(ofs, n, data_a, data_b)						\
-	for (int _rep = 0; _rep < n; _rep++) {						\
-		DrawFormatString(20, 120 + _rep * 20 + ofs * 20, Cr,	\
-		L#data_a"[%d]"#data_b": %d", _rep, data_a[_rep]data_b);	\
+#define RECR_DEBUG(ofs, data)											\
+		DrawFormatString(20, 120 + ofs * 20, Cr, L#data": %d", data)
+#define RECR_DEBUG_LOOP(ofs, n, data_a, data_b)							\
+	for (int _rep = 0; _rep < n; _rep++) {								\
+		DrawFormatString(20, 120 + _rep * 20 + ofs * 20, Cr,			\
+		L#data_a"[%d]"#data_b": %d", _rep, data_a[_rep]data_b);			\
 	}
 #else
 #define RECR_DEBUG(n, data_a, data_b)
+#define RECR_DEBUG_LOOP(n, data_a, data_b)
 #endif
 
 typedef enum chara_pos_e {
@@ -84,16 +88,23 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	//p: パックナンバー
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
+	/* char */
+	char hitatk2 = 0; //hit event, bit unit: 0: upper hit, 1: middle hit, 2: lower hit, 3~7: reserved
+	char key[256];
+	char closeFg = 0;
+	/* short */
 	short int i[3];
 	short int Lv = 0;
 	short int notes = 0;
-	int bgp[3] = { 0,0,0 }; //[0:sky,1:ground,2:water]の横位置
 	short int bgf[2] = { 0,0 }; //落ち物背景の[0:横位置,1:縦位置]
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
 	short int drop = 0;
-	short int rank = 0;
-	short int Clear = 0;
 	short int KeyPushCount[7] = { 0,0,0,0,0,0,0 };
+	short int cameraN = 0;
+	short int objectN[3] = { 0,0,0 }; //note number
+	short int objectNG[3] = { 0,0,0 }; //note number without ghost note
+	/* int */
+	int bgp[3] = { 0,0,0 }; //[0:sky,1:ground,2:water]の横位置
 	int judgh = 0; //ノーツの時間距離
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20], songT;
@@ -101,8 +112,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int Ntime = 0;
-	view_jug_eff_t judge_eff[3];
-	play_key_stat_t key_stat;
 	int holda = 0;
 	int holdb = 0;
 	int holdc = 0;
@@ -121,29 +130,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int judghcount[4] = { 0,0,0,0 };
 	int life = 500;
 	int ret_gap[3] = { 0,0,0 };
-	gap_box gap2;
 	int StopFrag = -1;
 	int hitpose = 0;
-	struct camera_box camera[255];
-	short int cameraN = 0;
 	int nowcamera[2] = { 320,240 };
-	struct judge_box judge;
-	struct score_box score;
-	struct scrool_box scrool[99];
 	int scroolN = 0;
 	int HighSrore; //ハイスコア
 	int viewjudge[4] = { 0,0,0,0 };
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
-	char hitatk2 = 0; //hit event, bit unit: 0: upper hit, 1: middle hit, 2: lower hit, 3~7: reserved
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
-	for (i[0] = 0; i[0] <= 59; i[0]++)fps[i[0]] = 17;
-	fps[60] = 0;
-	fps[61] = 0;
-	double GD[5];
-	int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
-	short int itemN = 0; //↑の番号
-	int Sitem[99]; //サウンドアイテムのアドレス、DrawGraphで呼べる。
-	short int SitemN = 0; //↑の番号
 	int chamo[3][99][2]; //キャラの[0:上,1:中,2:下]の[0:グラフィック,1:切り替え時間]
 	short int chamoN[3] = { 0,0,0 }; //↑の番号
 	int fall[99][2]; //落ち物背景の[0:番号,1:時間]
@@ -159,24 +153,37 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int carrowN = 0;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	short int viewTN = 0;
-	item_box Movie[999];
-	short int MovieN = 0;
-	view_BPM_box v_bpm[100];
-	unsigned int v_bpmN = 0;
-	struct note_box note[3][2000];
-	short int objectN[3] = { 0,0,0 }; //note number
-	short int objectNG[3] = { 0,0,0 }; //note number without ghost note
 	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
 	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
 	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
 	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
 	int Xline[3] = { 150,150,150 };//[上,中,下]レーンの横位置
 	int outpoint[2] = { -1,0 };
-	double SumRate[2] = { 0,0 }, bpm = 120, bpmG = 120;
+	unsigned int Cr = GetColor(255, 255, 255);
+	unsigned int Crb = GetColor(0, 0, 0);
+	unsigned int CrR = GetColor(255, 0, 0);
+	int CutTime = 0;
+	/* struct */
+	view_jug_eff_t judge_eff[3];
+	play_key_stat_t key_stat;
+	gap_box gap2;
+	struct camera_box camera[255];
+	struct judge_box judge;
+	struct score_box score;
+	struct scrool_box scrool[99];
+	item_box Movie[999];
+	short int MovieN = 0;
+	view_BPM_box v_bpm[100];
+	unsigned int v_bpmN = 0;
+	struct note_box note[3][2000];
+	playnum_box allnum;
+	/* double */
+	double GD[5];
+	double SumRate[2] = { 0,0 }, bpm = 120;
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
-	double DifRate; //譜面定数
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
-	char key[256];
+	double DifRate; //譜面定数
+	/* wchar_t */
 	wchar_t songN[255];
 	wchar_t songNE[255];
 	wchar_t fileN[255];
@@ -189,15 +196,20 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
 	wchar_t GT2[255];
-	wchar_t GT3[] = L".png";
 	wchar_t ST1[] = L"record/";
 	wchar_t ST2[] = L"/list.txt";
 	wchar_t ST3[] = L".dat";
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	unsigned int Cr = GetColor(255, 255, 255);
-	unsigned int Crb = GetColor(0, 0, 0);
-	unsigned int CrR = GetColor(255, 0, 0);
-	playnum_box allnum;
+	/* image */
+	int item[99]; //アイテムのfd、DrawGraphで呼べる。
+	short int itemN = 0; //↑の番号
+	/* sound */
+	int Sitem[99]; //サウンドアイテムのfd
+	short int SitemN = 0; //↑の番号
+	CutinReady();
+	for (i[0] = 0; i[0] <= 59; i[0]++)fps[i[0]] = 17;
+	fps[60] = 0;
+	fps[61] = 0;
 	FILE *fp;
 	//システムロード
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
@@ -335,7 +347,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int backwaterimg = LoadGraph(waterFN);
 	int dangerimg = LoadGraph(L"picture/danger.png");
 	int dropimg = LoadGraph(L"picture/drop.png");
-	int resultimg = LoadGraph(L"picture/result.png");
 	int sbarimg = LoadGraph(L"picture/scoreber.png");
 	int sbbarimg = LoadGraph(L"picture/scoreber2.png");
 	int filterimg = LoadGraph(L"picture/Black.png");
@@ -479,6 +490,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK);
 	WaitTimer(10);
 	int Stime = GetNowCount();
+	CutTime = Stime;
 	//ゲーム開始
 	while (1) {
 		ClearDrawScreen();
@@ -1391,8 +1403,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
 			DrawFormatString(20, 100, Cr, L"Autoplay");
 		}
-		RECR_DEBUG(0, 3, objectNG);
-		RECR_DEBUG(3, 3, objectN);
+		RECR_DEBUG(0, CutTime);
 		//データオーバーフローで警告文表示
 		if (0 <= note[0][1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"UPPER OVER");
@@ -1420,8 +1431,21 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
 			ShowBonusEff(judge, AllNotesHitTime, BonusSnd, Bonusimg, filterimg, BigLightimg, SmallLightimg, flashimg, B_ringimg);
 		}
-		//終了時間から5秒以上たって、曲が終了したら抜ける。
-		if (Etime + 5000 <= Ntime && (musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
+		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
+		if (closeFg == 0 &&
+			Etime + 5000 <= Ntime &&
+			(musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
+			closeFg = 1;
+			CutTime = GetNowCount();
+		}
+		if (closeFg == 0) {
+			ViewCutOut(CutTime);
+		}
+		if (closeFg == 1) {
+			ViewCutIn(CutTime);
+		}
+		//カットイン再生から2秒以上たったら抜ける。
+		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
 			break;
