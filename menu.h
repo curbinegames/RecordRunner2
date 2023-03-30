@@ -1,3 +1,5 @@
+#include "recr_cutin.h"
+
 #define MENU_NUM 4
 
 typedef struct _menu_item {
@@ -11,13 +13,15 @@ void DrawBack(_menu_item now, _menu_item before, int time);
 void DrawCard(_menu_item *card, int num, int LR, int time);
 
 now_scene_t menu(void) {
+	char closeFg = 0;
 	int command = 0; //選択中のモード
 	int before = 0; //前に選んでたモード
 	int LR = 1;
 	int starttime = -250;
 	int help, goust, select;
 	int key = 1;
-	int	lan[7] = { 0,0,0,2,0,0,0 };//使うのは[4,言語]だけ
+	int	lan[7] = { 0,0,0,2,0,0,0 }; //使うのは[4,言語]だけ
+	int CutTime = 0;
 	now_scene_t next = SCENE_MENU; //次のモード
 	_menu_item menu_item[MENU_NUM];
 	FILE *fp;
@@ -27,6 +31,7 @@ now_scene_t menu(void) {
 		fclose(fp);
 	}
 	unsigned int Cr = GetColor(255, 255, 255);
+	CutinReady();
 	menu_item[0] = { 
 		LoadGraph(L"picture/menu/FREE PLAY.png"),
 		LoadGraph(L"picture/menu/FREE PLAY G.png"),
@@ -53,14 +58,25 @@ now_scene_t menu(void) {
 	};
 	help = LoadGraph(L"picture/help.png");
 	select = LoadSoundMem(L"sound/arrow.wav");
+	CutTime = GetNowCount();
 	while (1) {
 		ClearDrawScreen();
 		//背景表示
 		DrawBack(menu_item[command], menu_item[before], GetNowCount() - starttime);
 		DrawCard(menu_item, command, LR, GetNowCount() - starttime);
 		DrawGraph(0, 0, help, TRUE);
-		if (lan[4] == 0)DrawString(5, 460, L"左右キー:選択   Enterキー:決定", Cr);
-		else if (lan[4] == 1)DrawString(5, 460, L"←→key:choose   Enter key:enter", Cr);
+		if (lan[4] == 0) {
+			DrawString(5, 460, L"左右キー:選択   Enterキー:決定", Cr);
+		}
+		else if (lan[4] == 1) {
+			DrawString(5, 460, L"←→key:choose   Enter key:enter", Cr);
+		}
+		if (closeFg == 0) {
+			ViewCutOut(CutTime);
+		}
+		if (closeFg == 1) {
+			ViewCutIn(CutTime);
+		}
 		ScreenFlip();
 		//ここからキー判定
 		if (CheckHitKey(KEY_INPUT_LEFT)) {
@@ -90,8 +106,14 @@ now_scene_t menu(void) {
 		else if (CheckHitKey(KEY_INPUT_RETURN)) {
 			//エンターが押された
 			if (key == 0) {
-				next = menu_item[command].num;
-				break;
+				if (menu_item[command].num != SCENE_SERECT) {
+					next = menu_item[command].num;
+					break;
+				}
+				SetCutTipFg(CUTIN_TIPS_ON);
+				SetTipNo();
+				closeFg = 1;
+				CutTime = GetNowCount();
 			}
 			key = 1;
 		}
@@ -102,7 +124,11 @@ now_scene_t menu(void) {
 		}
 		//特定のキーが押されていない
 		else key = 0;
-		WaitTimer(5);
+		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
+			next = menu_item[command].num;
+			break;
+		}
+		WaitTimer(10);
 	}
 	return next;
 }

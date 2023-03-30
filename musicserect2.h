@@ -19,7 +19,6 @@ now_scene_t musicserect2(int *p1) {
 	int LR = 1;
 	int ShiftKey = 0;
 	int AutoFlag = 0;
-	int key = 1;
 	int SongPreSTime = 0;
 	int SongPrePat = 0;
 	int SortMode = SORT_DEFAULT;
@@ -43,24 +42,7 @@ now_scene_t musicserect2(int *p1) {
 	wchar_t GT1[256];
 	wchar_t GT2[256];
 	wchar_t GT3[256];
-	wchar_t ST1[] = L"record/";
-	wchar_t ST2[] = L"/list.txt";
-	wchar_t ST3[] = { L"NULL" };
 	wchar_t ST4[6][7] = { L"0.txt" ,L"1.txt" ,L"2.txt" ,L"3.txt" ,L"4.txt" ,L"5.txt" };
-	wchar_t ST5[] = { L"picture/NULL jucket.png" };
-	wchar_t ST6[] = { L"#TITLE:" };
-	wchar_t ST6E[] = { L"#E.TITLE:" };
-	wchar_t ST7[] = { L"#ARTIST:" };
-	wchar_t ST7E[] = { L"#E.ARTIST:" };
-	wchar_t ST8[] = { L"#MUSIC:" };
-	wchar_t ST9[] = { L"song/" };
-	wchar_t ST10[] = { L"#LEVEL:" };
-	wchar_t ST11[] = { L"#PREVIEW:" };
-	wchar_t ST12[] = { L"#JACKET:" };
-	wchar_t ST13[] = { L"#DIFBAR:" };
-	wchar_t ST14[] = { L"#MAP:" };
-	wchar_t ST15[] = { L"score/" };
-	wchar_t ST16[] = { L".dat" };
 	now_scene_t next = SCENE_EXIT;
 	MUSIC_BOX songdata[SongNumLim];
 	int back = LoadGraph(L"picture/MSback.png");
@@ -132,17 +114,17 @@ now_scene_t musicserect2(int *p1) {
 	G[2] = 0;
 	for (int i = 0; i < G[1]; i++) {
 		//"record/<パック名>/list.txt"を探す
-		strcopy(ST1, GT1, 1); //"record/"
+		strcopy(L"record/", GT1, 1); //"record/"
 		strcats(GT1, PackName[i]); //"record/<パック名>"
-		strcats(GT1, ST2); //"record/<パック名>/list.txt"
+		strcats(GT1, L"/list.txt"); //"record/<パック名>/list.txt"
 		G[0] = FileRead_open(GT1);
 		PackFirstNum[i] = G[2];
 		while (FileRead_eof(G[0]) == 0) {
 			FileRead_gets(GT1, 256, G[0]); //GT1に曲名が入る
 			songdata[G[2]].limit = 3;
-			strcopy(ST3, songdata[G[2]].difP, 1);
+			strcopy(L"NULL", songdata[G[2]].difP, 1);
 			for (int j = 0; j < 6; j++) {
-				strcopy(ST1, GT2, 1); //"record/"
+				strcopy(L"record/", GT2, 1); //"record/"
 				strcats(GT2, PackName[i]); //"record/<パック名>"
 				stradds(GT2, L'/'); //"record/<パック名>/"
 				strcats(GT2, GT1); //"record/<パック名>/<曲名>"
@@ -150,10 +132,10 @@ now_scene_t musicserect2(int *p1) {
 				strcopy(GT2, GT3, 1); //GT3にコピー
 				strcats(GT2, ST4[j]); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 				//初期値定義(ファイルがなくても代入する)
-				strcopy(ST3, songdata[G[2]].SongName[j], 1);
-				strcopy(ST3, songdata[G[2]].artist[j], 1);
-				strcopy(ST3, songdata[G[2]].SongFileName[j], 1);
-				strcopy(ST5, songdata[G[2]].jacketP[j], 1);
+				strcopy(L"NULL", songdata[G[2]].SongName[j], 1);
+				strcopy(L"NULL", songdata[G[2]].artist[j], 1);
+				strcopy(L"NULL", songdata[G[2]].SongFileName[j], 1);
+				strcopy(L"picture/NULL jucket.png", songdata[G[2]].jacketP[j], 1);
 				strcopy(PackName[i], songdata[G[2]].packName, 1);
 				songdata[G[2]].level[j] = -1;
 				songdata[G[2]].preview[j][0] = 441000;
@@ -165,36 +147,40 @@ now_scene_t musicserect2(int *p1) {
 				while (FileRead_eof(G[3]) == 0) {
 					FileRead_gets(GT2, 256, G[3]);
 					//曲名を読み込む
-					if (strands(GT2, ST6) && (lan[4] == 0 || strands(songdata[G[2]].SongName[j], ST3))) {
+					if (strands(GT2, L"#TITLE:") &&
+						(lan[4] == 0 || strands(songdata[G[2]].SongName[j], L"NULL"))) {
 						strmods(GT2, 7);
 						strcopy(GT2, songdata[G[2]].SongName[j], 1);
 					}
-					if (strands(GT2, ST6E) && (lan[4] == 1 || strands(songdata[G[2]].SongName[j], ST3))) {
+					if (strands(GT2, L"#E.TITLE:") &&
+						(lan[4] == 1 || strands(songdata[G[2]].SongName[j], L"NULL"))) {
 						strmods(GT2, 9);
 						strcopy(GT2, songdata[G[2]].SongName[j], 1);
 					}
 					//作曲者を読み込む
-					if (strands(GT2, ST7) && (lan[4] == 0 || strands(songdata[G[2]].artist[j], ST3))) {
+					if (strands(GT2, L"#ARTIST:") &&
+						(lan[4] == 0 || strands(songdata[G[2]].artist[j], L"NULL"))) {
 						strmods(GT2, 8);
 						strcopy(GT2, songdata[G[2]].artist[j], 1);
 					}
-					if (strands(GT2, ST7E) && (lan[4] == 1 || strands(songdata[G[2]].artist[j], ST3))) {
+					if (strands(GT2, L"#E.ARTIST:") &&
+						(lan[4] == 1 || strands(songdata[G[2]].artist[j], L"NULL"))) {
 						strmods(GT2, 10);
 						strcopy(GT2, songdata[G[2]].artist[j], 1);
 					}
 					//曲ファイル名を読み込む
-					if (strands(GT2, ST8)) {
+					if (strands(GT2, L"#MUSIC:")) {
 						strmods(GT2, 7);
 						strcopy(GT3, songdata[G[2]].SongFileName[j], 1);
 						strcats(songdata[G[2]].SongFileName[j], GT2);
 					}
 					//難易度を読み込む
-					if (strands(GT2, ST10)) {
+					if (strands(GT2, L"#LEVEL:")) {
 						strmods(GT2, 7);
 						songdata[G[2]].level[j] = strsans(GT2);
 					}
 					//プレビュー時間を読み込む
-					if (strands(GT2, ST11)) {
+					if (strands(GT2, L"#PREVIEW:")) {
 						strmods(GT2, 9);
 						songdata[G[2]].preview[j][0] = (int)((double)strsans(GT2) / 1000.0 * 44100.0);
 						strnex(GT2);
@@ -203,19 +189,19 @@ now_scene_t musicserect2(int *p1) {
 						}
 					}
 					//ジャケット写真を読み込む
-					if (strands(GT2, ST12)) {
+					if (strands(GT2, L"#JACKET:")) {
 						strmods(GT2, 8);
 						strcopy(GT3, songdata[G[2]].jacketP[j], 1);
 						strcats(songdata[G[2]].jacketP[j], GT2);
 					}
 					//差し替えAnotherバーを読み込む
-					if (strands(GT2, ST13)) {
+					if (strands(GT2, L"#DIFBAR:")) {
 						strmods(GT2, 8);
 						strcopy(GT3, songdata[G[2]].difP, 1);
 						strcats(songdata[G[2]].difP, GT2);
 					}
 					//マップに入ったら抜ける
-					if (strands(GT2, ST14)) { break; }
+					if (strands(GT2, L"#MAP:")) { break; }
 				}
 				FileRead_close(G[3]);
 			}
@@ -227,9 +213,9 @@ now_scene_t musicserect2(int *p1) {
 				songdata[G[2]].ClearRank[j] = 6;
 				songdata[G[2]].ClearRate[j] = 0;
 			}
-			strcopy(ST15, GT2, 1);
+			strcopy(L"score/", GT2, 1);
 			strcats(GT2, GT1);
-			strcats(GT2, ST16);
+			strcats(GT2, L".dat");
 			e = _wfopen_s(&fp, GT2, L"rb");
 			if (e == 0) {
 				fread(&songdata[G[2]].Hscore, sizeof(int), 6, fp);
@@ -273,6 +259,19 @@ now_scene_t musicserect2(int *p1) {
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
 	CutinReady();
+	G[0] = Mapping[command[0]];
+	G[1] = songdata[G[0]].preview[command[1]][0];
+	// 開始位置に曲ファイルがあれば再生
+	if (strands(songdata[G[0]].SongFileName[command[1]], L"NULL") == 0) {
+		SongPrePat = 0; // 再生位置パターンを0に設定
+		strcopy(songdata[G[0]].SongFileName[command[1]], playingsong, 1); // 曲名取得
+		previewM = LoadSoundMem(playingsong); // 曲をfdに読み込み
+		SetCurrentPositionSoundMem(G[1], previewM); // 再生位置
+		ChangeVolumeSoundMem(0, previewM); // 音量
+		PlaySoundMem(previewM, DX_PLAYTYPE_BACK, FALSE); // 再生
+		WaitTimer(10); // ウェイト
+		SongPreSTime = GetNowCount(); // 再生開始時間を保存
+	}
 	CutTime = GetNowCount();
 	while (1) {
 		ClearDrawScreen();
@@ -336,7 +335,7 @@ now_scene_t musicserect2(int *p1) {
 			songdata[Mapping[command[0]]].Hdis[command[1]] / 1000.0);
 		//プレビューを流す
 		if (moveC == 0 && XmoveC == 0
-			&& strands(songdata[Mapping[command[0]]].SongFileName[command[1]], ST3) == 0
+			&& strands(songdata[Mapping[command[0]]].SongFileName[command[1]], L"NULL") == 0
 			&& strands(playingsong, songdata[Mapping[command[0]]].SongFileName[command[1]]) == 0) {
 			StopSoundMem(previewM);
 			DeleteSoundMem(previewM);
@@ -454,7 +453,7 @@ now_scene_t musicserect2(int *p1) {
 			if (0 <= songdata[Mapping[command[0]]].level[command[1]]) {
 				//隠し曲用
 				if (command[1] == 3 && songdata[Mapping[command[0]]].Hscore[3] >= 90000
-					&& strands(songdata[Mapping[command[0]]].SongFileName[5], ST3) == 0
+					&& strands(songdata[Mapping[command[0]]].SongFileName[5], L"NULL") == 0
 					&& songdata[Mapping[command[0]]].Hscore[5] <= 0) {
 					G[0] = 0;
 					if (songdata[Mapping[command[0]]].Hscore[3] >= 90000
@@ -494,12 +493,17 @@ now_scene_t musicserect2(int *p1) {
 				p1++;
 				*p1 = AutoFlag;
 				next = SCENE_MUSIC;
+				SetCutTipFg(CUTIN_TIPS_SONG);
+				SetCutSong(songdata[Mapping[command[0]]].SongName[command[1]],
+					songdata[Mapping[command[0]]].jacketP[command[1]]);
 				closeFg = 1;
 				CutTime = GetNowCount();
 			}
 		}
 		else if (G[0] == 2) { /* 戻る */
 			next = SCENE_MENU;
+			SetTipNo();
+			SetCutTipFg(CUTIN_TIPS_ON);
 			closeFg = 1;
 			CutTime = GetNowCount();
 		}
@@ -518,10 +522,12 @@ now_scene_t musicserect2(int *p1) {
 				UD = -1;
 				startC = GetNowCount();
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
-					if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
+				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
+					if (strands(songdata[Mapping[command[0]]].SongName[0], L"NULL") != 1) {
+						command[1] = 0;
+					}
 					for (int i = 1; i <= 3; i++) {
-						if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
+						if (strands(songdata[Mapping[command[0]]].SongName[i], L"NULL") != 1) {
 							command[1] = i;
 							break;
 						}
@@ -541,10 +547,11 @@ now_scene_t musicserect2(int *p1) {
 				UD = 1;
 				startC = GetNowCount();
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], ST3)) {
-					if (strands(songdata[Mapping[command[0]]].SongName[0], ST3) != 1) command[1] = 0;
+				if (SortMode == SORT_DEFAULT &&
+					strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
+					if (strands(songdata[Mapping[command[0]]].SongName[0], L"NULL") != 1) command[1] = 0;
 					for (int i = 1; i <= 3; i++) {
-						if (strands(songdata[Mapping[command[0]]].SongName[i], ST3) != 1) {
+						if (strands(songdata[Mapping[command[0]]].SongName[i], L"NULL") != 1) {
 							command[1] = i;
 							break;
 						}

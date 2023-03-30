@@ -1435,6 +1435,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (closeFg == 0 &&
 			Etime + 5000 <= Ntime &&
 			(musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
+			SetCutTipFg(CUTIN_TIPS_NONE);
 			closeFg = 1;
 			CutTime = GetNowCount();
 		}

@@ -177,6 +177,8 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		ScreenFlip();
 		//ÉGÉìÉ^Å[Ç™âüÇ≥ÇÍÇΩ
 		if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
+			SetCutTipFg(CUTIN_TIPS_ON);
+			SetTipNo();
 			closeFg = 1;
 			CutTime = GetNowCount();
 		}
