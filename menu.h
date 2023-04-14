@@ -31,7 +31,6 @@ now_scene_t menu(void) {
 		fclose(fp);
 	}
 	unsigned int Cr = GetColor(255, 255, 255);
-	CutinReady();
 	menu_item[0] = { 
 		LoadGraph(L"picture/menu/FREE PLAY.png"),
 		LoadGraph(L"picture/menu/FREE PLAY G.png"),

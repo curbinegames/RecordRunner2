@@ -206,7 +206,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/* sound */
 	int Sitem[99]; //サウンドアイテムのfd
 	short int SitemN = 0; //↑の番号
-	CutinReady();
 	for (i[0] = 0; i[0] <= 59; i[0]++)fps[i[0]] = 17;
 	fps[60] = 0;
 	fps[61] = 0;
@@ -1554,7 +1553,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
-			InitGraph();
+			InitPic();
 			return SCENE_SERECT;
 		}
 		WaitTimer(5);
@@ -1566,7 +1565,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		ScreenFlip();
 	}
-	InitGraph();
+	InitPic();
 	if (AutoFlag == 1) { return SCENE_SERECT; }
 	else {
 		ret_gap[0] = gap2.sum;

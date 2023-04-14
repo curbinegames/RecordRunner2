@@ -258,7 +258,6 @@ now_scene_t musicserect2(int *p1) {
 	G[0] += 0;
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
-	CutinReady();
 	G[0] = Mapping[command[0]];
 	G[1] = songdata[G[0]].preview[command[1]][0];
 	// 開始位置に曲ファイルがあれば再生
@@ -614,7 +613,7 @@ now_scene_t musicserect2(int *p1) {
 			StopSoundMem(previewM);
 			ClearDrawScreen();
 			InitSoundMem();
-			InitGraph();
+			InitPic();
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) {

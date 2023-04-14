@@ -173,10 +173,11 @@ now_scene_t option(void) {
 			}
 			key = 1;
 		}
-#if 0
+#if 1 /* デバッグ用コード */
 		else if (CheckHitKey(KEY_INPUT_Q) == 1) {
-			/* output dif */
 			if (key == 0) {
+#if 0 /* 全譜面定数を出力 */
+				/* output dif */
 				int G[10];
 				int difl[4] = { 0,0,0,0 };
 				wchar_t file[255];
@@ -252,6 +253,22 @@ now_scene_t option(void) {
 					}
 				}
 				fclose(ofp);
+#elif 0 /* プレイヤーのレートの詳細を出力 */
+				FILE* fp;
+				FILE* outfp;
+				play_rate_t temp;
+				wchar_t temp2[255];
+				(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
+				(void)_wfopen_s(&outfp, L"RateDetail.txt", L"w");
+				if (fp != NULL && outfp != NULL) {
+					for (int i = 0; i < RATE_NUM; i++) {
+						fread(&temp, sizeof(play_rate_t), 1, fp);
+						fwprintf(outfp, L"%2d: %5.2f: %s\n", i + 1, temp.num, temp.name);
+					}
+				}
+				fclose(fp);
+				fclose(outfp);
+#endif
 			}
 			key = 1;
 		}

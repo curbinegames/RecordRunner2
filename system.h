@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DxLib.h"
+#include "recr_cutin.h"
 
 #define COLOR_WHITE (0xffffffff)
 
@@ -13,6 +14,11 @@ typedef enum now_scene_e {
 	SCENE_EXIT = 5,
 	SCENE_MUSIC,
 } now_scene_t; /* = next */
+
+void InitPic() {
+	InitGraph();
+	CutinReady();
+}
 
 char GetCharNo() {
 	int data[6] = { 0,0,0,2,0,0 };

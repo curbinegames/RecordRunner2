@@ -136,7 +136,6 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	int resultimg = LoadGraph(L"picture/result.png");
 	/* audio */
 	int musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
-	CutinReady();
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_LOOP);
 	WaitTimer(10);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
@@ -152,10 +151,10 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		DrawCurFont(judge->miss, 140, 175, 30, 1);
 		DrawCurFont(Mcombo, 155, 215, 30, 4);
 		DrawCurFont(notes, 265, 215, 30, 5);
-		DrawFormatString(10, 320, COLOR_WHITE, L"%d.%2d",
+		DrawFormatString(10, 320, COLOR_WHITE, L"%d.%02d",
 			NewRate / 100, NewRate % 100);
 		if (0 < RateSub) {
-			DrawFormatString(10, 340, COLOR_WHITE, L"+%d.%2d",
+			DrawFormatString(10, 340, COLOR_WHITE, L"+%d.%02d",
 				RateSub / 100, RateSub % 100);
 		}
 		else { DrawString(10, 340, L"not rise", COLOR_WHITE); }
@@ -189,7 +188,7 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		}
 		if (GetWindowUserCloseFlag(TRUE)) return SCENE_EXIT;
 	}
-	InitGraph();
+	InitPic();
 	return SCENE_SERECT;
 }
 
@@ -316,6 +315,11 @@ void SaveRate(wchar_t songN[], double rate) {
 	char num = -1;
 	play_rate_t data[RATE_NUM];
 	FILE* fp;
+	(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
+	if (fp != NULL) {
+		fread(&data, sizeof(play_rate_t), RATE_NUM, fp);
+		fclose(fp);
+	}
 	// “¯‚¶‹ÈA‚Ü‚½‚Í–¢Žû˜^‚ð’T‚·
 	for (char i = 0; i < RATE_NUM; i++) {
 		if ((strands(songN, data[i].name) || (data[i].name[0] == L'\0')) &&

@@ -29,7 +29,6 @@ now_scene_t title(void) {
 	int Push = LoadGraph(L"picture/pushkey.png");
 	int white = LoadGraph(L"picture/White.png");
 	int CutTime = 0;
-	CutinReady();
 	StartTime = GetNowCount();
 	CutTime = StartTime;
 	while (1) {
@@ -52,7 +51,7 @@ now_scene_t title(void) {
 		}
 		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
 			InitSoundMem();
-			InitGraph();
+			InitPic();
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) {
