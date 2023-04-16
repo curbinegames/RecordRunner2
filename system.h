@@ -5,6 +5,10 @@
 
 #define COLOR_WHITE (0xffffffff)
 
+#define INIT_PIC() InitGraph(); CutinReadyPic()
+#define INIT_SND() InitSoundMem(); CutinReadySnd()
+#define INIT_MAT() INIT_PIC(); INIT_SND()
+
 typedef enum now_scene_e {
 	SCENE_TITLE = 0,
 	SCENE_MENU,
@@ -14,11 +18,6 @@ typedef enum now_scene_e {
 	SCENE_EXIT = 5,
 	SCENE_MUSIC,
 } now_scene_t; /* = next */
-
-void InitPic() {
-	InitGraph();
-	CutinReady();
-}
 
 char GetCharNo() {
 	int data[6] = { 0,0,0,2,0,0 };

@@ -50,8 +50,7 @@ now_scene_t title(void) {
 			CutTime = GetNowCount();
 		}
 		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
-			InitSoundMem();
-			InitPic();
+			INIT_MAT();
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) {

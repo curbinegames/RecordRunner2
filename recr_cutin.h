@@ -6,7 +6,8 @@ typedef enum cutin_tips_e {
 	CUTIN_TIPS_SONG,
 } cutin_tips_e;
 
-extern void CutinReady();
+extern void CutinReadyPic();
+extern void CutinReadySnd();
 extern void SetCutSong(wchar_t* songName, wchar_t* picName);
 extern void SetCutTipFg(cutin_tips_e Fg);
 extern void SetTipNo();

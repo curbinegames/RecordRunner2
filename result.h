@@ -187,7 +187,7 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		}
 		if (GetWindowUserCloseFlag(TRUE)) return SCENE_EXIT;
 	}
-	InitPic();
+	INIT_PIC();
 	return SCENE_SERECT;
 }
 

@@ -1553,7 +1553,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
-			InitPic();
+			INIT_PIC();
 			return SCENE_SERECT;
 		}
 		WaitTimer(5);
@@ -1565,7 +1565,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		ScreenFlip();
 	}
-	InitPic();
+	INIT_PIC();
 	if (AutoFlag == 1) { return SCENE_SERECT; }
 	else {
 		ret_gap[0] = gap2.sum;

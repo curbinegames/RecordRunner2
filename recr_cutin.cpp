@@ -77,12 +77,15 @@ static wchar_t const tip[][31] = {
 };
 static char const tipNum = sizeof(tip) / sizeof(tip[0]);
 
-void CutinReady() {
+void CutinReadyPic() {
 	pic_cutin[0] = LoadGraph(L"picture/cutin/cutinU.png");
 	pic_cutin[1] = LoadGraph(L"picture/cutin/cutinD.png");
 	pic_cutin[2] = LoadGraph(L"picture/cutin/cutinDisk.png");
 	pic_cutin[3] = LoadGraph(SongJucketName);
 	pic_cutin[4] = LoadGraph(L"picture/cutin/cutinS.png");
+}
+
+void CutinReadySnd() {
 	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
 	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
 }

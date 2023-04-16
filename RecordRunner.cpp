@@ -37,11 +37,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	upgrade_rate_f(); // レートのセーブデータ更新(Ver.1.04 -> Ver.1.05)
 	//ゲーム終了(nextが5のとき)までの間、処理を繰り返す
 	while (next != 5) {
-		InitPic();
+		INIT_PIC();
 		if (mnom[next] != now) {
 			StopSoundMem(bgm);
-			InitSoundMem();
-			InitPic();
+			INIT_SND();
 			now = mnom[next];
 			switch (mnom[next]) {
 			case 0:

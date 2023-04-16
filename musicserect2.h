@@ -612,8 +612,7 @@ now_scene_t musicserect2(int *p1) {
 		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
 			StopSoundMem(previewM);
 			ClearDrawScreen();
-			InitSoundMem();
-			InitPic();
+			INIT_MAT();
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) {
