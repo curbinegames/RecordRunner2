@@ -317,6 +317,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/* address box */
 	judge_action_box judgeA;
 	judgeA.combo = &combo;
+	judgeA.soundEnFg = &system[2];
 	judgeA.gap = &gap2;
 	judgeA.judge = &judge;
 	judgeA.life = &life;
@@ -367,13 +368,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		p_sound.arw = LoadSoundMem(L"sound/arrow.wav");
 		p_sound.swi = LoadSoundMem(L"sound/swing.wav");
 		p_sound.bom = LoadSoundMem(L"sound/bomb.wav");
-	}
-	else {
-		p_sound.att = LoadSoundMem(L"sound/non.wav");
-		p_sound.cat = LoadSoundMem(L"sound/non.wav");
-		p_sound.arw = LoadSoundMem(L"sound/non.wav");
-		p_sound.swi = LoadSoundMem(L"sound/non.wav");
-		p_sound.bom = LoadSoundMem(L"sound/non.wav");
 	}
 	songT = FileRead_open(L"RecordPack.txt");
 	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
@@ -1132,7 +1126,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 			}
 		}
-
 		//判定
 		//ヒットノーツ
 		G[0] = 0;
@@ -1237,7 +1230,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				judgh = note[i[0]][objectN[i[0]]].hittime - Ntime;
 			}
 		}
-
 		PlayNoteHitSound2(&p_sound);
 		Mcombo = mins(Mcombo, combo);
 		//ヒットエフェクト表示
@@ -1784,6 +1776,7 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 	judge_action_box* const judgeA) {
 	if (judge == NOTE_JUDGE_NONE) { return; }
 	int* const combo = judgeA->combo;
+	int* const SoundEnFg = judgeA->soundEnFg;
 	gap_box* const gap = judgeA->gap;
 	struct judge_box* const judge_b = judgeA->judge;
 	int* const life = judgeA->life;
@@ -1837,7 +1830,7 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 		if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
 			(judge_b->pjust)++;
 		}
-		if (judge != NOTE_JUDGE_MISS) {
+		if (judge != NOTE_JUDGE_MISS && *SoundEnFg == 0) {
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
 				sound->flag, SE_HIT);
 		}
@@ -1845,8 +1838,10 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 	case NOTE_CATCH:
 		if (judge == NOTE_JUDGE_JUST) {
 			(judge_b->pjust)++;
-			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-				sound->flag, SE_CATCH);
+			if (*SoundEnFg == 0) {
+				sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
+					sound->flag, SE_CATCH);
+			}
 		}
 		break;
 	case NOTE_UP:
@@ -1857,7 +1852,7 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 		if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
 			(judge_b->pjust)++;
 		}
-		if (judge != NOTE_JUDGE_MISS) {
+		if (judge != NOTE_JUDGE_MISS && *SoundEnFg == 0) {
 			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
 				sound->flag, SE_ARROW);
 		}
@@ -1868,8 +1863,10 @@ void note_judge_event(note_judge judge, int* const viewjudge,
 			(judge_b->pjust)++;
 			break;
 		case NOTE_JUDGE_MISS:
-			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-				sound->flag, SE_BOMB);
+			if (*SoundEnFg == 0) {
+				sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
+					sound->flag, SE_BOMB);
+			}
 			break;
 		default:
 			/* nope */

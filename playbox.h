@@ -200,6 +200,7 @@ struct scrool_box {
 
 typedef struct judge_action_box_t {
 	int* combo;
+	int* soundEnFg;
 	gap_box* gap;
 	struct judge_box* judge;
 	int* life;
