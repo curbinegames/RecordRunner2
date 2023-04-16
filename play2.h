@@ -163,6 +163,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	unsigned int Crb = GetColor(0, 0, 0);
 	unsigned int CrR = GetColor(255, 0, 0);
 	int CutTime = 0;
+	int Stime = 0;
 	/* struct */
 	view_jug_eff_t judge_eff[3];
 	play_key_stat_t key_stat;
@@ -200,21 +201,179 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	wchar_t ST2[] = L"/list.txt";
 	wchar_t ST3[] = L".dat";
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	/* image */
+	/* ボーナス演出素材 */
+	int Bonusimg[3] = {
+		LoadGraph(L"picture/PERFECT.png"),
+		LoadGraph(L"picture/FULLCOMBO.png"),
+		LoadGraph(L"picture/NOMISS.png")
+	};
+	int BonusSnd[3] = {
+		LoadSoundMem(L"sound/a-perfect.mp3"),
+		LoadSoundMem(L"sound/a-fullcombo.mp3"),
+		LoadSoundMem(L"sound/a-nomiss.mp3")
+	};
+	int BigLightimg = LoadGraph(L"picture/Bonus-Biglight.png");
+	int SmallLightimg[3] = {
+		LoadGraph(L"picture/Bonus-Smalllight3.png"),
+		LoadGraph(L"picture/Bonus-Smalllight2.png"),
+		LoadGraph(L"picture/Bonus-Smalllight1.png")
+	};
+	int flashimg = LoadGraph(L"picture/White.png");
+	int B_ringimg = LoadGraph(L"picture/Bonus-Ring.png");
+	/* その他グラフィックと効果音 */
 	int item[99]; //アイテムのfd、DrawGraphで呼べる。
 	short int itemN = 0; //↑の番号
-	/* sound */
 	int Sitem[99]; //サウンドアイテムのfd
 	short int SitemN = 0; //↑の番号
+	int MelodySnd[24] = {
+		LoadSoundMem(L"sound/melody/lowF.wav"),
+		LoadSoundMem(L"sound/melody/lowF#.wav"),
+		LoadSoundMem(L"sound/melody/lowG.wav"),
+		LoadSoundMem(L"sound/melody/lowG#.wav"),
+		LoadSoundMem(L"sound/melody/lowA.wav"),
+		LoadSoundMem(L"sound/melody/lowA#.wav"),
+		LoadSoundMem(L"sound/melody/lowB.wav"),
+		LoadSoundMem(L"sound/melody/lowC.wav"),
+		LoadSoundMem(L"sound/melody/lowC#.wav"),
+		LoadSoundMem(L"sound/melody/lowD.wav"),
+		LoadSoundMem(L"sound/melody/lowD#.wav"),
+		LoadSoundMem(L"sound/melody/lowE.wav"),
+		LoadSoundMem(L"sound/melody/highF.wav"),
+		LoadSoundMem(L"sound/melody/highF#.wav"),
+		LoadSoundMem(L"sound/melody/highG.wav"),
+		LoadSoundMem(L"sound/melody/highG#.wav"),
+		LoadSoundMem(L"sound/melody/highA.wav"),
+		LoadSoundMem(L"sound/melody/highA#.wav"),
+		LoadSoundMem(L"sound/melody/highB.wav"),
+		LoadSoundMem(L"sound/melody/highC.wav"),
+		LoadSoundMem(L"sound/melody/highC#.wav"),
+		LoadSoundMem(L"sound/melody/highD.wav"),
+		LoadSoundMem(L"sound/melody/highD#.wav"),
+		LoadSoundMem(L"sound/melody/highE.wav")
+	};
+	int judgeimg[4] = {
+		LoadGraph(L"picture/judge-just.png"),
+		LoadGraph(L"picture/judge-good.png"),
+		LoadGraph(L"picture/judge-safe.png"),
+		LoadGraph(L"picture/judge-miss.png")
+	};
+	int judghimg = LoadGraph(L"picture/Marker.png");
+	int backskyimg = 0;
+	int backgroundimg = 0;
+	int backwaterimg = 0;
+	int dangerimg = LoadGraph(L"picture/danger.png");
+	int dropimg = LoadGraph(L"picture/drop.png");
+	int sbarimg = LoadGraph(L"picture/scoreber.png");
+	int sbbarimg = LoadGraph(L"picture/scoreber2.png");
+	int filterimg = LoadGraph(L"picture/Black.png");
+	int charaguideimg = LoadGraph(L"picture/Cguide.png");
+	int gapbarimg = LoadGraph(L"picture/GapBer.png");
+	int gaplineimg = LoadGraph(L"picture/GapBerLine.png");
+	int Lbarimg[3] = {
+		LoadGraph(L"picture/LIFEbar.png"),
+		LoadGraph(L"picture/LIFEbar2.png"),
+		LoadGraph(L"picture/LIFEbar3.png")
+	};
+	int Tbarimg[2] = {
+		LoadGraph(L"picture/TIMEbar.png"),
+		LoadGraph(L"picture/TIMEbar2.png")
+	};
+	int rankimg[6] = {
+		LoadGraph(L"picture/rankEX.png"),
+		LoadGraph(L"picture/rankS.png"),
+		LoadGraph(L"picture/rankA.png"),
+		LoadGraph(L"picture/rankB.png"),
+		LoadGraph(L"picture/rankC.png"),
+		LoadGraph(L"picture/rankD.png")
+	};
+	int coleimg[5] = {
+		LoadGraph(L"picture/DROPED.png"),
+		LoadGraph(L"picture/CLEARED.png"),
+		LoadGraph(L"picture/NOMISS.png"),
+		LoadGraph(L"picture/FULLCOMBO.png"),
+		LoadGraph(L"picture/PERFECT.png")
+	};
+	int effimg[7][5];
+	LoadDivGraph(L"picture/hiteff.png", 5, 5, 1, 50, 50, effimg[0]);
+	LoadDivGraph(L"picture/hiteff.png", 5, 5, 1, 50, 50, effimg[1]);
+	LoadDivGraph(L"picture/upeff.png", 5, 5, 1, 50, 50, effimg[2]);
+	LoadDivGraph(L"picture/downeff.png", 5, 5, 1, 50, 50, effimg[3]);
+	LoadDivGraph(L"picture/lefteff.png", 5, 5, 1, 50, 50, effimg[4]);
+	LoadDivGraph(L"picture/righteff.png", 5, 5, 1, 50, 50, effimg[5]);
+	LoadDivGraph(L"picture/bombeff.png", 5, 5, 1, 50, 50, effimg[6]);
+	int KeyViewimg[2];
+	int Rchaimg;
+	int ComboFontimg[10];
+	LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, ComboFontimg);
+	struct note_img noteimg;
+	play_sound_t p_sound;
+	int musicmp3;
+#define DIV_X 6
+#define DIV_Y 6
+#define PIC_NUM (DIV_X * DIV_Y)
+#define PIC_SIZE_X 160
+#define PIC_SIZE_Y 160
+	int	charaimg[PIC_NUM];
+	/* address box */
+	judge_action_box judgeA;
+	judgeA.combo = &combo;
+	judgeA.gap = &gap2;
+	judgeA.judge = &judge;
+	judgeA.life = &life;
+	judgeA.p_sound = &p_sound;
+	judgeA.score = &score;
+	judgeA.melody_snd = &MelodySnd[0];
+	/* FILE */
+	FILE* fp;
+	/* action */
 	for (i[0] = 0; i[0] <= 59; i[0]++)fps[i[0]] = 17;
 	fps[60] = 0;
 	fps[61] = 0;
-	FILE *fp;
 	//システムロード
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&system, sizeof(int), 7, fp);
 		fclose(fp);
+	}
+	if (system[5]) {
+		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
+		KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
+	}
+	switch (system[0]) {
+	case 0:
+		LoadDivGraph(L"picture/Picker.png",
+			PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
+		Rchaimg = LoadGraph(L"picture/RePicker.png");
+		break;
+	case 1:
+		LoadDivGraph(L"picture/Gator.png",
+			PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
+		Rchaimg = LoadGraph(L"picture/ReGator.png");
+		break;
+	case 2:
+		LoadDivGraph(L"picture/Taylor.png",
+			PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
+		Rchaimg = LoadGraph(L"picture/ReTaylor.png");
+		break;
+	}
+#undef DIV_X
+#undef DIV_Y
+#undef PIC_NUM
+#undef PIC_SIZE_X
+#undef PIC_SIZE_Y
+	if (system[2] == 0) {
+		p_sound.att = LoadSoundMem(L"sound/attack.wav");
+		p_sound.cat = LoadSoundMem(L"sound/catch.wav");
+		p_sound.arw = LoadSoundMem(L"sound/arrow.wav");
+		p_sound.swi = LoadSoundMem(L"sound/swing.wav");
+		p_sound.bom = LoadSoundMem(L"sound/bomb.wav");
+	}
+	else {
+		p_sound.att = LoadSoundMem(L"sound/non.wav");
+		p_sound.cat = LoadSoundMem(L"sound/non.wav");
+		p_sound.arw = LoadSoundMem(L"sound/non.wav");
+		p_sound.swi = LoadSoundMem(L"sound/non.wav");
+		p_sound.bom = LoadSoundMem(L"sound/non.wav");
 	}
 	songT = FileRead_open(L"RecordPack.txt");
 	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
@@ -282,143 +441,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&v_bpm, sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
 		fread(&outpoint, sizeof(int), 2, fp);//エラーデータ
 	}
+	musicmp3 = LoadSoundMem(mp3FN);
+	backskyimg = LoadGraph(skyFN);
+	backgroundimg = LoadGraph(groundFN);
+	backwaterimg = LoadGraph(waterFN);
 	fclose(fp);
 	strcats(DataFN, fileN);
 	strcats(DataFN, ST3);
-	//ハイスコア取得
 	HighSrore = GetHighScore(DataFN, o);
-	//オルゴール音声
-	int MelodySnd[24] = {
-		LoadSoundMem(L"sound/melody/lowF.wav"),
-		LoadSoundMem(L"sound/melody/lowF#.wav"),
-		LoadSoundMem(L"sound/melody/lowG.wav"),
-		LoadSoundMem(L"sound/melody/lowG#.wav"),
-		LoadSoundMem(L"sound/melody/lowA.wav"),
-		LoadSoundMem(L"sound/melody/lowA#.wav"),
-		LoadSoundMem(L"sound/melody/lowB.wav"),
-		LoadSoundMem(L"sound/melody/lowC.wav"),
-		LoadSoundMem(L"sound/melody/lowC#.wav"),
-		LoadSoundMem(L"sound/melody/lowD.wav"),
-		LoadSoundMem(L"sound/melody/lowD#.wav"),
-		LoadSoundMem(L"sound/melody/lowE.wav"),
-		LoadSoundMem(L"sound/melody/highF.wav"),
-		LoadSoundMem(L"sound/melody/highF#.wav"),
-		LoadSoundMem(L"sound/melody/highG.wav"),
-		LoadSoundMem(L"sound/melody/highG#.wav"),
-		LoadSoundMem(L"sound/melody/highA.wav"),
-		LoadSoundMem(L"sound/melody/highA#.wav"),
-		LoadSoundMem(L"sound/melody/highB.wav"),
-		LoadSoundMem(L"sound/melody/highC.wav"),
-		LoadSoundMem(L"sound/melody/highC#.wav"),
-		LoadSoundMem(L"sound/melody/highD.wav"),
-		LoadSoundMem(L"sound/melody/highD#.wav"),
-		LoadSoundMem(L"sound/melody/highE.wav")
-	};
-	//ボーナス演出素材
-	int Bonusimg[3] = {
-		LoadGraph(L"picture/PERFECT.png"),
-		LoadGraph(L"picture/FULLCOMBO.png"),
-		LoadGraph(L"picture/NOMISS.png")
-	};
-	int BonusSnd[3] = {
-		LoadSoundMem(L"sound/a-perfect.mp3"),
-		LoadSoundMem(L"sound/a-fullcombo.mp3"),
-		LoadSoundMem(L"sound/a-nomiss.mp3")
-	};
-	int BigLightimg = LoadGraph(L"picture/Bonus-Biglight.png");
-	int SmallLightimg[3] = {
-		LoadGraph(L"picture/Bonus-Smalllight3.png"),
-		LoadGraph(L"picture/Bonus-Smalllight2.png"),
-		LoadGraph(L"picture/Bonus-Smalllight1.png")
-	};
-	int flashimg = LoadGraph(L"picture/White.png");
-	int B_ringimg = LoadGraph(L"picture/Bonus-Ring.png");
-	//その他グラフィックと効果音
-	int judgeimg[4] = {
-		LoadGraph(L"picture/judge-just.png"),
-		LoadGraph(L"picture/judge-good.png"),
-		LoadGraph(L"picture/judge-safe.png"),
-		LoadGraph(L"picture/judge-miss.png")
-	};
-	int judghimg = LoadGraph(L"picture/Marker.png");
-	int backskyimg = LoadGraph(skyFN);
-	int backgroundimg = LoadGraph(groundFN);
-	int backwaterimg = LoadGraph(waterFN);
-	int dangerimg = LoadGraph(L"picture/danger.png");
-	int dropimg = LoadGraph(L"picture/drop.png");
-	int sbarimg = LoadGraph(L"picture/scoreber.png");
-	int sbbarimg = LoadGraph(L"picture/scoreber2.png");
-	int filterimg = LoadGraph(L"picture/Black.png");
-	int charaguideimg = LoadGraph(L"picture/Cguide.png");
-	int gapbarimg = LoadGraph(L"picture/GapBer.png");
-	int gaplineimg = LoadGraph(L"picture/GapBerLine.png");
-	int difberimg;
-	int Lbarimg[3] = {
-		LoadGraph(L"picture/LIFEbar.png"),
-		LoadGraph(L"picture/LIFEbar2.png"),
-		LoadGraph(L"picture/LIFEbar3.png")
-	};
-	int Tbarimg[2] = {
-		LoadGraph(L"picture/TIMEbar.png"),
-		LoadGraph(L"picture/TIMEbar2.png")
-	};
-	int rankimg[6] = {
-		LoadGraph(L"picture/rankEX.png"),
-		LoadGraph(L"picture/rankS.png"),
-		LoadGraph(L"picture/rankA.png"),
-		LoadGraph(L"picture/rankB.png"),
-		LoadGraph(L"picture/rankC.png"),
-		LoadGraph(L"picture/rankD.png")
-	};
-	int coleimg[5] = {
-		LoadGraph(L"picture/DROPED.png"),
-		LoadGraph(L"picture/CLEARED.png"),
-		LoadGraph(L"picture/NOMISS.png"),
-		LoadGraph(L"picture/FULLCOMBO.png"),
-		LoadGraph(L"picture/PERFECT.png")
-	};
-	int effimg[7][5];
-	int KeyViewimg[2];
-	int Rchaimg;
-	int ComboFontimg[10];
-	//ノーツの画像
-	struct note_img noteimg;
-	play_sound_t p_sound;
-	int musicmp3;
-	judge_action_box judgeA;
-	judgeA.combo = &combo;
-	judgeA.gap = &gap2;
-	judgeA.judge = &judge;
-	judgeA.life = &life;
-	judgeA.p_sound = &p_sound;
-	judgeA.score = &score;
-	judgeA.melody_snd = &MelodySnd[0];
-	switch (o) {
-	case 0:
-		difberimg = LoadGraph(L"picture/difauto.png");
-		break;
-	case 1:
-		difberimg = LoadGraph(L"picture/difeasy.png");
-		break;
-	case 2:
-		difberimg = LoadGraph(L"picture/difnormal.png");
-		break;
-	case 3:
-		difberimg = LoadGraph(L"picture/difhard.png");
-		break;
-	case 4:
-	case 5:
-		difberimg = LoadGraph(DifFN);
-		break;
-	}
-	LoadDivGraph(L"picture/hiteff.png", 5, 5, 1, 50, 50, effimg[0]);
-	LoadDivGraph(L"picture/hiteff.png", 5, 5, 1, 50, 50, effimg[1]);
-	LoadDivGraph(L"picture/upeff.png", 5, 5, 1, 50, 50, effimg[2]);
-	LoadDivGraph(L"picture/downeff.png", 5, 5, 1, 50, 50, effimg[3]);
-	LoadDivGraph(L"picture/lefteff.png", 5, 5, 1, 50, 50, effimg[4]);
-	LoadDivGraph(L"picture/righteff.png", 5, 5, 1, 50, 50, effimg[5]);
-	LoadDivGraph(L"picture/bombeff.png", 5, 5, 1, 50, 50, effimg[6]);
-	LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, ComboFontimg);
 	for (i[0] = 0; i[0] < 100; i[0]++) {
 		strcopy(dataE, GT1, 1);
 		stradds(GT1, L'/');
@@ -435,50 +465,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		Sitem[i[0] - 1] = LoadSoundMem(GT1);
 		if (Sitem[i[0] - 1] == -1) { break; }
 	}
-	if (system[5]) {
-		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
-		KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
-	}
-#define DIV_X 6
-#define DIV_Y 6
-#define PIC_NUM (DIV_X * DIV_Y)
-#define PIC_SIZE_X 160
-#define PIC_SIZE_Y 160
-	int	charaimg[PIC_NUM];
-	switch (system[0]) {
-	case 0:
-		LoadDivGraph(L"picture/Picker.png", PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
-		Rchaimg = LoadGraph(L"picture/RePicker.png");
-		break;
-	case 1:
-		LoadDivGraph(L"picture/Gator.png", PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
-		Rchaimg = LoadGraph(L"picture/ReGator.png");
-		break;
-	case 2:
-		LoadDivGraph(L"picture/Taylor.png", PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
-		Rchaimg = LoadGraph(L"picture/ReTaylor.png");
-		break;
-	}
-#undef DIV_X
-#undef DIV_Y
-#undef PIC_NUM
-#undef PIC_SIZE_X
-#undef PIC_SIZE_Y
-	musicmp3 = LoadSoundMem(mp3FN);
-	if (system[2] == 0) {
-		p_sound.att = LoadSoundMem(L"sound/attack.wav");
-		p_sound.cat = LoadSoundMem(L"sound/catch.wav");
-		p_sound.arw = LoadSoundMem(L"sound/arrow.wav");
-		p_sound.swi = LoadSoundMem(L"sound/swing.wav");
-		p_sound.bom = LoadSoundMem(L"sound/bomb.wav");
-	}
-	else {
-		p_sound.att = LoadSoundMem(L"sound/non.wav");
-		p_sound.cat = LoadSoundMem(L"sound/non.wav");
-		p_sound.arw = LoadSoundMem(L"sound/non.wav");
-		p_sound.swi = LoadSoundMem(L"sound/non.wav");
-		p_sound.bom = LoadSoundMem(L"sound/non.wav");
-	}
 	//ゲーム開始前の下準備
 	notes = notzero(notes);
 	GD[0] = difkey[4][3] / 100.0 - Lv;//mdifと難易度表記の差
@@ -488,8 +474,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	else { DifRate = difkey[4][3] / 100.0; }
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK);
 	WaitTimer(10);
-	int Stime = GetNowCount();
-	CutTime = Stime;
+	CutTime = Stime = GetNowCount();
 	//ゲーム開始
 	while (1) {
 		ClearDrawScreen();
