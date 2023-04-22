@@ -30,13 +30,6 @@ typedef enum rrs_obj_code_e {
 	OBJ_CODE_SPACE,
 } rrs_obj_code_t;
 
-typedef struct ddef_box {
-	int maxdif = 0;
-	int lastdif = 0;
-	int nowdifsection = 1;
-	int datanum = -1;
-} ddef_box;
-
 int IsNoteCode(wchar_t c);
 int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
 int cal_nowdif_m(int *difkey, int num, int now, int voidtime);
@@ -1174,16 +1167,19 @@ void RecordLoad2(int p, int n, int o) {
 	while (note[0][objectN[0]].hittime >= 0 ||
 		note[1][objectN[1]].hittime >= 0 ||
 		note[2][objectN[2]].hittime >= 0) {
+#if 0
+		DdifCal1((char *)G[0], &note[0][objectN[0]], &note[1][objectN[1]],
+			&note[2][objectN[2]], objectN, Etime, noteoff, &ddif2, ddif,
+			difkey[0], difkey[7][3], difkey[difkey[1][3]], difkey[difkey[2][3]],
+			o, waningLv, outpoint);
+#else
 		//一番早いノーツを探してG[0]に代入
 		G[0] = CalFindNearNote(&note[0][objectN[0]], &note[1][objectN[1]],
 			&note[2][objectN[2]]);
 		//ddifの計算
-		while (note[G[0]][objectN[G[0]]].hittime >=
-			(Etime - noteoff) / 25 * ddif2.nowdifsection + noteoff) {
-			ddif[ddif2.nowdifsection - 1] = cal_ddif(ddif2.datanum, difkey[0],
-				Etime, noteoff, ddif2.nowdifsection, difkey[7][3]);
-			ddif2.nowdifsection++;
-		}
+		CheckDdif(&note[G[0]][objectN[G[0]]], Etime, noteoff, &ddif2,
+			ddif, difkey[0], difkey[7][3]);
+		//difkeyへのデータ登録
 		difkey[difkey[1][3]][0] = note[G[0]][objectN[G[0]]].object;
 		difkey[difkey[1][3]][1] = note[G[0]][objectN[G[0]]].hittime;
 		//譜面規約チェック
@@ -1193,6 +1189,7 @@ void RecordLoad2(int p, int n, int o) {
 			outpoint[0] = difkey[difkey[1][3]][1];
 			outpoint[1] = G[2];
 		}
+#endif
 		//各ノーツ補間
 		switch (difkey[difkey[1][3]][0]) {
 		case 1:
@@ -1204,75 +1201,29 @@ void RecordLoad2(int p, int n, int o) {
 			}
 			break;
 		case 2:
-			if (G[0] != 1) difkey[difkey[1][3]][0] = G[0] / 2 + 3;
-			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 3 &&
-				(difkey[difkey[2][3]][0] == 8 ||
-					difkey[difkey[2][3]][0] == 9)) {
-				difkey[difkey[2][3]][0] = 3;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 2 && (difkey[difkey[2][3]][0] == 1 || difkey[difkey[2][3]][0] == 5 || difkey[difkey[2][3]][0] == 6)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 2 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9)) {
-				difkey[difkey[2][3]][0] = 2;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 4 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 8)) {
-				difkey[difkey[2][3]][0] = 4;
+			if (DdifCatchFix(G[0], &difkey[difkey[1][3]][0],
+				&difkey[difkey[2][3]][0]) == 1) {
 				objectN[G[0]]++;
 				continue;
 			}
 			break;
 		case 5:
-			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
+			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 ||
+				difkey[difkey[2][3]][0] == 9) {
 				difkey[difkey[2][3]][0] = 5;
 				continue;
 			}
 			break;
 		case 6:
-			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
+			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 ||
+				difkey[difkey[2][3]][0] == 9) {
 				difkey[difkey[2][3]][0] = 6;
 				continue;
 			}
 			break;
 		case 7:
-			if (G[0] != 0)difkey[difkey[1][3]][0] = G[0] + 7;
-			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && difkey[difkey[2][3]][0] == 8 || difkey[difkey[1][3]][0] == 8 && difkey[difkey[2][3]][0] == 7) {
-				difkey[difkey[2][3]][0] = 4;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && difkey[difkey[2][3]][0] == 9 || difkey[difkey[1][3]][0] == 9 && difkey[difkey[2][3]][0] == 7) {
-				difkey[difkey[2][3]][0] = 2;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 8 && difkey[difkey[2][3]][0] == 9 || difkey[difkey[1][3]][0] == 9 && difkey[difkey[2][3]][0] == 8) {
-				difkey[difkey[2][3]][0] = 3;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && (difkey[difkey[2][3]][0] != 3)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 8 && (difkey[difkey[2][3]][0] == 3 || difkey[difkey[2][3]][0] == 4)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 9 && (difkey[difkey[2][3]][0] != 4)) {
+			if (DdifBombFix(G[0], &difkey[difkey[1][3]][0],
+				&difkey[difkey[2][3]][0]) == 1) {
 				objectN[G[0]]++;
 				continue;
 			}
@@ -1293,18 +1244,20 @@ void RecordLoad2(int p, int n, int o) {
 #define ARE_NEAR_NOTE(note, lane1, lane2, num)								\
 	((note)[lane1][num[lane1]].hittime + 10 >=								\
 	(note)[lane2][num[lane2]].hittime)
+#define ARE_VERT_ARROW(note, lane1, lane2, num)								\
+	IS_ARROW_NOTE(note, lane1, num) && lane1 != lane2 &&					\
+	ARE_SAME_NOTE(note, lane1, lane2, num) &&								\
+	ARE_NEAR_NOTE(note, lane1, lane2, num)
 		// 縦置きアロースキップ
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (IS_ARROW_NOTE(note, G[0], objectN) &&
-				G[0] != i[0] &&
-				ARE_SAME_NOTE(note, G[0], i[0], objectN) &&
-				ARE_NEAR_NOTE(note, G[0], i[0], objectN)) {
+			if (ARE_VERT_ARROW(note, G[0], i[0], objectN)) {
 				objectN[i[0]]++;
 			}
 		}
 #undef IS_ARROW_NOTE
 #undef ARE_SAME_NOTE
 #undef ARE_NEAR_NOTE
+#undef ARE_VERT_ARROW
 		objectN[G[0]]++;
 		ddif2.datanum++;
 		G[0] = 0;
@@ -1312,7 +1265,7 @@ void RecordLoad2(int p, int n, int o) {
 			cal_nowdif_m(difkey[0], difkey[0][3], difkey[1][3], difkey[7][3]));
 		for (i[0] = 1; i[0] < 4; i[0]++) {
 			difkey[i[0]][3]++;
-			if (difkey[i[0]][3] > difkey[0][3])difkey[i[0]][3] = 0;
+			if (difkey[i[0]][3] > difkey[0][3]) { difkey[i[0]][3] = 0; }
 		}
 		CalGhostSkip(note[0], note[1], note[2], objectN);
 	}
@@ -1551,44 +1504,4 @@ item_eff_box set_pic_mat(wchar_t *s) {
 		strnex(s);
 	}
 	return eff;
-}
-
-int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl) {
-	if (nowtime <= 0 || beftime <= 0) {
-		return 0;
-	}
-	switch (dif * 10 + wl) {
-	case 11:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 1200) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 12:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 600) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 13:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 300) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 21:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 600) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 22:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 300) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 23:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 150) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	default: break;
-	}
-	return 0;
 }

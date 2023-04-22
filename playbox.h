@@ -1,7 +1,4 @@
-
-#ifndef PLAY_BOX
-
-#define PLAY_BOX 1
+#pragma once
 
 typedef enum note_material {
 	NOTE_NONE = -1,
@@ -197,7 +194,6 @@ struct scrool_box {
 	double basetime = -1;
 	double speed = -1;
 };
-
 typedef struct judge_action_box_t {
 	int* combo;
 	int* soundEnFg;
@@ -208,5 +204,10 @@ typedef struct judge_action_box_t {
 	play_sound_t* p_sound;
 	struct score_box* score;
 } judge_action_box;
+typedef struct ddef_box {
+	int maxdif = 0;
+	int lastdif = 0;
+	int nowdifsection = 1;
+	int datanum = -1;
+} ddef_box;
 
-#endif // PLAY_BOX
