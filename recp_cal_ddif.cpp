@@ -1,5 +1,6 @@
 
 #include "sancur.h"
+#include "playbox.h"
 #include "recp_cal_ddif.h"
 
 /* ä‘äuÇ™5msà»â∫ÇÃÉmÅ[ÉgÇÕìØéûâüÇµàµÇ¢ÅBhitÇÕ1.3î{ÅAarrowÇÕ1.6î{ */
@@ -21,7 +22,7 @@ struct ddif_box_s {
 	ddif_box_t *bbef = NULL;
 };
 
-int cal_ddif_solo_push(ddif_box_t ddif) {
+static int cal_ddif_solo_push(ddif_box_t ddif) {
 	int gap = ddif.time - ddif.bef->time;
 	int ret = 3000000 / gap;
 	/* arrowÇÃècòA */
@@ -44,7 +45,7 @@ int cal_ddif_solo_push(ddif_box_t ddif) {
 	return ret;
 }
 
-int cal_ddif_mix_push(ddif_box_t ddif) {
+static int cal_ddif_mix_push(ddif_box_t ddif) {
 	if (3 <= ddif.note && ddif.note <= 6) {
 		return MULTI_ARROW_MLP(ddif.bef->dif);
 	}
@@ -73,3 +74,62 @@ int cal_difkey(int n_time, int b_time, int n_note, int b_note, int bb_note, int
 	/* íPëÃîªíË */
 	return cal_ddif_solo_push(ddif);
 }
+
+static int CalGhostCount(note_box note[]) {
+	int num = 0;
+	while (note[num].object == 8 && note[num].hittime >= 0) { num++; }
+	return num;
+}
+
+void CalGhostSkip(note_box note1[], note_box note2[], note_box note3[],
+	short objNo[]) {
+	objNo[0] += CalGhostCount(&note1[objNo[0]]);
+	objNo[1] += CalGhostCount(&note2[objNo[1]]);
+	objNo[2] += CalGhostCount(&note3[objNo[2]]);
+	return;
+}
+
+char CalFindNearNote(note_box note1[], note_box note2[], note_box note3[]) {
+	note_box* note[3] = { note1,note2,note3 };
+	char ret = 0;
+	for (int i = 0; i < 3; i++) {
+		if (ret != i && note[ret]->hittime >
+			note[i]->hittime &&
+			note[i]->hittime >= 0) {
+			ret = i;
+		}
+		else if (ret != i &&
+			note[ret]->hittime ==
+			note[i]->hittime &&
+			note[ret]->object == 2 &&
+			note[i]->object != 2 &&
+			note[i]->hittime >= 0) {
+			ret = i;
+		}
+	}
+	return ret;
+}
+
+int cal_ddif(int num, int const* difkey, int Etime, int noteoff, int difsec,
+	int voidtime) {
+	int ret = 0;
+	int count = 0;
+	if (num >= 50) {
+		num = 49;
+	}
+	for (int i = 0; i < num; i++) {
+		if (difkey[i * 4 + 1] > (Etime - noteoff) / 25 *
+			difsec - voidtime + noteoff) {
+			count++;
+			ret += difkey[i * 4 + 2];
+		}
+	}
+	if (count == 0) {
+		return 0;
+	}
+	else {
+		return ret * 50 / count;
+	}
+}
+
+

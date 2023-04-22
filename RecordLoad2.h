@@ -1169,43 +1169,14 @@ void RecordLoad2(int p, int n, int o) {
 	if (difkey[0][3] > 49)difkey[0][3] = 49;
 	difkey[7][3] = (Etime - noteoff) / 25 * 2;
 	if (difkey[7][3] < 10000)difkey[7][3] = 10000;
+	CalGhostSkip(note[0], note[1], note[2], objectN);
 	//ノーツがなくなるまで繰り返す
 	while (note[0][objectN[0]].hittime >= 0 ||
 		note[1][objectN[1]].hittime >= 0 ||
 		note[2][objectN[2]].hittime >= 0) {
-		//GHOSTノーツをスキップ
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			while (note[i[0]][objectN[i[0]]].object == 8 &&
-				note[i[0]][objectN[i[0]]].hittime >= 0) {
-				objectN[i[0]]++;
-			}
-		}
-		G[0] = -1;
 		//一番早いノーツを探してG[0]に代入
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (note[i[0]][objectN[i[0]]].hittime >= 0) {
-				G[0] = i[0];
-				break;
-			}
-		}
-		//無かったらブレーク
-		if (G[0] == -1) break;
-		//一番早いノーツを探してG[0]に代入
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (G[0] != i[0] && note[G[0]][objectN[G[0]]].hittime >
-				note[i[0]][objectN[i[0]]].hittime &&
-				note[i[0]][objectN[i[0]]].hittime >= 0) {
-				G[0] = i[0];
-			}
-			else if (G[0] != i[0] &&
-				note[G[0]][objectN[G[0]]].hittime ==
-				note[i[0]][objectN[i[0]]].hittime &&
-				note[G[0]][objectN[G[0]]].object == 2 &&
-				note[i[0]][objectN[i[0]]].object != 2 &&
-				note[i[0]][objectN[i[0]]].hittime >= 0) {
-				G[0] = i[0];
-			}
-		}
+		G[0] = CalFindNearNote(&note[0][objectN[0]], &note[1][objectN[1]],
+			&note[2][objectN[2]]);
 		//ddifの計算
 		while (note[G[0]][objectN[G[0]]].hittime >=
 			(Etime - noteoff) / 25 * ddif2.nowdifsection + noteoff) {
@@ -1215,25 +1186,24 @@ void RecordLoad2(int p, int n, int o) {
 		}
 		difkey[difkey[1][3]][0] = note[G[0]][objectN[G[0]]].object;
 		difkey[difkey[1][3]][1] = note[G[0]][objectN[G[0]]].hittime;
-
+		//譜面規約チェック
 		G[2] = MapErrorCheck(difkey[difkey[1][3]][0], difkey[difkey[1][3]][1],
 			difkey[difkey[2][3]][0], difkey[difkey[2][3]][1], o, waningLv);
 		if (G[2] != 0 && outpoint[1] == 0) {
 			outpoint[0] = difkey[difkey[1][3]][1];
 			outpoint[1] = G[2];
 		}
-
-		//hitノーツ補間
-		if (difkey[difkey[1][3]][0] == 1) {
+		//各ノーツ補間
+		switch (difkey[difkey[1][3]][0]) {
+		case 1:
 			if (difkey[difkey[2][3]][0] == 1 &&
 				difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
 				difkey[difkey[2][3]][2] *= 1;
 				objectN[G[0]]++;
 				continue;
 			}
-		}
-		//catchノーツ補間
-		else if (difkey[difkey[1][3]][0] == 2) {
+			break;
+		case 2:
 			if (G[0] != 1) difkey[difkey[1][3]][0] = G[0] / 2 + 3;
 			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
 				objectN[G[0]]++;
@@ -1241,7 +1211,7 @@ void RecordLoad2(int p, int n, int o) {
 			}
 			else if (difkey[difkey[1][3]][0] == 3 &&
 				(difkey[difkey[2][3]][0] == 8 ||
-				difkey[difkey[2][3]][0] == 9)) {
+					difkey[difkey[2][3]][0] == 9)) {
 				difkey[difkey[2][3]][0] = 3;
 				objectN[G[0]]++;
 				continue;
@@ -1260,23 +1230,20 @@ void RecordLoad2(int p, int n, int o) {
 				objectN[G[0]]++;
 				continue;
 			}
-		}
-		//leftノーツ補間
-		else if (difkey[difkey[1][3]][0] == 5) {
+			break;
+		case 5:
 			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
 				difkey[difkey[2][3]][0] = 5;
 				continue;
 			}
-		}
-		//rightノーツ補間
-		else if (difkey[difkey[1][3]][0] == 6) {
+			break;
+		case 6:
 			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
 				difkey[difkey[2][3]][0] = 6;
 				continue;
 			}
-		}
-		//bombノーツ補間
-		else if (difkey[difkey[1][3]][0] == 7) {
+			break;
+		case 7:
 			if (G[0] != 0)difkey[difkey[1][3]][0] = G[0] + 7;
 			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
 				objectN[G[0]]++;
@@ -1309,43 +1276,35 @@ void RecordLoad2(int p, int n, int o) {
 				objectN[G[0]]++;
 				continue;
 			}
+			break;
 		}
 		/* calculate difkey */
 		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
-#if 1
 			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
 				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
 				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
 				difkey[difkey[2][3]][2]);
-#else
-			G[1] = difkey[difkey[1][3]][1] - difkey[difkey[2][3]][1];
-			if (G[1] == 0)G[1] = 1;
-			if (G[1] <= 5 &&
-				(difkey[difkey[1][3]][0] != difkey[difkey[2][3]][0] ||
-				(difkey[difkey[1][3]][0] == 1 && difkey[difkey[2][3]][0] == 1))) {
-				if (3 <= difkey[difkey[1][3]][0] && difkey[difkey[1][3]][0] <= 6) {
-					difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.6;
-				}
-				else {
-					difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.3;
-				}
-			}
-			else {
-				difkey[difkey[1][3]][2] = 3000000 / G[1];
-				if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0] && difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6 && difkey[difkey[1][3]][2] >= 40000) difkey[difkey[1][3]][2] *= 2;
-				else if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0] && difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6 && difkey[difkey[1][3]][2] <= 40000 && difkey[difkey[1][3]][2] >= 20000) difkey[difkey[1][3]][2] = difkey[difkey[1][3]][2] / -75.0 + 3.0;
-				if (difkey[difkey[1][3]][0] != difkey[difkey[3][3]][0]) difkey[difkey[1][3]][2] *= 1.2;
-				if (difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6)difkey[difkey[1][3]][2] *= 1.2;
-			}
-#endif
 		}
+#define IS_ARROW_NOTE(note, lane, num)										\
+	((note)[lane][num[lane]].object >= 3 &&									\
+	(note)[lane][num[lane]].object <= 6)
+#define ARE_SAME_NOTE(note, lane1, lane2, num)								\
+	((note)[lane1][num[lane1]].object == (note)[lane2][num[lane2]].object)
+#define ARE_NEAR_NOTE(note, lane1, lane2, num)								\
+	((note)[lane1][num[lane1]].hittime + 10 >=								\
+	(note)[lane2][num[lane2]].hittime)
+		// 縦置きアロースキップ
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (note[G[0]][objectN[G[0]]].object >= 3 && note[G[0]][objectN[G[0]]].object <= 6 &&
-				G[0] != i[0] && note[G[0]][objectN[G[0]]].object == note[i[0]][objectN[i[0]]].object &&
-				note[G[0]][objectN[G[0]]].hittime + 5 >= note[i[0]][objectN[i[0]]].hittime) {
+			if (IS_ARROW_NOTE(note, G[0], objectN) &&
+				G[0] != i[0] &&
+				ARE_SAME_NOTE(note, G[0], i[0], objectN) &&
+				ARE_NEAR_NOTE(note, G[0], i[0], objectN)) {
 				objectN[i[0]]++;
 			}
 		}
+#undef IS_ARROW_NOTE
+#undef ARE_SAME_NOTE
+#undef ARE_NEAR_NOTE
 		objectN[G[0]]++;
 		ddif2.datanum++;
 		G[0] = 0;
@@ -1355,6 +1314,7 @@ void RecordLoad2(int p, int n, int o) {
 			difkey[i[0]][3]++;
 			if (difkey[i[0]][3] > difkey[0][3])difkey[i[0]][3] = 0;
 		}
+		CalGhostSkip(note[0], note[1], note[2], objectN);
 	}
 	ddif2.datanum++;
 	for (i[0] = 0; i[0] < 2; i[0]++)if (difkey[i[0]][2] == 0 && difkey[2][2] > 0)ddif2.datanum--;
@@ -1433,27 +1393,6 @@ int IsNoteCode(wchar_t c) {
 		return 1;
 	}
 	return 0;
-}
-
-int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime) {
-	int ret = 0;
-	int count = 0;
-	if (num >= 50) {
-		num = 49;
-	}
-	for (int i = 0; i < num; i++) {
-		if (difkey[i * 4 + 1] > (Etime - noteoff) / 25 *
-			difsec - voidtime + noteoff) {
-			count++;
-			ret += difkey[i * 4 + 2];
-		}
-	}
-	if (count == 0) {
-		return 0;
-	}
-	else {
-		return ret * 50 / count;
-	}
 }
 
 int cal_nowdif_m(int *difkey, int num, int now, int voidtime) {
