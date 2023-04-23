@@ -1176,9 +1176,11 @@ void RecordLoad2(int p, int n, int o) {
 		//一番早いノーツを探してG[0]に代入
 		G[0] = CalFindNearNote(&note[0][objectN[0]], &note[1][objectN[1]],
 			&note[2][objectN[2]]);
-		DdifCal6(&note[G[0]][objectN[G[0]]], Etime, noteoff, &ddif2, ddif,
-			&difkey[0][0], difkey[7][3], difkey[difkey[1][3]],
-			difkey[difkey[2][3]], o, waningLv, outpoint);
+		//ddifの計算
+		CheckDdif(&note[G[0]][objectN[G[0]]], Etime, noteoff, &ddif2,
+			ddif, difkey[0], difkey[7][3]);
+		DdifCal5(difkey[difkey[1][3]], difkey[difkey[2][3]],
+			&note[G[0]][objectN[G[0]]], o, waningLv, outpoint);
 #endif
 		//各ノーツ補間
 		if (DdifNoteFix(difkey[difkey[1][3]], difkey[difkey[2][3]], objectN,
@@ -1199,9 +1201,33 @@ void RecordLoad2(int p, int n, int o) {
 				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
 				difkey[difkey[2][3]][2]);
 		}
-		// 縦置きアロースキップ
+#if 0
 		DdifCal3(&note[0][objectN[0]], &note[1][objectN[1]],
-			&note[2][objectN[2]], G[0], objectN);
+			&note[2][objectN[2]], (char*)&G[0], objectN);
+#else
+		// 縦置きアロースキップ
+#define IS_ARROW_NOTE(note, lane, num)										\
+	((note)[lane][num[lane]].object >= 3 &&									\
+	(note)[lane][num[lane]].object <= 6)
+#define ARE_SAME_NOTE(note, lane1, lane2, num)								\
+	((note)[lane1][num[lane1]].object == (note)[lane2][num[lane2]].object)
+#define ARE_NEAR_NOTE(note, lane1, lane2, num)								\
+	((note)[lane1][num[lane1]].hittime + 10 >=								\
+	(note)[lane2][num[lane2]].hittime)
+#define ARE_VERT_ARROW(note, lane1, lane2, num)								\
+	IS_ARROW_NOTE(note, lane1, num) && lane1 != lane2 &&					\
+	ARE_SAME_NOTE(note, lane1, lane2, num) &&								\
+	ARE_NEAR_NOTE(note, lane1, lane2, num)
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			if (ARE_VERT_ARROW(note, G[0], i[0], objectN)) {
+				objectN[i[0]]++;
+			}
+		}
+#undef IS_ARROW_NOTE
+#undef ARE_SAME_NOTE
+#undef ARE_NEAR_NOTE
+#undef ARE_VERT_ARROW
+#endif
 		DdifCal4(objectN, (char*)&G[0], &ddif2, difkey[0], difkey[0][3],
 			&difkey[1][3], &difkey[2][3], &difkey[3][3], difkey[7][3]);
 #endif

@@ -13,13 +13,26 @@
  /* arrowキーは1.2倍 */
 #define ARROW_MLP(x) ((x) * 12 / 10)
 
+#define IS_ARROW_NOTE(note, lane, num)										\
+	((note)[lane][num[lane]].object >= 3 &&									\
+	(note)[lane][num[lane]].object <= 6)
+#define ARE_SAME_NOTE(note, lane1, lane2, num)								\
+	((note)[lane1][num[lane1]].object == (note)[lane2][num[lane2]].object)
+#define ARE_NEAR_NOTE(note, lane1, lane2, num)								\
+	((note)[lane1][num[lane1]].hittime + 10 >=								\
+	(note)[lane2][num[lane2]].hittime)
+#define ARE_VERT_ARROW(note, lane1, lane2, num)								\
+	IS_ARROW_NOTE(note, lane1, num) && lane1 != lane2 &&					\
+	ARE_SAME_NOTE(note, lane1, lane2, num) &&								\
+	ARE_NEAR_NOTE(note, lane1, lane2, num)
+
 typedef struct ddif_box_s ddif_box_t;
 struct ddif_box_s {
 	int time = 0;
 	int note = 0;
 	int dif = 0;
-	ddif_box_t* bef = NULL;
-	ddif_box_t* bbef = NULL;
+	ddif_box_t *bef = NULL;
+	ddif_box_t *bbef = NULL;
 };
 
 static int cal_ddif_solo_push(ddif_box_t ddif) {
@@ -210,9 +223,9 @@ int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif,
 	return 0;
 }
 
-void CheckDdif(int hittime, int Etime, int noteoff, ddef_box* ddif2,
+void CheckDdif(note_box* note, int Etime, int noteoff, ddef_box* ddif2,
 	int ddif[], int* Fdif, int voidtime) {
-	while (hittime >=
+	while (note->hittime >=
 		(Etime - noteoff) / 25 * ddif2->nowdifsection + noteoff) {
 		ddif[ddif2->nowdifsection - 1] = cal_ddif(ddif2->datanum, Fdif,
 			Etime, noteoff, ddif2->nowdifsection, voidtime);
@@ -220,6 +233,33 @@ void CheckDdif(int hittime, int Etime, int noteoff, ddef_box* ddif2,
 	}
 	return;
 }
+
+#if 0
+void DdifCal1(char* lane, note_box note1[], note_box note2[], note_box note3[],
+	short objNo[], int Etime, int noteoff, ddef_box* ddif2, int ddif[],
+	int *Fdif, int voidtime, int Ndif[], int Bdif[], char dif, int waningLv,
+	int outpoint[]) {
+	int G[1];
+	note_box* note[3] = { note1,note2,note3 };
+	//一番早いノーツを探して*laneに代入
+	*lane = CalFindNearNote(&note[0][objNo[0]], &note[1][objNo[1]],
+		&note[2][objNo[2]]);
+	//ddifの計算
+	CheckDdif(&note[*lane][objNo[*lane]], Etime, noteoff, ddif2,
+		ddif, Fdif, voidtime);
+	//difkeyへのデータ登録
+	Ndif[0] = note[*lane][objNo[*lane]].object;
+	Ndif[1] = note[*lane][objNo[*lane]].hittime;
+	//譜面規約チェック
+	G[0] = MapErrorCheck(Ndif[0], Ndif[1],
+		Bdif[0], Bdif[1], (int)dif, waningLv);
+	if (G[0] != 0 && outpoint[1] == 0) {
+		outpoint[0] = Ndif[1];
+		outpoint[1] = G[0];
+	}
+	return;
+}
+#endif
 
 int cal_nowdif_m(int* difkey, int num, int now, int voidtime) {
 	int ret = 0;
@@ -267,6 +307,17 @@ void DdifCal2(int *NdifNo, int *BdifNo, int *BBdifNo, int Ndif[], int Bdif[],
 }
 #endif
 
+#if 0
+void DdifCal3(note_box note1[], note_box note2[], note_box note3[],
+	char* lane, short objNo[]) {
+	note_box* note[3] = { note1,note2,note3 };
+	for (int i = 0; i < 3; i++) {
+		if (ARE_VERT_ARROW(note, *lane, i, objNo)) { objNo[i]++; }
+	}
+	return;
+}
+#endif
+
 void DdifCal4(short objNo[], char* lane, ddef_box* ddif2, int* Fdif,
 	int limitNo, int* NdifNo, int* BdifNo, int* BBdifNo, int voidtime) {
 	objNo[*lane]++;
@@ -290,7 +341,8 @@ void DdifCal5(int Ndif[], int Bdif[], note_box *note, char dif, int waningLv,
 	Ndif[0] = note->object;
 	Ndif[1] = note->hittime;
 	//譜面規約チェック
-	G[0] = MapErrorCheck(Ndif[0], Ndif[1], Bdif[0], Bdif[1], dif, waningLv);
+	G[0] = MapErrorCheck(Ndif[0], Ndif[1],
+		Bdif[0], Bdif[1], dif, waningLv);
 	if (G[0] != 0 && outpoint[1] == 0) {
 		outpoint[0] = Ndif[1];
 		outpoint[1] = G[0];
@@ -334,57 +386,3 @@ char DdifNoteFix(int Ndif[], int Bdif[], short objNo[], char lane) {
 	}
 	return 0;
 }
-
-#if 0
-void DdifCal1(char* lane, note_box note1[], note_box note2[], note_box note3[],
-	short objNo[], int Etime, int noteoff, ddef_box* ddif2, int ddif[],
-	int* Fdif, int voidtime, int Ndif[], int Bdif[], char dif, int waningLv,
-	int outpoint[]) {
-	note_box* note[3] = { note1,note2,note3 };
-	//一番早いノーツを探してG[0]に代入
-	*lane = CalFindNearNote(&note[0][objNo[0]], &note[1][objNo[1]],
-		&note[2][objNo[2]]);
-	//ddifの計算
-	CheckDdif(&note[*lane][objNo[*lane]], Etime, noteoff, ddif2, ddif, Fdif,
-		voidtime);
-	DdifCal5(Ndif, Bdif, &note[*lane][objNo[*lane]], dif, waningLv, outpoint);
-	return;
-}
-#endif
-
-void DdifCal6(note_box* note, int Etime, int noteoff, ddef_box* ddif2,
-	int* ddif, int* Fdif, int voidtime, int* Ndif, int* Bdif, char dif,
-	int waningLv, int outpoint[]) {
-	CheckDdif(note->hittime, Etime, noteoff, ddif2, ddif, Fdif, voidtime);
-	DdifCal5(Ndif, Bdif, note, dif, waningLv, outpoint);
-	return;
-}
-
-#if 1
-void DdifCal3(note_box note1[], note_box note2[], note_box note3[],
-	char lane, short objNo[]) {
-	note_box* note[3] = { note1,note2,note3 };
-	for (int i = 0; i < 3; i++) {
-		if (
-
-#if 0
-#define IS_ARROW_NOTE(note) ((note).object >= 3 && (note).object <= 6)
-#define ARE_SAME_NOTE(note, lane1, lane2)									\
-	((note)[lane1].object == (note)[lane2].object)
-#define ARE_NEAR_NOTE(note, lane1, lane2)									\
-	((note)[lane1].hittime + 5 >= (note)[lane2].hittime)
-#define ARE_VERT_ARROW(note, lane1, lane2)									\
-	IS_ARROW_NOTE((note)[lane1]) && lane1 != lane2 &&							\
-	ARE_SAME_NOTE(note, lane1, lane2) && ARE_NEAR_NOTE(note, lane1, lane2)
-
-			ARE_VERT_ARROW(*note, lane, i)
-#else
-			note[lane]->object >= 3 && note[lane]->object <= 6 && lane != i &&
-			note[lane]->object == note[i]->object &&
-			note[lane]->hittime + 5 >= note[i]->hittime
-#endif
-			) { objNo[i]++; }
-	}
-	return;
-}
-#endif
