@@ -1222,18 +1222,16 @@ void RecordLoad2(int p, int n, int o) {
 			outpoint[0] = difkey[difkey[1][3]][1];
 			outpoint[1] = G[2];
 		}
-
-		//hitノーツ補間
-		if (difkey[difkey[1][3]][0] == 1) {
+		switch (difkey[difkey[1][3]][0]) {
+		case 1: //hitノーツ補間
 			if (difkey[difkey[2][3]][0] == 1 &&
 				difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
 				difkey[difkey[2][3]][2] *= 1;
 				objectN[G[0]]++;
 				continue;
 			}
-		}
-		//catchノーツ補間
-		else if (difkey[difkey[1][3]][0] == 2) {
+			break;
+		case 2: //catchノーツ補間
 			if (G[0] != 1) difkey[difkey[1][3]][0] = G[0] / 2 + 3;
 			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
 				objectN[G[0]]++;
@@ -1260,23 +1258,20 @@ void RecordLoad2(int p, int n, int o) {
 				objectN[G[0]]++;
 				continue;
 			}
-		}
-		//leftノーツ補間
-		else if (difkey[difkey[1][3]][0] == 5) {
+			break;
+		case 5: //leftノーツ補間
 			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
 				difkey[difkey[2][3]][0] = 5;
 				continue;
 			}
-		}
-		//rightノーツ補間
-		else if (difkey[difkey[1][3]][0] == 6) {
+			break;
+		case 6: //rightノーツ補間
 			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
 				difkey[difkey[2][3]][0] = 6;
 				continue;
 			}
-		}
-		//bombノーツ補間
-		else if (difkey[difkey[1][3]][0] == 7) {
+			break;
+		case 7: //bombノーツ補間
 			if (G[0] != 0)difkey[difkey[1][3]][0] = G[0] + 7;
 			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
 				objectN[G[0]]++;
@@ -1309,6 +1304,7 @@ void RecordLoad2(int p, int n, int o) {
 				objectN[G[0]]++;
 				continue;
 			}
+			break;
 		}
 		/* calculate difkey */
 		if (difkey[2][3] != -1 && difkey[3][3] != -1) {

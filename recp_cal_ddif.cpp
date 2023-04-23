@@ -12,15 +12,6 @@
  /* arrowƒL[‚Í1.2”{ */
 #define ARROW_MLP(x) ((x) * 12 / 10)
 
-typedef struct ddif_box_s ddif_box_t;
-struct ddif_box_s {
-	int time = 0;
-	int note = 0;
-	int dif = 0;
-	ddif_box_t *bef = NULL;
-	ddif_box_t *bbef = NULL;
-};
-
 int cal_ddif_solo_push(ddif_box_t ddif) {
 	int gap = ddif.time - ddif.bef->time;
 	int ret = 3000000 / gap;
