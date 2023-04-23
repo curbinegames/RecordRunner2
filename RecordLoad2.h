@@ -1312,32 +1312,10 @@ void RecordLoad2(int p, int n, int o) {
 		}
 		/* calculate difkey */
 		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
-#if 1
 			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
 				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
 				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
 				difkey[difkey[2][3]][2]);
-#else
-			G[1] = difkey[difkey[1][3]][1] - difkey[difkey[2][3]][1];
-			if (G[1] == 0)G[1] = 1;
-			if (G[1] <= 5 &&
-				(difkey[difkey[1][3]][0] != difkey[difkey[2][3]][0] ||
-				(difkey[difkey[1][3]][0] == 1 && difkey[difkey[2][3]][0] == 1))) {
-				if (3 <= difkey[difkey[1][3]][0] && difkey[difkey[1][3]][0] <= 6) {
-					difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.6;
-				}
-				else {
-					difkey[difkey[1][3]][2] = difkey[difkey[2][3]][2] * 1.3;
-				}
-			}
-			else {
-				difkey[difkey[1][3]][2] = 3000000 / G[1];
-				if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0] && difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6 && difkey[difkey[1][3]][2] >= 40000) difkey[difkey[1][3]][2] *= 2;
-				else if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0] && difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6 && difkey[difkey[1][3]][2] <= 40000 && difkey[difkey[1][3]][2] >= 20000) difkey[difkey[1][3]][2] = difkey[difkey[1][3]][2] / -75.0 + 3.0;
-				if (difkey[difkey[1][3]][0] != difkey[difkey[3][3]][0]) difkey[difkey[1][3]][2] *= 1.2;
-				if (difkey[difkey[1][3]][0] >= 3 && difkey[difkey[1][3]][0] <= 6)difkey[difkey[1][3]][2] *= 1.2;
-			}
-#endif
 		}
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			if (note[G[0]][objectN[G[0]]].object >= 3 && note[G[0]][objectN[G[0]]].object <= 6 &&
