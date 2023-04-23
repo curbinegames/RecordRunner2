@@ -1179,33 +1179,63 @@ void RecordLoad2(int p, int n, int o) {
 		//ddifの計算
 		CheckDdif(&note[G[0]][objectN[G[0]]], Etime, noteoff, &ddif2,
 			ddif, difkey[0], difkey[7][3]);
-		DdifCal5(difkey[difkey[1][3]], difkey[difkey[2][3]],
-			&note[G[0]][objectN[G[0]]], o, waningLv, outpoint);
+		//difkeyへのデータ登録
+		difkey[difkey[1][3]][0] = note[G[0]][objectN[G[0]]].object;
+		difkey[difkey[1][3]][1] = note[G[0]][objectN[G[0]]].hittime;
+		//譜面規約チェック
+		G[2] = MapErrorCheck(difkey[difkey[1][3]][0], difkey[difkey[1][3]][1],
+			difkey[difkey[2][3]][0], difkey[difkey[2][3]][1], o, waningLv);
+		if (G[2] != 0 && outpoint[1] == 0) {
+			outpoint[0] = difkey[difkey[1][3]][1];
+			outpoint[1] = G[2];
+		}
 #endif
 		//各ノーツ補間
-		if (DdifNoteFix(difkey[difkey[1][3]], difkey[difkey[2][3]], objectN,
-			G[0]) == 1) {
-			continue;
+		switch (difkey[difkey[1][3]][0]) {
+		case 1:
+			if (difkey[difkey[2][3]][0] == 1 &&
+				difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
+				difkey[difkey[2][3]][2] *= 1;
+				objectN[G[0]]++;
+				continue;
+			}
+			break;
+		case 2:
+			if (DdifCatchFix(G[0], &difkey[difkey[1][3]][0],
+				&difkey[difkey[2][3]][0]) == 1) {
+				objectN[G[0]]++;
+				continue;
+			}
+			break;
+		case 5:
+			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 ||
+				difkey[difkey[2][3]][0] == 9) {
+				difkey[difkey[2][3]][0] = 5;
+				continue;
+			}
+			break;
+		case 6:
+			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 ||
+				difkey[difkey[2][3]][0] == 9) {
+				difkey[difkey[2][3]][0] = 6;
+				continue;
+			}
+			break;
+		case 7:
+			if (DdifBombFix(G[0], &difkey[difkey[1][3]][0],
+				&difkey[difkey[2][3]][0]) == 1) {
+				objectN[G[0]]++;
+				continue;
+			}
+			break;
 		}
 		/* calculate difkey */
-#if 0
-		DdifCal2(&difkey[1][3], &difkey[2][3], &difkey[3][3],
-			difkey[difkey[1][3]], difkey[difkey[2][3]], difkey[difkey[3][3]],
-			&G[0], &note[0][objectN[0]], &note[1][objectN[1]],
-			&note[2][objectN[2]], objectN, &ddif2, difkey[0], difkey[7][3],
-			difkey[0][3]);
-#else
 		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
 			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
 				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
 				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
 				difkey[difkey[2][3]][2]);
 		}
-#if 0
-		DdifCal3(&note[0][objectN[0]], &note[1][objectN[1]],
-			&note[2][objectN[2]], (char*)&G[0], objectN);
-#else
-		// 縦置きアロースキップ
 #define IS_ARROW_NOTE(note, lane, num)										\
 	((note)[lane][num[lane]].object >= 3 &&									\
 	(note)[lane][num[lane]].object <= 6)
@@ -1218,6 +1248,7 @@ void RecordLoad2(int p, int n, int o) {
 	IS_ARROW_NOTE(note, lane1, num) && lane1 != lane2 &&					\
 	ARE_SAME_NOTE(note, lane1, lane2, num) &&								\
 	ARE_NEAR_NOTE(note, lane1, lane2, num)
+		// 縦置きアロースキップ
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			if (ARE_VERT_ARROW(note, G[0], i[0], objectN)) {
 				objectN[i[0]]++;
@@ -1227,10 +1258,15 @@ void RecordLoad2(int p, int n, int o) {
 #undef ARE_SAME_NOTE
 #undef ARE_NEAR_NOTE
 #undef ARE_VERT_ARROW
-#endif
-		DdifCal4(objectN, (char*)&G[0], &ddif2, difkey[0], difkey[0][3],
-			&difkey[1][3], &difkey[2][3], &difkey[3][3], difkey[7][3]);
-#endif
+		objectN[G[0]]++;
+		ddif2.datanum++;
+		G[0] = 0;
+		ddif2.maxdif = mins(ddif2.maxdif,
+			cal_nowdif_m(difkey[0], difkey[0][3], difkey[1][3], difkey[7][3]));
+		for (i[0] = 1; i[0] < 4; i[0]++) {
+			difkey[i[0]][3]++;
+			if (difkey[i[0]][3] > difkey[0][3]) { difkey[i[0]][3] = 0; }
+		}
 		CalGhostSkip(note[0], note[1], note[2], objectN);
 	}
 	ddif2.datanum++;
@@ -1310,6 +1346,26 @@ int IsNoteCode(wchar_t c) {
 		return 1;
 	}
 	return 0;
+}
+
+int cal_nowdif_m(int *difkey, int num, int now, int voidtime) {
+	int ret = 0;
+	int count = 0;
+	for (int i = 0; i <= num; i++) {
+		if (difkey[i * 4 + 2] < 0) {
+			break;
+		}
+		if (difkey[i * 4 + 1] > difkey[now * 4 + 1] - voidtime) {
+			ret += difkey[i * 4 + 2];
+			count++;
+		}
+	}
+	if (count == 0) {
+		return 0;
+	}
+	else {
+		return ret * 50 / count;
+	}
 }
 
 rrs_obj_code_t check_obj_code(wchar_t const *const s) {
