@@ -31,14 +31,11 @@ typedef enum rrs_obj_code_e {
 } rrs_obj_code_t;
 
 int IsNoteCode(wchar_t c);
-int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
-int cal_nowdif_m(int *difkey, int num, int now, int voidtime);
 rrs_obj_code_t check_obj_code(wchar_t const *const s);
 void set_item_set(item_box* const Movie, short* const MovieN,
 	playnum_box* allnum, wchar_t* const s, item_set_box const* const item_set,
 	double bpmG, double timer);
 item_eff_box set_pic_mat(wchar_t *s);
-int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
@@ -1167,44 +1164,19 @@ void RecordLoad2(int p, int n, int o) {
 	while (note[0][objectN[0]].hittime >= 0 ||
 		note[1][objectN[1]].hittime >= 0 ||
 		note[2][objectN[2]].hittime >= 0) {
-#if 0
-		DdifCal1((char *)G[0], &note[0][objectN[0]], &note[1][objectN[1]],
-			&note[2][objectN[2]], objectN, Etime, noteoff, &ddif2, ddif,
-			difkey[0], difkey[7][3], difkey[difkey[1][3]], difkey[difkey[2][3]],
-			o, waningLv, outpoint);
-#else
-		//一番早いノーツを探してG[0]に代入
-		G[0] = CalFindNearNote(&note[0][objectN[0]], &note[1][objectN[1]],
-			&note[2][objectN[2]]);
-		DdifCal6(&note[G[0]][objectN[G[0]]], Etime, noteoff, &ddif2, ddif,
-			&difkey[0][0], difkey[7][3], difkey[difkey[1][3]],
-			difkey[difkey[2][3]], o, waningLv, outpoint);
-#endif
+		DdifCal1((char*)&G[0], &note[0][objectN[0]], &note[1][objectN[1]],
+			&note[2][objectN[2]], Etime, noteoff, &ddif2, ddif, &difkey[0][0],
+			difkey[7][3], difkey[difkey[1][3]], difkey[difkey[2][3]], o,
+			waningLv, outpoint);
 		//各ノーツ補間
 		if (DdifNoteFix(difkey[difkey[1][3]], difkey[difkey[2][3]], objectN,
-			G[0]) == 1) {
-			continue;
-		}
+			G[0]) == 1) { continue; }
 		/* calculate difkey */
-#if 0
 		DdifCal2(&difkey[1][3], &difkey[2][3], &difkey[3][3],
 			difkey[difkey[1][3]], difkey[difkey[2][3]], difkey[difkey[3][3]],
 			&G[0], &note[0][objectN[0]], &note[1][objectN[1]],
 			&note[2][objectN[2]], objectN, &ddif2, difkey[0], difkey[7][3],
 			difkey[0][3]);
-#else
-		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
-			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
-				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
-				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
-				difkey[difkey[2][3]][2]);
-		}
-		// 縦置きアロースキップ
-		DdifCal3(&note[0][objectN[0]], &note[1][objectN[1]],
-			&note[2][objectN[2]], G[0], objectN);
-		DdifCal4(objectN, (char*)&G[0], &ddif2, difkey[0], difkey[0][3],
-			&difkey[1][3], &difkey[2][3], &difkey[3][3], difkey[7][3]);
-#endif
 		CalGhostSkip(note[0], note[1], note[2], objectN);
 	}
 	ddif2.datanum++;
@@ -1224,7 +1196,7 @@ void RecordLoad2(int p, int n, int o) {
 		ddif[i[0]] = ddif[ddif2.nowdifsection - 1];
 	}
 	ddif2.lastdif = ddif[ddif2.nowdifsection - 1] / 50;
-	//NEEDYOU:Lv.1.0->2713, Co-op katyohugetsu:Lv.8.0->34733
+	//NEEDYOU:Lv.1.0->2713, katyohugetsu:Lv.8.0->34733
 	ddif2.maxdif = lins(2713, 100, 34733, 800, ddif2.maxdif);
 	ddif2.lastdif = lins(2713, 100, 34733, 800, ddif2.lastdif);
 
