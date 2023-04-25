@@ -2,6 +2,7 @@
 #include "result.h"
 #include "playbox.h"
 #include "recr_cutin.h"
+#include "dxlibcur.h"
 
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
@@ -44,6 +45,33 @@ typedef enum note_judge {
 	NOTE_JUDGE_SAFE,
 	NOTE_JUDGE_MISS
 } note_judge;
+
+void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
+	unsigned int color, int thick) {
+	int end = x1 + 10;
+	switch (mode) {
+	case 1: // lin
+		DrawLine(x1, y1, x2, y2, color, thick);
+		break;
+	case 2: // acc
+		for (int i = x1; i <= x2; i++) {
+			end = maxs(i + 10, x2);
+			DrawLine(i, pals(x1, y1, x2, y2, i),
+				end, pals(x1, y1, x2, y2, end),
+				color, thick);
+		}
+		break;
+	case 3: // dec
+		for (int i = x1; i <= x2; i++) {
+			end = maxs(i + 10, x2);
+			DrawLine(i, pals(x2, y2, x1, y1, i),
+				end, pals(x2, y2, x1, y1, end),
+				color, thick);
+		}
+		break;
+	}
+	return;
+}
 
 void AddGap(gap_box* const box, int data);
 void AddHitJudge(struct judge_box* const ans, int gup);
@@ -147,6 +175,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int YmoveN2[3] = { 0,0,0 };
 	int Xmove[3][999][4]; //[上, 中, 下]レーン横移動の[0:開始時間,1:位置,2:終了時間,3:種類]
 	short int XmoveN[3] = { 0,0,0 }; //↑の番号
+	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	short int lockN[2] = { 0,0 }; //↑の番号
 	int carrow[2][99];
@@ -640,7 +669,83 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[0]++;
 			}
 		}
-		//キャラ位置ガイドの表示
+		// view line
+		if (AutoFlag == 1) {
+			for (i[0] = 0; i[0] < 3; i[0]++) {
+				// count No
+				while (Ntime >= Ymove[i[0]][LineMoveN[i[0]]][2] &&
+					0 <= Ymove[i[0]][LineMoveN[i[0]]][0] ||
+					Ymove[i[0]][LineMoveN[i[0]]][3] == 4) {
+					LineMoveN[i[0]]++;
+				}
+				G[5] = LineMoveN[i[0]];
+				while (1) {
+					// color code
+					switch (i[0]) {
+					case 0:
+						G[0] = 0xffff0000;
+						break;
+					case 1:
+						G[0] = 0xff00ff00;
+						break;
+					case 2:
+						G[0] = 0xff0000ff;
+						break;
+					}
+					if (Ymove[i[0]][G[5]][0] < 0) {
+						G[3] = (Ymove[i[0]][G[5] - 1][2] - Ntime) / 2.1;
+						G[2] = 640;
+						G[4] = Ymove[i[0]][G[5] - 1][1];
+						G[1] = Ymove[i[0]][G[5] - 1][1];
+						DrawLine(Xline[i[0]] + 15 + nowcamera[0] + G[3],
+							G[4] + 15 + nowcamera[1],
+							640,
+							G[1] + 15 + nowcamera[1],
+							G[0], 2);
+						break;
+					}
+					// cal Xpos1
+					if (G[5] < 1) {
+						G[3] = Xline[i[0]];
+						G[2] = (Ymove[i[0]][G[5]][0] - Ntime) / 2.1;
+						G[4] = Yline[i[0]];
+						G[1] = Yline[i[0]];
+						DrawLine(Xline[i[0]] + 15 + nowcamera[0] + G[3],
+							G[4] + 15 + nowcamera[1],
+							Xline[i[0]] + 15 + nowcamera[0] + G[2],
+							G[1] + 15 + nowcamera[1],
+							G[0], 2);
+					}
+					else if (Ntime < Ymove[i[0]][G[5]][2]) {
+						G[3] = (Ymove[i[0]][G[5] - 1][2] - Ntime) / 2.1;
+						G[2] = (Ymove[i[0]][G[5]][0] - Ntime) / 2.1;
+						G[4] = Ymove[i[0]][G[5] - 1][1];
+						G[1] = Ymove[i[0]][G[5] - 1][1];
+						DrawLine(Xline[i[0]] + 15 + nowcamera[0] + G[3],
+							G[4] + 15 + nowcamera[1],
+							Xline[i[0]] + 15 + nowcamera[0] + G[2],
+							G[1] + 15 + nowcamera[1],
+							G[0], 2);
+					}
+					G[3] = (Ymove[i[0]][G[5]][0] - Ntime) / 2.1;
+					G[2] = (Ymove[i[0]][G[5]][2] - Ntime) / 2.1;
+					G[4] = Ymove[i[0]][G[5] - 1][1];
+					G[1] = Ymove[i[0]][G[5]][1];
+					if (640 < Xline[i[0]] + 15 + nowcamera[0] + G[3]) {
+						break;
+					}
+					// wiew
+					DrawLineCurve(Xline[i[0]] + 15 + nowcamera[0] + G[3],
+						G[4] + 15 + nowcamera[1],
+						Xline[i[0]] + 15 + nowcamera[0] + G[2],
+						G[1] + 15 + nowcamera[1],
+						Ymove[i[0]][G[5]][3], G[0], 2);
+					//loop step
+					G[5]++;
+				}
+			}
+		}
+		// view chara pos guide
 		if (carrow[1][carrowN + 1] < Ntime && carrow[1][carrowN + 1] >= 0) {
 			carrowN++;
 		}
@@ -1477,6 +1582,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					XmoveN[0] = 0;
 					XmoveN[1] = 0;
 					XmoveN[2] = 0;
+					LineMoveN[0] = 0;
+					LineMoveN[1] = 0;
+					LineMoveN[2] = 0;
 					lockN[0] = 0;
 					lockN[1] = 0;
 					carrowN = 0;
@@ -1515,6 +1623,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					XmoveN[0] = 0;
 					XmoveN[1] = 0;
 					XmoveN[2] = 0;
+					LineMoveN[0] = 0;
+					LineMoveN[1] = 0;
+					LineMoveN[2] = 0;
 					lockN[0] = 0;
 					lockN[1] = 0;
 					carrowN = 0;
