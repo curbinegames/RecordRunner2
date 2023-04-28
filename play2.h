@@ -502,22 +502,64 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	while (1) {
 		ClearDrawScreen();
 		GetHitKeyStateAll(key);
-		//ghost skip
-		for (int j = 0; j < 3; j++) {
-			objectNG[j] = mins(objectNG[j], objectN[j]);
-			while (note[j][objectNG[j]].object == NOTE_GHOST &&
-				note[j][objectNG[j]].object != NOTE_NONE) {
-				objectNG[j]++;
+		// number step
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			objectNG[i[0]] = mins(objectNG[i[0]], objectN[i[0]]);
+			while (note[i[0]][objectNG[i[0]]].object == NOTE_GHOST &&
+				   note[i[0]][objectNG[i[0]]].object != NOTE_NONE) {
+				objectNG[i[0]]++;
+			}
+			while (0 <= chamo[i[0]][chamoN[i[0]] + 1][1] &&
+						chamo[i[0]][chamoN[i[0]] + 1][1] <= Ntime) {
+				chamoN[i[0]]++;
+			}
+			while (0 <= speedt[i[0]][speedN[i[0]] + 1][0] &&
+						speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime) {
+				speedN[i[0]]++;
 			}
 		}
-		//見た目BPMの変化
-		while (v_bpm[v_bpmN + 1].time <= Ntime && -1000 < v_bpm[v_bpmN + 1].time) {
+		while (-1000 < v_bpm[v_bpmN + 1].time &&
+					   v_bpm[v_bpmN + 1].time <= Ntime) {
 			v_bpmN++;
 		}
-		//カメラ移動
-		while (0 <= camera[cameraN].endtime && camera[cameraN].endtime < Ntime) {
+		while (0 <= camera[cameraN].endtime &&
+					camera[cameraN].endtime < Ntime) {
 			cameraN++;
 		}
+		while (0 <= scrool[scroolN + 1].starttime &&
+					scrool[scroolN + 1].starttime <= Ntime) {
+			scroolN++;
+		}
+		if (system[3] != 0) {
+			while (-500 < Movie[MovieN].endtime &&
+						  Movie[MovieN].endtime < Ntime) {
+				MovieN++;
+			}
+		}
+		if (AutoFlag == 1) {
+			for (i[0] = 0; i[0] < 3; i[0]++) {
+				while ((0 <= Ymove[i[0]][LineMoveN[i[0]]][0] &&
+							 Ymove[i[0]][LineMoveN[i[0]]][2] <= Ntime) ||
+							 Ymove[i[0]][LineMoveN[i[0]]][3] == 4) {
+					LineMoveN[i[0]]++;
+				}
+			}
+		}
+		while (0 <= carrow[1][carrowN + 1] &&
+					carrow[1][carrowN + 1] < Ntime) {
+			carrowN++;
+		}
+		for (i[0] = 0; i[0] < 2; i[0]++) {
+			while (0 <= lock[i[0]][1][lockN[i[0]] + 1] &&
+						lock[i[0]][1][lockN[i[0]] + 1] <= Ntime) {
+				lockN[i[0]]++;
+			}
+		}
+		while (0 <= viewT[0][viewTN + 1] &&
+					viewT[0][viewTN + 1] <= Ntime) {
+			viewTN++;
+		}
+		//カメラ移動
 		if (camera[cameraN].starttime <= Ntime && Ntime <= camera[cameraN].endtime) {
 			nowcamera[0] = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
 				camera[cameraN - 1].xpos, camera[cameraN].endtime, camera[cameraN].xpos, Ntime);
@@ -529,9 +571,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			nowcamera[1] = camera[cameraN - 1].ypos;
 		}
 		//背景表示
-		while (0 <= scrool[scroolN + 1].starttime && scrool[scroolN + 1].starttime <= Ntime) {
-			scroolN++;
-		}
 		if (system[3] != 0) {
 			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) {
 				speedN[3]++;
@@ -601,10 +640,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//アイテム表示
 		if (system[3] != 0) {
-			while (Movie[MovieN].endtime < Ntime &&
-				Movie[MovieN].endtime > -500) {
-				MovieN++;
-			}
 			G[0] = 0;
 			while (Movie[MovieN + G[0]].endtime > -500) {
 				if (Movie[MovieN + G[0]].starttime > Ntime ||
@@ -672,12 +707,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		// view line
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
-				// count No
-				while (Ntime >= Ymove[i[0]][LineMoveN[i[0]]][2] &&
-					0 <= Ymove[i[0]][LineMoveN[i[0]]][0] ||
-					Ymove[i[0]][LineMoveN[i[0]]][3] == 4) {
-					LineMoveN[i[0]]++;
-				}
 				G[5] = LineMoveN[i[0]];
 				while (1) {
 					// color code
@@ -746,9 +775,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		// view chara pos guide
-		if (carrow[1][carrowN + 1] < Ntime && carrow[1][carrowN + 1] >= 0) {
-			carrowN++;
-		}
 		if (carrow[0][carrowN] == 1) {
 			DrawGraph(Xline[charaput] - 4 + nowcamera[0], Yline[charaput] - 4 + nowcamera[1],
 				charaguideimg, TRUE);
@@ -782,10 +808,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawGraph(Xline[i[0]] + nowcamera[0], Yline[i[0]] + nowcamera[1], judghimg, TRUE);
 		}
 		//キャラグラ変換
-		for (i[0] = 0; i[0] < 3; i[0]++)while (Ntime >= chamo[i[0]][chamoN[i[0]] + 1][1] &&
-			chamo[i[0]][chamoN[i[0]] + 1][1] >= 0) {
-			chamoN[i[0]]++;
-		}
 		G[3] = 0;
 		//get chara position
 		charaput = GetCharaPos(Ntime, note[0][objectNG[0]], note[1][objectNG[1]],
@@ -1125,14 +1147,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		default:
 			break;
 		}
-		/* lock 移動 */
-		for (i[0] = 0; i[0] < 2; i[0]++) {
-			if (Ntime >= lock[i[0]][1][lockN[i[0]] + 1] && lock[i[0]][1][lockN[i[0]] + 1] >= 0){
-				lockN[i[0]]++;
-			}
-		}
-		/* view 移動 */
-		if (viewT[0][viewTN + 1] <= Ntime && viewT[0][viewTN + 1] >= 0) viewTN++;
 		/* 音符表示 */
 		/* G[0] = viewN+
 		 * G[1] = 横位置
@@ -1145,10 +1159,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		 * i[1] = ノーツループ
 		 */
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime &&
-				speedt[i[0]][speedN[i[0]] + 1][0] >= 0) {
-				speedN[i[0]]++;
-			}
 			G[0] = G[3] = G[4] = G[5] = 0;
 			for (i[1] = objectN[i[0]]; note[i[0]][i[1]].hittime > 0; i[1]++) {
 				//表示/非表示ナンバーを進める
