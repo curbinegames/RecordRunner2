@@ -1,6 +1,7 @@
 #include "playing.h"
 #include "playbox.h"
 #include "recp_cal_ddif.h"
+#include "recp_cal_difkey.h"
 
 typedef enum rrs_obj_code_e {
 	OBJ_CODE_NONE = -1,
@@ -1206,6 +1207,7 @@ void RecordLoad2(int p, int n, int o) {
 				G[0] = i[0];
 			}
 		}
+		DifkeyCalInsertNote(&note[G[0]][objectN[G[0]]], G[0]);
 		//ddif‚ÌŒvŽZ
 		while (note[G[0]][objectN[G[0]]].hittime >=
 			(Etime - noteoff) / 25 * ddif2.nowdifsection + noteoff) {
@@ -1331,11 +1333,13 @@ void RecordLoad2(int p, int n, int o) {
 		}
 	}
 	ddif2.datanum++;
-	for (i[0] = 0; i[0] < 2; i[0]++)if (difkey[i[0]][2] == 0 && difkey[2][2] > 0)ddif2.datanum--;
-	if (ddif2.datanum < 1)ddif2.datanum = 1;
-	if (ddif2.datanum > 50)ddif2.datanum = 50;
+	for (i[0] = 0; i[0] < 2; i[0]++) {
+		if (difkey[i[0]][2] == 0 && difkey[2][2] > 0) { ddif2.datanum--; }
+	}
+	if (ddif2.datanum < 1) { ddif2.datanum = 1; }
+	if (ddif2.datanum > 50) { ddif2.datanum = 50; }
 	ddifG[1] = ddif2.maxdif;
-	if (ddifG[1] <= 0)ddifG[1] = 1;
+	if (ddifG[1] <= 0) { ddifG[1] = 1; }
 	ddif2.maxdif /= 50;
 	ddif[ddif2.nowdifsection - 1] = 0;
 	for (i[0] = 0; i[0] < ddif2.datanum; i[0]++) {

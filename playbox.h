@@ -84,7 +84,7 @@ struct note_img {
 	int bomb = LoadGraph(L"picture/bomb.png");
 	int goust = LoadGraph(L"picture/goust.png");
 };
-struct note_box {
+typedef struct note_box {
 	int hittime = -1;
 	int viewtime = -1;
 	note_material object = NOTE_NONE;
@@ -93,7 +93,7 @@ struct note_box {
 	int sound = 0;
 	enum melodysound melody = MELODYSOUND_NONE;
 	int color = 0;
-};
+} note_box_t;
 typedef struct play_sound_s {
 	int att;
 	int cat;
