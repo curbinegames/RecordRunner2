@@ -1170,6 +1170,7 @@ void RecordLoad2(int p, int n, int o) {
 	if (difkey[0][3] > 49)difkey[0][3] = 49;
 	difkey[7][3] = (Etime - noteoff) / 25 * 2;
 	if (difkey[7][3] < 10000)difkey[7][3] = 10000;
+	DifkeyCalInit(notes, Etime - noteoff);
 	//ƒm[ƒc‚ª‚È‚­‚È‚é‚Ü‚ÅŒJ‚è•Ô‚·
 	while (note[0][objectN[0]].hittime >= 0 ||
 		note[1][objectN[1]].hittime >= 0 ||
