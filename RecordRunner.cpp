@@ -3,7 +3,6 @@
 #include "system.h"
 #include "sancur.h"
 #include "strcur.h"
-#include "keycur.h"
 #include "title.h"
 #include "menu.h"
 #include "musicserect2.h"

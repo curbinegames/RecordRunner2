@@ -1,5 +1,6 @@
 #include "serectbase.h"
 #include "recr_cutin.h"
+#include "dxlibcur.h"
 
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
@@ -248,6 +249,7 @@ now_scene_t musicserect2(int *p1) {
 	}
 	//ここまで、曲情報の読み込み
 	//曲のソート
+	AvoidKeyBug();
 	G[0] = Mapping[command[0]];
 	SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 	for (int i = 0; i < SongNumCount; i++) {
