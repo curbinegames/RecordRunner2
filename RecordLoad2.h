@@ -48,6 +48,36 @@ void set_item_set(item_box* const Movie, short* const MovieN,
 item_eff_box set_pic_mat(wchar_t *s);
 int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
+/* sub action */
+double SETbpm(wchar_t* p1) {
+	strmods(p1, 5);
+	return strsans2(p1);
+}
+
+int SEToffset(wchar_t* p1) {
+	strmods(p1, 12);
+	return strsans(p1);
+}
+
+int SETLv(wchar_t* p1) {
+	strmods(p1, 7);
+	return strsans(p1);
+}
+
+int shifttime(double n, double bpm, int time) {
+	return (int)(time + 240000.0 * (n - 1.0) / (bpm * 16.0));
+}
+
+void SETMove(double NowTime, double StartTime, double MovePoint,
+	double MoveType, double EndTime, double bpm, int* StaetTimeBuff,
+	int* MovePointBuff, int* EndTimeBuff, int* MoveTypeBuff) {
+	*StaetTimeBuff = shifttime(StartTime, bpm, (int)NowTime);
+	*MovePointBuff = (int)(MovePoint * 50.0 + 100.0);
+	*EndTimeBuff = shifttime(EndTime, bpm, (int)NowTime) - 5;
+	*MoveTypeBuff = (int)MoveType;
+}
+
+/* main action */
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
@@ -235,7 +265,9 @@ void RecordLoad2(int p, int n, int o) {
 			v_bpm[0].BPM = (unsigned short)bpm;
 		}
 		//ノートのオフセットを読み込む
-		else if (strands(GT1, L"#NOTEOFFSET:")) timer[0] = timer[1] = timer[2] = noteoff = SEToffset(GT1);
+		else if (strands(GT1, L"#NOTEOFFSET:")) {
+			timer[0] = timer[1] = timer[2] = noteoff = SEToffset(GT1);
+		}
 		//空の背景を読み込む
 		else if (strands(GT1, L"#SKY:")) {
 			strcopy(GT24, skyFN, 1);
