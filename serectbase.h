@@ -1,5 +1,4 @@
 #ifndef SECERT_BASE
-#include "define.h"
 
 #define SECERT_BASE
 

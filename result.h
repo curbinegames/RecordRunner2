@@ -1,4 +1,3 @@
-#include "define.h"
 #include "fontcur.h"
 #include "playbox.h"
 #include "system.h"
@@ -13,6 +12,7 @@
 #define CAL_GAP_WIDTH(all_gap, count, all_d_gap)							\
 	(((all_d_gap) / (count)) - ((all_gap) * (all_gap)) / ((count) * (count)))
 
+char GetCharNo();
 char CalScoreRank(int score);
 int CalPlayRate(judge_box judge, double DifRate);
 int GetFullRate();
@@ -22,6 +22,17 @@ void SavePlayCount(char drop, struct judge_box const* const judge);
 void SaveRate(wchar_t songN[], double rate);
 void SaveScore(wchar_t songN[], char dif,
 	int score, double acc, int Dscore, short rank, char Clear);
+
+char GetCharNo() {
+	int data[6] = { 0,0,0,2,0,0 };
+	FILE* fp;
+	(void)_wfopen_s(&fp, L"save/system.dat", L"rb");
+	if (fp != NULL) {
+		fread(&data, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+	return (char)data[0];
+}
 
 now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	struct judge_box const* const judge, int Mcombo, short int notes,
@@ -318,6 +329,7 @@ void SavePlayCount(char drop, struct judge_box const* const judge) {
 
 void SaveRate(wchar_t songN[], double rate) {
 	char num = -1;
+	int G = 0;
 	play_rate_t data[RATE_NUM];
 	FILE* fp;
 	(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
@@ -344,7 +356,10 @@ void SaveRate(wchar_t songN[], double rate) {
 	if (data[num].num < rate) {
 		data[num].num = rate;
 		strcopy(songN, data[num].name, 1);
-		_wfopen_s(&fp, RATE_FILE_NAME, L"wb");
+		G = _wfopen_s(&fp, RATE_FILE_NAME, L"wb");
+		if (fp == NULL) {
+			while (1) {}
+		}
 		fwrite(&data, sizeof(play_rate_t), RATE_NUM, fp);
 		fclose(fp);
 	}

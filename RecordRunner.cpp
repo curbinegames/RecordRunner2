@@ -15,23 +15,14 @@
 #include "recr_cutin.h"
 #include "versionup.h"
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine, int nCmdShow) {
-	now_scene_t next = SCENE_TITLE;
+#define DX_MAIN_DEF HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
+
+static void GameMain() {
 	int now = 0, bgm, mnom[7] = { 0,1,0,1,1,0,0 };
 	int G[5] = { 0,0,0,0,0 };
 	unsigned int Cr = GetColor(255, 255, 255);
-	(void)hInstance;
-	(void)hPrevInstance;
-	(void)lpCmdLine;
-	(void)nCmdShow;
-	ChangeWindowMode(TRUE);
-	SetAlwaysRunFlag(TRUE);
-	SetWindowUserCloseEnableFlag(FALSE);
-	SetMainWindowText(L"Record Runner");
-	SetWindowSizeChangeEnableFlag(TRUE);
-	if (DxLib_Init() == -1) { return -1; }
-	SetDrawScreen(DX_SCREEN_BACK);
+	now_scene_t next = SCENE_TITLE;
+	FILE* fp;
 	bgm = LoadSoundMem(L"song/no.mp3");
 	INIT_MAT();
 	upgrade_rate_f(); // レートのセーブデータ更新(Ver.1.04 -> Ver.1.05)
@@ -93,6 +84,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			break;
 		}
 	}
+}
+
+int WINAPI WinMain(DX_MAIN_DEF) {
+	(void)hInstance;
+	(void)hPrevInstance;
+	(void)lpCmdLine;
+	(void)nCmdShow;
+	ChangeWindowMode(TRUE);
+	SetAlwaysRunFlag(TRUE);
+	SetWindowUserCloseEnableFlag(FALSE);
+	SetMainWindowText(L"Record Runner");
+	SetWindowSizeChangeEnableFlag(TRUE);
+	if (DxLib_Init() == -1) { return -1; }
+	SetDrawScreen(DX_SCREEN_BACK);
+	GameMain(); // ゲーム処理
 	DxLib_End();
 	return 0;
 }

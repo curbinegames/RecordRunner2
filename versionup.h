@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DxLib.h"
-#include "define.h"
+#include "system.h"
 #include "strcur.h"
 
 void upgrade_rate_f() {
@@ -11,7 +11,10 @@ void upgrade_rate_f() {
 	FILE* fp;
 	FILE* log;
 	_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp != NULL) { return; }
+	if (fp != NULL) {
+		fclose(fp);
+		return;
+	}
 	_wfopen_s(&fp, OLD_RATE_FILE_NAME_S, L"rb");
 	if (fp == NULL) { return; }
 	fread(&name, 255, 10, fp);
