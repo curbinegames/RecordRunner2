@@ -69,6 +69,7 @@ static wchar_t const tip[][31] = {
 	L"長押しノーツ? 追加しないよそんなもん",
 	L"まだまだ追加したい機能はあるんだ",
 	L"譜面のレギュレーションは一応ある",
+	L"選曲画面の時、マウスも反応する",
 	L"カービンはケモナー", /* カービンのこと */
 	L"カービンのtwitterもよろしくね",
 	L"カービンの英語表記は、curbine",
@@ -116,7 +117,7 @@ void ViewCutIn(int Stime) {
 	DrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
 	DrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
 	DrawRotaGraph(320 - PosY, 240 - PosY, 1,
-		(double)Rot / 100.0, pic_cutin[2], TRUE);
+		(double)Rot / 50.0, pic_cutin[2], TRUE);
 	switch (CutFg) {
 	case CUTIN_TIPS_ON:
 		DrawString(CUT_MES_POSX + PosY * 640 / 360, 430, tip[TipNo], 0xFF000000);
@@ -153,7 +154,7 @@ void ViewCutOut(int Stime) {
 	DrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
 	DrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
 	DrawRotaGraph(320 + PosY, 240 - PosY, 1,
-		(double)Rot / 100.0, pic_cutin[2], TRUE);
+		(double)Rot / 50.0, pic_cutin[2], TRUE);
 	switch (CutFg) {
 	case CUTIN_TIPS_ON:
 		DrawString(CUT_MES_POSX - PosY * 640 / 360, 430, tip[TipNo], 0xFF000000);

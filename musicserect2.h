@@ -2,20 +2,25 @@
 #include "recr_cutin.h"
 #include "dxlibcur.h"
 
+#define MUSE_FADTM 250
+#define MUSE_KEYTM 500
+
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
 	char closeFg = 0;
 	unsigned int Cr[7];
 	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
 	Cr[3] = GetColor(0, 0, 0);
+	int NTime = 0;
 	int e;
 	int G[10];
 	int command[2] = { 0,1 };
 	int SongNumCount = 0;
-	int moveC = 250;
-	int startC = -250;
-	int XmoveC = 250;
-	int XstartC = -250;
+	int moveC = MUSE_FADTM;
+	int startC = -MUSE_FADTM;
+	int XmoveC = MUSE_FADTM;
+	int XstartC = -MUSE_FADTM;
+	int preSC = 0;
 	int UD = 1;
 	int LR = 1;
 	int ShiftKey = 0;
@@ -275,14 +280,15 @@ now_scene_t musicserect2(int *p1) {
 	}
 	CutTime = GetNowCount();
 	while (1) {
+		NTime = GetNowCount();
 		ClearDrawScreen();
 		//背景の表示
 		DrawGraph(backpos, 0, back, TRUE);
 		DrawGraph(backpos + 640, 0, back, TRUE);
 		backpos = (backpos - 2) % 640;
 		//時間設定
-		moveC = mins(-1 * (GetNowCount() - startC) + 250, 0);
-		XmoveC = mins(-1 * (GetNowCount() - XstartC) + 250, 0);
+		moveC = mins(-1 * (NTime - startC) + MUSE_FADTM, 0);
+		XmoveC = mins(-1 * (NTime - XstartC) + MUSE_FADTM, 0);
 		//曲一覧を作成する
 		DrawSongBar(command[0], command[1], SongNumCount, UD, moveC, bar,
 			songdata, Mapping, CRatepic, CRankpic);
@@ -309,11 +315,11 @@ now_scene_t musicserect2(int *p1) {
 		}
 		if (LR == 1) {
 			DrawGraph(460, 320, difbar[command[1]], TRUE);
-			DrawGraph(pals(0, 640, 250, 460, XmoveC), 320, difbar[command[1] + 1], TRUE);
+			DrawGraph(pals(0, 640, MUSE_FADTM, 460, XmoveC), 320, difbar[command[1] + 1], TRUE);
 		}
 		else if (LR == -1) {
 			DrawGraph(460, 320, difbar[command[1] - 1], TRUE);
-			DrawGraph(pals(0, 460, 250, 640, XmoveC), 320, difbar[command[1]], TRUE);
+			DrawGraph(pals(0, 460, MUSE_FADTM, 640, XmoveC), 320, difbar[command[1]], TRUE);
 		}
 		//詳細を表示する
 		DrawGraph(316, 370, detail, TRUE);
@@ -335,7 +341,7 @@ now_scene_t musicserect2(int *p1) {
 			songdata[Mapping[command[0]]].Hacc[command[1]],
 			songdata[Mapping[command[0]]].Hdis[command[1]] / 1000.0);
 		//プレビューを流す
-		if (moveC == 0 && XmoveC == 0
+		if (preSC + MUSE_KEYTM < NTime
 			&& strands(songdata[Mapping[command[0]]].SongFileName[command[1]], L"NULL") == 0
 			&& strands(playingsong, songdata[Mapping[command[0]]].SongFileName[command[1]]) == 0) {
 			StopSoundMem(previewM);
@@ -347,31 +353,32 @@ now_scene_t musicserect2(int *p1) {
 			ChangeVolumeSoundMem(0, previewM);
 			PlaySoundMem(previewM, DX_PLAYTYPE_BACK, FALSE);
 			WaitTimer(30);
-			SongPreSTime = GetNowCount();
+			NTime = GetNowCount();
+			SongPreSTime = NTime;
 		}
-		if (GetNowCount() - SongPreSTime < 500) {
-			ChangeVolumeSoundMem(lins(0, 0, 500, 255, GetNowCount() - SongPreSTime), previewM);
+		if (NTime - SongPreSTime < 500) {
+			ChangeVolumeSoundMem(lins(0, 0, 500, 255, NTime - SongPreSTime), previewM);
 		}
-		else if (500 <= GetNowCount() - SongPreSTime && GetNowCount() - SongPreSTime < 14500) {
+		else if (500 <= NTime - SongPreSTime && NTime - SongPreSTime < 14500) {
 			ChangeVolumeSoundMem(255, previewM);
 		}
-		else if (14500 <= GetNowCount() - SongPreSTime && GetNowCount() - SongPreSTime < 15000) {
-			ChangeVolumeSoundMem(lins(14500, 255, 15000, 0, GetNowCount() - SongPreSTime), previewM);
+		else if (14500 <= NTime - SongPreSTime && NTime - SongPreSTime < 15000) {
+			ChangeVolumeSoundMem(lins(14500, 255, 15000, 0, NTime - SongPreSTime), previewM);
 		}
-		else if (15000 <= GetNowCount() - SongPreSTime) {
+		else if (15000 <= NTime - SongPreSTime) {
 			StopSoundMem(previewM);
 			SongPrePat++;
 			SetCurrentPositionSoundMem(songdata[Mapping[command[0]]].preview[command[1]][SongPrePat % 2], previewM);
 			ChangeVolumeSoundMem(0, previewM);
 			PlaySoundMem(previewM, DX_PLAYTYPE_BACK, FALSE);
 			WaitTimer(30);
-			SongPreSTime = GetNowCount();
+			SongPreSTime = NTime;
 		}
 		//レートを表示する
 		DrawRate(rate, ratebarimg, chap[lan[0]], charaimg);
 		//ディスクを表示する(ソート表示場所)
-		if (UD == 1) { diskr += pals(0, 2, 250, -48, moveC) / 100.0; }
-		else { diskr += pals(0, 2, 250, 50, moveC) / 100.0; }
+		if (UD == 1) { diskr += pals(0, 2, MUSE_FADTM, -75, moveC) / 100.0; }
+		else { diskr += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
 		if (diskr > 6.28) { diskr -= 6.28; }
 		else if (diskr < 0) { diskr += 6.28; }
 		DrawRotaGraph(610, 25, 1, diskr, disk, TRUE);
@@ -498,7 +505,7 @@ now_scene_t musicserect2(int *p1) {
 				SetCutSong(songdata[Mapping[command[0]]].SongName[command[1]],
 					songdata[Mapping[command[0]]].jacketP[command[1]]);
 				closeFg = 1;
-				CutTime = GetNowCount();
+				CutTime = NTime;
 			}
 		}
 		else if (G[0] == 2) { /* 戻る */
@@ -506,22 +513,23 @@ now_scene_t musicserect2(int *p1) {
 			SetTipNo();
 			SetCutTipFg(CUTIN_TIPS_ON);
 			closeFg = 1;
-			CutTime = GetNowCount();
+			CutTime = NTime;
 		}
 		else {
 			switch (G[0]) {
 			case 3: /* 曲選択上 */
 				command[0]--;
 				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-				if (command[0] < 0) command[0] = SongNumCount - 1;
+				if (command[0] < 0) { command[0] = SongNumCount - 1; }
 				if (command[1] > songdata[Mapping[command[0]]].limit) {
 					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= 250;
+					XstartC -= MUSE_FADTM;
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				UD = -1;
-				startC = GetNowCount();
+				startC = NTime;
+				preSC = startC;
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
 				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
 					if (strands(songdata[Mapping[command[0]]].SongName[0], L"NULL") != 1) {
@@ -541,12 +549,13 @@ now_scene_t musicserect2(int *p1) {
 				if (command[0] >= SongNumCount) command[0] = 0;
 				if (command[1] > songdata[Mapping[command[0]]].limit) {
 					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= 250;
+					XstartC -= MUSE_FADTM;
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				UD = 1;
-				startC = GetNowCount();
+				startC = NTime;
+				preSC = startC;
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
 				if (SortMode == SORT_DEFAULT &&
 					strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
@@ -561,10 +570,11 @@ now_scene_t musicserect2(int *p1) {
 				break;
 			case 5: /* 難易度下降 */
 				command[1]--;
-				XstartC = GetNowCount();
+				XstartC = NTime;
+				preSC = XstartC;
 				if (command[1] < 0) {
 					command[1] = 0;
-					XstartC -= 250;
+					XstartC -= MUSE_FADTM;
 				}
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				LR = 1;
@@ -580,10 +590,11 @@ now_scene_t musicserect2(int *p1) {
 				break;
 			case 6: /* 難易度上昇 */
 				command[1]++;
-				XstartC = GetNowCount();
+				XstartC = NTime;
+				preSC = XstartC;
 				if (command[1] > songdata[Mapping[command[0]]].limit) {
 					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= 250;
+					XstartC -= MUSE_FADTM;
 				}
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				LR = -1;
@@ -611,7 +622,7 @@ now_scene_t musicserect2(int *p1) {
 				break;
 			}
 		}
-		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
+		if (closeFg == 1 && CutTime + 2000 <= NTime) {
 			StopSoundMem(previewM);
 			ClearDrawScreen();
 			INIT_MAT();
