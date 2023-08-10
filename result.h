@@ -203,8 +203,8 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 }
 
 now_scene_t result(int dif, short Lv, char drop, int difkey,
-	wchar_t songN[255], wchar_t DifFN[255], struct judge_box judge,
-	int score, int Mcombo, short notes, int gapa[3], int Dscore) {
+	wchar_t songN[], wchar_t DifFN[], struct judge_box judge, 
+	int score, int Mcombo, short notes, int gapa[], int Dscore) {
 	/* arg fix */
 	if (gapa[1] == 0) { gapa[1] = 1; }
 	/* int */
