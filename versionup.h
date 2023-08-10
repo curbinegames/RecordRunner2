@@ -39,3 +39,39 @@ void upgrade_rate_f() {
 	if (log != NULL) { fclose(log); }
 	return;
 }
+
+void fix10501to10502_2(wchar_t const *oldFL, wchar_t const *newFL) {
+	int	read[7] = { 0,0,0,0,0,0,0 };
+	int	Readdis[7] = { 0,0,0,0,0,0,0 };
+	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
+	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
+	double ReadAcc[7] = { 0,0,0,0,0,0,0 };
+	FILE *fp;
+	(void)_wfopen_s(&fp, oldFL, L"rb");
+	if (fp == NULL) {
+		return;
+	}
+	fread(&read, sizeof(int), 6, fp);
+	fread(&ReadAcc, sizeof(double), 6, fp);
+	fread(&Readdis, sizeof(int), 6, fp);
+	fread(&ReadRank, sizeof(int), 6, fp);
+	fread(&ReadClear, sizeof(int), 6, fp);
+	fclose(fp);
+	for (int i = 0; i < 7; i++) {
+		SaveScore(newFL, i, read[i], ReadAcc[i], Readdis[i],
+			(short)ReadRank[i], (char)ReadClear[i]);
+	}
+	//_wremove(oldFL);
+	return;
+}
+
+void fix10501to10502() {
+	fix10501to10502_2(L"score/華調風月.dat", L"katyohugetsu");
+	fix10501to10502_2(L"score/グラデーション・ワールド.dat", L"Gradation-world");
+	fix10501to10502_2(L"score/サイクリング.dat", L"cycling");
+	fix10501to10502_2(L"score/トリノユメ.dat", L"Torinoyume");
+	fix10501to10502_2(L"score/モーニンググローリー.dat", L"Morning Glory");
+	fix10501to10502_2(L"score/無料(タダ)のうた.dat", L"Tada no Uta");
+	fix10501to10502_2(L"score/明るくそしてしとやかに.dat", L"light and graceful");
+	return;
+}
