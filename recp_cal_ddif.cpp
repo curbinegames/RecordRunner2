@@ -13,7 +13,7 @@
 #define ARROW_MLP(x) ((x) * 12 / 10)
 
 int cal_ddif_solo_push(ddif_box_t ddif) {
-	int gap = ddif.time - ddif.bef->time;
+	int gap = mins(ddif.time - ddif.bef->time, 1);
 	int ret = 3000000 / gap;
 	/* arrow‚Ìc˜A */
 	if (ddif.note == ddif.bef->note && 3 <= ddif.note && ddif.note <= 6) {
