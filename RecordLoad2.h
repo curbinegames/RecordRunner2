@@ -47,7 +47,7 @@ void set_item_set(item_box* const Movie, short* const MovieN,
 item_eff_box set_pic_mat(wchar_t *s);
 int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
-/* sub action */
+/* proto */
 double SETbpm(wchar_t* p1) {
 	strmods(p1, 5);
 	return strsans2(p1);
@@ -74,6 +74,29 @@ void SETMove(double NowTime, double StartTime, double MovePoint,
 	*MovePointBuff = (int)(MovePoint * 50.0 + 100.0);
 	*EndTimeBuff = shifttime(EndTime, bpm, (int)NowTime) - 5;
 	*MoveTypeBuff = (int)MoveType;
+}
+
+/* sub action */
+static note_material GetNoteObjMat(TCHAR code) {
+	switch (code) {
+	case L'H':
+		return NOTE_HIT;
+	case L'C':
+		return NOTE_CATCH;
+	case L'U':
+		return NOTE_UP;
+	case L'D':
+		return NOTE_DOWN;
+	case L'L':
+		return NOTE_LEFT;
+	case L'R':
+		return NOTE_RIGHT;
+	case L'B':
+		return NOTE_BOMB;
+	case L'G':
+		return NOTE_GHOST;
+	}
+	return NOTE_NONE;
 }
 
 /* main action */
@@ -1061,35 +1084,7 @@ void RecordLoad2(int p, int n, int o) {
 									break;
 								}
 							}
-							switch ((wchar_t)(G[2])) {
-							case L'H':
-								note[i[0]][objectN[i[0]]].object = NOTE_HIT;
-								break;
-							case L'C':
-								note[i[0]][objectN[i[0]]].object = NOTE_CATCH;
-								break;
-							case L'U':
-								note[i[0]][objectN[i[0]]].object = NOTE_UP;
-								break;
-							case L'D':
-								note[i[0]][objectN[i[0]]].object = NOTE_DOWN;
-								break;
-							case L'L':
-								note[i[0]][objectN[i[0]]].object = NOTE_LEFT;
-								break;
-							case L'R':
-								note[i[0]][objectN[i[0]]].object = NOTE_RIGHT;
-								break;
-							case L'B':
-								note[i[0]][objectN[i[0]]].object = NOTE_BOMB;
-								break;
-							case L'G':
-								note[i[0]][objectN[i[0]]].object = NOTE_GHOST;
-								break;
-							default:
-								/* none */
-								break;
-							}
+							note[i[0]][objectN[i[0]]].object = GetNoteObjMat((TCHAR)G[2]);
 							//viewtime‚ðŒvŽZ‚·‚é
 							G[1] = 0;
 							while (0 <= scrool[G[1] + 1].starttime &&
