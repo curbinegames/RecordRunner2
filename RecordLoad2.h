@@ -99,6 +99,15 @@ static note_material GetNoteObjMat(TCHAR code) {
 	return NOTE_NONE;
 }
 
+static void CalNoteViewTime(note_box *note, scrool_box scrool[]) {
+	int num = 0;
+	while (0 <= scrool[num + 1].starttime &&
+		scrool[num + 1].starttime <= note->hittime) {
+		num++;
+	}
+	note->viewtime = note->hittime * scrool[num].speed + scrool[num].basetime;
+}
+
 /* main action */
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
@@ -1086,12 +1095,7 @@ void RecordLoad2(int p, int n, int o) {
 							}
 							note[i[0]][objectN[i[0]]].object = GetNoteObjMat((TCHAR)G[2]);
 							//viewtimeを計算する
-							G[1] = 0;
-							while (0 <= scrool[G[1] + 1].starttime &&
-								scrool[G[1] + 1].starttime <= note[i[0]][objectN[i[0]]].hittime) {
-								G[1]++;
-							}
-							note[i[0]][objectN[i[0]]].viewtime = note[i[0]][objectN[i[0]]].hittime * scrool[G[1]].speed + scrool[G[1]].basetime;
+							CalNoteViewTime(&note[i[0]][objectN[i[0]]], scrool);
 							note[i[0]][objectN[i[0]]].ypos = 50 * i[0] + 300;
 							note[i[0]][objectN[i[0]]].xpos = 150;
 							//縦位置を計算する
