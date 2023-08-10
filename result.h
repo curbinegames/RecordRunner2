@@ -203,8 +203,9 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 }
 
 now_scene_t result(int dif, short Lv, char drop, int difkey,
-	wchar_t songN[], wchar_t DifFN[], struct judge_box judge, 
-	int score, int Mcombo, short notes, int gapa[], int Dscore) {
+	wchar_t songN[], wchar_t DifFN[], wchar_t fileN[],
+	struct judge_box judge, int score, int Mcombo, short notes,
+	int gapa[], int Dscore) {
 	/* arg fix */
 	if (gapa[1] == 0) { gapa[1] = 1; }
 	/* int */
@@ -220,10 +221,10 @@ now_scene_t result(int dif, short Lv, char drop, int difkey,
 	double DifRate = CAL_DIF_RATE(difkey, Lv) / 100; //譜面定数
 	double rate = (double)CalPlayRate(judge, DifRate) / 100.0;
 	/* action */
-	SaveScore(songN, (char)dif, score, acc, Dscore, (short)rank, Clear); // スコア保存
+	SaveScore(fileN, (char)dif, score, acc, Dscore, (short)rank, Clear); // スコア保存
 	SavePlayCount(drop, &judge); // プレイ回数保存
 	SaveCharPlayCount(CharNo); // キャラプレイ数保存
-	SaveRate(songN, rate); // レート保存
+	SaveRate(fileN, rate); // レート保存
 	NewRate = GetFullRate(); // 保存後のレート
 	RateSub = NewRate - OldRate; // レートの差
 	return ViewResult(dif, DifFN, songN, &judge, Mcombo, notes, NewRate,

@@ -1679,7 +1679,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ret_gap[0] = gap2.sum;
 		ret_gap[1] = gap2.count;
 		ret_gap[2] = gap2.ssum;
-		return result(o, Lv, drop, difkey[4][3], songN, DifFN, judge, score.sum, Mcombo, notes, ret_gap, Dscore[3]);
+		return result(o, Lv, drop, difkey[4][3], songN, DifFN, fileN, judge, score.sum, Mcombo, notes, ret_gap, Dscore[3]);
 	}
 }
 
