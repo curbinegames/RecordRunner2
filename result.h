@@ -20,7 +20,7 @@ char JudgeClearRank(char drop, judge_box judge);
 void SaveCharPlayCount(char charaNo);
 void SavePlayCount(char drop, struct judge_box const* const judge);
 void SaveRate(wchar_t songN[], double rate);
-void SaveScore(wchar_t songN[], char dif,
+void SaveScore(wchar_t const songN[], char dif,
 	int score, double acc, int Dscore, short rank, char Clear);
 
 char GetCharNo() {
@@ -365,7 +365,7 @@ void SaveRate(wchar_t songN[], double rate) {
 	}
 }
 
-void SaveScore(wchar_t songN[], char dif,
+void SaveScore(wchar_t const songN[], char dif,
 	int score, double acc, int Dscore, short rank, char Clear) {
 	int	read[7] = { 0,0,0,0,0,0,0 };
 	int	Readdis[7] = { 0,0,0,0,0,0,0 };
