@@ -339,8 +339,8 @@ void SaveRate(wchar_t songN[], double rate) {
 	}
 	// “¯‚¶‹ÈA‚Ü‚½‚Í–¢û˜^‚ğ’T‚·
 	for (char i = 0; i < RATE_NUM; i++) {
-		if ((strands(songN, data[i].name) || (data[i].name[0] == L'\0')) &&
-			data[i].num == 0) {
+		if (strands(songN, data[i].name) ||
+			(data[i].name[0] == L'\0' && data[i].num == 0)) {
 			num = i;
 			break;
 		}
