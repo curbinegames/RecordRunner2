@@ -1,8 +1,12 @@
+/* include */
+
 #include "RecordLoad2.h"
 #include "result.h"
 #include "playbox.h"
 #include "recr_cutin.h"
 #include "dxlibcur.h"
+
+/* define */
 
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
@@ -33,6 +37,8 @@
 #define RECR_DEBUG_LOOP(n, data_a, data_b)
 #endif
 
+/* enum */
+
 typedef enum chara_pos_e {
 	RECR_CHARP_U = 0,
 	RECR_CHARP_M,
@@ -45,6 +51,8 @@ typedef enum note_judge {
 	NOTE_JUDGE_SAFE,
 	NOTE_JUDGE_MISS
 } note_judge;
+
+/* proto */
 
 void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 	unsigned int color, int thick) {
@@ -107,6 +115,8 @@ void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
 char PlayNoteHitSound(note_box note, int *MelodySnd, int *Sitem, char seflag,
 	int notemat);
 void PlayNoteHitSound2(play_sound_t* const sound);
+
+/* action */
 
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/*---—pŒê’è‹`-----
