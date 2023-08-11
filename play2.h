@@ -429,6 +429,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	}
 	if (G[2] != 0) {
 		RecordLoad2(p, n, o);//rrsデータが無い、または作成の指示があれば作る
+		cal_ddif_3(GT1);//ddif計算
 		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
 	}
 	if (G[2] == 0) {
