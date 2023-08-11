@@ -116,8 +116,320 @@ char PlayNoteHitSound(note_box note, int *MelodySnd, int *Sitem, char seflag,
 	int notemat);
 void PlayNoteHitSound2(play_sound_t* const sound);
 
-/* action */
+/* sub action */
+static void AutoBefTate(int *keyu, int *keyd, int *keyl, int *keyr,
+	note_material umat, note_material mmat, note_material lmat,
+	int uhittime, int mhittime, int lhittime, int Ntime) {
+	if (uhittime - Ntime <= 40) {
+		switch (umat) {
+		case NOTE_UP:
+			*keyu = 0;
+			break;
+		case NOTE_DOWN:
+			*keyd = 0;
+			break;
+		case NOTE_LEFT:
+			*keyl = 0;
+			break;
+		case NOTE_RIGHT:
+			*keyr = 0;
+			break;
+		default:
+			break;
+		}
+	}
+	if (mhittime - Ntime <= 40) {
+		switch (mmat) {
+		case NOTE_UP:
+			*keyu = 0;
+			break;
+		case NOTE_DOWN:
+			*keyd = 0;
+			break;
+		case NOTE_LEFT:
+			*keyl = 0;
+			break;
+		case NOTE_RIGHT:
+			*keyr = 0;
+			break;
+		default:
+			break;
+		}
+	}
+	if (lhittime - Ntime <= 40) {
+		switch (lmat) {
+		case NOTE_UP:
+			*keyu = 0;
+			break;
+		case NOTE_DOWN:
+			*keyd = 0;
+			break;
+		case NOTE_LEFT:
+			*keyl = 0;
+			break;
+		case NOTE_RIGHT:
+			*keyr = 0;
+			break;
+		default:
+			break;
+		}
+	}
+	return;
+}
 
+static void AutoHit(int *keya, int *keyb, int *keyc,
+	struct note_box unote[], struct note_box mnote[], struct note_box lnote[],
+	int Ntime) {
+	int hitcount = 0;
+	for (int i = 0; i < 3; i++) {
+		if (unote[i].object == 1 && unote[i].hittime - Ntime <= 8) {
+			hitcount++;
+		}
+		if (mnote[i].object == 1 && mnote[i].hittime - Ntime <= 8) {
+			hitcount++;
+		}
+		if (lnote[i].object == 1 && lnote[i].hittime - Ntime <= 8) {
+			hitcount++;
+		}
+	}
+	if (hitcount == 1) {
+		if (*keyc == 0) {
+			*keyc = 1;
+			*keya = 0;
+		}
+		else {
+			*keya = 1;
+			*keyc = 0;
+		}
+		*keyb = 0;
+	}
+	else if (hitcount == 2) {
+		if (*keyc == 0) {
+			*keyc = 1;
+			*keya = 0;
+		}
+		else {
+			*keya = 1;
+			*keyc = 0;
+		}
+		*keyb = 1;
+	}
+	else if (hitcount >= 3) {
+		*keya = 1;
+		*keyb = 1;
+		*keyc = 1;
+	}
+	return;
+}
+
+static int AutoArrowLR(int *keyu, int *keyd, int *keyl, int *keyr,
+	note_material umat, note_material mmat, note_material lmat,
+	int uhittime, int mhittime, int lhittime, int Ntime) {
+	int hitFG = 0;
+	if (umat == 5 && uhittime - Ntime <= 8 ||
+		mmat == 5 && mhittime - Ntime <= 8 ||
+		lmat == 5 && lhittime - Ntime <= 8) {
+		if (hitFG == 0) {
+			*keyu = 0;
+			*keyd = 0;
+			*keyl = 0;
+			*keyr = 0;
+		}
+		hitFG = 1;
+		*keyl = 1;
+	}
+	if (umat == 6 && uhittime - Ntime <= 8 ||
+		mmat == 6 && mhittime - Ntime <= 8 ||
+		lmat == 6 && lhittime - Ntime <= 8) {
+		if (hitFG == 0) {
+			*keyu = 0;
+			*keyd = 0;
+			*keyl = 0;
+			*keyr = 0;
+		}
+		hitFG = 1;
+		*keyr = 1;
+	}
+	return hitFG;
+}
+
+static void AutoBomb(int *keyu, int *keyd,
+	note_material umat, note_material mmat, note_material lmat,
+	int uhittime, int mhittime, int lhittime, int Ntime){
+	if (*keyd > 0) {
+		if (lmat == 7 && lhittime - Ntime <= 40) {
+			*keyd = 0;
+		}
+		if (umat == 7 && uhittime - Ntime <= 40) {
+			*keyu = 0;
+		}
+		if (mmat == 7 && mhittime - Ntime <= 40) {
+			if (umat == 2 && uhittime - Ntime <= 40 ||
+				lmat == 7 && lhittime - Ntime <= 40) {
+				(*keyu)++;
+				*keyd = 0;
+			}
+			else {
+				*keyu = 0;
+				(*keyd)++;
+			}
+		}
+	}
+	else {
+		if (umat == 7 && uhittime - Ntime <= 40) {
+			*keyu = 0;
+		}
+		if (lmat == 7 && lhittime - Ntime <= 40) {
+			*keyd = 0;
+		}
+		if (mmat == 7 && mhittime - Ntime <= 40) {
+			if (umat == 7 && uhittime - Ntime <= 40 ||
+				lmat == 2 && lhittime - Ntime <= 40) {
+				*keyu = 0;
+				(*keyd)++;
+			}
+			else {
+				(*keyu)++;
+				*keyd = 0;
+			}
+		}
+	}
+}
+
+static void AutoArrowUD(int *keyu, int *keyd, int *keyl, int *keyr,
+	note_material umat, note_material mmat, note_material lmat,
+	int uhittime, int mhittime, int lhittime, int Ntime, int hitFG) {
+	if (umat == 3 && uhittime - Ntime <= 8 ||
+		mmat == 3 && mhittime - Ntime <= 8 ||
+		lmat == 3 && lhittime - Ntime <= 8) {
+		if (hitFG == 0) {
+			*keyu = 0;
+			*keyd = 0;
+			*keyl = 0;
+			*keyr = 0;
+		}
+		hitFG = 1;
+		*keyu = 1;
+		if (umat == 7 && uhittime - Ntime <= 40) {
+			*keyd = 1;
+		}
+	}
+	if (umat == 4 && uhittime - Ntime <= 8 ||
+		mmat == 4 && mhittime - Ntime <= 8 ||
+		lmat == 4 && lhittime - Ntime <= 8) {
+		if (hitFG == 0) {
+			*keyu = 0;
+			*keyd = 0;
+			*keyl = 0;
+			*keyr = 0;
+		}
+		hitFG = 1;
+		*keyd = 1;
+		if (lmat == 7 && lhittime - Ntime <= 40) {
+			*keyu = 1;
+		}
+	}
+	return;
+}
+
+static void AutoCatch(int *keyu, int *keyd,
+	note_material umat, note_material mmat, note_material lmat,
+	int uhittime, int mhittime, int lhittime, int Ntime){
+	if (*keyu > 0) {
+		if (lmat == 2 && lhittime - Ntime <= 8) {
+			*keyu = 0;
+			(*keyd)++;
+		}
+		if (mmat == 2 && mhittime - Ntime <= 8) {
+			*keyu = 0;
+			*keyd = 0;
+		}
+		if (umat == 2 && uhittime - Ntime <= 8) {
+			(*keyu)++;
+			*keyd = 0;
+		}
+	}
+	else {
+		if (umat == 2 && uhittime - Ntime <= 8) {
+			(*keyu)++;
+			*keyd = 0;
+		}
+		if (mmat == 2 && mhittime - Ntime <= 8) {
+			*keyu = 0;
+			*keyd = 0;
+		}
+		if (lmat == 2 && lhittime - Ntime <= 8) {
+			*keyu = 0;
+			(*keyd)++;
+		}
+	}
+	return;
+}
+
+static void AutoReleaseKey(int *keya, int *keyb, int *keyc,
+	int *keyu, int *keyd, int *keyl, int *keyr,
+	note_material umat, note_material mmat, note_material lmat, int Ntime) {
+	/* ヒットボタン離し */
+	if (*keya > 10) { *keya = 0; }
+	if (*keyb > 10) { *keyb = 0; }
+	if (*keyc > 10) { *keyc = 0; }
+	/* 左右ボタン離し */
+	if (*keyl > 10) { *keyl = 0; }
+	if (*keyr > 10) { *keyr = 0; }
+	/* 上下ボタン離し */
+	if (*keyu > 10 &&
+		umat != 2 && mmat != 2 && lmat != 2 &&
+		umat != 7 && mmat != 7 && lmat != 7) {
+		*keyu = 0;
+	}
+	if (*keyd > 10 &&
+		umat != 2 && mmat != 2 && lmat != 2 &&
+		umat != 7 && mmat != 7 && lmat != 7) {
+		*keyd = 0;
+	}
+}
+
+static void AutoAution(int *keya, int *keyb, int *keyc,
+	int *keyu, int *keyd, int *keyl, int *keyr,
+	struct note_box *unote, struct note_box *mnote, struct note_box *lnote,
+	int Ntime) {
+	int hitFG = 0;
+	if (*keya > 0) { (*keya)++; }
+	if (*keyb > 0) { (*keyb)++; }
+	if (*keyc > 0) { (*keyc)++; }
+	if (*keyu > 0) { (*keyu)++; }
+	if (*keyd > 0) { (*keyd)++; }
+	if (*keyl > 0) { (*keyl)++; }
+	if (*keyr > 0) { (*keyr)++; }
+	//縦連前ボタン離し
+	AutoBefTate(keyu, keyd, keyl, keyr,
+		unote->object, mnote->object, lnote->object,
+		unote->hittime, mnote->hittime, lnote->hittime, Ntime);
+	//ヒットノーツ処理
+	AutoHit(keya, keyb, keyc, unote, mnote, lnote, Ntime);
+	//左右アローノーツ処理
+	hitFG = AutoArrowLR(keyu, keyd, keyl, keyr,
+		unote->object, mnote->object, lnote->object,
+		unote->hittime, mnote->hittime, lnote->hittime, Ntime);
+	//ボムノーツ処理
+	AutoBomb(keyu, keyd,
+		unote->object, mnote->object, lnote->object,
+		unote->hittime, mnote->hittime, lnote->hittime, Ntime);
+	//上下アローノーツ処理
+	AutoArrowUD(keyu, keyd, keyl, keyr,
+		unote->object, mnote->object, lnote->object,
+		unote->hittime, mnote->hittime, lnote->hittime, Ntime, hitFG);
+	//キャッチノーツ処理
+	AutoCatch(keyu, keyd,
+		unote->object, mnote->object, lnote->object,
+		unote->hittime, mnote->hittime, lnote->hittime, Ntime);
+	/* ボタン離し */
+	AutoReleaseKey(keya, keyb, keyc, keyu, keyd, keyl, keyr,
+		unote->object, mnote->object, lnote->object, Ntime);
+	return;
+}
+
+/* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/*---用語定義-----
 	ユーザー用譜面データ: ユーザーが作った譜面データ。ユーザーに分かりやすい。
@@ -883,240 +1195,15 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//オートプレイ用コード
 		else if (AutoFlag == 1) {
-			if (holda > 0) { holda++; }
-			if (holdb > 0) { holdb++; }
-			if (holdc > 0) { holdc++; }
-			if (holdu > 0) { holdu++; }
-			if (holdd > 0) { holdd++; }
-			if (holdl > 0) { holdl++; }
-			if (holdr > 0) { holdr++; }
-			//縦連前ボタン離し
-			if (note[0][objectNG[0]].object == 3 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
-				note[1][objectNG[1]].object == 3 && note[1][objectNG[1]].hittime - Ntime <= 40 ||
-				note[2][objectNG[2]].object == 3 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-				holdu = 0;
-			}
-			if (note[0][objectNG[0]].object == 4 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
-				note[1][objectNG[1]].object == 4 && note[1][objectNG[1]].hittime - Ntime <= 40 ||
-				note[2][objectNG[2]].object == 4 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-				holdd = 0;
-			}
-			if (note[0][objectNG[0]].object == 5 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
-				note[1][objectNG[1]].object == 5 && note[1][objectNG[1]].hittime - Ntime <= 40 ||
-				note[2][objectNG[2]].object == 5 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-				holdl = 0;
-			}
-			if (note[0][objectNG[0]].object == 6 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
-				note[1][objectNG[1]].object == 6 && note[1][objectNG[1]].hittime - Ntime <= 40 ||
-				note[2][objectNG[2]].object == 6 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-				holdr = 0;
-			}
-			//ヒットノーツ処理
-			G[0] = 0;
-			if (note[0][objectNG[0]].object == 1 && note[0][objectNG[0]].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (note[1][objectNG[1]].object == 1 && note[1][objectNG[1]].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (note[2][objectNG[2]].object == 1 && note[2][objectNG[2]].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (note[0][objectNG[0] + 1].object == 1 && note[0][objectNG[0] + 1].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (note[1][objectNG[1] + 1].object == 1 && note[1][objectNG[1] + 1].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (note[2][objectNG[2] + 1].object == 1 && note[2][objectNG[2] + 1].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (note[0][objectNG[0] + 2].object == 1 && note[0][objectNG[0] + 2].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (note[1][objectNG[1] + 2].object == 1 && note[1][objectNG[1] + 2].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (note[2][objectNG[2] + 2].object == 1 && note[2][objectNG[2] + 2].hittime - Ntime <= 8) {
-				G[0]++;
-			}
-			if (G[0] == 1) {
-				if (holdc == 0) {
-					holdc = 1;
-					holda = 0;
-					holdb = 0;
-				}
-				else {
-					holda = 1;
-					holdc = 0;
-					holdb = 0;
-				}
-			}
-			else if (G[0] == 2) {
-				if (holdc == 0) {
-					holdc = 1;
-					holdb = 1;
-					holda = 0;
-				}
-				else {
-					holda = 1;
-					holdb = 1;
-					holdc = 0;
-				}
-			}
-			else if (G[0] >= 3) {
-				holda = 1;
-				holdb = 1;
-				holdc = 1;
-			}
-			//左右アローノーツ処理
-			G[0] = 0;
-			if (note[0][objectNG[0]].object == 5 && note[0][objectNG[0]].hittime - Ntime <= 8 ||
-				note[1][objectNG[1]].object == 5 && note[1][objectNG[1]].hittime - Ntime <= 8 ||
-				note[2][objectNG[2]].object == 5 && note[2][objectNG[2]].hittime - Ntime <= 8) {
-				if (G[0] == 0) {
-					holdu = 0;
-					holdd = 0;
-					holdl = 0;
-					holdr = 0;
-				}
-				G[0] = 1;
-				holdl = 1;
-			}
-			if (note[0][objectNG[0]].object == 6 && note[0][objectNG[0]].hittime - Ntime <= 8 ||
-				note[1][objectNG[1]].object == 6 && note[1][objectNG[1]].hittime - Ntime <= 8 ||
-				note[2][objectNG[2]].object == 6 && note[2][objectNG[2]].hittime - Ntime <= 8) {
-				if (G[0] == 0) {
-					holdu = 0;
-					holdd = 0;
-					holdl = 0;
-					holdr = 0;
-				}
-				G[0] = 1;
-				holdr = 1;
-			}
-			//ボムノーツ処理
-			if (holdd > 0) {
-				if (note[2][objectNG[2]].object == 7 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-					holdd = 0;
-				}
-				if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40) {
-					holdu = 0;
-				}
-				if (note[1][objectNG[1]].object == 7 && note[1][objectNG[1]].hittime - Ntime <= 40) {
-					if (note[0][objectNG[0]].object == 2 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
-						note[2][objectNG[2]].object == 7 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-						holdu++;
-						holdd = 0;
-					}
-					else {
-						holdu = 0;
-						holdd++;
-					}
-				}
-			}
-			else {
-				if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40) {
-					holdu = 0;
-				}
-				if (note[2][objectNG[2]].object == 7 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-					holdd = 0;
-				}
-				if (note[1][objectNG[1]].object == 7 && note[1][objectNG[1]].hittime - Ntime <= 40) {
-					if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40 ||
-						note[2][objectNG[2]].object == 2 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-						holdu = 0;
-						holdd++;
-					}
-					else {
-						holdu++;
-						holdd = 0;
-					}
-				}
-			}
-			//上下アローノーツ処理
-			if (note[0][objectNG[0]].object == 3 && note[0][objectNG[0]].hittime - Ntime <= 8 ||
-				note[1][objectNG[1]].object == 3 && note[1][objectNG[1]].hittime - Ntime <= 8 ||
-				note[2][objectNG[2]].object == 3 && note[2][objectNG[2]].hittime - Ntime <= 8) {
-				if (G[0] == 0) {
-					holdu = 0;
-					holdd = 0;
-					holdl = 0;
-					holdr = 0;
-				}
-				G[0] = 1;
-				holdu = 1;
-				if (note[0][objectNG[0]].object == 7 && note[0][objectNG[0]].hittime - Ntime <= 40) {
-					holdd = 1;
-				}
-			}
-			if (note[0][objectNG[0]].object == 4 && note[0][objectNG[0]].hittime - Ntime <= 8 ||
-				note[1][objectNG[1]].object == 4 && note[1][objectNG[1]].hittime - Ntime <= 8 ||
-				note[2][objectNG[2]].object == 4 && note[2][objectNG[2]].hittime - Ntime <= 8) {
-				if (G[0] == 0) {
-					holdu = 0;
-					holdd = 0;
-					holdl = 0;
-					holdr = 0;
-				}
-				G[0] = 1;
-				holdd = 1;
-				if (note[2][objectNG[2]].hittime == 7 && note[2][objectNG[2]].hittime - Ntime <= 40) {
-					holdu = 1;
-				}
-			}
-			//キャッチノーツ処理
-#if 1
-			if (holdu > 0) {
+#if MODE_CHANGE == 1
+			AutoAution(&holda, &holdb, &holdc, &holdu, &holdd, &holdl, &holdr,
+				&note2.up[objectNG[0]], &note2.mid[objectNG[1]],
+				&note2.low[objectNG[2]], Ntime);
 #else
+			AutoAution(&holda, &holdb, &holdc, &holdu, &holdd, &holdl, &holdr,
+				&note[0][objectNG[0]], &note[1][objectNG[1]],
+				&note[2][objectNG[2]], Ntime);
 #endif
-				if (note[2][objectNG[2]].object == 2 && note[2][objectNG[2]].hittime - Ntime <= 8) {
-					holdu = 0;
-					holdd++;
-				}
-				if (note[1][objectNG[1]].object == 2 && note[1][objectNG[1]].hittime - Ntime <= 8) {
-					holdu = 0;
-					holdd = 0;
-				}
-				if (note[0][objectNG[0]].object == 2 && note[0][objectNG[0]].hittime - Ntime <= 8) {
-					holdu++;
-					holdd = 0;
-				}
-#if 1
-			}
-			else {
-				if (note[0][objectNG[0]].object == 2 && note[0][objectNG[0]].hittime - Ntime <= 8) {
-					holdu++;
-					holdd = 0;
-				}
-				if (note[1][objectNG[1]].object == 2 && note[1][objectNG[1]].hittime - Ntime <= 8) {
-					holdu = 0;
-					holdd = 0;
-				}
-				if (note[2][objectNG[2]].object == 2 && note[2][objectNG[2]].hittime - Ntime <= 8) {
-					holdu = 0;
-					holdd++;
-				}
-			}
-#else
-#endif
-			if (holdc > 10) { holdc = 0; }
-			if (holda > 10) { holda = 0; }
-			if (holdb > 10) { holdb = 0; }
-			if (holdu > 10 &&
-				note[0][objectNG[0]].object != 2 && note[1][objectNG[1]].object != 2 &&
-				note[2][objectNG[2]].object != 2 && note[0][objectNG[0]].object != 7 &&
-				note[1][objectNG[1]].object != 7 && note[2][objectNG[2]].object != 7) {
-				holdu = 0;
-			}
-			if (holdd > 10 &&
-				note[0][objectNG[0]].object != 2 && note[1][objectNG[1]].object != 2 &&
-				note[2][objectNG[2]].object != 2 && note[0][objectNG[0]].object != 7 &&
-				note[1][objectNG[1]].object != 7 && note[2][objectNG[2]].object != 7) {
-				holdd = 0;
-			}
-			if (holdl > 10) { holdl = 0; }
-			if (holdr > 10) { holdr = 0; }
 		}
 		//キー押しヒット解除
 		if (1 == holdu || 1 == holdd || 1 == holdl || 1 == holdr || hitatk[1] + 750 < Ntime) {
@@ -1209,7 +1296,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				//横位置
 				G[1] = (int)((speedt[i[0]][speedN[i[0]] + G[5]][1] * 20 *
 					(note[i[0]][i[1]].viewtime -
-					(scrool[scroolN].speed * Ntime + scrool[scroolN].basetime))
+						(scrool[scroolN].speed * Ntime + scrool[scroolN].basetime))
 					+ 5000) / 50);
 				G[1] += 50;
 				if (lock[0][0][lockN[0] + G[3]] == 1) G[1] += note[i[0]][i[1]].xpos - 150;
@@ -1304,13 +1391,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			case NOTE_RIGHT:
 				if ((CheckJudge(judgh) != NOTE_JUDGE_NONE) && (
 					(holdu == 1 &&
-					note[i[0]][objectN[i[0]]].object == NOTE_UP) ||
+						note[i[0]][objectN[i[0]]].object == NOTE_UP) ||
 					(holdd == 1 &&
-					note[i[0]][objectN[i[0]]].object == NOTE_DOWN) ||
+						note[i[0]][objectN[i[0]]].object == NOTE_DOWN) ||
 					(holdl == 1 &&
-					note[i[0]][objectN[i[0]]].object == NOTE_LEFT) ||
+						note[i[0]][objectN[i[0]]].object == NOTE_LEFT) ||
 					(holdr == 1 &&
-					note[i[0]][objectN[i[0]]].object == NOTE_RIGHT))) {
+						note[i[0]][objectN[i[0]]].object == NOTE_RIGHT))) {
 					note_judge_event(CheckJudge(judgh), &viewjudge[0],
 						&judge_eff[i[0]], &Dscore[0],
 						&note[i[0]][objectN[i[0]]], Sitem, Ntime, judgh,
