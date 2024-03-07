@@ -4,6 +4,7 @@
 #include "recp_cal_difkey.h"
 #include "recp_cal_ddif.h"
 #include "noteLoad.h"
+#include "define.h"
 
 typedef struct ddef_box_2 {
 	int maxdif = 0;
@@ -128,7 +129,7 @@ int cal_ddif_3(wchar_t path[]) {
 	fread(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 	fread(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 	fread(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-#if 0
+#if SWITCH_NOTE_BOX_2 == 1
 	noteLoadOld(&note[0][0], &note[1][0], &note[2][0],
 		allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp);
 #else
@@ -368,7 +369,7 @@ int cal_ddif_3(wchar_t path[]) {
 	fwrite(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 	fwrite(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 	fwrite(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-#if 0
+#if SWITCH_NOTE_BOX_2 == 1
 	noteSaveOld(&note[0][0], &note[1][0], &note[2][0], &allnum, fp);
 #else
 	fwrite(&note[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */

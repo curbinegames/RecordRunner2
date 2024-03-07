@@ -5,6 +5,9 @@ editserect.h
 RecordRunner2.vcxproj
 RecordRunner2.vcxproj.filters
 RecordRunner2.vcxproj.user
+StartDXProgram.vcxproj
+StartDXProgram.vcxproj.filters
+StartDXProgram.vcxproj.user
 
 *.avi
 *.bmp
@@ -21,6 +24,7 @@ RecordRunner2.vcxproj.user
 *.rrs
 *.sln
 *.suo
+*.tlog
 *.txt
 *.wav
 *.xcf

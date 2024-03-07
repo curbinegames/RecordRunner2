@@ -1,7 +1,14 @@
+#pragma once
 
-#ifndef PLAY_BOX
+#include "DxLib.h"
 
-#define PLAY_BOX 1
+typedef enum note_lane_num_e {
+	NOTE_LANE_UP = 0,
+	NOTE_LANE_MID,
+	NOTE_LANE_LOW,
+	NOTE_LANE_UM,
+	NOTE_LANE_ML,
+} note_lane_num_t;
 
 typedef enum note_material {
 	NOTE_NONE = -1,
@@ -84,6 +91,7 @@ struct note_img {
 	int bomb = LoadGraph(L"picture/bomb.png");
 	int goust = LoadGraph(L"picture/goust.png");
 };
+
 typedef struct note_box {
 	int hittime = -1;
 	int viewtime = -1;
@@ -94,6 +102,26 @@ typedef struct note_box {
 	enum melodysound melody = MELODYSOUND_NONE;
 	int color = 0;
 } note_box_t;
+
+typedef struct note_box_2_s {
+	int hittime = -1;
+	int viewtime = -1;
+	note_material object = NOTE_NONE;
+	note_lane_num_t lane = NOTE_LANE_MID;
+	int xpos = -1;
+	int ypos = -1;
+	int sound = 0;
+	enum melodysound melody = MELODYSOUND_NONE;
+	int color = 0;
+	int next = 5999;
+} note_box_2_t;
+
+typedef struct note_lane_s {
+	note_box_t up[2000];
+	note_box_t mid[2000];
+	note_box_t low[2000];
+} note_lane_t;
+
 typedef struct play_sound_s {
 	int att;
 	int cat;
@@ -208,5 +236,3 @@ typedef struct judge_action_box_t {
 	play_sound_t* p_sound;
 	struct score_box* score;
 } judge_action_box;
-
-#endif // PLAY_BOX
