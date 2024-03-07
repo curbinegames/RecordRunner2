@@ -1,0 +1,147 @@
+
+#include "DxLib.h"
+#include "playbox.h"
+#include "PlayHitEff.h"
+
+typedef struct rec_play_hit_effect_picture_s {
+	int hit[5];
+	int up[5];
+	int down[5];
+	int left[5];
+	int right[5];
+	int bomb[5];
+} rec_play_hit_effect_picture_t;
+
+typedef struct view_jug_eff_s {
+	int time = 0;
+	note_judge judge = NOTE_JUDGE_NONE;
+	note_material note = NOTE_NONE;
+} view_jug_eff_t;
+
+static rec_play_hit_effect_picture_t effimg;
+
+/* init */
+void ReadyEffPicture() {
+	LoadDivGraph(L"picture/hiteff.png", 5, 5, 1, 50, 50, effimg.hit);
+	LoadDivGraph(L"picture/upeff.png", 5, 5, 1, 50, 50, effimg.up);
+	LoadDivGraph(L"picture/downeff.png", 5, 5, 1, 50, 50, effimg.down);
+	LoadDivGraph(L"picture/lefteff.png", 5, 5, 1, 50, 50, effimg.left);
+	LoadDivGraph(L"picture/righteff.png", 5, 5, 1, 50, 50, effimg.right);
+	LoadDivGraph(L"picture/bombeff.png", 5, 5, 1, 50, 50, effimg.bomb);
+	return;
+}
+
+static view_jug_eff_t EffState[3];
+
+/* action */
+void PlaySetHitEffect(int time, note_judge judge, note_material notemat, int LineNo) {
+	EffState[LineNo].time = time;
+	EffState[LineNo].judge = judge;
+	EffState[LineNo].note = notemat;
+	return;
+}
+
+void PlayCheckHitEffect() {
+	for (int lineNo = 0; lineNo < 3; lineNo++) {
+		if (EffState[lineNo].time + 750 < GetNowCount()) {
+			EffState[lineNo].time = 0;
+			EffState[lineNo].judge = NOTE_JUDGE_NONE;
+			EffState[lineNo].note = NOTE_NONE;
+		}
+	}
+	return;
+}
+
+static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo, int xcam, int ycam) {
+	note_material notemat = NOTE_NONE;
+	int *img = NULL;
+	int frame = 0;
+	int xpos = xline[lineNo] - 10 + xcam;
+	int ypos = yline[lineNo] - 10 + ycam;
+
+	switch (EffState[lineNo].note - 1) {
+	case 0:
+		notemat = NOTE_HIT;
+		break;
+	case 1:
+		notemat = NOTE_CATCH;
+		break;
+	case 2:
+		notemat = NOTE_UP;
+		break;
+	case 3:
+		notemat = NOTE_DOWN;
+		break;
+	case 4:
+		notemat = NOTE_LEFT;
+		break;
+	case 5:
+		notemat = NOTE_RIGHT;
+		break;
+	case 6:
+		notemat = NOTE_BOMB;
+		break;
+	default:
+		return;
+	}
+
+	if (EffState[lineNo].time + 250 <= GetNowCount()) {
+		return;
+	}
+
+	switch (notemat) {
+	case NOTE_HIT:
+	case NOTE_CATCH:
+	case NOTE_UP:
+	case NOTE_DOWN:
+	case NOTE_LEFT:
+	case NOTE_RIGHT:
+		if (EffState[lineNo].judge < NOTE_JUDGE_JUST || EffState[lineNo].judge > NOTE_JUDGE_SAFE) {
+			return;
+		}
+		break;
+	case NOTE_BOMB:
+		if (EffState[lineNo].judge != NOTE_JUDGE_MISS) {
+			return;
+		}
+		break;
+	default:
+		return;
+	}
+
+	switch (notemat) {
+	case NOTE_HIT:
+	case NOTE_CATCH:
+		img = effimg.hit;
+		break;
+	case NOTE_UP:
+		img = effimg.up;
+		break;
+	case NOTE_DOWN:
+		img = effimg.down;
+		break;
+	case NOTE_LEFT:
+		img = effimg.left;
+		break;
+	case NOTE_RIGHT:
+		img = effimg.right;
+		break;
+	case NOTE_BOMB:
+		img = effimg.bomb;
+		break;
+	default:
+		return;
+	}
+
+	frame = (GetNowCount() - EffState[lineNo].time + 250) / 50 % 5;
+
+	DrawGraph(xpos, ypos, img[frame], TRUE);
+	return;
+}
+
+void PlayShowHitEffect(int *xline, int *yline, int xcam, int ycam) {
+	PlayShowHitEffectCap1(xline, yline, 0, xcam, ycam);
+	PlayShowHitEffectCap1(xline, yline, 1, xcam, ycam);
+	PlayShowHitEffectCap1(xline, yline, 2, xcam, ycam);
+	return;
+}

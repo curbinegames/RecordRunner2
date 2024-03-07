@@ -21,6 +21,7 @@ typedef enum note_material {
 	NOTE_BOMB,
 	NOTE_GHOST
 } note_material;
+
 enum maperror_enum {
 	HITNOTETOONEAR = 1,
 };
@@ -200,11 +201,6 @@ typedef struct view_BPM_box {
 	int time = -1000;
 	unsigned short BPM = 1;
 } view_BPM_box;
-typedef struct view_jug_eff_s {
-	int time = 0;
-	int judge = 0;
-	int note = 0;
-}view_jug_eff_t;
 typedef struct gap_box_t {
 	int view[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	int sum = 0;
