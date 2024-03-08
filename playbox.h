@@ -10,6 +10,14 @@ typedef enum note_lane_num_e {
 	NOTE_LANE_ML,
 } note_lane_num_t;
 
+typedef enum note_judge {
+	NOTE_JUDGE_NONE = -1,
+	NOTE_JUDGE_JUST = 0,
+	NOTE_JUDGE_GOOD,
+	NOTE_JUDGE_SAFE,
+	NOTE_JUDGE_MISS
+} note_judge;
+
 typedef enum note_material {
 	NOTE_NONE = -1,
 	NOTE_HIT = 1,

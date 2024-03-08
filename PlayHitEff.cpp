@@ -34,8 +34,8 @@ void ReadyEffPicture() {
 static view_jug_eff_t EffState[3];
 
 /* action */
-void PlaySetHitEffect(int time, note_judge judge, note_material notemat, int LineNo) {
-	EffState[LineNo].time = time;
+void PlaySetHitEffect(note_judge judge, note_material notemat, int LineNo) {
+	EffState[LineNo].time = GetNowCount();
 	EffState[LineNo].judge = judge;
 	EffState[LineNo].note = notemat;
 	return;
