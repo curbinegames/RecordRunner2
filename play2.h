@@ -1682,6 +1682,18 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		life = maxs(life, 500);
 		//スコア計算
 		score = GetScore3(score, judge, notes, Mcombo);
+		//距離計算
+		if (drop != 0) { //DROPED
+			Dscore.now_dis = Dscore.dis_save;
+		}
+		else if (mins(Ntime - noteoff, 0) > Etime - noteoff) { //CLEARED
+			Dscore.now_dis = Etime - noteoff;
+			Dscore.add_save = Dscore.add;
+		}
+		else { //PLAYING
+			Dscore.now_dis = mins(Ntime - noteoff, 0);
+			Dscore.add_save = Dscore.add;
+		}
 		//スコアバー表示
 		DrawGraph(0, 0, sbarimg, TRUE);
 		//スコア表示
@@ -1699,23 +1711,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		DrawFormatString(440, 10, 0xffffffff, L"%3d", life);
 		//距離表示
-		if (drop == 0) {
-			Dscore.add_save = Dscore.add;
-			Dscore.now_dis = mins(Ntime - noteoff, 0);
-		}
-		else if (drop) { Dscore.now_dis = Dscore.dis_save; }
-		if (Dscore.now_dis > Etime - noteoff) { //CLEARED
-			G[0] = 155;
+		UG[0] = 0xffffffff;
+		G[1] = 0;
+		if ((drop == 0) && (mins(Ntime - noteoff, 0) > Etime - noteoff)) {
 			G[1] = 1;
-			GD[0] = (Etime - noteoff) / 100000.0;
 			UG[0] = 0xff000000;
 		}
-		else { //PLAYING or DROPED
-			G[0] = (291 * Dscore.now_dis - 136 * Etime + 136 * noteoff) / (Etime - noteoff);
-			G[1] = 0;
-			GD[0] = Dscore.now_dis / 100000.0;
-			UG[0] = 0xffffffff;
-		}
+		G[0] = (291 * Dscore.now_dis - 136 * Etime + 136 * noteoff) / (Etime - noteoff);
+		GD[0] = Dscore.now_dis / 100000.0;
 		DrawGraph(G[0], 38, Tbarimg[G[1]], TRUE);
 		DrawFormatString(180, 45, UG[0], L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
 		Dscore.point = (int)(GD[0] * 1000 + Dscore.add_save);
