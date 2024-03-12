@@ -52,6 +52,14 @@ typedef enum chara_pos_e {
 	RECR_CHARP_D
 } chara_pos_t;
 
+/* struct */
+typedef struct distance_score_s {
+	int add = 0;
+	int add_save = 0;
+	int dis_save = 0;
+	int point = 0;
+} distance_score_t;
+
 /* proto */
 
 #if 1 /* filter */
@@ -109,7 +117,7 @@ struct score_box GetScore3(struct score_box score, struct judge_box judge,
 	const int notes, const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
 void Getxxxwav(wchar_t *str, int num);
-void note_judge_event(note_judge judge, int *const Dscore,
+void note_judge_event(note_judge judge, distance_score_t *Dscore,
 #if SWITCH_NOTE_BOX_2 == 1
 	note_box_2_t const *const noteinfo,
 #else
@@ -726,7 +734,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int AllNotesHitTime = -1;
 	int LaneTrack[3] = { -150,-150,-150 };
 	int Mcombo = 0;
-	int Dscore[4] = { 0,0,0,0 }; //距離に当たる部分[加点用,加点保存用,距離保存用,実点数]
 	int judghcount[4] = { 0,0,0,0 };
 	int life = 500;
 	int ret_gap[3] = { 0,0,0 };
@@ -765,6 +772,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	distance_score_t Dscore;
 	play_key_stat_t key_stat;
 	gap_box gap2;
 	struct camera_box camera[255];
@@ -1581,7 +1589,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			hitatk2 |= 1 << G[1];
 			NJ = CheckJudge(G[2]);
 			if (NJ == NOTE_JUDGE_MISS) { p_sound.flag |= SE_SWING; }
-			note_judge_event(NJ, &Dscore[0], &note[objectN[G[1]]], Sitem, Ntime,
+			note_judge_event(NJ, &Dscore, &note[objectN[G[1]]], Sitem, Ntime,
 				G[2], G[1], &judgeA);
 			objectN[G[1]] = note[objectN[G[1]]].next;
 		}
@@ -1595,7 +1603,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					note[objectN[i[0]]].hittime) {
 					while (note[objectN[i[0]]].hittime - Ntime <= 0 &&
 						0 <= note[objectN[i[0]]].hittime) {
-						note_judge_event(NOTE_JUDGE_JUST, &Dscore[0],
+						note_judge_event(NOTE_JUDGE_JUST, &Dscore,
 							&note[objectN[i[0]]], Sitem, Ntime, 0, i[0],
 							&judgeA);
 						charahit = 0;
@@ -1617,7 +1625,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 						note[objectN[i[0]]].object == NOTE_LEFT) ||
 					(holdr == 1 &&
 						note[objectN[i[0]]].object == NOTE_RIGHT))) {
-					note_judge_event(CheckJudge(judgh), &Dscore[0],
+					note_judge_event(CheckJudge(judgh), &Dscore,
 						&note[objectN[i[0]]], Sitem, Ntime, judgh, i[0],
 						&judgeA);
 					objectN[i[0]] = note[objectN[i[0]]].next;
@@ -1625,12 +1633,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			case NOTE_BOMB:
 				if (i[0] == charaput && judgh <= 0) {
-					note_judge_event(NOTE_JUDGE_MISS, &Dscore[0],
+					note_judge_event(NOTE_JUDGE_MISS, &Dscore,
 						&note[objectN[i[0]]], Sitem, Ntime, 0, i[0], &judgeA);
 					objectN[i[0]]++;
 				}
 				else while (note[objectN[i[0]]].hittime - Ntime < 0) {
-					note_judge_event(NOTE_JUDGE_JUST, &Dscore[0],
+					note_judge_event(NOTE_JUDGE_JUST, &Dscore,
 						&note[objectN[i[0]]], Sitem, Ntime, -JUST_TIME - 1,
 						i[0], &judgeA);
 					objectN[i[0]] = note[objectN[i[0]]].next;
@@ -1652,7 +1660,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		while (judgh <= -SAFE_TIME && judgh >= -1000000 &&
 			note[objectN[i[0]]].object >= NOTE_HIT &&
 			note[objectN[i[0]]].object <= NOTE_RIGHT) {
-			note_judge_event(NOTE_JUDGE_MISS, &Dscore[0], &note[objectN[i[0]]],
+			note_judge_event(NOTE_JUDGE_MISS, &Dscore, &note[objectN[i[0]]],
 				Sitem, Ntime, -SAFE_TIME, i[0], &judgeA);
 				objectN[i[0]] = note[objectN[i[0]]].next;
 				judgh = note[objectN[i[0]]].hittime - Ntime;
@@ -1668,13 +1676,15 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			score.loss = maxs(score.loss - life * 20, score.normal + score.combo);
 			life = 0;
 		}
+		//ライフ上限
+		life = maxs(life, 500);
+		//スコア計算
+		score = GetScore3(score, judge, notes, Mcombo);
 		//スコアバー表示
 		DrawGraph(0, 0, sbarimg, TRUE);
 		//スコア表示
-		score = GetScore3(score, judge, notes, Mcombo);
 		ShowScore2(score, HighSrore, Ntime);
 		//ライフ表示
-		life = maxs(life, 500);
 		if (life > 100) {
 			DrawGraph((291 * life - 57000) / 500, 3, Lbarimg[0], TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (-51 * life + 25500) / 80);
@@ -1685,21 +1695,21 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		DrawFormatString(440, 10, Cr, L"%3d", life);
 		//距離表示
 		if (drop == 0) {
-			Dscore[1] = Dscore[0];
+			Dscore.add_save = Dscore.add;
 			G[0] = mins(Ntime - noteoff, 0);
 		}
-		else if (drop) { G[0] = Dscore[2]; }
+		else if (drop) { G[0] = Dscore.dis_save; }
 		if (G[0] > Etime - noteoff) { //CLEARED
 			DrawGraph(155, 38, Tbarimg[1], TRUE);
 			GD[0] = (Etime - noteoff) / 100000.0;
-			DrawFormatString(180, 45, Crb, L"%.3fkm", GD[0] + Dscore[1] / 1000.0);
+			DrawFormatString(180, 45, Crb, L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
 		}
 		else { //PLAYING or DROPED
 			DrawGraph((291 * G[0] - 136 * Etime + 136 * noteoff) / (Etime - noteoff), 38, Tbarimg[0], TRUE);
 			GD[0] = G[0] / 100000.0;
-			DrawFormatString(180, 45, Cr, L"%.3fkm", GD[0] + Dscore[1] / 1000.0);
+			DrawFormatString(180, 45, Cr, L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
 		}
-		Dscore[3] = (int)(GD[0] * 1000 + Dscore[1]);
+		Dscore.point = (int)(GD[0] * 1000 + Dscore.add_save);
 		//スコアバー隠し表示
 		DrawGraph(0, 0, sbbarimg, TRUE);
 		//ランニングステータス表示
@@ -1801,8 +1811,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//ライフがなくなったらDROPED扱い
 		if (life <= 0 && drop == 0 && AutoFlag == 0) {
 			drop = 1;
-			Dscore[1] = Dscore[0];
-			Dscore[2] = mins(Ntime - noteoff, 0);
+			Dscore.add_save = Dscore.add;
+			Dscore.dis_save = mins(Ntime - noteoff, 0);
 		}
 		if (drop) { DrawGraph(0, 0, dropimg, TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
@@ -1989,7 +1999,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ret_gap[0] = gap2.sum;
 		ret_gap[1] = gap2.count;
 		ret_gap[2] = gap2.ssum;
-		return result(o, Lv, drop, difkey[4][3], songN, DifFN, fileN, judge, score.sum, Mcombo, notes, ret_gap, Dscore[3]);
+		return result(o, Lv, drop, difkey[4][3], songN, DifFN, fileN, judge, score.sum, Mcombo, notes, ret_gap, Dscore.point);
 	}
 }
 
@@ -2220,7 +2230,7 @@ void Getxxxwav(wchar_t *str, int num) {
  * slow miss は別関数で判定している。
  * (そのうち slow miss もこっちで判定するようにしたい)
  */
-void note_judge_event(note_judge judge, int* const Dscore,
+void note_judge_event(note_judge judge, distance_score_t *Dscore,
 #if SWITCH_NOTE_BOX_2 == 1
 	note_box_2_t const *const noteinfo,
 #else
@@ -2250,25 +2260,25 @@ void note_judge_event(note_judge judge, int* const Dscore,
 	case NOTE_JUDGE_JUST:
 		(*combo)++;
 		*life += 2;
-		(*Dscore)++;
+		(Dscore->add)++;
 		(judge_b->just)++;
 		break;
 	case NOTE_JUDGE_GOOD:
 		(*combo)++;
 		(*life)++;
-		// *Dscore += 0;
+		// (Dscore->add) += 0;
 		(judge_b->good)++;
 		break;
 	case NOTE_JUDGE_SAFE:
 		// *combo += 0;
 		// *life += 0;
-		// *Dscore += 0;
+		// (Dscore->add) += 0;
 		(judge_b->safe)++;
 		break;
 	case NOTE_JUDGE_MISS:
 		*combo = 0;
 		*life -= 20;
-		// *Dscore += 0;
+		// (Dscore->add) += 0;
 		(judge_b->miss)++;
 		break;
 	default:
