@@ -56,6 +56,7 @@ typedef enum chara_pos_e {
 typedef struct distance_score_s {
 	int add = 0;
 	int add_save = 0;
+	int now_dis = 0;
 	int dis_save = 0;
 	int point = 0;
 } distance_score_t;
@@ -716,6 +717,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int judgh = 0; //ノーツの時間距離
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20], songT;
+	unsigned int UG[5];
 	int system[7] = { 0,0,0,2,0,0,0 };
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
@@ -1685,30 +1687,37 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//スコア表示
 		ShowScore2(score, HighSrore, Ntime);
 		//ライフ表示
+		G[0] = lins(0, -114, 500, 177, life);
 		if (life > 100) {
-			DrawGraph((291 * life - 57000) / 500, 3, Lbarimg[0], TRUE);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (-51 * life + 25500) / 80);
-			DrawGraph((291 * life - 57000) / 500, 3, Lbarimg[1], TRUE);
+			DrawGraph(G[0], 3, Lbarimg[0], TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 255, 500, 0, life));
+			DrawGraph(G[0], 3, Lbarimg[1], TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
-		else DrawGraph((291 * life - 57000) / 500, 3, Lbarimg[2], TRUE);
-		DrawFormatString(440, 10, Cr, L"%3d", life);
+		else {
+			DrawGraph(G[0], 3, Lbarimg[2], TRUE);
+		}
+		DrawFormatString(440, 10, 0xffffffff, L"%3d", life);
 		//距離表示
 		if (drop == 0) {
 			Dscore.add_save = Dscore.add;
-			G[0] = mins(Ntime - noteoff, 0);
+			Dscore.now_dis = mins(Ntime - noteoff, 0);
 		}
-		else if (drop) { G[0] = Dscore.dis_save; }
-		if (G[0] > Etime - noteoff) { //CLEARED
-			DrawGraph(155, 38, Tbarimg[1], TRUE);
+		else if (drop) { Dscore.now_dis = Dscore.dis_save; }
+		if (Dscore.now_dis > Etime - noteoff) { //CLEARED
+			G[0] = 155;
+			G[1] = 1;
 			GD[0] = (Etime - noteoff) / 100000.0;
-			DrawFormatString(180, 45, Crb, L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
+			UG[0] = 0xff000000;
 		}
 		else { //PLAYING or DROPED
-			DrawGraph((291 * G[0] - 136 * Etime + 136 * noteoff) / (Etime - noteoff), 38, Tbarimg[0], TRUE);
-			GD[0] = G[0] / 100000.0;
-			DrawFormatString(180, 45, Cr, L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
+			G[0] = (291 * Dscore.now_dis - 136 * Etime + 136 * noteoff) / (Etime - noteoff);
+			G[1] = 0;
+			GD[0] = Dscore.now_dis / 100000.0;
+			UG[0] = 0xffffffff;
 		}
+		DrawGraph(G[0], 38, Tbarimg[G[1]], TRUE);
+		DrawFormatString(180, 45, UG[0], L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
 		Dscore.point = (int)(GD[0] * 1000 + Dscore.add_save);
 		//スコアバー隠し表示
 		DrawGraph(0, 0, sbbarimg, TRUE);
