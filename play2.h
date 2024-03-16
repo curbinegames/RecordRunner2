@@ -700,9 +700,14 @@ static int DrawNoteOne(int G[],
 	return 0;
 }
 
-void recSetYlineGroundSea(int Yline[], int Ntime, rec_ymove_old_t *Ymove, int YmoveN[]) {
-	for (int iLine = 3; iLine <= 4; iLine++) {
-		if (Ntime >= (*Ymove)[iLine][YmoveN[iLine]][0] && 0 <= (*Ymove)[iLine][YmoveN[iLine]][0]) {
+void recSetYline(int Yline[], int Ntime, rec_ymove_old_t *Ymove, int YmoveN[], int backEn) {
+	int loop = 5;
+	if (backEn == 0) {
+		loop = 3;
+	}
+	for (int iLine = 0; iLine < loop; iLine++) {
+		if ((*Ymove)[iLine][YmoveN[iLine]][0] <= Ntime &&
+			(*Ymove)[iLine][YmoveN[iLine]][0] >= 0) {
 			Yline[iLine] =
 				(int)movecal(
 					(*Ymove)[iLine][YmoveN[iLine]][3],
@@ -1198,8 +1203,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				scrool[scroolN].speed, nowcamera[0]);
 			G[18] = 0;
 			G[19] = bgp[1];
-			//背景の縦位置計算
-			recSetYlineGroundSea(Yline, Ntime, &Ymove, YmoveN);
 			//draw background picture
 			G[0] = bgp[0] / 100;
 			while (G[0] + nowcamera[0] / 5 < 70000) {
@@ -1392,19 +1395,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawTurnGraph(Xline[charaput] - 56 + nowcamera[0], Yline[charaput] - 4 + nowcamera[1],
 				charaguideimg, TRUE);
 		}
+		//Yline(縦位置)の計算
+		recSetYline(Yline, Ntime, &Ymove, YmoveN, system.backLight);
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			//縦移動
-			if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
-				Yline[i[0]] = (int)movecal(Ymove[i[0]][YmoveN[i[0]]][3], Ymove[i[0]][YmoveN[i[0]]][0],
-					Ymove[i[0]][YmoveN[i[0]] - 1][1], Ymove[i[0]][YmoveN[i[0]]][2],
-					Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
-			}
-			while (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] ||
-				Ymove[i[0]][YmoveN[i[0]]][3] == 4) {
-				Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
-			}
-			//横移動
+			//横位置計算
 			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][0] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0]) {
 				Xline[i[0]] = (int)movecal(Xmove[i[0]][XmoveN[i[0]]][3], Xmove[i[0]][XmoveN[i[0]]][0],
 					Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2],
@@ -1414,6 +1409,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				Xmove[i[0]][XmoveN[i[0]]][3] == 4) {
 				Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
 			}
+			//描画
 			DrawGraph(Xline[i[0]] + nowcamera[0], Yline[i[0]] + nowcamera[1], judghimg, TRUE);
 		}
 		//キャラグラ変換
@@ -1823,9 +1819,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
 			DrawFormatString(20, 100, Cr, L"Autoplay");
 		}
-		RECR_DEBUG(0, speedN[0]);
-		RECR_DEBUG(1, speedN[1]);
-		RECR_DEBUG(2, speedN[2]);
+		//RECR_DEBUG(0, speedN[0]);
+		//RECR_DEBUG(1, speedN[1]);
+		//RECR_DEBUG(2, speedN[2]);
 		//データオーバーフローで警告文表示
 #if 0
 		if (0 <= note2.up[1999].hittime) {
