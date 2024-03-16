@@ -1319,70 +1319,56 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		// view line
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
-				G[5] = LineMoveN[i[0]];
-				while (1) {
+				for (int iDraw = LineMoveN[i[0]]; 1; iDraw++) {
+					int drawLeft = 0;
+					int drawRight = 0;
+					int drawY1 = 0;
+					int drawY2 = 0;
+					int drawC = 0;
 					// color code
 					switch (i[0]) {
 					case 0:
-						G[0] = 0xffff0000;
+						drawC = 0xffff0000;
 						break;
 					case 1:
-						G[0] = 0xff00ff00;
+						drawC = 0xff00ff00;
 						break;
 					case 2:
-						G[0] = 0xff0000ff;
+						drawC = 0xff0000ff;
 						break;
 					}
-					if (Ymove[i[0]][G[5]][0] < 0) {
-						G[3] = (Ymove[i[0]][G[5] - 1][2] - Ntime) / 2.1;
-						G[2] = 640;
-						G[4] = Ymove[i[0]][G[5] - 1][1];
-						G[1] = Ymove[i[0]][G[5] - 1][1];
-						DrawLine(Xline[i[0]] + 15 + nowcamera[0] + G[3],
-							G[4] + 15 + nowcamera[1],
-							640,
-							G[1] + 15 + nowcamera[1],
-							G[0], 2);
+					if (Ymove[i[0]][iDraw][0] < 0) {
+						drawLeft = (Ymove[i[0]][iDraw - 1][2] - Ntime) / 2.1 + Xline[i[0]] + 15 + nowcamera[0];
+						drawRight = 640;
+						drawY1 = Ymove[i[0]][iDraw - 1][1] + 15 + nowcamera[1];
+						drawY2 = Ymove[i[0]][iDraw - 1][1] + 15 + nowcamera[1];
+						DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 						break;
 					}
 					// cal Xpos1
-					if (G[5] < 1) {
-						G[3] = Xline[i[0]];
-						G[2] = (Ymove[i[0]][G[5]][0] - Ntime) / 2.1;
-						G[4] = Yline[i[0]];
-						G[1] = Yline[i[0]];
-						DrawLine(Xline[i[0]] + 15 + nowcamera[0] + G[3],
-							G[4] + 15 + nowcamera[1],
-							Xline[i[0]] + 15 + nowcamera[0] + G[2],
-							G[1] + 15 + nowcamera[1],
-							G[0], 2);
+					if (iDraw < 1) {
+						drawLeft = Xline[i[0]] + Xline[i[0]] + 15 + nowcamera[0];
+						drawRight = (Ymove[i[0]][iDraw][0] - Ntime) / 2.1 + Xline[i[0]] + 15 + nowcamera[0];
+						drawY1 = Yline[i[0]] + 15 + nowcamera[1];
+						drawY2 = Yline[i[0]] + 15 + nowcamera[1];
+						DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 					}
-					else if (Ntime < Ymove[i[0]][G[5]][2]) {
-						G[3] = (Ymove[i[0]][G[5] - 1][2] - Ntime) / 2.1;
-						G[2] = (Ymove[i[0]][G[5]][0] - Ntime) / 2.1;
-						G[4] = Ymove[i[0]][G[5] - 1][1];
-						G[1] = Ymove[i[0]][G[5] - 1][1];
-						DrawLine(Xline[i[0]] + 15 + nowcamera[0] + G[3],
-							G[4] + 15 + nowcamera[1],
-							Xline[i[0]] + 15 + nowcamera[0] + G[2],
-							G[1] + 15 + nowcamera[1],
-							G[0], 2);
+					else if (Ntime < Ymove[i[0]][iDraw][2]) {
+						drawLeft = (Ymove[i[0]][iDraw - 1][2] - Ntime) / 2.1 + Xline[i[0]] + 15 + nowcamera[0];
+						drawRight = (Ymove[i[0]][iDraw][0] - Ntime) / 2.1 + Xline[i[0]] + 15 + nowcamera[0];
+						drawY1 = Ymove[i[0]][iDraw - 1][1] + 15 + nowcamera[1];
+						drawY2 = Ymove[i[0]][iDraw - 1][1] + 15 + nowcamera[1];
+						DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 					}
-					G[3] = (Ymove[i[0]][G[5]][0] - Ntime) / 2.1;
-					G[2] = (Ymove[i[0]][G[5]][2] - Ntime) / 2.1;
-					G[4] = Ymove[i[0]][G[5] - 1][1];
-					G[1] = Ymove[i[0]][G[5]][1];
-					if (640 < Xline[i[0]] + 15 + nowcamera[0] + G[3]) {
+					drawLeft = (Ymove[i[0]][iDraw][0] - Ntime) / 2.1 + Xline[i[0]] + 15 + nowcamera[0];
+					if (640 < drawLeft) {
 						break;
 					}
+					drawRight = (Ymove[i[0]][iDraw][2] - Ntime) / 2.1 + Xline[i[0]] + 15 + nowcamera[0];
+					drawY1 = Ymove[i[0]][iDraw - 1][1] + 15 + nowcamera[1];
+					drawY2 = Ymove[i[0]][iDraw][1] + 15 + nowcamera[1];
 					// wiew
-					DrawLineCurve(Xline[i[0]] + 15 + nowcamera[0] + G[3],
-						G[4] + 15 + nowcamera[1],
-						Xline[i[0]] + 15 + nowcamera[0] + G[2],
-						G[1] + 15 + nowcamera[1],
-						Ymove[i[0]][G[5]][3], G[0], 2);
-					//loop step
-					G[5]++;
+					DrawLineCurve(drawLeft, drawY1, drawRight, drawY2, Ymove[i[0]][iDraw][3], drawC, 2);
 				}
 			}
 		}
