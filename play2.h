@@ -45,6 +45,10 @@
 #define RECR_DEBUG_LOOP(n, data_a, data_b)
 #endif
 
+/* typedef */
+
+typedef int rec_ymove_old_t[5][999][4];
+
 /* enum */
 
 typedef enum chara_pos_e {
@@ -61,6 +65,14 @@ typedef struct distance_score_s {
 	int dis_save = 0;
 	int point = 0;
 } distance_score_t;
+
+typedef struct rec_ymove_s {
+	int Stime = -1000;
+	int pos = -1000;
+	int Etime = -1000;
+	int mode = -1000;
+} rec_ymove_t;
+typedef rec_ymove_t rec_ymove_set_t[5][999];
 
 /* proto */
 
@@ -688,6 +700,28 @@ static int DrawNoteOne(int G[],
 	return 0;
 }
 
+void recSetYlineGroundSea(int Yline[], int Ntime, rec_ymove_old_t *Ymove, int YmoveN[]) {
+	for (int iLine = 3; iLine <= 4; iLine++) {
+		if (Ntime >= (*Ymove)[iLine][YmoveN[iLine]][0] && 0 <= (*Ymove)[iLine][YmoveN[iLine]][0]) {
+			Yline[iLine] =
+				(int)movecal(
+					(*Ymove)[iLine][YmoveN[iLine]][3],
+					(*Ymove)[iLine][YmoveN[iLine]][0],
+					(*Ymove)[iLine][YmoveN[iLine] - 1][1],
+					(*Ymove)[iLine][YmoveN[iLine]][2],
+					(*Ymove)[iLine][YmoveN[iLine]][1], Ntime);
+		}
+		while (
+			(*Ymove)[iLine][YmoveN[iLine]][2] <= Ntime &&
+			(*Ymove)[iLine][YmoveN[iLine]][0] >= 0 ||
+			(*Ymove)[iLine][YmoveN[iLine]][3] == 4) {
+			Yline[iLine] = (*Ymove)[iLine][YmoveN[iLine]][1];
+			YmoveN[iLine]++;
+		}
+	}
+	return;
+}
+
 #endif /* filter */
 
 /* main action */
@@ -750,8 +784,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int chamoN[3] = { 0,0,0 }; //↑の番号
 	int fall[99][2]; //落ち物背景の[0:番号,1:時間]
 	short int fallN = 0; //↑の番号
-	int Ymove[5][999][4]; //[上, 中, 下, (地面), (水中)]レーン縦移動の[0:開始時間,1:位置,2:終了時間,3:種類]
-	short int YmoveN[5] = { 0,0,0,0,0 }; //↑の番号
 	short int YmoveN2[3] = { 0,0,0 };
 	int Xmove[3][999][4]; //[上, 中, 下]レーン横移動の[0:開始時間,1:位置,2:終了時間,3:種類]
 	short int XmoveN[3] = { 0,0,0 }; //↑の番号
@@ -774,6 +806,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_ymove_old_t Ymove;
+	int YmoveN[5] = { 0,0,0,0,0 }; //Ymoveの番号
 	rec_system_t system;
 	distance_score_t Dscore;
 	play_key_stat_t key_stat;
@@ -1165,19 +1199,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			G[18] = 0;
 			G[19] = bgp[1];
 			//背景の縦位置計算
-			for (i[0] = 3; i[0] <= 4; i[0]++) {
-				if (Ntime >= Ymove[i[0]][YmoveN[i[0]]][0] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0]) {
-					Yline[i[0]] = (int)movecal(Ymove[i[0]][YmoveN[i[0]]][3],
-						Ymove[i[0]][YmoveN[i[0]]][0],
-						Ymove[i[0]][YmoveN[i[0]] - 1][1],
-						Ymove[i[0]][YmoveN[i[0]]][2],
-						Ymove[i[0]][YmoveN[i[0]]][1], Ntime);
-				}
-				while (Ntime >= Ymove[i[0]][YmoveN[i[0]]][2] && 0 <= Ymove[i[0]][YmoveN[i[0]]][0] ||
-					Ymove[i[0]][YmoveN[i[0]]][3] == 4) {
-					Yline[i[0]] = Ymove[i[0]][YmoveN[i[0]]++][1];
-				}
-			}
+			recSetYlineGroundSea(Yline, Ntime, &Ymove, YmoveN);
 			//draw background picture
 			G[0] = bgp[0] / 100;
 			while (G[0] + nowcamera[0] / 5 < 70000) {
