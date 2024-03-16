@@ -9,6 +9,7 @@
 #include "PlayViewJudge.h"
 #include "dxlibcur.h"
 #include "define.h"
+#include "RecSystem.h"
 
 /* define */
 
@@ -718,7 +719,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20], songT;
 	unsigned int UG[5];
-	int system[7] = { 0,0,0,2,0,0,0 };
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int Ntime = 0;
@@ -774,6 +774,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_system_t system;
 	distance_score_t Dscore;
 	play_key_stat_t key_stat;
 	gap_box gap2;
@@ -885,10 +886,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/* ピクチャの用意 */
 	ReadyBonusPsmat();
 	ReadyEffPicture();
+	ReadyJudgePicture();
 	/* address box */
 	judge_action_box judgeA;
 	judgeA.combo = &combo;
-	judgeA.soundEnFg = &system[2];
+	judgeA.soundEnFg = &system.soundEn;
 	judgeA.gap = &gap2;
 	judgeA.judge = &judge;
 	judgeA.life = &life;
@@ -896,22 +898,18 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	judgeA.score = &score;
 	judgeA.melody_snd = &MelodySnd[0];
 	/* FILE */
-	FILE* fp;
+	FILE *fp = NULL;
 	/* action */
 	for (i[0] = 0; i[0] <= 59; i[0]++) { fps[i[0]] = 17; }
 	fps[60] = 0;
 	fps[61] = 0;
 	//システムロード
-	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&system, sizeof(int), 7, fp);
-		fclose(fp);
-	}
-	if (system[5]) {
+	recSystenLoad(&system);
+	if (system.keyViewEn) {
 		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
 		KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
 	}
-	switch (system[0]) {
+	switch (system.chara) {
 	case 0:
 		LoadDivGraph(L"picture/Picker.png",
 			PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
@@ -933,7 +931,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #undef PIC_NUM
 #undef PIC_SIZE_X
 #undef PIC_SIZE_Y
-	if (system[2] == 0) {
+	if (system.soundEn == 0) {
 		p_sound.att = LoadSoundMem(L"sound/attack.wav");
 		p_sound.cat = LoadSoundMem(L"sound/catch.wav");
 		p_sound.arw = LoadSoundMem(L"sound/arrow.wav");
@@ -964,7 +962,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		cal_ddif_3(GT1);//ddif計算
 		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
 	}
-	if (G[2] == 0) {
+	if (fp != NULL) {
 		fread(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
 		fread(&mp3FN, 255, 1, fp);//音楽ファイル名
 		fread(&bpm, sizeof(double), 1, fp);//BPM
@@ -1117,7 +1115,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					scrool[scroolN + 1].starttime <= Ntime) {
 			scroolN++;
 		}
-		if (system[3] != 0) {
+		if (system.backLight != 0) {
 			while (-500 < Movie[MovieN].endtime &&
 						  Movie[MovieN].endtime < Ntime) {
 				MovieN++;
@@ -1158,7 +1156,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			nowcamera[1] = camera[cameraN - 1].ypos;
 		}
 		//背景表示
-		if (system[3] != 0) {
+		if (system.backLight != 0) {
 			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) {
 				speedN[3]++;
 			}
@@ -1215,7 +1213,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (bgf[1] >= 640)bgf[1] -= 480;
 		}
 		//フィルター表示
-		switch (system[3]) {
+		switch (system.backLight) {
 		case 1:
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
 			DrawGraph(0, 0, filterimg, TRUE);
@@ -1228,7 +1226,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			break;
 		}
 		//アイテム表示
-		if (system[3] != 0) {
+		if (system.backLight != 0) {
 			G[0] = 0;
 			while (Movie[MovieN + G[0]].endtime > -500) {
 				if (Movie[MovieN + G[0]].starttime > Ntime ||
@@ -1495,7 +1493,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//コンボ表示
 		ShowCombo(combo, ComboFontimg);
 		//判定表示
-		PlayShowJudge(system[6], Xline[charaput], Yline[charaput], nowcamera[0],
+		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput], nowcamera[0],
 			nowcamera[1]);
 		/* 音符表示 */
 		/* G[0] = viewN+
@@ -1762,7 +1760,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
 		}
 		//キー押し状況表示(オプション)
-		if (system[5]) {
+		if (system.keyViewEn) {
 			if (holda == 1) { KeyPushCount[0]++; }
 			if (holdb == 1) { KeyPushCount[1]++; }
 			if (holdc == 1) { KeyPushCount[2]++; }
@@ -1998,10 +1996,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		WaitTimer(5);
 		if (StopFrag == -1) {
-			Ntime = GetNowCount() - Stime + system[1] * 5;
+			Ntime = GetNowCount() - Stime + system.offset * 5;
 		}
 		else {
-			Stime = GetNowCount() - Ntime + system[1] * 5;
+			Stime = GetNowCount() - Ntime + system.offset * 5;
 		}
 		ScreenFlip();
 	}
