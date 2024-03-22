@@ -52,12 +52,12 @@ void PlayCheckHitEffect() {
 	return;
 }
 
-static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo, int xcam, int ycam) {
+static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo, rec_play_xy_set_t *camera) {
 	note_material notemat = NOTE_NONE;
 	int *img = NULL;
 	int frame = 0;
-	int xpos = xline[lineNo] - 10 + xcam;
-	int ypos = yline[lineNo] - 10 + ycam;
+	int xpos = xline[lineNo] - 10 + camera->x;
+	int ypos = yline[lineNo] - 10 + camera->y;
 
 	switch (EffState[lineNo].note - 1) {
 	case 0:
@@ -139,9 +139,9 @@ static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo, int xcam, 
 	return;
 }
 
-void PlayShowHitEffect(int *xline, int *yline, int xcam, int ycam) {
-	PlayShowHitEffectCap1(xline, yline, 0, xcam, ycam);
-	PlayShowHitEffectCap1(xline, yline, 1, xcam, ycam);
-	PlayShowHitEffectCap1(xline, yline, 2, xcam, ycam);
+void PlayShowHitEffect(int *xline, int *yline, rec_play_xy_set_t *camera) {
+	PlayShowHitEffectCap1(xline, yline, 0, camera);
+	PlayShowHitEffectCap1(xline, yline, 1, camera);
+	PlayShowHitEffectCap1(xline, yline, 2, camera);
 	return;
 }

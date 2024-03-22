@@ -240,3 +240,8 @@ typedef struct judge_action_box_t {
 	play_sound_t* p_sound;
 	struct score_box* score;
 } judge_action_box;
+
+typedef struct  rec_play_xy_set_s {
+	int x;
+	int y;
+} rec_play_xy_set_t;

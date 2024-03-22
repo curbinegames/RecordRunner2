@@ -633,7 +633,7 @@ static void CalPalCrawNote(int lock0, int lock1,
 	note_box_t *note,
 #endif
 	int Xline, int Yline, double speedt, struct scrool_box *scrool,
-	int nowcamera[], int Ntime, int G[]) {
+	rec_play_xy_set_t *nowcamera, int Ntime, int G[]) {
 	//縦位置
 	G[2] = ((lock1 == 1) ? note->ypos : Yline);
 	//横位置
@@ -643,8 +643,8 @@ static void CalPalCrawNote(int lock0, int lock1,
 	//色
 	G[6] = note->color;
 	//カメラ補正
-	G[1] += nowcamera[0];
-	G[2] += nowcamera[1];
+	G[1] += nowcamera->x;
+	G[2] += nowcamera->y;
 }
 
 /**
@@ -659,7 +659,7 @@ static int DrawNoteOne(int G[],
 	int *viewT0, int *viewT1, short viewTN, int lock00[], int lock01[],
 	int lock10[], int lock11[], short lockN[], double speedt, double *speedtp,
 	short speedN, int Ntime, int Xline, int Yline, struct scrool_box *scrool,
-	int nowcamera[], struct note_img *noteimg) {
+	rec_play_xy_set_t *nowcamera, struct note_img *noteimg) {
 	G[7] = StepNoDrawNote(note, viewT0, viewT1, viewTN, lock01, lock11, lockN,
 		speedtp, speedN, Ntime, G);
 	if (G[7] == 1) { return 1; }
@@ -730,7 +730,7 @@ void recSetYline(int Yline[], int Ntime, rec_ymove_old_t *Ymove, int YmoveN[], i
 #endif /* filter */
 
 int PlayShowGuideLine(int Ntime, int Line, rec_ymove_old_t *Ymove, int Xline[],
-	int Yline[], int nowcamera[], int iDraw)
+	int Yline[], rec_play_xy_set_t *nowcamera, int iDraw)
 {
 	int drawLeft = 0;
 	int drawRight = 0;
@@ -750,35 +750,35 @@ int PlayShowGuideLine(int Ntime, int Line, rec_ymove_old_t *Ymove, int Xline[],
 		break;
 	}
 	if ((*Ymove)[Line][iDraw][0] < 0) {
-		drawLeft = ((*Ymove)[Line][iDraw - 1][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera[0];
+		drawLeft = ((*Ymove)[Line][iDraw - 1][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
 		drawRight = 640;
-		drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera[1];
-		drawY2 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera[1];
+		drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
+		drawY2 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
 		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 		return 1;
 	}
 	// cal Xpos1
 	if (iDraw < 1) {
-		drawLeft = Xline[Line] + Xline[Line] + 15 + nowcamera[0];
-		drawRight = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera[0];
-		drawY1 = Yline[Line] + 15 + nowcamera[1];
-		drawY2 = Yline[Line] + 15 + nowcamera[1];
+		drawLeft = Xline[Line] + Xline[Line] + 15 + nowcamera->x;
+		drawRight = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+		drawY1 = Yline[Line] + 15 + nowcamera->y;
+		drawY2 = Yline[Line] + 15 + nowcamera->y;
 		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
 	else if (Ntime < (*Ymove)[Line][iDraw][2]) {
-		drawLeft = ((*Ymove)[Line][iDraw - 1][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera[0];
-		drawRight = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera[0];
-		drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera[1];
-		drawY2 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera[1];
+		drawLeft = ((*Ymove)[Line][iDraw - 1][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+		drawRight = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+		drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
+		drawY2 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
 		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
-	drawLeft = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera[0];
+	drawLeft = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
 	if (640 < drawLeft) {
 		return 1;
 	}
-	drawRight = ((*Ymove)[Line][iDraw][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera[0];
-	drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera[1];
-	drawY2 = (*Ymove)[Line][iDraw][1] + 15 + nowcamera[1];
+	drawRight = ((*Ymove)[Line][iDraw][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+	drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
+	drawY2 = (*Ymove)[Line][iDraw][1] + 15 + nowcamera->y;
 	// wiew
 	DrawLineCurve(drawLeft, drawY1, drawRight, drawY2, (*Ymove)[Line][iDraw][3], drawC, 2);
 	return 0;
@@ -835,7 +835,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int ret_gap[3] = { 0,0,0 };
 	int StopFrag = -1;
 	int hitpose = 0;
-	int nowcamera[2] = { 320,240 };
 	int scroolN = 0;
 	int HighSrore; //ハイスコア
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
@@ -866,6 +865,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_play_xy_set_t nowcamera;
+	nowcamera.x = 320;
+	nowcamera.y = 240;
 	rec_ymove_old_t Ymove;
 	int YmoveN[5] = { 0,0,0,0,0 }; //Ymoveの番号
 	rec_system_t system;
@@ -1240,14 +1242,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//カメラ移動
 		if (camera[cameraN].starttime <= Ntime && Ntime <= camera[cameraN].endtime) {
-			nowcamera[0] = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
+			nowcamera.x = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
 				camera[cameraN - 1].xpos, camera[cameraN].endtime, camera[cameraN].xpos, Ntime);
-			nowcamera[1] = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
+			nowcamera.y = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
 				camera[cameraN - 1].ypos, camera[cameraN].endtime, camera[cameraN].ypos, Ntime);
 		}
 		else {
-			nowcamera[0] = camera[cameraN - 1].xpos;
-			nowcamera[1] = camera[cameraN - 1].ypos;
+			nowcamera.x = camera[cameraN - 1].xpos;
+			nowcamera.y = camera[cameraN - 1].ypos;
 		}
 		//背景表示
 		if (system.backLight != 0) {
@@ -1255,24 +1257,24 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				speedN[3]++;
 			}
 			cal_back_x(bgp, speedt[3][speedN[3]][1], speedt[4][speedN[4]][1],
-				scrool[scroolN].speed, nowcamera[0]);
+				scrool[scroolN].speed, nowcamera.x);
 			G[18] = 0;
 			G[19] = bgp[1];
 			//draw background picture
 			G[0] = bgp[0] / 100;
-			while (G[0] + nowcamera[0] / 5 < 70000) {
-				DrawGraph(G[0] + nowcamera[0] / 5,
-					Yline[3] / 5 - 160 + nowcamera[1] / 5,
+			while (G[0] + nowcamera.x / 5 < 70000) {
+				DrawGraph(G[0] + nowcamera.x / 5,
+					Yline[3] / 5 - 160 + nowcamera.y / 5,
 					backskyimg, TRUE);
 				G[0] += 640;
 			}
 			G[0] = bgp[1] / 100;
-			while (G[0] + nowcamera[0] < 70000) {
-				DrawGraph(G[0] + nowcamera[0],
-					Yline[3] - 400 + nowcamera[1], backgroundimg,
+			while (G[0] + nowcamera.x < 70000) {
+				DrawGraph(G[0] + nowcamera.x,
+					Yline[3] - 400 + nowcamera.y, backgroundimg,
 					TRUE);
-				DrawGraph(G[0] + nowcamera[0],
-					Yline[4] - 400 + nowcamera[1], backwaterimg,
+				DrawGraph(G[0] + nowcamera.x,
+					Yline[4] - 400 + nowcamera.y, backwaterimg,
 					TRUE);
 				G[0] += 640;
 			}
@@ -1324,12 +1326,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					Movie[MovieN + G[0]].starttime,
 					Movie[MovieN + G[0]].startXpos,
 					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endXpos, Ntime) + nowcamera[0];
+					Movie[MovieN + G[0]].endXpos, Ntime) + nowcamera.x;
 				G[3] = (int)movecal(Movie[MovieN + G[0]].movemode,
 					Movie[MovieN + G[0]].starttime,
 					Movie[MovieN + G[0]].startYpos,
 					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endYpos, Ntime) + nowcamera[1];
+					Movie[MovieN + G[0]].endYpos, Ntime) + nowcamera.y;
 				G[4] = (int)movecal(Movie[MovieN + G[0]].movemode,
 					Movie[MovieN + G[0]].starttime,
 					Movie[MovieN + G[0]].startsize,
@@ -1343,10 +1345,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					Movie[MovieN + G[0]].endrot, Ntime);
 				//material setting
 				if (Movie[MovieN + G[0]].eff.lock == 1) {
-					G[2] -= nowcamera[0];
+					G[2] -= nowcamera.x;
 				}
 				if (Movie[MovieN + G[0]].eff.lock == 1) {
-					G[3] -= 25 + nowcamera[1];
+					G[3] -= 25 + nowcamera.y;
 				}
 				if (Movie[MovieN + G[0]].eff.bpm_alphr == 1) {
 					G[1] = lins(0, G[1], 60000 / v_bpm[v_bpmN].BPM, 0,
@@ -1375,7 +1377,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
 				for (int iDraw = LineMoveN[i[0]]; 1; iDraw++) {
-					if (PlayShowGuideLine(Ntime, i[0], &Ymove, Xline, Yline, nowcamera, iDraw) != 0) {
+					if (PlayShowGuideLine(Ntime, i[0], &Ymove, Xline, Yline, &nowcamera, iDraw) != 0) {
 						break;
 					}
 				}
@@ -1383,11 +1385,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		// view chara pos guide
 		if (carrow[0][carrowN] == 1) {
-			DrawGraph(Xline[charaput] - 4 + nowcamera[0], Yline[charaput] - 4 + nowcamera[1],
+			DrawGraph(Xline[charaput] - 4 + nowcamera.x, Yline[charaput] - 4 + nowcamera.y,
 				charaguideimg, TRUE);
 		}
 		else {
-			DrawTurnGraph(Xline[charaput] - 56 + nowcamera[0], Yline[charaput] - 4 + nowcamera[1],
+			DrawTurnGraph(Xline[charaput] - 56 + nowcamera.x, Yline[charaput] - 4 + nowcamera.y,
 				charaguideimg, TRUE);
 		}
 		//Yline(縦位置)の計算
@@ -1405,7 +1407,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
 			}
 			//描画
-			DrawGraph(Xline[i[0]] + nowcamera[0], Yline[i[0]] + nowcamera[1], judghimg, TRUE);
+			DrawGraph(Xline[i[0]] + nowcamera.x, Yline[i[0]] + nowcamera.y, judghimg, TRUE);
 		}
 		//キャラグラ変換
 		G[3] = 0;
@@ -1436,8 +1438,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (GetNowCount() - charahit > 250) { G[5] = 0; }
 		else { G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit); }
 		if (charahit > 0) {
-			G[0] = Xline[charaput] + G[5] + nowcamera[0];
-			G[1] = G[4] - 75 + nowcamera[1];
+			G[0] = Xline[charaput] + G[5] + nowcamera.x;
+			G[1] = G[4] - 75 + nowcamera.y;
 			G[2] = betweens(24 + hitpose * 6, (GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
 			if (carrow[0][carrowN] == 1) {
 				DrawGraph(G[0] - 160, G[1], charaimg[G[2]], TRUE);
@@ -1448,12 +1450,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		else {
 			if (carrow[0][carrowN] == 1) {
-				DrawGraph(Xline[charaput] - 160 + nowcamera[0], G[4] - 75 + nowcamera[1],
+				DrawGraph(Xline[charaput] - 160 + nowcamera.x, G[4] - 75 + nowcamera.y,
 					charaimg[Ntime * v_bpm[v_bpmN].BPM / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
 					TRUE);
 			}
 			else {
-				DrawTurnGraph(Xline[0] + 30 + nowcamera[0], G[4] - 75 + nowcamera[1],
+				DrawTurnGraph(Xline[0] + 30 + nowcamera.x, G[4] - 75 + nowcamera.y,
 					charaimg[Ntime * v_bpm[v_bpmN].BPM / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
 					TRUE);
 			}
@@ -1506,8 +1508,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//コンボ表示
 		ShowCombo(combo, ComboFontimg);
 		//判定表示
-		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput], nowcamera[0],
-			nowcamera[1]);
+		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput], &nowcamera);
 		/* 音符表示 */
 		/* G[0] = viewN+
 		 * G[1] = 横位置
@@ -1551,7 +1552,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 						viewTN, lock[0][0], lock[0][1], lock[1][0], lock[1][1],
 						lockN, speedt[i[0]][speedN[i[0]] + G[5]][1],
 						&speedt[i[0]][0][0], speedN[i[0]], Ntime, Xline[i[0]],
-						Yline[i[0]], &scrool[scroolN], nowcamera, &noteimg);
+						Yline[i[0]], &scrool[scroolN], &nowcamera, &noteimg);
 					if (G[7] == 1) { continue; }
 					else if (G[7] == 2) { break; }
 #if SWITCH_NOTE_BOX_2 == 1
@@ -1682,7 +1683,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		PlayNoteHitSound2(&p_sound);
 		Mcombo = mins(Mcombo, combo);
 		//ヒットエフェクト表示
-		PlayShowHitEffect(Xline, Yline, nowcamera[0], nowcamera[1]);
+		PlayShowHitEffect(Xline, Yline, &nowcamera);
 		PlayCheckHitEffect();
 		//ライフが0未満の時、1毎に減点スコアを20増やす。
 		if (life < 0) {

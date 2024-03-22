@@ -19,7 +19,7 @@ void PlaySetJudge(note_judge judge) {
 	return;
 }
 
-void PlayShowJudge(int posMode, int charaposX, int charaposY, int camX, int camY) {
+void PlayShowJudge(int posMode, int charaposX, int charaposY, rec_play_xy_set_t *camera) {
 	int BaseDrawX = 0;
 	int BaseDrawY = 0;
 	int drawY = 0;
@@ -41,8 +41,8 @@ void PlayShowJudge(int posMode, int charaposX, int charaposY, int camX, int camY
 		BaseDrawY = 260;
 		break;
 	case 4:
-		BaseDrawX = charaposX + camX - 120;
-		BaseDrawY = charaposY + camY - 100;
+		BaseDrawX = charaposX + camera->x - 120;
+		BaseDrawY = charaposY + camera->y - 100;
 		break;
 	default:
 		return;
