@@ -74,6 +74,17 @@ typedef struct rec_ymove_s {
 } rec_ymove_t;
 typedef rec_ymove_t rec_ymove_set_t[5][999];
 
+/* <=-1: just release, 0: no push, 1: just push, 2<=: hold */
+typedef struct rec_play_key_hold_s {
+	int z = 0;
+	int x = 0;
+	int c = 0;
+	int up = 0;
+	int down = 0;
+	int left = 0;
+	int right = 0;
+} rec_play_key_hold_t;
+
 typedef struct rec_paly_time_set_s {
 	int now;
 	int end;
@@ -128,8 +139,40 @@ int CheckNearHitNote(
 	int Ntime);
 #if SWITCH_NOTE_BOX_2 == 0
 int GetCharaPos2(int time, note_box_t highnote, note_box_t midnote,
-	note_box_t lownote, int keyu, int keyd, int keyl, int keyr,
-	int hitatp, int hitatt);
+	note_box_t lownote, int keyu, int keyd, int keyl, int keyr, int hitatp,
+	int hitatt) {
+	struct note_box note[3] = { highnote, midnote, lownote };
+	int ans = CHARA_POS_MID;
+	// near catch/bomb
+	for (int i = 0; i < 3; i++) {
+		if ((note[i].object == 2 && note[i].hittime <= time + 40 ||
+			note[i].object == 7 && note[i].hittime <= time + 40) &&
+			keyu == 0 && keyd == 0) {
+			return CHARA_POS_MID;
+		}
+	}
+	// hit note
+	if (keyu != 1 && keyd != 1 && keyl != 1 && keyr != 1 && hitatt != -1000) {
+		return hitatp;
+	}
+	// push up
+	if (1 <= keyu && 0 == keyd) {
+		ans = CHARA_POS_UP;
+	}
+	// push down
+	else if (0 == keyu && 1 <= keyd) {
+		ans = CHARA_POS_DOWN;
+	}
+	// push up and down
+	else if (1 <= keyu && 1 <= keyd) {
+		ans = CHARA_POS_MID;
+	}
+	// not hit
+	else {
+		ans = CHARA_POS_MID;
+	}
+	return ans;
+}
 #endif
 int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes2(struct judge_box judge, int Notes);
@@ -546,27 +589,29 @@ static void AutoAution(int *keya, int *keyb, int *keyc,
 
 #if SWITCH_NOTE_BOX_2 == 1
 int GetCharaPos3(int time, note_box_2_t note[], short int No[],
-	int keyu, int keyd, int keyl, int keyr, int hitatp, int hitatt) {
+	rec_play_key_hold_t *keyhold, int hitatp, int hitatt) {
 	int ans = CHARA_POS_MID;
 	// near catch/bomb
 	for (int i = 0; i < 3; i++) {
 		if (note[No[i]].hittime <= time + 40 &&
-			(note[No[i]].object == NOTE_CATCH || 
-			note[No[i]].object == NOTE_BOMB) &&
-			keyu == 0 && keyd == 0) {
+			(note[No[i]].object == NOTE_CATCH ||
+				note[No[i]].object == NOTE_BOMB) &&
+			keyhold->up == 0 && keyhold->down == 0) {
 			return CHARA_POS_MID;
 		}
 	}
 	// hit note
-	if (keyu != 1 && keyd != 1 && keyl != 1 && keyr != 1 && hitatt != -1000) {
+	if (keyhold->up != 1 && keyhold->down != 1 &&
+		keyhold->left != 1 && keyhold->right != 1 && hitatt != -1000)
+	{
 		return hitatp;
 	}
 	// push up
-	if (1 <= keyu && 0 == keyd) { ans = CHARA_POS_UP; }
+	if (1 <= keyhold->up && 0 == keyhold->down) { ans = CHARA_POS_UP; }
 	// push down
-	else if (0 == keyu && 1 <= keyd) { ans = CHARA_POS_DOWN; }
+	else if (0 == keyhold->up && 1 <= keyhold->down) { ans = CHARA_POS_DOWN; }
 	// push up and down
-	else if (1 <= keyu && 1 <= keyd) { ans = CHARA_POS_MID; }
+	else if (1 <= keyhold->up && 1 <= keyhold->down) { ans = CHARA_POS_MID; }
 	// not hit
 	else { ans = CHARA_POS_MID; }
 	return ans;
@@ -838,13 +883,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20], songT;
 	unsigned int UG[5];
-	int holda = 0;
-	int holdb = 0;
-	int holdc = 0;
-	int holdu = 0;
-	int holdd = 0;
-	int holdl = 0;
-	int holdr = 0;
 	int holdG = 0;
 	int key2 = 1;
 	int key3 = 1;
@@ -887,6 +925,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_play_key_hold_t keyhold;
 	rec_paly_time_set_t time;
 	rec_play_xy_set_t nowcamera;
 	nowcamera.x = 320;
@@ -1436,26 +1475,24 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		G[3] = 0;
 		//get chara position
 #if SWITCH_NOTE_BOX_2 == 1
-		charaput = GetCharaPos3(time.now, note, objectNG, 
-			holdu, holdd, holdl, holdr, hitatk[0], hitatk[1]);
+		charaput = GetCharaPos3(time.now, note, objectNG, &keyhold, hitatk[0], hitatk[1]);
 #else
-		charaput = GetCharaPos2(time.now, note2.up[objectNG[0]], 
-			note2.mid[objectNG[1]], note2.low[objectNG[2]], 
-			holdu, holdd, holdl, holdr, hitatk[0], hitatk[1]);
+		charaput = GetCharaPos2(time.now, note2.up[objectNG[0]], note2.mid[objectNG[1]],
+			note2.low[objectNG[2]], &keyhold, hitatk[0], hitatk[1]);
 #endif
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
-		if (holda == 1) {
+		if (keyhold.z == 1) {
 			hitpose = (hitpose + 1) % 2;
 		}
-		if (holdb == 1) {
+		if (keyhold.x == 1) {
 			hitpose = (hitpose + 1) % 2;
 		}
-		if (holdc == 1) {
+		if (keyhold.c == 1) {
 			hitpose = (hitpose + 1) % 2;
 		}
 		if ((GetNowCount() - charahit > 50) &&
-			(holdu == 1 || holdd == 1 || holdl == 1 || holdr == 1)) {
+			(keyhold.up == 1 || keyhold.down == 1 || keyhold.left == 1 || keyhold.right == 1)) {
 			charahit = 0;
 		}
 		if (GetNowCount() - charahit > 250) { G[5] = 0; }
@@ -1485,24 +1522,24 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//キー設定
 		if (AutoFlag == 0) {
-			if (key[KEY_INPUT_Z] == 0) holda = 0;
-			else if (key[KEY_INPUT_Z] == 1) holda++;
-			if (key[KEY_INPUT_X] == 0) holdb = 0;
-			else if (key[KEY_INPUT_X] == 1) holdb++;
-			if (key[KEY_INPUT_C] == 0) holdc = 0;
-			else if (key[KEY_INPUT_C] == 1) holdc++;
-			if (key[KEY_INPUT_UP] == 0) holdu = 0;
-			else if (key[KEY_INPUT_UP] == 1) holdu++;
-			if (key[KEY_INPUT_LEFT] == 0) holdl = 0;
-			else if (key[KEY_INPUT_LEFT] == 1) holdl++;
-			if (key[KEY_INPUT_RIGHT] == 0) holdr = 0;
-			else if (key[KEY_INPUT_RIGHT] == 1) holdr++;
-			if (key[KEY_INPUT_DOWN] == 0) holdd = 0;
-			else if (key[KEY_INPUT_DOWN] == 1) holdd++;
+			if (key[KEY_INPUT_Z] == 0) keyhold.z = 0;
+			else if (key[KEY_INPUT_Z] == 1) keyhold.z++;
+			if (key[KEY_INPUT_X] == 0) keyhold.x = 0;
+			else if (key[KEY_INPUT_X] == 1) keyhold.x++;
+			if (key[KEY_INPUT_C] == 0) keyhold.c = 0;
+			else if (key[KEY_INPUT_C] == 1) keyhold.c++;
+			if (key[KEY_INPUT_UP] == 0) keyhold.up = 0;
+			else if (key[KEY_INPUT_UP] == 1) keyhold.up++;
+			if (key[KEY_INPUT_LEFT] == 0) keyhold.left = 0;
+			else if (key[KEY_INPUT_LEFT] == 1) keyhold.left++;
+			if (key[KEY_INPUT_RIGHT] == 0) keyhold.right = 0;
+			else if (key[KEY_INPUT_RIGHT] == 1) keyhold.right++;
+			if (key[KEY_INPUT_DOWN] == 0) keyhold.down = 0;
+			else if (key[KEY_INPUT_DOWN] == 1) keyhold.down++;
 		}
 		//オートプレイ用コード
 		else if (AutoFlag == 1) {
-			AutoAution(&holda, &holdb, &holdc, &holdu, &holdd, &holdl, &holdr,
+			AutoAution(&keyhold.z, &keyhold.x, &keyhold.c, &keyhold.up, &keyhold.down, &keyhold.left, &keyhold.right,
 #if SWITCH_NOTE_BOX_2 == 1
 				note, objectNG,
 #else
@@ -1512,7 +1549,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				time.now);
 		}
 		//キー押しヒット解除
-		if (1 == holdu || 1 == holdd || 1 == holdl || 1 == holdr || hitatk[1] + 750 < time.now) {
+		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk[1] + 750 < time.now) {
 			hitatk[1] = -1000;
 		}
 		if (key[KEY_INPUT_G] == 0) { holdG = 0; }
@@ -1520,13 +1557,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		//キャッチ判定に使う数値を計算
 		LaneTrack[charaput] = time.now;
-		if (holdu == 0 && holdd == 0 || holdu > 0 && holdd > 0) { LaneTrack[1] = time.now; }
-		else if (holdu > 0 && holdd == 0) { LaneTrack[0] = time.now; }
-		else if (holdu == 0 && holdd > 0) { LaneTrack[2] = time.now; }
+		if (keyhold.up == 0 && keyhold.down == 0 || keyhold.up > 0 && keyhold.down > 0) { LaneTrack[1] = time.now; }
+		else if (keyhold.up > 0 && keyhold.down == 0) { LaneTrack[0] = time.now; }
+		else if (keyhold.up == 0 && keyhold.down > 0) { LaneTrack[2] = time.now; }
 		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[0]); }
 		else { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[2]); }
 		//ヒット
-		if (holda == 1 || holdb == 1 || holdc == 1) charahit = GetNowCount();
+		if (keyhold.z == 1 || keyhold.x == 1 || keyhold.c == 1) charahit = GetNowCount();
 		if (charahit + 750 < GetNowCount()) charahit = 0;
 		//コンボ表示
 		ShowCombo(combo, ComboFontimg);
@@ -1587,9 +1624,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//判定
 		//ヒットノーツ
 		G[0] = 0;
-		if (holda == 1) { G[0]++; }
-		if (holdb == 1) { G[0]++; }
-		if (holdc == 1) { G[0]++; }
+		if (keyhold.z == 1) { G[0]++; }
+		if (keyhold.x == 1) { G[0]++; }
+		if (keyhold.c == 1) { G[0]++; }
 		hitatk2 = 0;
 		for (i[0] = 0; i[0] < G[0]; i[0]++) {
 			/* i[0] = 押しボタンループ
@@ -1654,13 +1691,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			case NOTE_LEFT:
 			case NOTE_RIGHT:
 				if ((CheckJudge(judgh) != NOTE_JUDGE_NONE) && (
-					(holdu == 1 &&
+					(keyhold.up == 1 &&
 						note[objectN[i[0]]].object == NOTE_UP) ||
-					(holdd == 1 &&
+					(keyhold.down == 1 &&
 						note[objectN[i[0]]].object == NOTE_DOWN) ||
-					(holdl == 1 &&
+					(keyhold.left == 1 &&
 						note[objectN[i[0]]].object == NOTE_LEFT) ||
-					(holdr == 1 &&
+					(keyhold.right == 1 &&
 						note[objectN[i[0]]].object == NOTE_RIGHT))) {
 					note_judge_event(CheckJudge(judgh), &Dscore,
 						&note[objectN[i[0]]], Sitem, time.now, judgh, i[0],
@@ -1798,20 +1835,20 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//キー押し状況表示(オプション)
 		if (system.keyViewEn) {
-			if (holda == 1) { KeyPushCount[0]++; }
-			if (holdb == 1) { KeyPushCount[1]++; }
-			if (holdc == 1) { KeyPushCount[2]++; }
-			if (holdu == 1) { KeyPushCount[3]++; }
-			if (holdd == 1) { KeyPushCount[4]++; }
-			if (holdl == 1) { KeyPushCount[5]++; }
-			if (holdr == 1) { KeyPushCount[6]++; }
-			DrawGraph(5, 445, KeyViewimg[maxs(holda, 1)], TRUE);
-			DrawGraph(40, 445, KeyViewimg[maxs(holdb, 1)], TRUE);
-			DrawGraph(75, 445, KeyViewimg[maxs(holdc, 1)], TRUE);
-			DrawGraph(570, 410, KeyViewimg[maxs(holdu, 1)], TRUE);
-			DrawGraph(570, 445, KeyViewimg[maxs(holdd, 1)], TRUE);
-			DrawGraph(535, 445, KeyViewimg[maxs(holdl, 1)], TRUE);
-			DrawGraph(605, 445, KeyViewimg[maxs(holdr, 1)], TRUE);
+			if (keyhold.z == 1) { KeyPushCount[0]++; }
+			if (keyhold.x == 1) { KeyPushCount[1]++; }
+			if (keyhold.c == 1) { KeyPushCount[2]++; }
+			if (keyhold.up == 1) { KeyPushCount[3]++; }
+			if (keyhold.down == 1) { KeyPushCount[4]++; }
+			if (keyhold.left == 1) { KeyPushCount[5]++; }
+			if (keyhold.right == 1) { KeyPushCount[6]++; }
+			DrawGraph(5, 445, KeyViewimg[maxs(keyhold.z, 1)], TRUE);
+			DrawGraph(40, 445, KeyViewimg[maxs(keyhold.x, 1)], TRUE);
+			DrawGraph(75, 445, KeyViewimg[maxs(keyhold.c, 1)], TRUE);
+			DrawGraph(570, 410, KeyViewimg[maxs(keyhold.up, 1)], TRUE);
+			DrawGraph(570, 445, KeyViewimg[maxs(keyhold.down, 1)], TRUE);
+			DrawGraph(535, 445, KeyViewimg[maxs(keyhold.left, 1)], TRUE);
+			DrawGraph(605, 445, KeyViewimg[maxs(keyhold.right, 1)], TRUE);
 			if (KeyPushCount[0] == 0) { DrawString(10, 450, L"Z", Cr); }
 			else { DrawFormatString(10, 450, Cr, L"%2d", KeyPushCount[0] % 100); }
 			if (KeyPushCount[1] == 0) { DrawString(45, 450, L"X", Cr); }
@@ -2146,44 +2183,6 @@ int CheckNearHitNote(
 	}
 	return ans;
 }
-
-#if SWITCH_NOTE_BOX_2 == 0
-int GetCharaPos2(int time, note_box_t highnote, note_box_t midnote,
-	note_box_t lownote, int keyu, int keyd, int keyl, int keyr, int hitatp, 
-	int hitatt) {
-	struct note_box note[3] = { highnote, midnote, lownote };
-	int ans = CHARA_POS_MID;
-	// near catch/bomb
-	for (int i = 0; i < 3; i++) {
-		if ((note[i].object == 2 && note[i].hittime <= time + 40 ||
-			note[i].object == 7 && note[i].hittime <= time + 40) &&
-			keyu == 0 && keyd == 0) {
-			return CHARA_POS_MID;
-		}
-	}
-	// hit note
-	if (keyu != 1 && keyd != 1 && keyl != 1 && keyr != 1 && hitatt != -1000) {
-		return hitatp;
-	}
-	// push up
-	if (1 <= keyu && 0 == keyd) {
-		ans = CHARA_POS_UP;
-	}
-	// push down
-	else if (0 == keyu && 1 <= keyd) {
-		ans = CHARA_POS_DOWN;
-	}
-	// push up and down
-	else if (1 <= keyu && 1 <= keyd) {
-		ans = CHARA_POS_MID;
-	}
-	// not hit
-	else {
-		ans = CHARA_POS_MID;
-	}
-	return ans;
-}
-#endif
 
 int GetHighScore(wchar_t pas[255], int dif) {
 	FILE *fp;
