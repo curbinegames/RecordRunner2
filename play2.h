@@ -74,6 +74,12 @@ typedef struct rec_ymove_s {
 } rec_ymove_t;
 typedef rec_ymove_t rec_ymove_set_t[5][999];
 
+typedef struct rec_paly_time_set_s {
+	int now;
+	int end;
+	int offset;
+} rec_paly_time_set_t;
+
 /* proto */
 
 #if 1 /* filter */
@@ -109,7 +115,7 @@ void AddGap(gap_box* const box, int data);
 void AddHitJudge(struct judge_box* const ans, int gup);
 void cal_back_x(int *xpos, double Gspeed, double Wspeed, double scrool,
 	int cam);
-int cal_nowdif_p(int *ddif, int Ntime, int noteoff, int Etime);
+
 note_judge CheckJudge(int gap);
 int CheckNearHitNote(
 #if SWITCH_NOTE_BOX_2 == 1
@@ -784,6 +790,25 @@ int PlayShowGuideLine(int Ntime, int Line, rec_ymove_old_t *Ymove, int Xline[],
 	return 0;
 }
 
+int cal_nowdif_p(int *ddif, rec_paly_time_set_t *time) {
+	int ret = 0;
+	int sect = 0;
+	int stime = 0;
+	if (time->now - time->offset <= 0) {
+		ret = ddif[0];
+	}
+	else if (time->now - time->end >= 0) {
+		ret = ddif[24];
+	}
+	else {
+		sect = (time->now - time->offset) * 24 / (time->end - time->offset);
+		stime = (time->now - time->offset) % ((time->end - time->offset) / 24);
+		ret = lins(0, ddif[sect], (time->end - time->offset) / 24, ddif[sect + 1], stime);
+	}
+	ret = lins(379 * 50, 100, 34733 * 50, 800, ret);
+	return ret;
+}
+
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #if 1 /* filter2 */
@@ -813,9 +838,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20], songT;
 	unsigned int UG[5];
-	int noteoff = 0; //ノーツのオフセット
-	int Etime = 0; //譜面の終わりの時間
-	int Ntime = 0;
 	int holda = 0;
 	int holdb = 0;
 	int holdc = 0;
@@ -865,6 +887,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_paly_time_set_t time;
 	rec_play_xy_set_t nowcamera;
 	nowcamera.x = 320;
 	nowcamera.y = 240;
@@ -1062,7 +1085,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
 		fread(&mp3FN, 255, 1, fp);//音楽ファイル名
 		fread(&bpm, sizeof(double), 1, fp);//BPM
-		fread(&noteoff, sizeof(int), 1, fp);//offset
+		fread(&time.offset, sizeof(int), 1, fp);//offset
 		fread(&skyFN, 255, 1, fp);//空背景名
 		fread(&groundFN, 255, 1, fp);//地面画像名
 		fread(&waterFN, 255, 1, fp);//水中画像名
@@ -1093,7 +1116,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&note2.low[0], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
 #endif
 		fread(&notes, sizeof(short int), 1, fp);//ノーツ数
-		fread(&Etime, sizeof(int), 1, fp);//曲終了時間
+		fread(&time.end, sizeof(int), 1, fp);//曲終了時間
 		fread(&G, sizeof(int), 2, fp);
 		difkey[4][3] = G[0];//最高難易度
 		difkey[6][3] = G[1];//最終難易度
@@ -1191,61 +1214,61 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 #endif
 			while (0 <= chamo[i[0]][chamoN[i[0]] + 1][1] &&
-						chamo[i[0]][chamoN[i[0]] + 1][1] <= Ntime) {
+						chamo[i[0]][chamoN[i[0]] + 1][1] <= time.now) {
 				chamoN[i[0]]++;
 			}
 			while (0 <= speedt[i[0]][speedN[i[0]] + 1][0] &&
-						speedt[i[0]][speedN[i[0]] + 1][0] <= Ntime) {
+						speedt[i[0]][speedN[i[0]] + 1][0] <= time.now) {
 				speedN[i[0]]++;
 			}
 		}
 		while (-1000 < v_bpm[v_bpmN + 1].time &&
-					   v_bpm[v_bpmN + 1].time <= Ntime) {
+					   v_bpm[v_bpmN + 1].time <= time.now) {
 			v_bpmN++;
 		}
 		while (0 <= camera[cameraN].endtime &&
-					camera[cameraN].endtime < Ntime) {
+					camera[cameraN].endtime < time.now) {
 			cameraN++;
 		}
 		while (0 <= scrool[scroolN + 1].starttime &&
-					scrool[scroolN + 1].starttime <= Ntime) {
+					scrool[scroolN + 1].starttime <= time.now) {
 			scroolN++;
 		}
 		if (system.backLight != 0) {
 			while (-500 < Movie[MovieN].endtime &&
-						  Movie[MovieN].endtime < Ntime) {
+						  Movie[MovieN].endtime < time.now) {
 				MovieN++;
 			}
 		}
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
 				while ((0 <= Ymove[i[0]][LineMoveN[i[0]]][0] &&
-							 Ymove[i[0]][LineMoveN[i[0]]][2] <= Ntime) ||
+							 Ymove[i[0]][LineMoveN[i[0]]][2] <= time.now) ||
 							 Ymove[i[0]][LineMoveN[i[0]]][3] == 4) {
 					LineMoveN[i[0]]++;
 				}
 			}
 		}
 		while (0 <= carrow[1][carrowN + 1] &&
-					carrow[1][carrowN + 1] < Ntime) {
+					carrow[1][carrowN + 1] < time.now) {
 			carrowN++;
 		}
 		for (i[0] = 0; i[0] < 2; i[0]++) {
 			while (0 <= lock[i[0]][1][lockN[i[0]] + 1] &&
-						lock[i[0]][1][lockN[i[0]] + 1] <= Ntime) {
+						lock[i[0]][1][lockN[i[0]] + 1] <= time.now) {
 				lockN[i[0]]++;
 			}
 		}
 		while (0 <= viewT[0][viewTN + 1] &&
-					viewT[0][viewTN + 1] <= Ntime) {
+					viewT[0][viewTN + 1] <= time.now) {
 			viewTN++;
 		}
 		//カメラ移動
-		if (camera[cameraN].starttime <= Ntime && Ntime <= camera[cameraN].endtime) {
+		if (camera[cameraN].starttime <= time.now && time.now <= camera[cameraN].endtime) {
 			nowcamera.x = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
-				camera[cameraN - 1].xpos, camera[cameraN].endtime, camera[cameraN].xpos, Ntime);
+				camera[cameraN - 1].xpos, camera[cameraN].endtime, camera[cameraN].xpos, time.now);
 			nowcamera.y = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
-				camera[cameraN - 1].ypos, camera[cameraN].endtime, camera[cameraN].ypos, Ntime);
+				camera[cameraN - 1].ypos, camera[cameraN].endtime, camera[cameraN].ypos, time.now);
 		}
 		else {
 			nowcamera.x = camera[cameraN - 1].xpos;
@@ -1253,7 +1276,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//背景表示
 		if (system.backLight != 0) {
-			if (speedt[3][speedN[3] + 1][0] < Ntime && speedt[3][speedN[3] + 1][0] >= 0) {
+			if (speedt[3][speedN[3] + 1][0] < time.now && speedt[3][speedN[3] + 1][0] >= 0) {
 				speedN[3]++;
 			}
 			cal_back_x(bgp, speedt[3][speedN[3]][1], speedt[4][speedN[4]][1],
@@ -1279,7 +1302,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[0] += 640;
 			}
 			//落ち物背景表示
-			if (Ntime >= fall[fallN + 1][0] && fall[fallN + 1][0] >= 0) fallN++;
+			if (time.now >= fall[fallN + 1][0] && fall[fallN + 1][0] >= 0) fallN++;
 			if (fall[fallN][1] >= 0) {
 				G[0] = bgf[0];//横
 				G[1] = bgf[1] + Yline[3];//縦
@@ -1311,8 +1334,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (system.backLight != 0) {
 			G[0] = 0;
 			while (Movie[MovieN + G[0]].endtime > -500) {
-				if (Movie[MovieN + G[0]].starttime > Ntime ||
-					Movie[MovieN + G[0]].endtime < Ntime) {
+				if (Movie[MovieN + G[0]].starttime > time.now ||
+					Movie[MovieN + G[0]].endtime < time.now) {
 					G[0]++;
 					continue;
 				}
@@ -1321,28 +1344,28 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					Movie[MovieN + G[0]].starttime,
 					Movie[MovieN + G[0]].startalpha,
 					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endalpha, Ntime);
+					Movie[MovieN + G[0]].endalpha, time.now);
 				G[2] = (int)movecal(Movie[MovieN + G[0]].movemode,
 					Movie[MovieN + G[0]].starttime,
 					Movie[MovieN + G[0]].startXpos,
 					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endXpos, Ntime) + nowcamera.x;
+					Movie[MovieN + G[0]].endXpos, time.now) + nowcamera.x;
 				G[3] = (int)movecal(Movie[MovieN + G[0]].movemode,
 					Movie[MovieN + G[0]].starttime,
 					Movie[MovieN + G[0]].startYpos,
 					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endYpos, Ntime) + nowcamera.y;
+					Movie[MovieN + G[0]].endYpos, time.now) + nowcamera.y;
 				G[4] = (int)movecal(Movie[MovieN + G[0]].movemode,
 					Movie[MovieN + G[0]].starttime,
 					Movie[MovieN + G[0]].startsize,
 					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endsize, Ntime);
+					Movie[MovieN + G[0]].endsize, time.now);
 				G[5] = G[4];
 				G[6] = (int)movecal(Movie[MovieN + G[0]].movemode,
 					Movie[MovieN + G[0]].starttime,
 					Movie[MovieN + G[0]].startrot,
 					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endrot, Ntime);
+					Movie[MovieN + G[0]].endrot, time.now);
 				//material setting
 				if (Movie[MovieN + G[0]].eff.lock == 1) {
 					G[2] -= nowcamera.x;
@@ -1352,14 +1375,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 				if (Movie[MovieN + G[0]].eff.bpm_alphr == 1) {
 					G[1] = lins(0, G[1], 60000 / v_bpm[v_bpmN].BPM, 0,
-						(Ntime - v_bpm[v_bpmN].time) % (60000 / v_bpm[v_bpmN].BPM));
+						(time.now - v_bpm[v_bpmN].time) % (60000 / v_bpm[v_bpmN].BPM));
 				}
 				if (Movie[MovieN + G[0]].eff.chara_alphr == 1) {
 					G[1] = lins(320, G[1], 60, 0, betweens(60, abss(Xline[1], G[2]), 320));
 				}
 				if (Movie[MovieN + G[0]].eff.bpm_size == 1) {
 					G[4] = pals(60000 / v_bpm[v_bpmN].BPM, G[4] / 2, 0, G[4],
-						(Ntime - v_bpm[v_bpmN].time) % (60000 / v_bpm[v_bpmN].BPM));
+						(time.now - v_bpm[v_bpmN].time) % (60000 / v_bpm[v_bpmN].BPM));
 				}
 				if (Movie[MovieN + G[0]].eff.edge_size == 1) {
 					G[4] = betweens(0, lins(540, G[4], 640, 0, G[2]), G[4]);
@@ -1377,7 +1400,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
 				for (int iDraw = LineMoveN[i[0]]; 1; iDraw++) {
-					if (PlayShowGuideLine(Ntime, i[0], &Ymove, Xline, Yline, &nowcamera, iDraw) != 0) {
+					if (PlayShowGuideLine(time.now, i[0], &Ymove, Xline, Yline, &nowcamera, iDraw) != 0) {
 						break;
 					}
 				}
@@ -1393,16 +1416,16 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				charaguideimg, TRUE);
 		}
 		//Yline(縦位置)の計算
-		recSetYline(Yline, Ntime, &Ymove, YmoveN, system.backLight);
+		recSetYline(Yline, time.now, &Ymove, YmoveN, system.backLight);
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			//横位置計算
-			if (Ntime >= Xmove[i[0]][XmoveN[i[0]]][0] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0]) {
+			if (time.now >= Xmove[i[0]][XmoveN[i[0]]][0] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0]) {
 				Xline[i[0]] = (int)movecal(Xmove[i[0]][XmoveN[i[0]]][3], Xmove[i[0]][XmoveN[i[0]]][0],
 					Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2],
-					Xmove[i[0]][XmoveN[i[0]]][1], Ntime);
+					Xmove[i[0]][XmoveN[i[0]]][1], time.now);
 			}
-			while (Ntime >= Xmove[i[0]][XmoveN[i[0]]][2] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0] ||
+			while (time.now >= Xmove[i[0]][XmoveN[i[0]]][2] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0] ||
 				Xmove[i[0]][XmoveN[i[0]]][3] == 4) {
 				Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
 			}
@@ -1413,10 +1436,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		G[3] = 0;
 		//get chara position
 #if SWITCH_NOTE_BOX_2 == 1
-		charaput = GetCharaPos3(Ntime, note, objectNG, 
+		charaput = GetCharaPos3(time.now, note, objectNG, 
 			holdu, holdd, holdl, holdr, hitatk[0], hitatk[1]);
 #else
-		charaput = GetCharaPos2(Ntime, note2.up[objectNG[0]], 
+		charaput = GetCharaPos2(time.now, note2.up[objectNG[0]], 
 			note2.mid[objectNG[1]], note2.low[objectNG[2]], 
 			holdu, holdd, holdl, holdr, hitatk[0], hitatk[1]);
 #endif
@@ -1451,12 +1474,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		else {
 			if (carrow[0][carrowN] == 1) {
 				DrawGraph(Xline[charaput] - 160 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[Ntime * v_bpm[v_bpmN].BPM / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
+					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
 					TRUE);
 			}
 			else {
 				DrawTurnGraph(Xline[0] + 30 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[Ntime * v_bpm[v_bpmN].BPM / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
+					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
 					TRUE);
 			}
 		}
@@ -1486,20 +1509,20 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				&note2.up[objectNG[0]], &note2.mid[objectNG[1]],
 				&note2.low[objectNG[2]],
 #endif
-				Ntime);
+				time.now);
 		}
 		//キー押しヒット解除
-		if (1 == holdu || 1 == holdd || 1 == holdl || 1 == holdr || hitatk[1] + 750 < Ntime) {
+		if (1 == holdu || 1 == holdd || 1 == holdl || 1 == holdr || hitatk[1] + 750 < time.now) {
 			hitatk[1] = -1000;
 		}
 		if (key[KEY_INPUT_G] == 0) { holdG = 0; }
 		else if (key[KEY_INPUT_G] == 1) { holdG++; }
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		//キャッチ判定に使う数値を計算
-		LaneTrack[charaput] = Ntime;
-		if (holdu == 0 && holdd == 0 || holdu > 0 && holdd > 0) { LaneTrack[1] = Ntime; }
-		else if (holdu > 0 && holdd == 0) { LaneTrack[0] = Ntime; }
-		else if (holdu == 0 && holdd > 0) { LaneTrack[2] = Ntime; }
+		LaneTrack[charaput] = time.now;
+		if (holdu == 0 && holdd == 0 || holdu > 0 && holdd > 0) { LaneTrack[1] = time.now; }
+		else if (holdu > 0 && holdd == 0) { LaneTrack[0] = time.now; }
+		else if (holdu == 0 && holdd > 0) { LaneTrack[2] = time.now; }
 		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[0]); }
 		else { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[2]); }
 		//ヒット
@@ -1551,7 +1574,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					G[7] = DrawNoteOne(G, &note[i[1]], viewT[0], viewT[1],
 						viewTN, lock[0][0], lock[0][1], lock[1][0], lock[1][1],
 						lockN, speedt[i[0]][speedN[i[0]] + G[5]][1],
-						&speedt[i[0]][0][0], speedN[i[0]], Ntime, Xline[i[0]],
+						&speedt[i[0]][0][0], speedN[i[0]], time.now, Xline[i[0]],
 						Yline[i[0]], &scrool[scroolN], &nowcamera, &noteimg);
 					if (G[7] == 1) { continue; }
 					else if (G[7] == 2) { break; }
@@ -1576,49 +1599,49 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			note_judge NJ = NOTE_JUDGE_JUST;
 #if SWITCH_NOTE_BOX_2 == 1
 			G[1] = CheckNearHitNote(&note[objectN[0]],
-				&note[objectN[1]], &note[objectN[2]], Ntime);
+				&note[objectN[1]], &note[objectN[2]], time.now);
 #else
 			G[1] = CheckNearHitNote(&note2.up[objectN[0]],
-				&note2.mid[objectN[1]], &note2.low[objectN[2]], Ntime);
+				&note2.mid[objectN[1]], &note2.low[objectN[2]], time.now);
 #endif
 			if (G[1] == -1) {
 				if (i[0] == 0) { p_sound.flag |= SE_SWING; }
 				break;
 			}
 #if SWITCH_NOTE_BOX_2 == 1
-			G[2] = note[objectN[G[1]]].hittime - Ntime;
+			G[2] = note[objectN[G[1]]].hittime - time.now;
 #else
 			switch (G[1]) {
 			case 0:
-				G[2] = note2.up[objectN[G[1]]].hittime - Ntime;
+				G[2] = note2.up[objectN[G[1]]].hittime - time.now;
 				break;
 			case 1:
-				G[2] = note2.mid[objectN[G[1]]].hittime - Ntime;
+				G[2] = note2.mid[objectN[G[1]]].hittime - time.now;
 				break;
 			case 2:
-				G[2] = note2.low[objectN[G[1]]].hittime - Ntime;
+				G[2] = note2.low[objectN[G[1]]].hittime - time.now;
 				break;
 			}
 #endif
 			hitatk2 |= 1 << G[1];
 			NJ = CheckJudge(G[2]);
 			if (NJ == NOTE_JUDGE_MISS) { p_sound.flag |= SE_SWING; }
-			note_judge_event(NJ, &Dscore, &note[objectN[G[1]]], Sitem, Ntime,
+			note_judge_event(NJ, &Dscore, &note[objectN[G[1]]], Sitem, time.now,
 				G[2], G[1], &judgeA);
 			objectN[G[1]] = note[objectN[G[1]]].next;
 		}
-		SetHitPosByHit(&hitatk[0], hitatk2, Ntime);
+		SetHitPosByHit(&hitatk[0], hitatk2, time.now);
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			/* i[0] = レーンループ */
-			judgh = note[objectN[i[0]]].hittime - Ntime;
+			judgh = note[objectN[i[0]]].hittime - time.now;
 			switch (note[objectN[i[0]]].object) {
 			case NOTE_CATCH:
 				if (LaneTrack[i[0]] + SAFE_TIME >=
 					note[objectN[i[0]]].hittime) {
-					while (note[objectN[i[0]]].hittime - Ntime <= 0 &&
+					while (note[objectN[i[0]]].hittime - time.now <= 0 &&
 						0 <= note[objectN[i[0]]].hittime) {
 						note_judge_event(NOTE_JUDGE_JUST, &Dscore,
-							&note[objectN[i[0]]], Sitem, Ntime, 0, i[0],
+							&note[objectN[i[0]]], Sitem, time.now, 0, i[0],
 							&judgeA);
 						charahit = 0;
 						hitatk[1] = -1000;
@@ -1640,7 +1663,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					(holdr == 1 &&
 						note[objectN[i[0]]].object == NOTE_RIGHT))) {
 					note_judge_event(CheckJudge(judgh), &Dscore,
-						&note[objectN[i[0]]], Sitem, Ntime, judgh, i[0],
+						&note[objectN[i[0]]], Sitem, time.now, judgh, i[0],
 						&judgeA);
 					objectN[i[0]] = note[objectN[i[0]]].next;
 				}
@@ -1648,12 +1671,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			case NOTE_BOMB:
 				if (i[0] == charaput && judgh <= 0) {
 					note_judge_event(NOTE_JUDGE_MISS, &Dscore,
-						&note[objectN[i[0]]], Sitem, Ntime, 0, i[0], &judgeA);
+						&note[objectN[i[0]]], Sitem, time.now, 0, i[0], &judgeA);
 					objectN[i[0]]++;
 				}
-				else while (note[objectN[i[0]]].hittime - Ntime < 0) {
+				else while (note[objectN[i[0]]].hittime - time.now < 0) {
 					note_judge_event(NOTE_JUDGE_JUST, &Dscore,
-						&note[objectN[i[0]]], Sitem, Ntime, -JUST_TIME - 1,
+						&note[objectN[i[0]]], Sitem, time.now, -JUST_TIME - 1,
 						i[0], &judgeA);
 					objectN[i[0]] = note[objectN[i[0]]].next;
 				}
@@ -1675,9 +1698,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			note[objectN[i[0]]].object >= NOTE_HIT &&
 			note[objectN[i[0]]].object <= NOTE_RIGHT) {
 			note_judge_event(NOTE_JUDGE_MISS, &Dscore, &note[objectN[i[0]]],
-				Sitem, Ntime, -SAFE_TIME, i[0], &judgeA);
+				Sitem, time.now, -SAFE_TIME, i[0], &judgeA);
 				objectN[i[0]] = note[objectN[i[0]]].next;
-				judgh = note[objectN[i[0]]].hittime - Ntime;
+				judgh = note[objectN[i[0]]].hittime - time.now;
 			}
 		}
 		PlayNoteHitSound2(&p_sound);
@@ -1698,18 +1721,18 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (drop != 0) { //DROPED
 			Dscore.now_dis = Dscore.dis_save;
 		}
-		else if (mins(Ntime - noteoff, 0) > Etime - noteoff) { //CLEARED
-			Dscore.now_dis = Etime - noteoff;
+		else if (mins(time.now - time.offset, 0) > time.end - time.offset) { //CLEARED
+			Dscore.now_dis = time.end - time.offset;
 			Dscore.add_save = Dscore.add;
 		}
 		else { //PLAYING
-			Dscore.now_dis = mins(Ntime - noteoff, 0);
+			Dscore.now_dis = mins(time.now - time.offset, 0);
 			Dscore.add_save = Dscore.add;
 		}
 		//スコアバー表示
 		DrawGraph(0, 0, sbarimg, TRUE);
 		//スコア表示
-		ShowScore2(score, HighSrore, Ntime);
+		ShowScore2(score, HighSrore, time.now);
 		//ライフ表示
 		G[0] = lins(0, -114, 500, 177, life);
 		if (life > 100) {
@@ -1725,11 +1748,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//距離表示
 		UG[0] = 0xffffffff;
 		G[1] = 0;
-		if ((drop == 0) && (mins(Ntime - noteoff, 0) > Etime - noteoff)) {
+		if ((drop == 0) && (mins(time.now - time.offset, 0) > time.end - time.offset)) {
 			G[1] = 1;
 			UG[0] = 0xff000000;
 		}
-		G[0] = (291 * Dscore.now_dis - 136 * Etime + 136 * noteoff) / (Etime - noteoff);
+		G[0] = (291 * Dscore.now_dis - 136 * time.end + 136 * time.offset) / (time.end - time.offset);
 		GD[0] = Dscore.now_dis / 100000.0;
 		DrawGraph(G[0], 38, Tbarimg[G[1]], TRUE);
 		DrawFormatString(180, 45, UG[0], L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
@@ -1753,13 +1776,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawFormatString(490, 100, Cr, L"ldif:%.2f", difkey[6][3] / 100.0);
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
 			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
-				cal_nowdif_p(ddif, Ntime, noteoff, Etime) / 100.0);
+				cal_nowdif_p(ddif, &time) / 100.0);
 #if 0
 			/* エラー表示 */
 			if (outpoint[1] != 0) {
 				DrawFormatString(20, 120, CrR, L"MAPERROR");
-				DrawLine(lins(noteoff, 155, Etime, 446, outpoint[0]), 71,
-					lins(noteoff, 175, Etime, 465, outpoint[0]), 38, CrR);
+				DrawLine(lins(time.offset, 155, time.end, 446, outpoint[0]), 71,
+					lins(time.offset, 175, time.end, 465, outpoint[0]), 38, CrR);
 			}
 #endif
 		}
@@ -1806,9 +1829,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバック
-		fps[fps[60]++] = Ntime - fps[61];
+		fps[fps[60]++] = time.now - fps[61];
 		if (fps[60] > 59)fps[60] -= 60;
-		fps[61] = Ntime;
+		fps[61] = time.now;
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (AutoFlag == 1) {
@@ -1836,7 +1859,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (life <= 0 && drop == 0 && AutoFlag == 0) {
 			drop = 1;
 			Dscore.add_save = Dscore.add;
-			Dscore.dis_save = mins(Ntime - noteoff, 0);
+			Dscore.dis_save = mins(time.now - time.offset, 0);
 		}
 		if (drop) { DrawGraph(0, 0, dropimg, TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
@@ -1849,7 +1872,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
 		if (closeFg == 0 &&
-			Etime + 5000 <= Ntime &&
+			time.end + 5000 <= time.now &&
 			(musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
 			SetCutTipFg(CUTIN_TIPS_NONE);
 			closeFg = 1;
@@ -1875,7 +1898,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 						StopSoundMem(musicmp3);
 					}
 					else {
-						SetCurrentPositionSoundMem((int)((double)Ntime / 1000.0 * 44100.0), musicmp3);
+						SetCurrentPositionSoundMem((int)((double)time.now / 1000.0 * 44100.0), musicmp3);
 						PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK, FALSE);
 					}
 				}
@@ -1888,26 +1911,26 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (StopFrag == 1) {
 			if (CheckHitKey(KEY_INPUT_LEFT) == 1) {
 				if (key3 == 0) {
-					Ntime = mins(Ntime - 10000, 0);
+					time.now = mins(time.now - 10000, 0);
 #if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
 						for (objectN[i[0]] = 0; note[objectN[i[0]]].lane != NOTE_LANE_UP; objectN[i[0]] += 0) {
 							objectN[i[0]]++;
 						}
-						while (note[objectN[i[0]]].hittime < Ntime) {
+						while (note[objectN[i[0]]].hittime < time.now) {
 							objectN[i[0]]++;
 						}
 					}
 #else
-					while (Ntime < note2.up[objectN[0]].hittime ||
+					while (time.now < note2.up[objectN[0]].hittime ||
 						note2.up[objectN[0]].hittime < 0) {
 						objectN[0]--;
 					}
-					while (Ntime < note2.mid[objectN[1]].hittime ||
+					while (time.now < note2.mid[objectN[1]].hittime ||
 						note2.mid[objectN[1]].hittime < 0) {
 						objectN[1]--;
 					}
-					while (Ntime < note2.low[objectN[2]].hittime ||
+					while (time.now < note2.low[objectN[2]].hittime ||
 						note2.low[objectN[2]].hittime < 0) {
 						objectN[2]--;
 					}
@@ -1947,21 +1970,21 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			else if (CheckHitKey(KEY_INPUT_RIGHT) == 1) {
 				if (key3 == 0) {
-					Ntime += 10000;
+					time.now += 10000;
 #if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
-						while (note[objectN[i[0]]].hittime < Ntime) {
+						while (note[objectN[i[0]]].hittime < time.now) {
 							objectN[i[0]]++;
 						}
 					}
 #else
-					while (note2.up[objectN[0]].hittime < Ntime) {
+					while (note2.up[objectN[0]].hittime < time.now) {
 						objectN[0]++;
 					}
-					while (note2.mid[objectN[1]].hittime < Ntime) {
+					while (note2.mid[objectN[1]].hittime < time.now) {
 						objectN[1]++;
 					}
-					while (note2.low[objectN[2]].hittime < Ntime) {
+					while (note2.low[objectN[2]].hittime < time.now) {
 						objectN[2]++;
 					}
 #endif
@@ -2010,10 +2033,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		WaitTimer(5);
 		if (StopFrag == -1) {
-			Ntime = GetNowCount() - Stime + system.offset * 5;
+			time.now = GetNowCount() - Stime + system.offset * 5;
 		}
 		else {
-			Stime = GetNowCount() - Ntime + system.offset * 5;
+			Stime = GetNowCount() - time.now + system.offset * 5;
 		}
 		ScreenFlip();
 	}
@@ -2078,25 +2101,6 @@ void cal_back_x(int *xpos, double Gspeed, double Wspeed, double scrool,
 	}
 	xpos[2] = xpos[1];
 	return;
-}
-
-int cal_nowdif_p(int* ddif, int Ntime, int noteoff, int Etime) {
-	int ret = 0;
-	int sect = 0;
-	int stime = 0;
-	if (Ntime - noteoff <= 0) {
-		ret = ddif[0];
-	}
-	else if (Ntime - Etime >= 0) {
-		ret = ddif[24];
-	}
-	else {
-		sect = (Ntime - noteoff) * 24 / (Etime - noteoff);
-		stime = (Ntime - noteoff) % ((Etime - noteoff) / 24);
-		ret = lins(0, ddif[sect], (Etime - noteoff) / 24, ddif[sect + 1], stime);
-	}
-	ret = lins(379 * 50, 100, 34733 * 50, 800, ret);
-	return ret;
 }
 
 note_judge CheckJudge(int gap) {
