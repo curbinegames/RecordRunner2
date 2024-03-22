@@ -533,7 +533,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int carrowN = 0;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	short int viewTN = 0;
-	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
+	int mdif = 0;
+	int ldif = 0;
 	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
 	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
 	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
@@ -777,8 +778,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&notes, sizeof(short int), 1, fp);//ノーツ数
 		fread(&time.end, sizeof(int), 1, fp);//曲終了時間
 		fread(&G, sizeof(int), 2, fp);
-		difkey[4][3] = G[0];//最高難易度
-		difkey[6][3] = G[1];//最終難易度
+		mdif = G[0];//最高難易度
+		ldif = G[1];//最終難易度
 		fread(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 		fread(&DifFN, 255, 1, fp);//難易度バー名
@@ -814,11 +815,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	}
 	//ゲーム開始前の下準備
 	notes = notzero(notes);
-	GD[0] = difkey[4][3] / 100.0 - Lv;//mdifと難易度表記の差
+	GD[0] = mdif / 100.0 - Lv;//mdifと難易度表記の差
 	if (Lv == 0) { DifRate = 0; }
 	else if (2 <= GD[0]) { DifRate = Lv + 0.9; }
 	else if (0 <= GD[0] && GD[0] < 2) { DifRate = Lv + 0.45 * GD[0]; }
-	else { DifRate = difkey[4][3] / 100.0; }
+	else { DifRate = mdif / 100.0; }
 #if SWITCH_NOTE_BOX_2 == 1
 	for (i[0] = 0; i[0] < allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2]; i[0]++) {
 		if (note[i[0]].lane == NOTE_LANE_UP) {
@@ -1429,8 +1430,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					-ddif[i[0]] * 34 / notzero(ddifG[1]) + 72,
 					(G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24,
 					-ddif[i[0] + 1] * 34 / notzero(ddifG[1]) + 72, Cr);
-			DrawFormatString(490, 80, Cr, L"mdif:%.2f", difkey[4][3] / 100.0);
-			DrawFormatString(490, 100, Cr, L"ldif:%.2f", difkey[6][3] / 100.0);
+			DrawFormatString(490, 80, Cr, L"mdif:%.2f", mdif / 100.0);
+			DrawFormatString(490, 100, Cr, L"ldif:%.2f", ldif / 100.0);
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
 			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
 				cal_nowdif_p(ddif, &time) / 100.0);
@@ -1703,7 +1704,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ret_gap[0] = gap2.sum;
 		ret_gap[1] = gap2.count;
 		ret_gap[2] = gap2.ssum;
-		return result(o, Lv, drop, difkey[4][3], songN, DifFN, fileN, judge, score.sum, Mcombo, notes, ret_gap, Dscore.point);
+		return result(o, Lv, drop, mdif, songN, DifFN, fileN, judge, score.sum, Mcombo, notes, ret_gap, Dscore.point);
 	}
 }
 
