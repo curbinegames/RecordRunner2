@@ -3,6 +3,8 @@
 #include "system.h"
 #include "recr_cutin.h"
 
+#define VER_1_6 0
+
 #define CAL_ACC(judge, notes)												\
 	(((judge).just * 10000 + (judge).good * 9500 +							\
 	(judge).safe * 5500) / ((notes) * 100.0))
@@ -12,8 +14,18 @@
 #define CAL_GAP_WIDTH(all_gap, count, all_d_gap)							\
 	(((all_d_gap) / (count)) - ((all_gap) * (all_gap)) / ((count) * (count)))
 
+typedef enum rec_play_rank_e {
+	REC_PLAY_RANK_EX = 0,
+	REC_PLAY_RANK_S,
+	REC_PLAY_RANK_A,
+	REC_PLAY_RANK_B,
+	REC_PLAY_RANK_C,
+	REC_PLAY_RANK_D,
+	REC_PLAY_RANK_F,
+} rec_play_rank_t;
+
 char GetCharNo();
-char CalScoreRank(int score);
+rec_play_rank_t CalScoreRank(int score);
 int CalPlayRate(judge_box judge, double DifRate);
 int GetFullRate();
 char JudgeClearRank(char drop, judge_box judge);
@@ -36,35 +48,44 @@ char GetCharNo() {
 
 now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	struct judge_box const* const judge, int Mcombo, short int notes,
-	int NewRate, int RateSub, char rank, int score, double acc, int gap,
-	int gap_width, short int Clear, char charNo) {
+	int NewRate, int RateSub, char rank, double floatrank, int score,
+	double acc, int gap, int gap_width, short int Clear, char charNo)
+{
 	/* num */
 	char closeFg = 0;
 	int G[10] = { 0,0,0,0,0,0,0,0,0,0 };
 	int CutTime = 0;
 	/* typedef */
 	cur_font_cr_t fontNo;
+	cur_font_cr_t floatfontNo;
 	switch (rank) {
 	case 0:
 		fontNo = CUR_FONT_COLOR_RAINBOW;
+		floatfontNo = CUR_FONT_COLOR_BLUE;
 		break;
 	case 1:
 		fontNo = CUR_FONT_COLOR_BLUE;
+		floatfontNo = CUR_FONT_COLOR_YELLOW;
 		break;
 	case 2:
 		fontNo = CUR_FONT_COLOR_YELLOW;
+		floatfontNo = CUR_FONT_COLOR_MONO; /* TODO: result floatfontNo(2) must be GRAY */
 		break;
 	case 3:
 		fontNo = CUR_FONT_COLOR_GREEN;
+		floatfontNo = CUR_FONT_COLOR_GREEN;
 		break;
 	case 4:
 		fontNo = CUR_FONT_COLOR_PURPLE;
+		floatfontNo = CUR_FONT_COLOR_PURPLE;
 		break;
 	case 5:
 		fontNo = CUR_FONT_COLOR_RED;
+		floatfontNo = CUR_FONT_COLOR_RED;
 		break;
 	default:
 		fontNo = CUR_FONT_COLOR_MONO;
+		floatfontNo = CUR_FONT_COLOR_MONO;
 		break;
 	}
 	/* image */
@@ -179,6 +200,9 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		DrawCurFont(gap, 510, 205, 20, CUR_FONT_COLOR_MONO); /* gap */
 		DrawCurFont(gap_width, 500, 230, 20, CUR_FONT_COLOR_MONO); /* width */
 		DrawGraph(140, 260, rankimg, TRUE); /* rank */
+#if VER_1_6 == 1
+		DrawCurFont(floatrank, 280, 390, 30, floatfontNo, 3, 0); /* floatrank */
+#endif
 		DrawGraph(5, 420, coleimg, TRUE); /* clear rate */
 		DrawGraph(336, 252, Rchaimg, TRUE); /* chara */
 		if (closeFg == 0) { ViewCutOut(CutTime); }
@@ -202,6 +226,34 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	return SCENE_SERECT;
 }
 
+double GetFloatRank(int score, int miss, int notes, char rank) {
+	switch (rank) {
+	case REC_PLAY_RANK_EX:
+		return score / 2 - 49000;
+	case REC_PLAY_RANK_S:
+		return (score - 95000) / 3;
+	case REC_PLAY_RANK_A:
+		return score / 5 - 18000;
+	case REC_PLAY_RANK_B:
+		return score / 10 - 8000;
+	case REC_PLAY_RANK_C:
+		return score / 20 - 3000;
+	case REC_PLAY_RANK_D:
+		if (50000 <= score) {
+			return score * 3 / 100 + 800;
+		}
+		else if (40000 <= score) {
+			return score / 50 - 300;
+		}
+		else {
+			return score / 80;
+		}
+	case REC_PLAY_RANK_F:
+		return pals(0, 1000, 100, 0, 100 * miss / notes);
+	}
+	return 0;
+}
+
 now_scene_t result(int dif, short Lv, char drop, int difkey,
 	wchar_t songN[], wchar_t DifFN[], wchar_t fileN[],
 	struct judge_box judge, int score, int Mcombo, short notes,
@@ -217,6 +269,7 @@ now_scene_t result(int dif, short Lv, char drop, int difkey,
 	int RateSub = 0;
 	int gap = CAL_GAP(gapa[0], gapa[1]);
 	int gap_width = CAL_GAP_WIDTH(gapa[0], gapa[1], gapa[2]);
+	double floatrank = GetFloatRank(score, judge.miss, notes, rank) / 1000;
 	double acc = CAL_ACC(judge, notes);
 	double DifRate = CAL_DIF_RATE(difkey, Lv) / 100; //譜面定数
 	double rate = (double)CalPlayRate(judge, DifRate) / 100.0;
@@ -228,7 +281,8 @@ now_scene_t result(int dif, short Lv, char drop, int difkey,
 	NewRate = GetFullRate(); // 保存後のレート
 	RateSub = NewRate - OldRate; // レートの差
 	return ViewResult(dif, DifFN, songN, &judge, Mcombo, notes, NewRate,
-		RateSub, (short)rank, score, acc, gap, gap_width, Clear - 1, CharNo); // リザルト画面
+		RateSub, (short)rank, floatrank, score, acc, gap, gap_width, Clear - 1,
+		CharNo); // リザルト画面
 }
 
 int CalPlayRate(judge_box judge, double DifRate) {
@@ -257,13 +311,13 @@ int CalPlayRate(judge_box judge, double DifRate) {
 	return (int)(rate * 100);
 }
 
-char CalScoreRank(int score) {
-	if (score >= 98000) { return 0; }
-	if (score >= 95000) { return 1; }
-	if (score >= 90000) { return 2; }
-	if (score >= 85000) { return 3; }
-	if (score >= 80000) { return 4; }
-	return 5;
+rec_play_rank_t CalScoreRank(int score) {
+	if (score >= 98000) { return REC_PLAY_RANK_EX; }
+	if (score >= 95000) { return REC_PLAY_RANK_S; }
+	if (score >= 90000) { return REC_PLAY_RANK_A; }
+	if (score >= 85000) { return REC_PLAY_RANK_B; }
+	if (score >= 80000) { return REC_PLAY_RANK_C; }
+	return REC_PLAY_RANK_D;
 }
 
 int GetFullRate() {

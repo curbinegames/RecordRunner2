@@ -31,9 +31,10 @@ typedef enum cur_font_cr_e {
  * sizeY = font Y size
  * Cr = font color
  * a = under point count (if dn = 157.423 and a = 2, draw "157.42")
+ * zero = draw "0." (if dn = 0.524 and zero = 0, draw ".524")
  */
 void DrawCurFont(double dn, short int x, short int y, int sizeY,
-	cur_font_cr_t Cr, short int a = 0) {
+	cur_font_cr_t Cr, short int a = 0, int zero = 1) {
 	/* int */
 	int k = 0;
 	int n;
@@ -80,9 +81,11 @@ void DrawCurFont(double dn, short int x, short int y, int sizeY,
 	/* draw */
 	for (int i = k; i >= 0; i--) {
 		m = n % 10;
-		DrawExtendGraph(x + i * width + (a > 0) * pointX + ZeroP * width, y,
-			x + sizeX + i * width + (a > 0) * pointX + ZeroP * width,
-			y + sizeY, font[m], TRUE);
+		if (a != 1 || zero == 1 || m != 0) {
+			DrawExtendGraph(x + i * width + (a > 0) * pointX + ZeroP * width, y,
+				x + sizeX + i * width + (a > 0) * pointX + ZeroP * width,
+				y + sizeY, font[m], TRUE);
+		}
 		n /= 10;
 		if (a == 1) {
 			DrawExtendGraph(x + i * width + ZeroP * width, y,
