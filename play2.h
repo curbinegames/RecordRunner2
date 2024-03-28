@@ -100,6 +100,14 @@ typedef struct rec_chara_gra_data_s {
 	int num = 0;
 } rec_chara_gra_data_t[3];
 
+typedef struct rec_chara_arrow_s {
+	struct {
+		int data = 0;
+		int time = -10000;
+	} d[99];
+	int num = 0;
+} rec_chara_arrow_t;
+
 #endif /* filter */
 
 typedef struct rec_fall_data_s {
@@ -539,8 +547,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	short int lockN[2] = { 0,0 }; //↑の番号
-	int carrow[2][99];
-	short int carrowN = 0;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	short int viewTN = 0;
 	int mdif = 0;
@@ -556,6 +562,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_chara_arrow_t carrow;
 	rec_move_set_t Xmove[3];
 	rec_move_set_t Ymove[5];
 	rec_fall_data_t fall;
@@ -846,7 +853,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		fread(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
-		fread(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
+		{
+			int buf[2][99];
+			fread(buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
+			for (int i = 0; i < 99; i++) {
+				carrow.d[i].data = buf[0][i];
+				carrow.d[i].time = buf[1][i];
+			}
+		}
 		fread(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
 #if SWITCH_NOTE_BOX_2 == 1
 		fread(&note, sizeof(note_box_2_t),
@@ -990,9 +1004,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				}
 			}
 		}
-		while (0 <= carrow[1][carrowN + 1] &&
-					carrow[1][carrowN + 1] < time.now) {
-			carrowN++;
+		while (0 <= carrow.d[carrow.num + 1].time &&
+					carrow.d[carrow.num + 1].time < time.now) {
+			carrow.num++;
 		}
 		for (i[0] = 0; i[0] < 2; i[0]++) {
 			while (0 <= lock[i[0]][1][lockN[i[0]] + 1] &&
@@ -1148,7 +1162,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		// view chara pos guide
-		if (carrow[0][carrowN] == 1) {
+		if (carrow.d[carrow.num].data == 1) {
 			DrawGraph(Xline[charaput] - 4 + nowcamera.x, Yline[charaput] - 4 + nowcamera.y,
 				charaguideimg, TRUE);
 		}
@@ -1199,7 +1213,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			G[0] = Xline[charaput] + G[5] + nowcamera.x;
 			G[1] = G[4] - 75 + nowcamera.y;
 			G[2] = betweens(24 + hitpose * 6, (GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
-			if (carrow[0][carrowN] == 1) {
+			if (carrow.d[carrow.num].data == 1) {
 				DrawGraph(G[0] - 160, G[1], charaimg[G[2]], TRUE);
 			}
 			else {
@@ -1207,7 +1221,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 		}
 		else {
-			if (carrow[0][carrowN] == 1) {
+			if (carrow.d[carrow.num].data == 1) {
 				DrawGraph(Xline[charaput] - 160 + nowcamera.x, G[4] - 75 + nowcamera.y,
 					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 +
 					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
@@ -1697,7 +1711,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					LineMoveN[2] = 0;
 					lockN[0] = 0;
 					lockN[1] = 0;
-					carrowN = 0;
+					carrow.num = 0;
 					viewTN = 0;
 					MovieN = 0;
 				}
@@ -1750,7 +1764,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					LineMoveN[2] = 0;
 					lockN[0] = 0;
 					lockN[1] = 0;
-					carrowN = 0;
+					carrow.num = 0;
 					viewTN = 0;
 					MovieN = 0;
 				}
