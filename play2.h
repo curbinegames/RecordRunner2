@@ -118,6 +118,11 @@ typedef struct rec_fall_data_s {
 	int num = 0;
 } rec_fall_data_t;
 
+typedef struct rec_view_bpm_set_s {
+	view_BPM_box data[100];
+	int num = 0;
+} rec_view_bpm_set_t;
+
 #if 1 /* filter2 */
 
 /* proto */
@@ -582,8 +587,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	struct scrool_box scrool[99];
 	item_box Movie[999];
 	short int MovieN = 0;
-	view_BPM_box v_bpm[100];
-	unsigned int v_bpmN = 0;
+	rec_view_bpm_set_t v_BPM;
 #if SWITCH_NOTE_BOX_2 == 1
 	note_box_2_t note[6000];
 #else
@@ -881,7 +885,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&Movie, sizeof(item_box), allnum.movienum, fp);//アイテムデータ
 		fread(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 		fread(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-		fread(&v_bpm, sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
+		fread(v_BPM.data, sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
 		fread(&outpoint, sizeof(int), 2, fp);//エラーデータ
 	}
 	musicmp3 = LoadSoundMem(mp3FN);
@@ -977,9 +981,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				speedN[iLine]++;
 			}
 		}
-		while (-1000 < v_bpm[v_bpmN + 1].time &&
-					   v_bpm[v_bpmN + 1].time <= time.now) {
-			v_bpmN++;
+		while (-1000 < v_BPM.data[v_BPM.num + 1].time &&
+					   v_BPM.data[v_BPM.num + 1].time <= time.now) {
+			v_BPM.num++;
 		}
 		while (0 <= camera[cameraN].endtime &&
 					camera[cameraN].endtime < time.now) {
@@ -1129,15 +1133,15 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					G[3] -= 25 + nowcamera.y;
 				}
 				if (Movie[MovieN + G[0]].eff.bpm_alphr == 1) {
-					G[1] = lins(0, G[1], 60000 / v_bpm[v_bpmN].BPM, 0,
-						(time.now - v_bpm[v_bpmN].time) % (60000 / v_bpm[v_bpmN].BPM));
+					G[1] = lins(0, G[1], 60000 / v_BPM.data[v_BPM.num].BPM, 0,
+						(time.now - v_BPM.data[v_BPM.num].time) % (60000 / v_BPM.data[v_BPM.num].BPM));
 				}
 				if (Movie[MovieN + G[0]].eff.chara_alphr == 1) {
 					G[1] = lins(320, G[1], 60, 0, betweens(60, abss(Xline[1], G[2]), 320));
 				}
 				if (Movie[MovieN + G[0]].eff.bpm_size == 1) {
-					G[4] = pals(60000 / v_bpm[v_bpmN].BPM, G[4] / 2, 0, G[4],
-						(time.now - v_bpm[v_bpmN].time) % (60000 / v_bpm[v_bpmN].BPM));
+					G[4] = pals(60000 / v_BPM.data[v_BPM.num].BPM, G[4] / 2, 0, G[4],
+						(time.now - v_BPM.data[v_BPM.num].time) % (60000 / v_BPM.data[v_BPM.num].BPM));
 				}
 				if (Movie[MovieN + G[0]].eff.edge_size == 1) {
 					G[4] = betweens(0, lins(540, G[4], 640, 0, G[2]), G[4]);
@@ -1223,12 +1227,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		else {
 			if (carrow.d[carrow.num].data == 1) {
 				DrawGraph(Xline[charaput] - 160 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 +
+					charaimg[time.now * v_BPM.data[v_BPM.num].BPM / 20000 % 6 +
 					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
 			}
 			else {
 				DrawTurnGraph(Xline[0] + 30 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 +
+					charaimg[time.now * v_BPM.data[v_BPM.num].BPM / 20000 % 6 +
 					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
 			}
 		}
