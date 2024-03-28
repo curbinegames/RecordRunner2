@@ -389,28 +389,26 @@ static int DrawNoteOne(int G[],
 	return 0;
 }
 
-void recSetYline(int Yline[], int Ntime, rec_move_set_t Ymove[], int YmoveN[], int backEn) {
-	int loop = 5;
-	if (backEn == 0) {
-		loop = 3;
-	}
+void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	for (int iLine = 0; iLine < loop; iLine++) {
-		if (Ymove[iLine].d[YmoveN[iLine]].Stime <= Ntime &&
-			Ymove[iLine].d[YmoveN[iLine]].Stime >= 0) {
-			Yline[iLine] =
+		if (move[iLine].d[move[iLine].num].Stime <= Ntime &&
+			move[iLine].d[move[iLine].num].Stime >= 0)
+		{
+			line[iLine] =
 				(int)movecal(
-					Ymove[iLine].d[YmoveN[iLine]].mode,
-					Ymove[iLine].d[YmoveN[iLine]].Stime,
-					Ymove[iLine].d[YmoveN[iLine] - 1].pos,
-					Ymove[iLine].d[YmoveN[iLine]].Etime,
-					Ymove[iLine].d[YmoveN[iLine]].pos, Ntime);
+					move[iLine].d[move[iLine].num].mode,
+					move[iLine].d[move[iLine].num].Stime,
+					move[iLine].d[move[iLine].num - 1].pos,
+					move[iLine].d[move[iLine].num].Etime,
+					move[iLine].d[move[iLine].num].pos, Ntime);
 		}
 		while (
-			Ymove[iLine].d[YmoveN[iLine]].Etime <= Ntime &&
-			Ymove[iLine].d[YmoveN[iLine]].Stime >= 0 ||
-			Ymove[iLine].d[YmoveN[iLine]].mode == 4) {
-			Yline[iLine] = Ymove[iLine].d[YmoveN[iLine]].pos;
-			YmoveN[iLine]++;
+			move[iLine].d[move[iLine].num].Etime <= Ntime &&
+			move[iLine].d[move[iLine].num].Stime >= 0 ||
+			move[iLine].d[move[iLine].num].mode == 4)
+		{
+			line[iLine] = move[iLine].d[move[iLine].num].pos;
+			move[iLine].num++;
 		}
 	}
 	return;
@@ -567,7 +565,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	rec_play_xy_set_t nowcamera;
 	nowcamera.x = 320;
 	nowcamera.y = 240;
-	int YmoveN[5] = { 0,0,0,0,0 }; //Ymoveの番号
 	rec_system_t system;
 	distance_score_t Dscore;
 	play_key_stat_t key_stat;
@@ -1159,28 +1156,17 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawTurnGraph(Xline[charaput] - 56 + nowcamera.x, Yline[charaput] - 4 + nowcamera.y,
 				charaguideimg, TRUE);
 		}
+		//Xline(横位置)の計算
+		recSetLine(Xline, Xmove, time.now, 3);
 		//Yline(縦位置)の計算
-		recSetYline(Yline, time.now, Ymove, YmoveN, system.backLight);
+		if (system.backLight == 0) {
+			recSetLine(Yline, Ymove, time.now, 3);
+		}
+		else {
+			recSetLine(Yline, Ymove, time.now, 5);
+		}
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			//横位置計算
-	/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-			if (time.now >= Xmove[i[0]].d[Xmove[i[0]].num].Stime &&
-				0 <= Xmove[i[0]].d[Xmove[i[0]].num].Stime)
-			{
-				Xline[i[0]] = (int)movecal(Xmove[i[0]].d[Xmove[i[0]].num].mode,
-					Xmove[i[0]].d[Xmove[i[0]].num].Stime,
-					Xmove[i[0]].d[Xmove[i[0]].num - 1].pos,
-					Xmove[i[0]].d[Xmove[i[0]].num].Etime,
-					Xmove[i[0]].d[Xmove[i[0]].num].pos, time.now);
-			}
-			while (time.now >= Xmove[i[0]].d[Xmove[i[0]].num].Etime &&
-				0 <= Xmove[i[0]].d[Xmove[i[0]].num].Stime ||
-				Xmove[i[0]].d[Xmove[i[0]].num].mode == 4)
-			{
-				Xline[i[0]] = Xmove[i[0]].d[Xmove[i[0]].num++].pos;
-			}
-			//描画
 			DrawGraph(Xline[i[0]] + nowcamera.x, Yline[i[0]] + nowcamera.y, judghimg, TRUE);
 		}
 		//キャラグラ変換
@@ -1695,11 +1681,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					chamo[1].num = 0;
 					chamo[2].num = 0;
 					fall.num = 0;
-					YmoveN[0] = 0;
-					YmoveN[1] = 0;
-					YmoveN[2] = 0;
-					YmoveN[3] = 0;
-					YmoveN[4] = 0;
+					Ymove[0].num = 0;
+					Ymove[1].num = 0;
+					Ymove[2].num = 0;
+					Ymove[3].num = 0;
+					Ymove[4].num = 0;
 					YmoveN2[0] = 0;
 					YmoveN2[1] = 0;
 					YmoveN2[2] = 0;
@@ -1748,11 +1734,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					chamo[1].num = 0;
 					chamo[2].num = 0;
 					fall.num = 0;
-					YmoveN[0] = 0;
-					YmoveN[1] = 0;
-					YmoveN[2] = 0;
-					YmoveN[3] = 0;
-					YmoveN[4] = 0;
+					Ymove[0].num = 0;
+					Ymove[1].num = 0;
+					Ymove[2].num = 0;
+					Ymove[3].num = 0;
+					Ymove[4].num = 0;
 					YmoveN2[0] = 0;
 					YmoveN2[1] = 0;
 					YmoveN2[2] = 0;
