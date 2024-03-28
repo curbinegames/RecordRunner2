@@ -144,6 +144,7 @@ typedef struct rec_map_eff_data_s {
 	rec_view_bpm_set_t v_BPM;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	rec_chara_arrow_t carrow;
+	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 } rec_map_eff_data_t;
 
 #if 1 /* filter2 */
@@ -644,7 +645,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
-int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	short int lockN[2] = { 0,0 }; //↑の番号
 	short int viewTN = 0;
 	int mdif = 0;
@@ -939,7 +939,7 @@ int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない
 				move.x[2].d[i].mode  = buf[i][3];
 			}
 		}
-		fread(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
+		fread(&mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 		{
 			int buf[2][99];
 			fread(buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
@@ -1096,8 +1096,8 @@ int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない
 			mapeff.carrow.num++;
 		}
 		for (i[0] = 0; i[0] < 2; i[0]++) {
-			while (0 <= lock[i[0]][1][lockN[i[0]] + 1] &&
-						lock[i[0]][1][lockN[i[0]] + 1] <= time.now) {
+			while (0 <= mapeff.lock[i[0]][1][lockN[i[0]] + 1] &&
+						mapeff.lock[i[0]][1][lockN[i[0]] + 1] <= time.now) {
 				lockN[i[0]]++;
 			}
 		}
@@ -1338,7 +1338,7 @@ int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない
 #endif
 					) {
 					G[7] = DrawNoteOne(G, &note[i[1]], mapeff.viewT[0], mapeff.viewT[1],
-						viewTN, lock[0][0], lock[0][1], lock[1][0], lock[1][1],
+						viewTN, mapeff.lock[0][0], mapeff.lock[0][1], mapeff.lock[1][0], mapeff.lock[1][1],
 						lockN, speedt[i[0]][speedN[i[0]] + G[5]][1],
 						&speedt[i[0]][0][0], speedN[i[0]], time.now, Xline[i[0]],
 						Yline[i[0]], &mapeff.scrool[scroolN], &nowcamera, &noteimg);
