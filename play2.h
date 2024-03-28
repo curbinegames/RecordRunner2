@@ -70,13 +70,16 @@ typedef struct distance_score_s {
 	int point = 0;
 } distance_score_t;
 
-typedef struct rec_ymove_s {
-	int Stime = -1000;
-	int pos = -1000;
-	int Etime = -1000;
-	int mode = -1000;
-} rec_ymove_t;
-typedef rec_ymove_t rec_ymove_set_t[5][999];
+typedef struct rec_move_data_s {
+	int Stime = -10000;
+	int pos = -10000;
+	int Etime = -10000;
+	int mode = -10000;
+} rec_move_data_t;
+typedef struct rec_move_set_s {
+	rec_move_data_t d[999];
+	int num = 0;
+} rec_move_set_t;
 
 /* <=-1: just release, 0: no push, 1: just push, 2<=: hold */
 typedef struct rec_play_key_hold_s {
@@ -539,8 +542,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short int YmoveN2[3] = { 0,0,0 };
-	int Xmove[3][999][4]; //[上, 中, 下]レーン横移動の[0:開始時間,1:位置,2:終了時間,3:種類]
-	short int XmoveN[3] = { 0,0,0 }; //↑の番号
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	short int lockN[2] = { 0,0 }; //↑の番号
@@ -561,6 +562,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_move_set_t Xmove[3];
 	rec_fall_data_t fall;
 	rec_chara_gra_data_t chamo;
 	rec_play_key_hold_t keyhold;
@@ -796,9 +798,30 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&Ymove[2], sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
 		fread(&Ymove[3], sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
 		fread(&Ymove[4], sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
-		fread(&Xmove[0], sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
-		fread(&Xmove[1], sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
-		fread(&Xmove[2], sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
+		{
+			int buf[999][4];
+			fread(buf, sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
+			for (int i = 0; i < allnum.Xmovenum[0]; i++) {
+				Xmove[0].d[i].Stime = buf[i][0];
+				Xmove[0].d[i].pos   = buf[i][1];
+				Xmove[0].d[i].Etime = buf[i][2];
+				Xmove[0].d[i].mode  = buf[i][3];
+			}
+			fread(buf, sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
+			for (int i = 0; i < allnum.Xmovenum[1]; i++) {
+				Xmove[1].d[i].Stime = buf[i][0];
+				Xmove[1].d[i].pos   = buf[i][1];
+				Xmove[1].d[i].Etime = buf[i][2];
+				Xmove[1].d[i].mode  = buf[i][3];
+			}
+			fread(buf, sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
+			for (int i = 0; i < allnum.Xmovenum[2]; i++) {
+				Xmove[2].d[i].Stime = buf[i][0];
+				Xmove[2].d[i].pos   = buf[i][1];
+				Xmove[2].d[i].Etime = buf[i][2];
+				Xmove[2].d[i].mode  = buf[i][3];
+			}
+		}
 		fread(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 		fread(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 		fread(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
@@ -1115,14 +1138,21 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			//横位置計算
-			if (time.now >= Xmove[i[0]][XmoveN[i[0]]][0] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0]) {
-				Xline[i[0]] = (int)movecal(Xmove[i[0]][XmoveN[i[0]]][3], Xmove[i[0]][XmoveN[i[0]]][0],
-					Xmove[i[0]][XmoveN[i[0]] - 1][1], Xmove[i[0]][XmoveN[i[0]]][2],
-					Xmove[i[0]][XmoveN[i[0]]][1], time.now);
+	/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+			if (time.now >= Xmove[i[0]].d[Xmove[i[0]].num].Stime &&
+				0 <= Xmove[i[0]].d[Xmove[i[0]].num].Stime)
+			{
+				Xline[i[0]] = (int)movecal(Xmove[i[0]].d[Xmove[i[0]].num].mode,
+					Xmove[i[0]].d[Xmove[i[0]].num].Stime,
+					Xmove[i[0]].d[Xmove[i[0]].num - 1].pos,
+					Xmove[i[0]].d[Xmove[i[0]].num].Etime,
+					Xmove[i[0]].d[Xmove[i[0]].num].pos, time.now);
 			}
-			while (time.now >= Xmove[i[0]][XmoveN[i[0]]][2] && 0 <= Xmove[i[0]][XmoveN[i[0]]][0] ||
-				Xmove[i[0]][XmoveN[i[0]]][3] == 4) {
-				Xline[i[0]] = Xmove[i[0]][XmoveN[i[0]]++][1];
+			while (time.now >= Xmove[i[0]].d[Xmove[i[0]].num].Etime &&
+				0 <= Xmove[i[0]].d[Xmove[i[0]].num].Stime ||
+				Xmove[i[0]].d[Xmove[i[0]].num].mode == 4)
+			{
+				Xline[i[0]] = Xmove[i[0]].d[Xmove[i[0]].num++].pos;
 			}
 			//描画
 			DrawGraph(Xline[i[0]] + nowcamera.x, Yline[i[0]] + nowcamera.y, judghimg, TRUE);
@@ -1647,9 +1677,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					YmoveN2[0] = 0;
 					YmoveN2[1] = 0;
 					YmoveN2[2] = 0;
-					XmoveN[0] = 0;
-					XmoveN[1] = 0;
-					XmoveN[2] = 0;
+					Xmove[0].num = 0;
+					Xmove[1].num = 0;
+					Xmove[2].num = 0;
 					LineMoveN[0] = 0;
 					LineMoveN[1] = 0;
 					LineMoveN[2] = 0;
@@ -1700,9 +1730,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					YmoveN2[0] = 0;
 					YmoveN2[1] = 0;
 					YmoveN2[2] = 0;
-					XmoveN[0] = 0;
-					XmoveN[1] = 0;
-					XmoveN[2] = 0;
+					Xmove[0].num = 0;
+					Xmove[1].num = 0;
+					Xmove[2].num = 0;
 					LineMoveN[0] = 0;
 					LineMoveN[1] = 0;
 					LineMoveN[2] = 0;
