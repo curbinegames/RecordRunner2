@@ -49,10 +49,6 @@
 #define RECR_DEBUG_LOOP(n, data_a, data_b)
 #endif
 
-/* typedef */
-
-typedef int rec_ymove_old_t[5][999][4];
-
 /* enum */
 
 typedef enum chara_pos_e {
@@ -393,34 +389,34 @@ static int DrawNoteOne(int G[],
 	return 0;
 }
 
-void recSetYline(int Yline[], int Ntime, rec_ymove_old_t *Ymove, int YmoveN[], int backEn) {
+void recSetYline(int Yline[], int Ntime, rec_move_set_t Ymove[], int YmoveN[], int backEn) {
 	int loop = 5;
 	if (backEn == 0) {
 		loop = 3;
 	}
 	for (int iLine = 0; iLine < loop; iLine++) {
-		if ((*Ymove)[iLine][YmoveN[iLine]][0] <= Ntime &&
-			(*Ymove)[iLine][YmoveN[iLine]][0] >= 0) {
+		if (Ymove[iLine].d[YmoveN[iLine]].Stime <= Ntime &&
+			Ymove[iLine].d[YmoveN[iLine]].Stime >= 0) {
 			Yline[iLine] =
 				(int)movecal(
-					(*Ymove)[iLine][YmoveN[iLine]][3],
-					(*Ymove)[iLine][YmoveN[iLine]][0],
-					(*Ymove)[iLine][YmoveN[iLine] - 1][1],
-					(*Ymove)[iLine][YmoveN[iLine]][2],
-					(*Ymove)[iLine][YmoveN[iLine]][1], Ntime);
+					Ymove[iLine].d[YmoveN[iLine]].mode,
+					Ymove[iLine].d[YmoveN[iLine]].Stime,
+					Ymove[iLine].d[YmoveN[iLine] - 1].pos,
+					Ymove[iLine].d[YmoveN[iLine]].Etime,
+					Ymove[iLine].d[YmoveN[iLine]].pos, Ntime);
 		}
 		while (
-			(*Ymove)[iLine][YmoveN[iLine]][2] <= Ntime &&
-			(*Ymove)[iLine][YmoveN[iLine]][0] >= 0 ||
-			(*Ymove)[iLine][YmoveN[iLine]][3] == 4) {
-			Yline[iLine] = (*Ymove)[iLine][YmoveN[iLine]][1];
+			Ymove[iLine].d[YmoveN[iLine]].Etime <= Ntime &&
+			Ymove[iLine].d[YmoveN[iLine]].Stime >= 0 ||
+			Ymove[iLine].d[YmoveN[iLine]].mode == 4) {
+			Yline[iLine] = Ymove[iLine].d[YmoveN[iLine]].pos;
 			YmoveN[iLine]++;
 		}
 	}
 	return;
 }
 
-int PlayShowGuideLine(int Ntime, int Line, rec_ymove_old_t *Ymove, int Xline[],
+int PlayShowGuideLine(int Ntime, int Line, rec_move_set_t Ymove[], int Xline[],
 	int Yline[], rec_play_xy_set_t *nowcamera, int iDraw)
 {
 	int drawLeft = 0;
@@ -440,38 +436,38 @@ int PlayShowGuideLine(int Ntime, int Line, rec_ymove_old_t *Ymove, int Xline[],
 		drawC = 0xff0000ff;
 		break;
 	}
-	if ((*Ymove)[Line][iDraw][0] < 0) {
-		drawLeft = ((*Ymove)[Line][iDraw - 1][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+	if (Ymove[Line].d[iDraw].Stime < 0) {
+		drawLeft = (Ymove[Line].d[iDraw - 1].Etime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
 		drawRight = 640;
-		drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
-		drawY2 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
+		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + nowcamera->y;
+		drawY2 = Ymove[Line].d[iDraw - 1].pos + 15 + nowcamera->y;
 		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 		return 1;
 	}
 	// cal Xpos1
 	if (iDraw < 1) {
 		drawLeft = Xline[Line] + Xline[Line] + 15 + nowcamera->x;
-		drawRight = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
 		drawY1 = Yline[Line] + 15 + nowcamera->y;
 		drawY2 = Yline[Line] + 15 + nowcamera->y;
 		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
-	else if (Ntime < (*Ymove)[Line][iDraw][2]) {
-		drawLeft = ((*Ymove)[Line][iDraw - 1][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
-		drawRight = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
-		drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
-		drawY2 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
+	else if (Ntime < Ymove[Line].d[iDraw].Etime) {
+		drawLeft = (Ymove[Line].d[iDraw - 1].Etime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + nowcamera->y;
+		drawY2 = Ymove[Line].d[iDraw - 1].pos + 15 + nowcamera->y;
 		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
-	drawLeft = ((*Ymove)[Line][iDraw][0] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+	drawLeft = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
 	if (640 < drawLeft) {
 		return 1;
 	}
-	drawRight = ((*Ymove)[Line][iDraw][2] - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
-	drawY1 = (*Ymove)[Line][iDraw - 1][1] + 15 + nowcamera->y;
-	drawY2 = (*Ymove)[Line][iDraw][1] + 15 + nowcamera->y;
+	drawRight = (Ymove[Line].d[iDraw].Etime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
+	drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + nowcamera->y;
+	drawY2 = Ymove[Line].d[iDraw].pos + 15 + nowcamera->y;
 	// wiew
-	DrawLineCurve(drawLeft, drawY1, drawRight, drawY2, (*Ymove)[Line][iDraw][3], drawC, 2);
+	DrawLineCurve(drawLeft, drawY1, drawRight, drawY2, Ymove[Line].d[iDraw].mode, drawC, 2);
 	return 0;
 }
 
@@ -563,6 +559,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int Stime = 0;
 	/* struct */
 	rec_move_set_t Xmove[3];
+	rec_move_set_t Ymove[5];
 	rec_fall_data_t fall;
 	rec_chara_gra_data_t chamo;
 	rec_play_key_hold_t keyhold;
@@ -570,7 +567,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	rec_play_xy_set_t nowcamera;
 	nowcamera.x = 320;
 	nowcamera.y = 240;
-	rec_ymove_old_t Ymove;
 	int YmoveN[5] = { 0,0,0,0,0 }; //Ymoveの番号
 	rec_system_t system;
 	distance_score_t Dscore;
@@ -793,13 +789,43 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				chamo[2].time[i] = buf[2][i][1];
 			}
 		}
-		fread(&Ymove[0], sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
-		fread(&Ymove[1], sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
-		fread(&Ymove[2], sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
-		fread(&Ymove[3], sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
-		fread(&Ymove[4], sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
 		{
 			int buf[999][4];
+			fread(buf, sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
+			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+				Ymove[0].d[i].Stime = buf[i][0];
+				Ymove[0].d[i].pos   = buf[i][1];
+				Ymove[0].d[i].Etime = buf[i][2];
+				Ymove[0].d[i].mode  = buf[i][3];
+			}
+			fread(buf, sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
+			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+				Ymove[1].d[i].Stime = buf[i][0];
+				Ymove[1].d[i].pos   = buf[i][1];
+				Ymove[1].d[i].Etime = buf[i][2];
+				Ymove[1].d[i].mode  = buf[i][3];
+			}
+			fread(buf, sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
+			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+				Ymove[2].d[i].Stime = buf[i][0];
+				Ymove[2].d[i].pos   = buf[i][1];
+				Ymove[2].d[i].Etime = buf[i][2];
+				Ymove[2].d[i].mode  = buf[i][3];
+			}
+			fread(buf, sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
+			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+				Ymove[3].d[i].Stime = buf[i][0];
+				Ymove[3].d[i].pos   = buf[i][1];
+				Ymove[3].d[i].Etime = buf[i][2];
+				Ymove[3].d[i].mode  = buf[i][3];
+			}
+			fread(buf, sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
+			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+				Ymove[4].d[i].Stime = buf[i][0];
+				Ymove[4].d[i].pos   = buf[i][1];
+				Ymove[4].d[i].Etime = buf[i][2];
+				Ymove[4].d[i].mode  = buf[i][3];
+			}
 			fread(buf, sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
 			for (int i = 0; i < allnum.Xmovenum[0]; i++) {
 				Xmove[0].d[i].Stime = buf[i][0];
@@ -960,9 +986,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
-				while ((0 <= Ymove[i[0]][LineMoveN[i[0]]][0] &&
-							 Ymove[i[0]][LineMoveN[i[0]]][2] <= time.now) ||
-							 Ymove[i[0]][LineMoveN[i[0]]][3] == 4) {
+				while ((0 <= Ymove[i[0]].d[LineMoveN[i[0]]].Stime &&
+							 Ymove[i[0]].d[LineMoveN[i[0]]].Etime <= time.now) ||
+							 Ymove[i[0]].d[LineMoveN[i[0]]].mode == 4) {
 					LineMoveN[i[0]]++;
 				}
 			}
@@ -1118,7 +1144,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
 				for (int iDraw = LineMoveN[i[0]]; 1; iDraw++) {
-					if (PlayShowGuideLine(time.now, i[0], &Ymove, Xline, Yline, &nowcamera, iDraw) != 0) {
+					if (PlayShowGuideLine(time.now, i[0], Ymove, Xline, Yline, &nowcamera, iDraw) != 0) {
 						break;
 					}
 				}
@@ -1134,7 +1160,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				charaguideimg, TRUE);
 		}
 		//Yline(縦位置)の計算
-		recSetYline(Yline, time.now, &Ymove, YmoveN, system.backLight);
+		recSetYline(Yline, time.now, Ymove, YmoveN, system.backLight);
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			//横位置計算
