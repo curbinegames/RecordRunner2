@@ -92,6 +92,12 @@ typedef struct rec_paly_time_set_s {
 	int offset;
 } rec_paly_time_set_t;
 
+typedef struct rec_chara_gra_data_s {
+	int gra[99];
+	int time[99];
+	int num = 0;
+} rec_chara_gra_data_t[3];
+
 /* proto */
 
 #if 1 /* filter */
@@ -519,8 +525,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int HighSrore; //ハイスコア
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
-	int chamo[3][99][2]; //キャラの[0:上,1:中,2:下]の[0:グラフィック,1:切り替え時間]
-	short int chamoN[3] = { 0,0,0 }; //↑の番号
 	int fall[99][2]; //落ち物背景の[0:番号,1:時間]
 	short int fallN = 0; //↑の番号
 	short int YmoveN2[3] = { 0,0,0 };
@@ -546,6 +550,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_chara_gra_data_t chamo;
 	rec_play_key_hold_t keyhold;
 	rec_paly_time_set_t time;
 	rec_play_xy_set_t nowcamera;
@@ -755,7 +760,18 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 		fread(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 		fread(&speedt, sizeof(double), 990, fp);//レーン速度
-		fread(&chamo, sizeof(int), 594, fp);//キャラグラ変換タイミング
+		{
+			int buf[3][99][2];
+			fread(&buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
+			for (int i = 0; i < 99; i++) {
+				chamo[0].gra[i]  = buf[0][i][0];
+				chamo[0].time[i] = buf[0][i][1];
+				chamo[1].gra[i]  = buf[1][i][0];
+				chamo[1].time[i] = buf[1][i][1];
+				chamo[2].gra[i]  = buf[2][i][0];
+				chamo[2].time[i] = buf[2][i][1];
+			}
+		}
 		fread(&Ymove[0], sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
 		fread(&Ymove[1], sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
 		fread(&Ymove[2], sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
@@ -848,14 +864,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ClearDrawScreen();
 		GetHitKeyStateAll(key);
 		// number step
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			objectNG[i[0]] = mins(objectNG[i[0]], objectN[i[0]]);
+		for (int iLine = 0; iLine < 3; iLine++) {
+			objectNG[iLine] = mins(objectNG[iLine], objectN[iLine]);
 #if SWITCH_NOTE_BOX_2 == 1
-			while (note[objectNG[i[0]]].object == NOTE_GHOST) {
-				objectNG[i[0]] = note[objectNG[i[0]]].next;
+			while (note[objectNG[iLine]].object == NOTE_GHOST) {
+				objectNG[iLine] = note[objectNG[iLine]].next;
 			}
 #else
-			switch (i[0]) {
+			switch (iLine) {
 			case 0:
 				while (note2.up[objectNG[0]].object == NOTE_GHOST) {
 					objectNG[0]++;
@@ -873,13 +889,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			}
 #endif
-			while (0 <= chamo[i[0]][chamoN[i[0]] + 1][1] &&
-						chamo[i[0]][chamoN[i[0]] + 1][1] <= time.now) {
-				chamoN[i[0]]++;
+			while (0 <= chamo[iLine].time[chamo[iLine].num + 1] &&
+						chamo[iLine].time[chamo[iLine].num + 1] <= time.now) {
+				chamo[iLine].num++;
 			}
-			while (0 <= speedt[i[0]][speedN[i[0]] + 1][0] &&
-						speedt[i[0]][speedN[i[0]] + 1][0] <= time.now) {
-				speedN[i[0]]++;
+			while (0 <= speedt[iLine][speedN[iLine] + 1][0] &&
+						speedt[iLine][speedN[iLine] + 1][0] <= time.now) {
+				speedN[iLine]++;
 			}
 		}
 		while (-1000 < v_bpm[v_bpmN + 1].time &&
@@ -1132,13 +1148,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		else {
 			if (carrow[0][carrowN] == 1) {
 				DrawGraph(Xline[charaput] - 160 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
-					TRUE);
+					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 +
+					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
 			}
 			else {
 				DrawTurnGraph(Xline[0] + 30 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 + chamo[charaput][chamoN[charaput]][0] * 6],
-					TRUE);
+					charaimg[time.now * v_bpm[v_bpmN].BPM / 20000 % 6 +
+					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
 			}
 		}
 		//キー設定
@@ -1600,9 +1616,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					scroolN = 0;
 					itemN = 0;
 					SitemN = 0;
-					chamoN[0] = 0;
-					chamoN[1] = 0;
-					chamoN[2] = 0;
+					chamo[0].num = 0;
+					chamo[1].num = 0;
+					chamo[2].num = 0;
 					fallN = 0;
 					YmoveN[0] = 0;
 					YmoveN[1] = 0;
@@ -1653,9 +1669,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					scroolN = 0;
 					itemN = 0;
 					SitemN = 0;
-					chamoN[0] = 0;
-					chamoN[1] = 0;
-					chamoN[2] = 0;
+					chamo[0].num = 0;
+					chamo[1].num = 0;
+					chamo[2].num = 0;
 					fallN = 0;
 					YmoveN[0] = 0;
 					YmoveN[1] = 0;
