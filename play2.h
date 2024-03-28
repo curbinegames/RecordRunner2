@@ -127,35 +127,7 @@ typedef struct rec_view_bpm_set_s {
 
 /* proto */
 
-void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
-	unsigned int color, int thick) {
-	int end = x1 + 10;
-	switch (mode) {
-	case 1: // lin
-		DrawLine(x1, y1, x2, y2, color, thick);
-		break;
-	case 2: // acc
-		for (int i = x1; i <= x2; i++) {
-			end = maxs(i + 10, x2);
-			DrawLine(i, pals(x1, y1, x2, y2, i),
-				end, pals(x1, y1, x2, y2, end),
-				color, thick);
-		}
-		break;
-	case 3: // dec
-		for (int i = x1; i <= x2; i++) {
-			end = maxs(i + 10, x2);
-			DrawLine(i, pals(x2, y2, x1, y1, i),
-				end, pals(x2, y2, x1, y1, end),
-				color, thick);
-		}
-		break;
-	}
-	return;
-}
-
 void AddGap(gap_box* const box, int data);
-void AddHitJudge(struct judge_box* const ans, int gup);
 void cal_back_x(int *xpos, double Gspeed, double Wspeed, double scrool,
 	int cam);
 
@@ -423,6 +395,33 @@ void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 			line[iLine] = move[iLine].d[move[iLine].num].pos;
 			move[iLine].num++;
 		}
+	}
+	return;
+}
+
+void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
+	unsigned int color, int thick) {
+	int end = x1 + 10;
+	switch (mode) {
+	case 1: // lin
+		DrawLine(x1, y1, x2, y2, color, thick);
+		break;
+	case 2: // acc
+		for (int i = x1; i <= x2; i++) {
+			end = maxs(i + 10, x2);
+			DrawLine(i, pals(x1, y1, x2, y2, i),
+				end, pals(x1, y1, x2, y2, end),
+				color, thick);
+		}
+		break;
+	case 3: // dec
+		for (int i = x1; i <= x2; i++) {
+			end = maxs(i + 10, x2);
+			DrawLine(i, pals(x2, y2, x1, y1, i),
+				end, pals(x2, y2, x1, y1, end),
+				color, thick);
+		}
+		break;
 	}
 	return;
 }
@@ -1813,25 +1812,6 @@ void AddGap(gap_box* const box, int data){
 	box->sum += data;
 	box->ssum += data * data;
 	box->count++;
-	return;
-}
-
-void AddHitJudge(struct judge_box* const ans, int gup) {
-	if (-P_JUST_TIME <= gup && gup <= P_JUST_TIME) {
-		(ans->pjust)++;
-	}
-	if (-JUST_TIME <= gup && gup <= JUST_TIME) {
-		(ans->just)++;
-	}
-	else if (-GOOD_TIME <= gup && gup <= GOOD_TIME) {
-		(ans->good)++;
-	}
-	else if (-SAFE_TIME <= gup && gup <= SAFE_TIME) {
-		(ans->safe)++;
-	}
-	else if (gup <= F_MISS_TIME) {
-		(ans->miss)++;
-	}
 	return;
 }
 
