@@ -807,28 +807,28 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				Ymove[0].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+			for (int i = 0; i < allnum.Ymovenum[1]; i++) {
 				Ymove[1].d[i].Stime = buf[i][0];
 				Ymove[1].d[i].pos   = buf[i][1];
 				Ymove[1].d[i].Etime = buf[i][2];
 				Ymove[1].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+			for (int i = 0; i < allnum.Ymovenum[2]; i++) {
 				Ymove[2].d[i].Stime = buf[i][0];
 				Ymove[2].d[i].pos   = buf[i][1];
 				Ymove[2].d[i].Etime = buf[i][2];
 				Ymove[2].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+			for (int i = 0; i < allnum.Ymovenum[3]; i++) {
 				Ymove[3].d[i].Stime = buf[i][0];
 				Ymove[3].d[i].pos   = buf[i][1];
 				Ymove[3].d[i].Etime = buf[i][2];
 				Ymove[3].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
+			for (int i = 0; i < allnum.Ymovenum[4]; i++) {
 				Ymove[4].d[i].Stime = buf[i][0];
 				Ymove[4].d[i].pos   = buf[i][1];
 				Ymove[4].d[i].Etime = buf[i][2];
