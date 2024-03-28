@@ -520,6 +520,22 @@ int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
 
 #endif /* filter2 */
 
+void PlaySetCamera(rec_play_xy_set_t *retcam, struct camera_box camset[], int camN, int Ntime) {
+	if (camset[camN].starttime <= Ntime && Ntime <= camset[camN].endtime) {
+		retcam->x = (int)movecal(camset[camN].mode,
+			camset[camN].starttime, camset[camN - 1].xpos,
+			camset[camN].endtime, camset[camN].xpos, Ntime);
+		retcam->y = (int)movecal( camset[camN].mode,
+			camset[camN].starttime, camset[camN - 1].ypos,
+			camset[camN].endtime, camset[camN].ypos, Ntime);
+	}
+	else {
+		retcam->x = camset[camN - 1].xpos;
+		retcam->y = camset[camN - 1].ypos;
+	}
+	return;
+}
+
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #if 1 /* filter3 */
@@ -1032,16 +1048,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			viewTN++;
 		}
 		//ƒJƒƒ‰ˆÚ“®
-		if (mapeff.camera[cameraN].starttime <= time.now && time.now <= mapeff.camera[cameraN].endtime) {
-			nowcamera.x = (int)movecal(mapeff.camera[cameraN].mode, mapeff.camera[cameraN].starttime,
-				mapeff.camera[cameraN - 1].xpos, mapeff.camera[cameraN].endtime, mapeff.camera[cameraN].xpos, time.now);
-			nowcamera.y = (int)movecal(mapeff.camera[cameraN].mode, mapeff.camera[cameraN].starttime,
-				mapeff.camera[cameraN - 1].ypos, mapeff.camera[cameraN].endtime, mapeff.camera[cameraN].ypos, time.now);
-		}
-		else {
-			nowcamera.x = mapeff.camera[cameraN - 1].xpos;
-			nowcamera.y = mapeff.camera[cameraN - 1].ypos;
-		}
+		PlaySetCamera(&nowcamera, mapeff.camera, cameraN, time.now);
 		//”wŒi•\¦
 		if (system.backLight != 0) {
 			if (speedt[3][speedN[3] + 1][0] < time.now && speedt[3][speedN[3] + 1][0] >= 0) {
