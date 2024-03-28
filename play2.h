@@ -139,6 +139,8 @@ typedef struct rec_play_nameset_s {
 
 typedef struct rec_map_eff_data_s {
 	struct camera_box camera[255];
+	struct scrool_box scrool[99];
+	item_box Movie[999];
 } rec_map_eff_data_t;
 
 #if 1 /* filter2 */
@@ -536,6 +538,63 @@ void PlaySetCamera(rec_play_xy_set_t *retcam, struct camera_box camset[], int ca
 	return;
 }
 
+void PlayDrawItem(item_box *Movie, int Ntime, rec_play_xy_set_t *camera,
+	view_BPM_box *v_BPM, int Xmidline, int item[])
+{
+	int drawA;
+	int drawX;
+	int drawY;
+	int drawS;
+	int drawR;
+	for (item_box *pMovie = Movie; pMovie->endtime > -500; pMovie++) {
+		if (pMovie->starttime <= Ntime && pMovie->endtime >= Ntime) {
+			//base setting
+			drawA = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startalpha,
+				pMovie->endtime, pMovie->endalpha, Ntime);
+			drawX = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startXpos,
+				pMovie->endtime, pMovie->endXpos, Ntime) + camera->x;
+			drawY = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startYpos,
+				pMovie->endtime, pMovie->endYpos, Ntime) + camera->y;
+			drawS = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startsize,
+				pMovie->endtime, pMovie->endsize, Ntime);
+			drawR = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startrot,
+				pMovie->endtime, pMovie->endrot, Ntime);
+			//material setting
+			if (pMovie->eff.lock == 1) {
+				drawX -= camera->x;
+			}
+			if (pMovie->eff.lock == 1) {
+				drawY -= 25 + camera->y;
+			}
+			if (pMovie->eff.bpm_alphr == 1) {
+				drawA = lins(0, drawA, 60000 / v_BPM->BPM, 0,
+					(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
+			}
+			if (pMovie->eff.chara_alphr == 1) {
+				drawA = lins(320, drawA, 60, 0, betweens(60, abss(Xmidline, drawX), 320));
+			}
+			if (pMovie->eff.bpm_size == 1) {
+				drawS = pals(60000 / v_BPM->BPM, drawS / 2, 0, drawS,
+					(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
+			}
+			if (pMovie->eff.edge_size == 1) {
+				drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
+				drawS = betweens(0, lins(100, drawS, 0, 0, drawX), drawS);
+			}
+			//drawing
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
+			DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR,
+				item[pMovie->ID]);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		}
+	}
+}
+
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #if 1 /* filter3 */
@@ -616,8 +675,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	rec_map_eff_data_t mapeff;
 	struct judge_box judge;
 	struct score_box score;
-	struct scrool_box scrool[99];
-	item_box Movie[999];
 	short int MovieN = 0;
 	rec_view_bpm_set_t v_BPM;
 #if SWITCH_NOTE_BOX_2 == 1
@@ -907,9 +964,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 		fread(&nameset.DifFN, 255, 1, fp);//難易度バー名
-		fread(&Movie, sizeof(item_box), allnum.movienum, fp);//アイテムデータ
+		fread(&mapeff.Movie, sizeof(item_box), allnum.movienum, fp);//アイテムデータ
 		fread(&mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
-		fread(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+		fread(&mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 		fread(&v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
 		fread(&outpoint, sizeof(int), 2, fp);//エラーデータ
 	}
@@ -1014,13 +1071,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					mapeff.camera[cameraN].endtime < time.now) {
 			cameraN++;
 		}
-		while (0 <= scrool[scroolN + 1].starttime &&
-					scrool[scroolN + 1].starttime <= time.now) {
+		while (0 <= mapeff.scrool[scroolN + 1].starttime &&
+					mapeff.scrool[scroolN + 1].starttime <= time.now) {
 			scroolN++;
 		}
 		if (system.backLight != 0) {
-			while (-500 < Movie[MovieN].endtime &&
-						  Movie[MovieN].endtime < time.now) {
+			while (-500 < mapeff.Movie[MovieN].endtime &&
+						  mapeff.Movie[MovieN].endtime < time.now) {
 				MovieN++;
 			}
 		}
@@ -1055,7 +1112,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				speedN[3]++;
 			}
 			cal_back_x(bgp, speedt[3][speedN[3]][1], speedt[4][speedN[4]][1],
-				scrool[scroolN].speed, nowcamera.x);
+				mapeff.scrool[scroolN].speed, nowcamera.x);
 			G[18] = 0;
 			G[19] = bgp[1];
 			//draw background picture
@@ -1107,69 +1164,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//アイテム表示
 		if (system.backLight != 0) {
-			G[0] = 0;
-			while (Movie[MovieN + G[0]].endtime > -500) {
-				if (Movie[MovieN + G[0]].starttime > time.now ||
-					Movie[MovieN + G[0]].endtime < time.now) {
-					G[0]++;
-					continue;
-				}
-				//base setting
-				G[1] = (int)movecal(Movie[MovieN + G[0]].movemode,
-					Movie[MovieN + G[0]].starttime,
-					Movie[MovieN + G[0]].startalpha,
-					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endalpha, time.now);
-				G[2] = (int)movecal(Movie[MovieN + G[0]].movemode,
-					Movie[MovieN + G[0]].starttime,
-					Movie[MovieN + G[0]].startXpos,
-					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endXpos, time.now) + nowcamera.x;
-				G[3] = (int)movecal(Movie[MovieN + G[0]].movemode,
-					Movie[MovieN + G[0]].starttime,
-					Movie[MovieN + G[0]].startYpos,
-					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endYpos, time.now) + nowcamera.y;
-				G[4] = (int)movecal(Movie[MovieN + G[0]].movemode,
-					Movie[MovieN + G[0]].starttime,
-					Movie[MovieN + G[0]].startsize,
-					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endsize, time.now);
-				G[5] = G[4];
-				G[6] = (int)movecal(Movie[MovieN + G[0]].movemode,
-					Movie[MovieN + G[0]].starttime,
-					Movie[MovieN + G[0]].startrot,
-					Movie[MovieN + G[0]].endtime,
-					Movie[MovieN + G[0]].endrot, time.now);
-				//material setting
-				if (Movie[MovieN + G[0]].eff.lock == 1) {
-					G[2] -= nowcamera.x;
-				}
-				if (Movie[MovieN + G[0]].eff.lock == 1) {
-					G[3] -= 25 + nowcamera.y;
-				}
-				if (Movie[MovieN + G[0]].eff.bpm_alphr == 1) {
-					G[1] = lins(0, G[1], 60000 / v_BPM.data[v_BPM.num].BPM, 0,
-						(time.now - v_BPM.data[v_BPM.num].time) % (60000 / v_BPM.data[v_BPM.num].BPM));
-				}
-				if (Movie[MovieN + G[0]].eff.chara_alphr == 1) {
-					G[1] = lins(320, G[1], 60, 0, betweens(60, abss(Xline[1], G[2]), 320));
-				}
-				if (Movie[MovieN + G[0]].eff.bpm_size == 1) {
-					G[4] = pals(60000 / v_BPM.data[v_BPM.num].BPM, G[4] / 2, 0, G[4],
-						(time.now - v_BPM.data[v_BPM.num].time) % (60000 / v_BPM.data[v_BPM.num].BPM));
-				}
-				if (Movie[MovieN + G[0]].eff.edge_size == 1) {
-					G[4] = betweens(0, lins(540, G[4], 640, 0, G[2]), G[4]);
-					G[4] = betweens(0, lins(100, G[4], 0, 0, G[2]), G[4]);
-				}
-				//drawing
-				SetDrawBlendMode(DX_BLENDMODE_ALPHA, G[1]);
-				DrawDeformationPic(G[2], G[3], G[4] / 100.0, G[4] / 100.0, G[6],
-					item[Movie[MovieN + G[0]].ID]);
-				SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-				G[0]++;
-			}
+			PlayDrawItem(&mapeff.Movie[MovieN], time.now, &nowcamera,
+				&v_BPM.data[v_BPM.num], Xline[1], item);
 		}
 		// view line
 		if (AutoFlag == 1) {
@@ -1344,7 +1340,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 						viewTN, lock[0][0], lock[0][1], lock[1][0], lock[1][1],
 						lockN, speedt[i[0]][speedN[i[0]] + G[5]][1],
 						&speedt[i[0]][0][0], speedN[i[0]], time.now, Xline[i[0]],
-						Yline[i[0]], &scrool[scroolN], &nowcamera, &noteimg);
+						Yline[i[0]], &mapeff.scrool[scroolN], &nowcamera, &noteimg);
 					if (G[7] == 1) { continue; }
 					else if (G[7] == 2) { break; }
 #if SWITCH_NOTE_BOX_2 == 1
