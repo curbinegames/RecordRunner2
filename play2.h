@@ -141,6 +141,8 @@ typedef struct rec_map_eff_data_s {
 	struct camera_box camera[255];
 	struct scrool_box scrool[99];
 	item_box Movie[999];
+	rec_view_bpm_set_t v_BPM;
+	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 } rec_map_eff_data_t;
 
 #if 1 /* filter2 */
@@ -643,7 +645,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	short int lockN[2] = { 0,0 }; //↑の番号
-	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	short int viewTN = 0;
 	int mdif = 0;
 	int ldif = 0;
@@ -947,7 +948,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				carrow.d[i].time = buf[1][i];
 			}
 		}
-		fread(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
+		fread(&mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
 #if SWITCH_NOTE_BOX_2 == 1
 		fread(&note, sizeof(note_box_2_t),
 			allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
@@ -967,7 +968,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&mapeff.Movie, sizeof(item_box), allnum.movienum, fp);//アイテムデータ
 		fread(&mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 		fread(&mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-		fread(&v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
+		fread(&mapeff.v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
 		fread(&outpoint, sizeof(int), 2, fp);//エラーデータ
 	}
 	musicmp3 = LoadSoundMem(nameset.mp3FN);
@@ -1063,9 +1064,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				speedN[iLine]++;
 			}
 		}
-		while (-1000 < v_BPM.data[v_BPM.num + 1].time &&
-					   v_BPM.data[v_BPM.num + 1].time <= time.now) {
-			v_BPM.num++;
+		while (-1000 < mapeff.v_BPM.data[mapeff.v_BPM.num + 1].time &&
+					   mapeff.v_BPM.data[mapeff.v_BPM.num + 1].time <= time.now) {
+			mapeff.v_BPM.num++;
 		}
 		while (0 <= mapeff.camera[cameraN].endtime &&
 					mapeff.camera[cameraN].endtime < time.now) {
@@ -1100,8 +1101,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				lockN[i[0]]++;
 			}
 		}
-		while (0 <= viewT[0][viewTN + 1] &&
-					viewT[0][viewTN + 1] <= time.now) {
+		while (0 <= mapeff.viewT[0][viewTN + 1] &&
+					mapeff.viewT[0][viewTN + 1] <= time.now) {
 			viewTN++;
 		}
 		//カメラ移動
@@ -1165,7 +1166,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//アイテム表示
 		if (system.backLight != 0) {
 			PlayDrawItem(&mapeff.Movie[MovieN], time.now, &nowcamera,
-				&v_BPM.data[v_BPM.num], Xline[1], item);
+				&mapeff.v_BPM.data[mapeff.v_BPM.num], Xline[1], item);
 		}
 		// view line
 		if (AutoFlag == 1) {
@@ -1239,12 +1240,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		else {
 			if (carrow.d[carrow.num].data == 1) {
 				DrawGraph(Xline[charaput] - 160 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[time.now * v_BPM.data[v_BPM.num].BPM / 20000 % 6 +
+					charaimg[time.now * mapeff.v_BPM.data[mapeff.v_BPM.num].BPM / 20000 % 6 +
 					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
 			}
 			else {
 				DrawTurnGraph(Xline[0] + 30 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[time.now * v_BPM.data[v_BPM.num].BPM / 20000 % 6 +
+					charaimg[time.now * mapeff.v_BPM.data[mapeff.v_BPM.num].BPM / 20000 % 6 +
 					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
 			}
 		}
@@ -1336,7 +1337,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					i[1]++
 #endif
 					) {
-					G[7] = DrawNoteOne(G, &note[i[1]], viewT[0], viewT[1],
+					G[7] = DrawNoteOne(G, &note[i[1]], mapeff.viewT[0], mapeff.viewT[1],
 						viewTN, lock[0][0], lock[0][1], lock[1][0], lock[1][1],
 						lockN, speedt[i[0]][speedN[i[0]] + G[5]][1],
 						&speedt[i[0]][0][0], speedN[i[0]], time.now, Xline[i[0]],
