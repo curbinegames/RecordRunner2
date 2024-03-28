@@ -137,6 +137,10 @@ typedef struct rec_play_nameset_s {
 	wchar_t DifFN[255] = L"picture/difanother.png";
 } rec_play_nameset_t;
 
+typedef struct rec_map_eff_data_s {
+	struct camera_box camera[255];
+} rec_map_eff_data_t;
+
 #if 1 /* filter2 */
 
 /* proto */
@@ -593,7 +597,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	distance_score_t Dscore;
 	play_key_stat_t key_stat;
 	gap_box gap2;
-	struct camera_box camera[255];
+	rec_map_eff_data_t mapeff;
 	struct judge_box judge;
 	struct score_box score;
 	struct scrool_box scrool[99];
@@ -888,7 +892,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
 		fread(&nameset.DifFN, 255, 1, fp);//難易度バー名
 		fread(&Movie, sizeof(item_box), allnum.movienum, fp);//アイテムデータ
-		fread(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
+		fread(&mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 		fread(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 		fread(&v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
 		fread(&outpoint, sizeof(int), 2, fp);//エラーデータ
@@ -990,8 +994,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					   v_BPM.data[v_BPM.num + 1].time <= time.now) {
 			v_BPM.num++;
 		}
-		while (0 <= camera[cameraN].endtime &&
-					camera[cameraN].endtime < time.now) {
+		while (0 <= mapeff.camera[cameraN].endtime &&
+					mapeff.camera[cameraN].endtime < time.now) {
 			cameraN++;
 		}
 		while (0 <= scrool[scroolN + 1].starttime &&
@@ -1028,15 +1032,15 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			viewTN++;
 		}
 		//カメラ移動
-		if (camera[cameraN].starttime <= time.now && time.now <= camera[cameraN].endtime) {
-			nowcamera.x = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
-				camera[cameraN - 1].xpos, camera[cameraN].endtime, camera[cameraN].xpos, time.now);
-			nowcamera.y = (int)movecal(camera[cameraN].mode, camera[cameraN].starttime,
-				camera[cameraN - 1].ypos, camera[cameraN].endtime, camera[cameraN].ypos, time.now);
+		if (mapeff.camera[cameraN].starttime <= time.now && time.now <= mapeff.camera[cameraN].endtime) {
+			nowcamera.x = (int)movecal(mapeff.camera[cameraN].mode, mapeff.camera[cameraN].starttime,
+				mapeff.camera[cameraN - 1].xpos, mapeff.camera[cameraN].endtime, mapeff.camera[cameraN].xpos, time.now);
+			nowcamera.y = (int)movecal(mapeff.camera[cameraN].mode, mapeff.camera[cameraN].starttime,
+				mapeff.camera[cameraN - 1].ypos, mapeff.camera[cameraN].endtime, mapeff.camera[cameraN].ypos, time.now);
 		}
 		else {
-			nowcamera.x = camera[cameraN - 1].xpos;
-			nowcamera.y = camera[cameraN - 1].ypos;
+			nowcamera.x = mapeff.camera[cameraN - 1].xpos;
+			nowcamera.y = mapeff.camera[cameraN - 1].ypos;
 		}
 		//背景表示
 		if (system.backLight != 0) {
