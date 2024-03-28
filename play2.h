@@ -76,6 +76,10 @@ typedef struct rec_move_set_s {
 	rec_move_data_t d[999];
 	int num = 0;
 } rec_move_set_t;
+typedef struct rec_move_all_set_s {
+	rec_move_set_t x[3];
+	rec_move_set_t y[5];
+} rec_move_all_set_t;
 
 /* <=-1: just release, 0: no push, 1: just push, 2<=: hold */
 typedef struct rec_play_key_hold_s {
@@ -108,8 +112,6 @@ typedef struct rec_chara_arrow_s {
 	int num = 0;
 } rec_chara_arrow_t;
 
-#endif /* filter */
-
 typedef struct rec_fall_data_s {
 	struct {
 		int No = -10000;
@@ -122,6 +124,18 @@ typedef struct rec_view_bpm_set_s {
 	view_BPM_box data[100];
 	int num = 0;
 } rec_view_bpm_set_t;
+
+#endif /* filter */
+
+typedef struct rec_play_nameset_s {
+	wchar_t sky[255] = L"picture/backskynoamal.png";
+	wchar_t ground[255] = L"picture/groundnaturenormal.png";
+	wchar_t water[255] = L"picture/waternormal.png";
+	wchar_t mp3FN[255] = L"song/";
+	wchar_t songN[255];
+	wchar_t songNE[255];
+	wchar_t DifFN[255] = L"picture/difanother.png";
+} rec_play_nameset_t;
 
 #if 1 /* filter2 */
 
@@ -547,7 +561,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int HighSrore; //ハイスコア
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
-	short int YmoveN2[3] = { 0,0,0 };
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	short int lockN[2] = { 0,0 }; //↑の番号
@@ -566,9 +579,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_play_nameset_t nameset;
 	rec_chara_arrow_t carrow;
-	rec_move_set_t Xmove[3];
-	rec_move_set_t Ymove[5];
+	rec_move_all_set_t move;
 	rec_fall_data_t fall;
 	rec_chara_gra_data_t chamo;
 	rec_play_key_hold_t keyhold;
@@ -602,16 +615,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
 	double DifRate; //譜面定数
 	/* wchar_t */
-	wchar_t songN[255];
-	wchar_t songNE[255];
 	wchar_t fileN[255];
 	wchar_t dataE[255] = L"record/";
-	wchar_t mp3FN[255] = L"song/";
 	wchar_t DataFN[255] = L"score/";
-	wchar_t skyFN[255] = L"picture/backskynoamal.png";
-	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
-	wchar_t waterFN[255] = L"picture/waternormal.png";
-	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
 	wchar_t GT2[255];
 	wchar_t ST1[] = L"record/";
@@ -765,14 +771,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	}
 	if (fp != NULL) {
 		fread(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
-		fread(&mp3FN, 255, 1, fp);//音楽ファイル名
+		fread(&nameset.mp3FN, 255, 1, fp);//音楽ファイル名
 		fread(&bpm, sizeof(double), 1, fp);//BPM
 		fread(&time.offset, sizeof(int), 1, fp);//offset
-		fread(&skyFN, 255, 1, fp);//空背景名
-		fread(&groundFN, 255, 1, fp);//地面画像名
-		fread(&waterFN, 255, 1, fp);//水中画像名
-		fread(&songN, 255, 1, fp);//曲名
-		fread(&songNE, 255, 1, fp);//曲名(英語)
+		fread(&nameset.sky, 255, 1, fp);//空背景名
+		fread(&nameset.ground, 255, 1, fp);//地面画像名
+		fread(&nameset.water, 255, 1, fp);//水中画像名
+		fread(&nameset.songN, 255, 1, fp);//曲名
+		fread(&nameset.songNE, 255, 1, fp);//曲名(英語)
 		fread(&Lv, sizeof(short int), 1, fp);//レベル
 		//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 		{
@@ -800,59 +806,59 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			int buf[999][4];
 			fread(buf, sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
-				Ymove[0].d[i].Stime = buf[i][0];
-				Ymove[0].d[i].pos   = buf[i][1];
-				Ymove[0].d[i].Etime = buf[i][2];
-				Ymove[0].d[i].mode  = buf[i][3];
+				move.y[0].d[i].Stime = buf[i][0];
+				move.y[0].d[i].pos   = buf[i][1];
+				move.y[0].d[i].Etime = buf[i][2];
+				move.y[0].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[1]; i++) {
-				Ymove[1].d[i].Stime = buf[i][0];
-				Ymove[1].d[i].pos   = buf[i][1];
-				Ymove[1].d[i].Etime = buf[i][2];
-				Ymove[1].d[i].mode  = buf[i][3];
+				move.y[1].d[i].Stime = buf[i][0];
+				move.y[1].d[i].pos   = buf[i][1];
+				move.y[1].d[i].Etime = buf[i][2];
+				move.y[1].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[2]; i++) {
-				Ymove[2].d[i].Stime = buf[i][0];
-				Ymove[2].d[i].pos   = buf[i][1];
-				Ymove[2].d[i].Etime = buf[i][2];
-				Ymove[2].d[i].mode  = buf[i][3];
+				move.y[2].d[i].Stime = buf[i][0];
+				move.y[2].d[i].pos   = buf[i][1];
+				move.y[2].d[i].Etime = buf[i][2];
+				move.y[2].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[3]; i++) {
-				Ymove[3].d[i].Stime = buf[i][0];
-				Ymove[3].d[i].pos   = buf[i][1];
-				Ymove[3].d[i].Etime = buf[i][2];
-				Ymove[3].d[i].mode  = buf[i][3];
+				move.y[3].d[i].Stime = buf[i][0];
+				move.y[3].d[i].pos   = buf[i][1];
+				move.y[3].d[i].Etime = buf[i][2];
+				move.y[3].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[4]; i++) {
-				Ymove[4].d[i].Stime = buf[i][0];
-				Ymove[4].d[i].pos   = buf[i][1];
-				Ymove[4].d[i].Etime = buf[i][2];
-				Ymove[4].d[i].mode  = buf[i][3];
+				move.y[4].d[i].Stime = buf[i][0];
+				move.y[4].d[i].pos   = buf[i][1];
+				move.y[4].d[i].Etime = buf[i][2];
+				move.y[4].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
 			for (int i = 0; i < allnum.Xmovenum[0]; i++) {
-				Xmove[0].d[i].Stime = buf[i][0];
-				Xmove[0].d[i].pos   = buf[i][1];
-				Xmove[0].d[i].Etime = buf[i][2];
-				Xmove[0].d[i].mode  = buf[i][3];
+				move.x[0].d[i].Stime = buf[i][0];
+				move.x[0].d[i].pos   = buf[i][1];
+				move.x[0].d[i].Etime = buf[i][2];
+				move.x[0].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
 			for (int i = 0; i < allnum.Xmovenum[1]; i++) {
-				Xmove[1].d[i].Stime = buf[i][0];
-				Xmove[1].d[i].pos   = buf[i][1];
-				Xmove[1].d[i].Etime = buf[i][2];
-				Xmove[1].d[i].mode  = buf[i][3];
+				move.x[1].d[i].Stime = buf[i][0];
+				move.x[1].d[i].pos   = buf[i][1];
+				move.x[1].d[i].Etime = buf[i][2];
+				move.x[1].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
 			for (int i = 0; i < allnum.Xmovenum[2]; i++) {
-				Xmove[2].d[i].Stime = buf[i][0];
-				Xmove[2].d[i].pos   = buf[i][1];
-				Xmove[2].d[i].Etime = buf[i][2];
-				Xmove[2].d[i].mode  = buf[i][3];
+				move.x[2].d[i].Stime = buf[i][0];
+				move.x[2].d[i].pos   = buf[i][1];
+				move.x[2].d[i].Etime = buf[i][2];
+				move.x[2].d[i].mode  = buf[i][3];
 			}
 		}
 		fread(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
@@ -880,17 +886,17 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ldif = G[1];//最終難易度
 		fread(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
-		fread(&DifFN, 255, 1, fp);//難易度バー名
+		fread(&nameset.DifFN, 255, 1, fp);//難易度バー名
 		fread(&Movie, sizeof(item_box), allnum.movienum, fp);//アイテムデータ
 		fread(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 		fread(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-		fread(v_BPM.data, sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
+		fread(&v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
 		fread(&outpoint, sizeof(int), 2, fp);//エラーデータ
 	}
-	musicmp3 = LoadSoundMem(mp3FN);
-	backskyimg = LoadGraph(skyFN);
-	backgroundimg = LoadGraph(groundFN);
-	backwaterimg = LoadGraph(waterFN);
+	musicmp3 = LoadSoundMem(nameset.mp3FN);
+	backskyimg = LoadGraph(nameset.sky);
+	backgroundimg = LoadGraph(nameset.ground);
+	backwaterimg = LoadGraph(nameset.water);
 	fclose(fp);
 	strcats(DataFN, fileN);
 	strcats(DataFN, ST3);
@@ -1000,9 +1006,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
-				while ((0 <= Ymove[i[0]].d[LineMoveN[i[0]]].Stime &&
-							 Ymove[i[0]].d[LineMoveN[i[0]]].Etime <= time.now) ||
-							 Ymove[i[0]].d[LineMoveN[i[0]]].mode == 4) {
+				while ((0 <= move.y[i[0]].d[LineMoveN[i[0]]].Stime &&
+							 move.y[i[0]].d[LineMoveN[i[0]]].Etime <= time.now) ||
+							 move.y[i[0]].d[LineMoveN[i[0]]].mode == 4) {
 					LineMoveN[i[0]]++;
 				}
 			}
@@ -1158,7 +1164,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
 				for (int iDraw = LineMoveN[i[0]]; 1; iDraw++) {
-					if (PlayShowGuideLine(time.now, i[0], Ymove, Xline, Yline, &nowcamera, iDraw) != 0) {
+					if (PlayShowGuideLine(time.now, i[0], move.y, Xline, Yline, &nowcamera, iDraw) != 0) {
 						break;
 					}
 				}
@@ -1174,13 +1180,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				charaguideimg, TRUE);
 		}
 		//Xline(横位置)の計算
-		recSetLine(Xline, Xmove, time.now, 3);
+		recSetLine(Xline, move.x, time.now, 3);
 		//Yline(縦位置)の計算
 		if (system.backLight == 0) {
-			recSetLine(Yline, Ymove, time.now, 3);
+			recSetLine(Yline, move.y, time.now, 3);
 		}
 		else {
-			recSetLine(Yline, Ymove, time.now, 5);
+			recSetLine(Yline, move.y, time.now, 5);
 		}
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
@@ -1698,17 +1704,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					chamo[1].num = 0;
 					chamo[2].num = 0;
 					fall.num = 0;
-					Ymove[0].num = 0;
-					Ymove[1].num = 0;
-					Ymove[2].num = 0;
-					Ymove[3].num = 0;
-					Ymove[4].num = 0;
-					YmoveN2[0] = 0;
-					YmoveN2[1] = 0;
-					YmoveN2[2] = 0;
-					Xmove[0].num = 0;
-					Xmove[1].num = 0;
-					Xmove[2].num = 0;
+					move.y[0].num = 0;
+					move.y[1].num = 0;
+					move.y[2].num = 0;
+					move.y[3].num = 0;
+					move.y[4].num = 0;
+					move.x[0].num = 0;
+					move.x[1].num = 0;
+					move.x[2].num = 0;
 					LineMoveN[0] = 0;
 					LineMoveN[1] = 0;
 					LineMoveN[2] = 0;
@@ -1751,17 +1754,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					chamo[1].num = 0;
 					chamo[2].num = 0;
 					fall.num = 0;
-					Ymove[0].num = 0;
-					Ymove[1].num = 0;
-					Ymove[2].num = 0;
-					Ymove[3].num = 0;
-					Ymove[4].num = 0;
-					YmoveN2[0] = 0;
-					YmoveN2[1] = 0;
-					YmoveN2[2] = 0;
-					Xmove[0].num = 0;
-					Xmove[1].num = 0;
-					Xmove[2].num = 0;
+					move.y[0].num = 0;
+					move.y[1].num = 0;
+					move.y[2].num = 0;
+					move.y[3].num = 0;
+					move.y[4].num = 0;
+					move.x[0].num = 0;
+					move.x[1].num = 0;
+					move.x[2].num = 0;
 					LineMoveN[0] = 0;
 					LineMoveN[1] = 0;
 					LineMoveN[2] = 0;
@@ -1798,7 +1798,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ret_gap[0] = gap2.sum;
 		ret_gap[1] = gap2.count;
 		ret_gap[2] = gap2.ssum;
-		return result(o, Lv, drop, mdif, songN, DifFN, fileN, judge, score.sum, Mcombo, notes, ret_gap, Dscore.point);
+		return result(o, Lv, drop, mdif, nameset.songN, nameset.DifFN, fileN, judge, score.sum, Mcombo, notes, ret_gap, Dscore.point);
 	}
 }
 
