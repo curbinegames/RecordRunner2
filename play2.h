@@ -1,3 +1,6 @@
+
+#if 1 /* filter */
+
 /* include */
 
 #include "RecordLoad2.h"
@@ -90,7 +93,7 @@ typedef struct rec_paly_time_set_s {
 	int now;
 	int end;
 	int offset;
-} rec_paly_time_set_t;
+} rec_play_time_set_t;
 
 typedef struct rec_chara_gra_data_s {
 	int gra[99];
@@ -98,9 +101,19 @@ typedef struct rec_chara_gra_data_s {
 	int num = 0;
 } rec_chara_gra_data_t[3];
 
-/* proto */
+#endif /* filter */
 
-#if 1 /* filter */
+typedef struct rec_fall_data_s {
+	struct {
+		int No = -10000;
+		int time = -10000;
+	} d[99];
+	int num = 0;
+} rec_fall_data_t;
+
+#if 1 /* filter2 */
+
+/* proto */
 
 void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 	unsigned int color, int thick) {
@@ -404,8 +417,6 @@ void recSetYline(int Yline[], int Ntime, rec_ymove_old_t *Ymove, int YmoveN[], i
 	return;
 }
 
-#endif /* filter */
-
 int PlayShowGuideLine(int Ntime, int Line, rec_ymove_old_t *Ymove, int Xline[],
 	int Yline[], rec_play_xy_set_t *nowcamera, int iDraw)
 {
@@ -461,7 +472,7 @@ int PlayShowGuideLine(int Ntime, int Line, rec_ymove_old_t *Ymove, int Xline[],
 	return 0;
 }
 
-int cal_nowdif_p(int *ddif, rec_paly_time_set_t *time) {
+int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
 	int ret = 0;
 	int sect = 0;
 	int stime = 0;
@@ -480,9 +491,11 @@ int cal_nowdif_p(int *ddif, rec_paly_time_set_t *time) {
 	return ret;
 }
 
+#endif /* filter2 */
+
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
-#if 1 /* filter2 */
+#if 1 /* filter3 */
 	/*---用語定義-----
 	ユーザー用譜面データ: ユーザーが作った譜面データ。ユーザーに分かりやすい。
 	PC用譜面データ: ユーザー用譜面データから計算で作られた、PC専用の譜面データ。PCに分かりやすい。
@@ -525,8 +538,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int HighSrore; //ハイスコア
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
-	int fall[99][2]; //落ち物背景の[0:番号,1:時間]
-	short int fallN = 0; //↑の番号
 	short int YmoveN2[3] = { 0,0,0 };
 	int Xmove[3][999][4]; //[上, 中, 下]レーン横移動の[0:開始時間,1:位置,2:終了時間,3:種類]
 	short int XmoveN[3] = { 0,0,0 }; //↑の番号
@@ -550,9 +561,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_fall_data_t fall;
 	rec_chara_gra_data_t chamo;
 	rec_play_key_hold_t keyhold;
-	rec_paly_time_set_t time;
+	rec_play_time_set_t time;
 	rec_play_xy_set_t nowcamera;
 	nowcamera.x = 320;
 	nowcamera.y = 240;
@@ -605,7 +617,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int itemN = 0; //↑の番号
 	int Sitem[99]; //サウンドアイテムのfd
 	short int SitemN = 0; //↑の番号
-#endif /* filter2 */
+#endif /* filter3 */
 	/* グラフィックと効果音 */
 	int MelodySnd[24] = {
 		LoadSoundMem(L"sound/melody/lowF.wav"),
@@ -758,11 +770,18 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&songNE, 255, 1, fp);//曲名(英語)
 		fread(&Lv, sizeof(short int), 1, fp);//レベル
 		//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
-		fread(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
+		{
+			int buf[99][2];
+			fread(buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
+			for (int i = 0; i < 99; i++) {
+				fall.d[i].time = buf[i][0];
+				fall.d[i].No   = buf[i][1];
+			}
+		}
 		fread(&speedt, sizeof(double), 990, fp);//レーン速度
 		{
 			int buf[3][99][2];
-			fread(&buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
+			fread(buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
 			for (int i = 0; i < 99; i++) {
 				chamo[0].gra[i]  = buf[0][i][0];
 				chamo[0].time[i] = buf[0][i][1];
@@ -978,13 +997,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[0] += 640;
 			}
 			//落ち物背景表示
-			if (time.now >= fall[fallN + 1][0] && fall[fallN + 1][0] >= 0) fallN++;
-			if (fall[fallN][1] >= 0) {
+			if (time.now >= fall.d[fall.num + 1].time && fall.d[fall.num + 1].time >= 0) fall.num++;
+			if (fall.d[fall.num].No >= 0) {
 				G[0] = bgf[0];//横
 				G[1] = bgf[1] + Yline[3];//縦
 				for (i[0] = 0; i[0] < 2; i[0]++) {
 					for (i[1] = 0; i[1] < 3; i[1]++) {
-						DrawGraph(G[0] + i[0] * 640, G[1] - i[1] * 480, item[fall[fallN][1]], TRUE);
+						DrawGraph(G[0] + i[0] * 640, G[1] - i[1] * 480, item[fall.d[fall.num].No], TRUE);
 					}
 				}
 				bgf[0] -= 5;
@@ -1619,7 +1638,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					chamo[0].num = 0;
 					chamo[1].num = 0;
 					chamo[2].num = 0;
-					fallN = 0;
+					fall.num = 0;
 					YmoveN[0] = 0;
 					YmoveN[1] = 0;
 					YmoveN[2] = 0;
@@ -1672,7 +1691,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					chamo[0].num = 0;
 					chamo[1].num = 0;
 					chamo[2].num = 0;
-					fallN = 0;
+					fall.num = 0;
 					YmoveN[0] = 0;
 					YmoveN[1] = 0;
 					YmoveN[2] = 0;
