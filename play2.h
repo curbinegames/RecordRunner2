@@ -145,6 +145,7 @@ typedef struct rec_map_eff_data_s {
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	rec_chara_arrow_t carrow;
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
+	rec_move_all_set_t move;
 } rec_map_eff_data_t;
 
 #if 1 /* filter2 */
@@ -661,7 +662,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int Stime = 0;
 	/* struct */
 	rec_play_nameset_t nameset;
-	rec_move_all_set_t move;
 	rec_fall_data_t fall;
 	rec_chara_gra_data_t chamo;
 	rec_play_key_hold_t keyhold;
@@ -884,59 +884,59 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			int buf[999][4];
 			fread(buf, sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
-				move.y[0].d[i].Stime = buf[i][0];
-				move.y[0].d[i].pos   = buf[i][1];
-				move.y[0].d[i].Etime = buf[i][2];
-				move.y[0].d[i].mode  = buf[i][3];
+				mapeff.move.y[0].d[i].Stime = buf[i][0];
+				mapeff.move.y[0].d[i].pos   = buf[i][1];
+				mapeff.move.y[0].d[i].Etime = buf[i][2];
+				mapeff.move.y[0].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[1]; i++) {
-				move.y[1].d[i].Stime = buf[i][0];
-				move.y[1].d[i].pos   = buf[i][1];
-				move.y[1].d[i].Etime = buf[i][2];
-				move.y[1].d[i].mode  = buf[i][3];
+				mapeff.move.y[1].d[i].Stime = buf[i][0];
+				mapeff.move.y[1].d[i].pos   = buf[i][1];
+				mapeff.move.y[1].d[i].Etime = buf[i][2];
+				mapeff.move.y[1].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[2]; i++) {
-				move.y[2].d[i].Stime = buf[i][0];
-				move.y[2].d[i].pos   = buf[i][1];
-				move.y[2].d[i].Etime = buf[i][2];
-				move.y[2].d[i].mode  = buf[i][3];
+				mapeff.move.y[2].d[i].Stime = buf[i][0];
+				mapeff.move.y[2].d[i].pos   = buf[i][1];
+				mapeff.move.y[2].d[i].Etime = buf[i][2];
+				mapeff.move.y[2].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[3]; i++) {
-				move.y[3].d[i].Stime = buf[i][0];
-				move.y[3].d[i].pos   = buf[i][1];
-				move.y[3].d[i].Etime = buf[i][2];
-				move.y[3].d[i].mode  = buf[i][3];
+				mapeff.move.y[3].d[i].Stime = buf[i][0];
+				mapeff.move.y[3].d[i].pos   = buf[i][1];
+				mapeff.move.y[3].d[i].Etime = buf[i][2];
+				mapeff.move.y[3].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
 			for (int i = 0; i < allnum.Ymovenum[4]; i++) {
-				move.y[4].d[i].Stime = buf[i][0];
-				move.y[4].d[i].pos   = buf[i][1];
-				move.y[4].d[i].Etime = buf[i][2];
-				move.y[4].d[i].mode  = buf[i][3];
+				mapeff.move.y[4].d[i].Stime = buf[i][0];
+				mapeff.move.y[4].d[i].pos   = buf[i][1];
+				mapeff.move.y[4].d[i].Etime = buf[i][2];
+				mapeff.move.y[4].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
 			for (int i = 0; i < allnum.Xmovenum[0]; i++) {
-				move.x[0].d[i].Stime = buf[i][0];
-				move.x[0].d[i].pos   = buf[i][1];
-				move.x[0].d[i].Etime = buf[i][2];
-				move.x[0].d[i].mode  = buf[i][3];
+				mapeff.move.x[0].d[i].Stime = buf[i][0];
+				mapeff.move.x[0].d[i].pos   = buf[i][1];
+				mapeff.move.x[0].d[i].Etime = buf[i][2];
+				mapeff.move.x[0].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
 			for (int i = 0; i < allnum.Xmovenum[1]; i++) {
-				move.x[1].d[i].Stime = buf[i][0];
-				move.x[1].d[i].pos   = buf[i][1];
-				move.x[1].d[i].Etime = buf[i][2];
-				move.x[1].d[i].mode  = buf[i][3];
+				mapeff.move.x[1].d[i].Stime = buf[i][0];
+				mapeff.move.x[1].d[i].pos   = buf[i][1];
+				mapeff.move.x[1].d[i].Etime = buf[i][2];
+				mapeff.move.x[1].d[i].mode  = buf[i][3];
 			}
 			fread(buf, sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
 			for (int i = 0; i < allnum.Xmovenum[2]; i++) {
-				move.x[2].d[i].Stime = buf[i][0];
-				move.x[2].d[i].pos   = buf[i][1];
-				move.x[2].d[i].Etime = buf[i][2];
-				move.x[2].d[i].mode  = buf[i][3];
+				mapeff.move.x[2].d[i].Stime = buf[i][0];
+				mapeff.move.x[2].d[i].pos   = buf[i][1];
+				mapeff.move.x[2].d[i].Etime = buf[i][2];
+				mapeff.move.x[2].d[i].mode  = buf[i][3];
 			}
 		}
 		fread(&mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
@@ -1084,9 +1084,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
-				while ((0 <= move.y[i[0]].d[LineMoveN[i[0]]].Stime &&
-							 move.y[i[0]].d[LineMoveN[i[0]]].Etime <= time.now) ||
-							 move.y[i[0]].d[LineMoveN[i[0]]].mode == 4) {
+				while ((0 <= mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Stime &&
+							 mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Etime <= time.now) ||
+							 mapeff.move.y[i[0]].d[LineMoveN[i[0]]].mode == 4) {
 					LineMoveN[i[0]]++;
 				}
 			}
@@ -1172,7 +1172,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
 				for (int iDraw = LineMoveN[i[0]]; 1; iDraw++) {
-					if (PlayShowGuideLine(time.now, i[0], move.y, Xline, Yline, &nowcamera, iDraw) != 0) {
+					if (PlayShowGuideLine(time.now, i[0], mapeff.move.y, Xline, Yline, &nowcamera, iDraw) != 0) {
 						break;
 					}
 				}
@@ -1188,13 +1188,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				charaguideimg, TRUE);
 		}
 		//Xline(横位置)の計算
-		recSetLine(Xline, move.x, time.now, 3);
+		recSetLine(Xline, mapeff.move.x, time.now, 3);
 		//Yline(縦位置)の計算
 		if (system.backLight == 0) {
-			recSetLine(Yline, move.y, time.now, 3);
+			recSetLine(Yline, mapeff.move.y, time.now, 3);
 		}
 		else {
-			recSetLine(Yline, move.y, time.now, 5);
+			recSetLine(Yline, mapeff.move.y, time.now, 5);
 		}
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
@@ -1712,14 +1712,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					chamo[1].num = 0;
 					chamo[2].num = 0;
 					fall.num = 0;
-					move.y[0].num = 0;
-					move.y[1].num = 0;
-					move.y[2].num = 0;
-					move.y[3].num = 0;
-					move.y[4].num = 0;
-					move.x[0].num = 0;
-					move.x[1].num = 0;
-					move.x[2].num = 0;
+					mapeff.move.y[0].num = 0;
+					mapeff.move.y[1].num = 0;
+					mapeff.move.y[2].num = 0;
+					mapeff.move.y[3].num = 0;
+					mapeff.move.y[4].num = 0;
+					mapeff.move.x[0].num = 0;
+					mapeff.move.x[1].num = 0;
+					mapeff.move.x[2].num = 0;
 					LineMoveN[0] = 0;
 					LineMoveN[1] = 0;
 					LineMoveN[2] = 0;
@@ -1762,14 +1762,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					chamo[1].num = 0;
 					chamo[2].num = 0;
 					fall.num = 0;
-					move.y[0].num = 0;
-					move.y[1].num = 0;
-					move.y[2].num = 0;
-					move.y[3].num = 0;
-					move.y[4].num = 0;
-					move.x[0].num = 0;
-					move.x[1].num = 0;
-					move.x[2].num = 0;
+					mapeff.move.y[0].num = 0;
+					mapeff.move.y[1].num = 0;
+					mapeff.move.y[2].num = 0;
+					mapeff.move.y[3].num = 0;
+					mapeff.move.y[4].num = 0;
+					mapeff.move.x[0].num = 0;
+					mapeff.move.x[1].num = 0;
+					mapeff.move.x[2].num = 0;
 					LineMoveN[0] = 0;
 					LineMoveN[1] = 0;
 					LineMoveN[2] = 0;
