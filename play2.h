@@ -391,16 +391,18 @@ static int DrawNoteOne(int G[],
 #else
 	note_box_t *note,
 #endif
-	int *viewT0, int *viewT1, short viewTN, int lock00[], int lock01[],
-	int lock10[], int lock11[], short lockN[], double speedt, double *speedtp,
-	short speedN, int Ntime, int Xline, int Yline, struct scrool_box *scrool,
-	rec_play_xy_set_t *nowcamera, struct note_img *noteimg) {
-	G[7] = StepNoDrawNote(note, viewT0, viewT1, viewTN, lock01, lock11, lockN,
-		speedtp, speedN, Ntime, G);
+	rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
+	short speedN, int Ntime, int Xline, int Yline, int scroolN,
+	rec_play_xy_set_t *nowcamera, struct note_img *noteimg)
+{
+	double *speedtp = &mapeff->speedt[iLine][0][0];
+	G[7] = StepNoDrawNote(note, mapeff->viewT[0], mapeff->viewT[1], viewTN,
+		mapeff->lock[0][1], mapeff->lock[1][1], lockN, speedtp, speedN, Ntime, G);
 	if (G[7] == 1) { return 1; }
 	else if (G[7] == 2) { return 2; }
-	CalPalCrawNote(lock00[lockN[0] + G[3]], lock10[lockN[1] + G[4]],
-		note, Xline, Yline, speedtp[(speedN + G[5]) * 2 + 1], scrool, nowcamera, Ntime, G);
+	CalPalCrawNote(mapeff->lock[0][0][lockN[0] + G[3]], mapeff->lock[1][0][lockN[1] + G[4]],
+		note, Xline, Yline, speedtp[(speedN + G[5]) * 2 + 1], &mapeff->scrool[scroolN],
+		nowcamera, Ntime, G);
 	switch (note->object) {
 	case 1:
 		DrawGraph(G[1], G[2], noteimg->notebase, TRUE);
@@ -1342,7 +1344,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		 * i[0] = レーンループ
 		 * i[1] = ノーツループ
 		 */
-		for (i[0] = 0; i[0] < 3; i[0]++) {
+		for (int iLine = 0; iLine < 3; iLine++) {
 			G[0] = G[3] = G[4] = G[5] = 0;
 			{
 #if SWITCH_NOTE_BOX_2 == 1
@@ -1350,7 +1352,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				temp = &mapdata.note[0];
 #else
 				note_box_t *temp = NULL;
-				switch (i[0]) {
+				switch (iLine) {
 				case 0:
 					temp = &mapdata.note2.up[0];
 					break;
@@ -1362,22 +1364,21 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					break;
 				}
 #endif
-				for (i[1] = objectN[i[0]]; mapdata.note[i[1]].hittime > 0;
+				for (int iNote = objectN[iLine]; mapdata.note[iNote].hittime > 0;
 #if SWITCH_NOTE_BOX_2 == 1
-					i[1] = mapdata.note[i[1]].next
+					iNote = mapdata.note[iNote].next
 #else
-					i[1]++
+					iNote++
 #endif
-					) {
-					G[7] = DrawNoteOne(G, &mapdata.note[i[1]], mapeff.viewT[0], mapeff.viewT[1],
-						viewTN, mapeff.lock[0][0], mapeff.lock[0][1], mapeff.lock[1][0],
-						mapeff.lock[1][1], lockN, mapeff.speedt[i[0]][speedN[i[0]] + G[5]][1],
-						&mapeff.speedt[i[0]][0][0], speedN[i[0]], time.now, Xline[i[0]],
-						Yline[i[0]], &mapeff.scrool[scroolN], &nowcamera, &noteimg);
+					)
+				{
+					G[7] = DrawNoteOne(G, &mapdata.note[iNote], &mapeff, viewTN, lockN,
+						iLine, speedN[iLine], time.now, Xline[iLine], Yline[iLine],
+						scroolN, &nowcamera, &noteimg);
 					if (G[7] == 1) { continue; }
 					else if (G[7] == 2) { break; }
 #if SWITCH_NOTE_BOX_2 == 1
-					if (mapdata.note[i[1]].next == -1) { break; }
+					if (mapdata.note[iNote].next == -1) { break; }
 #endif
 				}
 			}
