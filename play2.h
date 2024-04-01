@@ -148,6 +148,21 @@ typedef struct rec_map_eff_data_s {
 	rec_move_all_set_t move;
 } rec_map_eff_data_t;
 
+typedef struct rec_map_detail_s {
+	double bpm = 120;
+	short int Lv = 0;
+#if SWITCH_NOTE_BOX_2 == 1
+	note_box_2_t note[6000];
+#else
+	note_lane_t note2;
+#endif
+	short int notes = 0;
+	int mdif = 0;
+	int ldif = 0;
+	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
+	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
+} rec_map_detail_t;
+
 #if 1 /* filter2 */
 
 /* proto */
@@ -525,8 +540,6 @@ int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
 	return ret;
 }
 
-#endif /* filter2 */
-
 void PlaySetCamera(rec_play_xy_set_t *retcam, struct camera_box camset[], int camN, int Ntime) {
 	if (camset[camN].starttime <= Ntime && Ntime <= camset[camN].endtime) {
 		retcam->x = (int)movecal(camset[camN].mode,
@@ -600,6 +613,8 @@ void PlayDrawItem(item_box *Movie, int Ntime, rec_play_xy_set_t *camera,
 	}
 }
 
+#endif /* filter2 */
+
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #if 1 /* filter3 */
@@ -616,8 +631,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	char closeFg = 0;
 	/* short */
 	short int i[3];
-	short int Lv = 0;
-	short int notes = 0;
 	short int bgf[2] = { 0,0 }; //落ち物背景の[0:横位置,1:縦位置]
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
 	short int drop = 0;
@@ -648,10 +661,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	short int lockN[2] = { 0,0 }; //↑の番号
 	short int viewTN = 0;
-	int mdif = 0;
-	int ldif = 0;
-	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
-	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
 	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
 	int Xline[3] = { 150,150,150 };//[上,中,下]レーンの横位置
 	int outpoint[2] = { -1,0 };
@@ -661,6 +670,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int CutTime = 0;
 	int Stime = 0;
 	/* struct */
+	rec_map_detail_t mapdata;
 	rec_play_nameset_t nameset;
 	rec_fall_data_t fall;
 	rec_chara_gra_data_t chamo;
@@ -678,17 +688,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	struct score_box score;
 	short int MovieN = 0;
 	rec_view_bpm_set_t v_BPM;
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t note[6000];
-#else
-	note_lane_t note2;
-#endif
 	short int objectN[3] = { 5999,5999,5999 }; //note number
 	short int objectNG[3] = { 0,0,0 }; //note number without ghost note
 	playnum_box allnum;
 	/* double */
 	double GD[5];
-	double SumRate[2] = { 0,0 }, bpm = 120;
+	double SumRate[2] = { 0,0 };
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
 	double DifRate; //譜面定数
@@ -850,14 +855,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	if (fp != NULL) {
 		fread(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
 		fread(&nameset.mp3FN, 255, 1, fp);//音楽ファイル名
-		fread(&bpm, sizeof(double), 1, fp);//BPM
+		fread(&mapdata.bpm, sizeof(double), 1, fp);//BPM
 		fread(&time.offset, sizeof(int), 1, fp);//offset
 		fread(&nameset.sky, 255, 1, fp);//空背景名
 		fread(&nameset.ground, 255, 1, fp);//地面画像名
 		fread(&nameset.water, 255, 1, fp);//水中画像名
 		fread(&nameset.songN, 255, 1, fp);//曲名
 		fread(&nameset.songNE, 255, 1, fp);//曲名(英語)
-		fread(&Lv, sizeof(short int), 1, fp);//レベル
+		fread(&mapdata.Lv, sizeof(short int), 1, fp);//レベル
 		//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 		{
 			int buf[99][2];
@@ -950,20 +955,23 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		fread(&mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
 #if SWITCH_NOTE_BOX_2 == 1
-		fread(&note, sizeof(note_box_2_t),
+		fread(&mapdata.note, sizeof(note_box_2_t),
 			allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
 #else
-		fread(&note2.up[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
-		fread(&note2.mid[0], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
-		fread(&note2.low[0], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
+		fread(&mapdata.note2.up[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
+		fread(&mapdata.note2.mid[0], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
+		fread(&mapdata.note2.low[0], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
 #endif
-		fread(&notes, sizeof(short int), 1, fp);//ノーツ数
+		fread(&mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
 		fread(&time.end, sizeof(int), 1, fp);//曲終了時間
-		fread(&G, sizeof(int), 2, fp);
-		mdif = G[0];//最高難易度
-		ldif = G[1];//最終難易度
-		fread(&ddif, sizeof(int), 25, fp);//各区間難易度データ
-		fread(&ddifG, sizeof(int), 2, fp);//各区間難易度データ
+		{
+			int buf[2];
+			fread(buf, sizeof(int), 2, fp);
+			mapdata.mdif = buf[0];//最高難易度
+			mapdata.ldif = buf[1];//最終難易度
+		}
+		fread(&mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
+		fread(&mapdata.ddifG, sizeof(int), 2, fp);//各区間難易度データ
 		fread(&nameset.DifFN, 255, 1, fp);//難易度バー名
 		fread(&mapeff.Movie, sizeof(item_box), allnum.movienum, fp);//アイテムデータ
 		fread(&mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
@@ -996,27 +1004,27 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (Sitem[i[0] - 1] == -1) { break; }
 	}
 	//ゲーム開始前の下準備
-	notes = notzero(notes);
-	GD[0] = mdif / 100.0 - Lv;//mdifと難易度表記の差
-	if (Lv == 0) { DifRate = 0; }
-	else if (2 <= GD[0]) { DifRate = Lv + 0.9; }
-	else if (0 <= GD[0] && GD[0] < 2) { DifRate = Lv + 0.45 * GD[0]; }
-	else { DifRate = mdif / 100.0; }
+	mapdata.notes = notzero(mapdata.notes);
+	GD[0] = mapdata.mdif / 100.0 - mapdata.Lv;//mdifと難易度表記の差
+	if (mapdata.Lv == 0) { DifRate = 0; }
+	else if (2 <= GD[0]) { DifRate = mapdata.Lv + 0.9; }
+	else if (0 <= GD[0] && GD[0] < 2) { DifRate = mapdata.Lv + 0.45 * GD[0]; }
+	else { DifRate = mapdata.mdif / 100.0; }
 #if SWITCH_NOTE_BOX_2 == 1
 	for (i[0] = 0; i[0] < allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2]; i[0]++) {
-		if (note[i[0]].lane == NOTE_LANE_UP) {
+		if (mapdata.note[i[0]].lane == NOTE_LANE_UP) {
 			objectN[0] = i[0];
 			break;
 		}
 	}
 	for (i[0] = 0; i[0] < allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2]; i[0]++) {
-		if (note[i[0]].lane == NOTE_LANE_MID) {
+		if (mapdata.note[i[0]].lane == NOTE_LANE_MID) {
 			objectN[1] = i[0];
 			break;
 		}
 	}
 	for (i[0] = 0; i[0] < allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2]; i[0]++) {
-		if (note[i[0]].lane == NOTE_LANE_LOW) {
+		if (mapdata.note[i[0]].lane == NOTE_LANE_LOW) {
 			objectN[2] = i[0];
 			break;
 		}
@@ -1033,23 +1041,23 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (int iLine = 0; iLine < 3; iLine++) {
 			objectNG[iLine] = mins(objectNG[iLine], objectN[iLine]);
 #if SWITCH_NOTE_BOX_2 == 1
-			while (note[objectNG[iLine]].object == NOTE_GHOST) {
-				objectNG[iLine] = note[objectNG[iLine]].next;
+			while (mapdata.note[objectNG[iLine]].object == NOTE_GHOST) {
+				objectNG[iLine] = mapdata.note[objectNG[iLine]].next;
 			}
 #else
 			switch (iLine) {
 			case 0:
-				while (note2.up[objectNG[0]].object == NOTE_GHOST) {
+				while (mapdata.note2.up[objectNG[0]].object == NOTE_GHOST) {
 					objectNG[0]++;
 				}
 				break;
 			case 1:
-				while (note2.mid[objectNG[1]].object == NOTE_GHOST) {
+				while (mapdata.note2.mid[objectNG[1]].object == NOTE_GHOST) {
 					objectNG[1]++;
 				}
 				break;
 			case 2:
-				while (note2.low[objectNG[2]].object == NOTE_GHOST) {
+				while (mapdata.note2.low[objectNG[2]].object == NOTE_GHOST) {
 					objectNG[2]++;
 				}
 				break;
@@ -1204,10 +1212,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		G[3] = 0;
 		//get chara position
 #if SWITCH_NOTE_BOX_2 == 1
-		charaput = GetCharaPos3(time.now, note, objectNG, &keyhold, hitatk[0], hitatk[1]);
+		charaput = GetCharaPos3(time.now, mapdata.note, objectNG, &keyhold, hitatk[0], hitatk[1]);
 #else
-		charaput = GetCharaPos2(time.now, note2.up[objectNG[0]], note2.mid[objectNG[1]],
-			note2.low[objectNG[2]], &keyhold, hitatk[0], hitatk[1]);
+		charaput = GetCharaPos2(time.now, mapdata.note2.up[objectNG[0]], mapdata.note2.mid[objectNG[1]],
+			mapdata.note2.low[objectNG[2]], &keyhold, hitatk[0], hitatk[1]);
 #endif
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
@@ -1270,10 +1278,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		else if (AutoFlag == 1) {
 			AutoAution(&keyhold.z, &keyhold.x, &keyhold.c, &keyhold.up, &keyhold.down, &keyhold.left, &keyhold.right,
 #if SWITCH_NOTE_BOX_2 == 1
-				note, objectNG,
+				mapdata.note, objectNG,
 #else
-				&note2.up[objectNG[0]], &note2.mid[objectNG[1]],
-				&note2.low[objectNG[2]],
+				&mapdata.note2.up[objectNG[0]], &mapdata.note2.mid[objectNG[1]],
+				&mapdata.note2.low[objectNG[2]],
 #endif
 				time.now);
 		}
@@ -1315,29 +1323,29 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			{
 #if SWITCH_NOTE_BOX_2 == 1
 				note_box_2_t *temp = NULL;
-				temp = &note[0];
+				temp = &mapdata.note[0];
 #else
 				note_box_t *temp = NULL;
 				switch (i[0]) {
 				case 0:
-					temp = &note2.up[0];
+					temp = &mapdata.note2.up[0];
 					break;
 				case 1:
-					temp = &note2.mid[0];
+					temp = &mapdata.note2.mid[0];
 					break;
 				case 2:
-					temp = &note2.low[0];
+					temp = &mapdata.note2.low[0];
 					break;
 				}
 #endif
-				for (i[1] = objectN[i[0]]; note[i[1]].hittime > 0;
+				for (i[1] = objectN[i[0]]; mapdata.note[i[1]].hittime > 0;
 #if SWITCH_NOTE_BOX_2 == 1
-					i[1] = note[i[1]].next
+					i[1] = mapdata.note[i[1]].next
 #else
 					i[1]++
 #endif
 					) {
-					G[7] = DrawNoteOne(G, &note[i[1]], mapeff.viewT[0], mapeff.viewT[1],
+					G[7] = DrawNoteOne(G, &mapdata.note[i[1]], mapeff.viewT[0], mapeff.viewT[1],
 						viewTN, mapeff.lock[0][0], mapeff.lock[0][1], mapeff.lock[1][0], mapeff.lock[1][1],
 						lockN, speedt[i[0]][speedN[i[0]] + G[5]][1],
 						&speedt[i[0]][0][0], speedN[i[0]], time.now, Xline[i[0]],
@@ -1345,7 +1353,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					if (G[7] == 1) { continue; }
 					else if (G[7] == 2) { break; }
 #if SWITCH_NOTE_BOX_2 == 1
-					if (note[i[1]].next == -1) { break; }
+					if (mapdata.note[i[1]].next == -1) { break; }
 #endif
 				}
 			}
@@ -1364,54 +1372,54 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			 * G[2] = 一番近いHITノーツのギャップ */
 			note_judge NJ = NOTE_JUDGE_JUST;
 #if SWITCH_NOTE_BOX_2 == 1
-			G[1] = CheckNearHitNote(&note[objectN[0]],
-				&note[objectN[1]], &note[objectN[2]], time.now);
+			G[1] = CheckNearHitNote(&mapdata.note[objectN[0]],
+				&mapdata.note[objectN[1]], &mapdata.note[objectN[2]], time.now);
 #else
-			G[1] = CheckNearHitNote(&note2.up[objectN[0]],
-				&note2.mid[objectN[1]], &note2.low[objectN[2]], time.now);
+			G[1] = CheckNearHitNote(&mapdata.note2.up[objectN[0]],
+				&mapdata.note2.mid[objectN[1]], &mapdata.note2.low[objectN[2]], time.now);
 #endif
 			if (G[1] == -1) {
 				if (i[0] == 0) { p_sound.flag |= SE_SWING; }
 				break;
 			}
 #if SWITCH_NOTE_BOX_2 == 1
-			G[2] = note[objectN[G[1]]].hittime - time.now;
+			G[2] = mapdata.note[objectN[G[1]]].hittime - time.now;
 #else
 			switch (G[1]) {
 			case 0:
-				G[2] = note2.up[objectN[G[1]]].hittime - time.now;
+				G[2] = mapdata.note2.up[objectN[G[1]]].hittime - time.now;
 				break;
 			case 1:
-				G[2] = note2.mid[objectN[G[1]]].hittime - time.now;
+				G[2] = mapdata.note2.mid[objectN[G[1]]].hittime - time.now;
 				break;
 			case 2:
-				G[2] = note2.low[objectN[G[1]]].hittime - time.now;
+				G[2] = mapdata.note2.low[objectN[G[1]]].hittime - time.now;
 				break;
 			}
 #endif
 			hitatk2 |= 1 << G[1];
 			NJ = CheckJudge(G[2]);
 			if (NJ == NOTE_JUDGE_MISS) { p_sound.flag |= SE_SWING; }
-			note_judge_event(NJ, &Dscore, &note[objectN[G[1]]], Sitem, time.now,
+			note_judge_event(NJ, &Dscore, &mapdata.note[objectN[G[1]]], Sitem, time.now,
 				G[2], G[1], &judgeA);
-			objectN[G[1]] = note[objectN[G[1]]].next;
+			objectN[G[1]] = mapdata.note[objectN[G[1]]].next;
 		}
 		SetHitPosByHit(&hitatk[0], hitatk2, time.now);
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			/* i[0] = レーンループ */
-			judgh = note[objectN[i[0]]].hittime - time.now;
-			switch (note[objectN[i[0]]].object) {
+			judgh = mapdata.note[objectN[i[0]]].hittime - time.now;
+			switch (mapdata.note[objectN[i[0]]].object) {
 			case NOTE_CATCH:
 				if (LaneTrack[i[0]] + SAFE_TIME >=
-					note[objectN[i[0]]].hittime) {
-					while (note[objectN[i[0]]].hittime - time.now <= 0 &&
-						0 <= note[objectN[i[0]]].hittime) {
+					mapdata.note[objectN[i[0]]].hittime) {
+					while (mapdata.note[objectN[i[0]]].hittime - time.now <= 0 &&
+						0 <= mapdata.note[objectN[i[0]]].hittime) {
 						note_judge_event(NOTE_JUDGE_JUST, &Dscore,
-							&note[objectN[i[0]]], Sitem, time.now, 0, i[0],
+							&mapdata.note[objectN[i[0]]], Sitem, time.now, 0, i[0],
 							&judgeA);
 						charahit = 0;
 						hitatk[1] = -1000;
-						objectN[i[0]] = note[objectN[i[0]]].next;
+						objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
 					}
 				}
 				break;
@@ -1421,37 +1429,37 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			case NOTE_RIGHT:
 				if ((CheckJudge(judgh) != NOTE_JUDGE_NONE) && (
 					(keyhold.up == 1 &&
-						note[objectN[i[0]]].object == NOTE_UP) ||
+						mapdata.note[objectN[i[0]]].object == NOTE_UP) ||
 					(keyhold.down == 1 &&
-						note[objectN[i[0]]].object == NOTE_DOWN) ||
+						mapdata.note[objectN[i[0]]].object == NOTE_DOWN) ||
 					(keyhold.left == 1 &&
-						note[objectN[i[0]]].object == NOTE_LEFT) ||
+						mapdata.note[objectN[i[0]]].object == NOTE_LEFT) ||
 					(keyhold.right == 1 &&
-						note[objectN[i[0]]].object == NOTE_RIGHT))) {
+						mapdata.note[objectN[i[0]]].object == NOTE_RIGHT))) {
 					note_judge_event(CheckJudge(judgh), &Dscore,
-						&note[objectN[i[0]]], Sitem, time.now, judgh, i[0],
+						&mapdata.note[objectN[i[0]]], Sitem, time.now, judgh, i[0],
 						&judgeA);
-					objectN[i[0]] = note[objectN[i[0]]].next;
+					objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
 				}
 				break;
 			case NOTE_BOMB:
 				if (i[0] == charaput && judgh <= 0) {
 					note_judge_event(NOTE_JUDGE_MISS, &Dscore,
-						&note[objectN[i[0]]], Sitem, time.now, 0, i[0], &judgeA);
+						&mapdata.note[objectN[i[0]]], Sitem, time.now, 0, i[0], &judgeA);
 					objectN[i[0]]++;
 				}
-				else while (note[objectN[i[0]]].hittime - time.now < 0) {
+				else while (mapdata.note[objectN[i[0]]].hittime - time.now < 0) {
 					note_judge_event(NOTE_JUDGE_JUST, &Dscore,
-						&note[objectN[i[0]]], Sitem, time.now, -JUST_TIME - 1,
+						&mapdata.note[objectN[i[0]]], Sitem, time.now, -JUST_TIME - 1,
 						i[0], &judgeA);
-					objectN[i[0]] = note[objectN[i[0]]].next;
+					objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
 				}
 				break;
 			case NOTE_GHOST:
 				if (judgh < 0) {
-					p_sound.flag = PlayNoteHitSound(note[objectN[i[0]]],
+					p_sound.flag = PlayNoteHitSound(mapdata.note[objectN[i[0]]],
 						MelodySnd, Sitem, p_sound.flag, SE_GHOST);
-					objectN[i[0]] = note[objectN[i[0]]].next;
+					objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
 				}
 				break;
 			case NOTE_HIT:
@@ -1461,12 +1469,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			//全ノーツslowmiss
 		while (judgh <= -SAFE_TIME && judgh >= -1000000 &&
-			note[objectN[i[0]]].object >= NOTE_HIT &&
-			note[objectN[i[0]]].object <= NOTE_RIGHT) {
-			note_judge_event(NOTE_JUDGE_MISS, &Dscore, &note[objectN[i[0]]],
+			mapdata.note[objectN[i[0]]].object >= NOTE_HIT &&
+			mapdata.note[objectN[i[0]]].object <= NOTE_RIGHT) {
+			note_judge_event(NOTE_JUDGE_MISS, &Dscore, &mapdata.note[objectN[i[0]]],
 				Sitem, time.now, -SAFE_TIME, i[0], &judgeA);
-				objectN[i[0]] = note[objectN[i[0]]].next;
-				judgh = note[objectN[i[0]]].hittime - time.now;
+				objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
+				judgh = mapdata.note[objectN[i[0]]].hittime - time.now;
 			}
 		}
 		PlayNoteHitSound2(&p_sound);
@@ -1482,7 +1490,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//ライフ上限
 		life = maxs(life, 500);
 		//スコア計算
-		score = GetScore3(score, judge, notes, Mcombo);
+		score = GetScore3(score, judge, mapdata.notes, Mcombo);
 		//距離計算
 		if (drop != 0) { //DROPED
 			Dscore.now_dis = Dscore.dis_save;
@@ -1526,23 +1534,23 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//スコアバー隠し表示
 		DrawGraph(0, 0, sbbarimg, TRUE);
 		//ランニングステータス表示
-		G[0] = GetRemainNotes2(judge, notes);
-		G[1] = CalPosScore2(score, G[0], notes, combo, Mcombo);
+		G[0] = GetRemainNotes2(judge, mapdata.notes);
+		G[1] = CalPosScore2(score, G[0], mapdata.notes, combo, Mcombo);
 		RunningStats2(judge, G[1], HighSrore);
 		//部分難易度表示 (only auto mode)
 		if (holdG >= 1 && AutoFlag == 1) {
-			G[0] = ddif[0] * 20 / notzero(ddifG[1]) + 155;
-			G[1] = ddif[24] * 20 / notzero(ddifG[1]) + 447;
+			G[0] = mapdata.ddif[0] * 20 / notzero(mapdata.ddifG[1]) + 155;
+			G[1] = mapdata.ddif[24] * 20 / notzero(mapdata.ddifG[1]) + 447;
 			for (i[0] = 0; i[0] <= 23; i[0]++)
 				DrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24,
-					-ddif[i[0]] * 34 / notzero(ddifG[1]) + 72,
+					-mapdata.ddif[i[0]] * 34 / notzero(mapdata.ddifG[1]) + 72,
 					(G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24,
-					-ddif[i[0] + 1] * 34 / notzero(ddifG[1]) + 72, Cr);
-			DrawFormatString(490, 80, Cr, L"mdif:%.2f", mdif / 100.0);
-			DrawFormatString(490, 100, Cr, L"ldif:%.2f", ldif / 100.0);
+					-mapdata.ddif[i[0] + 1] * 34 / notzero(mapdata.ddifG[1]) + 72, Cr);
+			DrawFormatString(490, 80, Cr, L"mdif:%.2f", mapdata.mdif / 100.0);
+			DrawFormatString(490, 100, Cr, L"ldif:%.2f", mapdata.ldif / 100.0);
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
 			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
-				cal_nowdif_p(ddif, &time) / 100.0);
+				cal_nowdif_p(mapdata.ddif, &time) / 100.0);
 #if 0
 			/* エラー表示 */
 			if (outpoint[1] != 0) {
@@ -1609,13 +1617,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//RECR_DEBUG(2, speedN[2]);
 		//データオーバーフローで警告文表示
 #if 0
-		if (0 <= note2.up[1999].hittime) {
+		if (0 <= mapdata.note2.up[1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"UPPER OVER");
 		}
-		else if (0 <= note2.mid[1999].hittime) {
+		else if (0 <= mapdata.note2.mid[1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"MIDDLE OVER");
 		}
-		else if (0 <= note2.low[1999].hittime) {
+		else if (0 <= mapdata.note2.low[1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"LOWER OVER");
 		}
 #endif
@@ -1629,7 +1637,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		if (drop) { DrawGraph(0, 0, dropimg, TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
-		if (GetRemainNotes2(judge, notes) == 0 && AllNotesHitTime < 0) {
+		if (GetRemainNotes2(judge, mapdata.notes) == 0 && AllNotesHitTime < 0) {
 			AllNotesHitTime = GetNowCount();
 		}
 		//オートでなく、ノーミス以上を出したら演出
@@ -1680,24 +1688,24 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					time.now = mins(time.now - 10000, 0);
 #if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
-						for (objectN[i[0]] = 0; note[objectN[i[0]]].lane != NOTE_LANE_UP; objectN[i[0]] += 0) {
+						for (objectN[i[0]] = 0; mapdata.note[objectN[i[0]]].lane != NOTE_LANE_UP; objectN[i[0]] += 0) {
 							objectN[i[0]]++;
 						}
-						while (note[objectN[i[0]]].hittime < time.now) {
+						while (mapdata.note[objectN[i[0]]].hittime < time.now) {
 							objectN[i[0]]++;
 						}
 					}
 #else
-					while (time.now < note2.up[objectN[0]].hittime ||
-						note2.up[objectN[0]].hittime < 0) {
+					while (time.now < mapdata.note2.up[objectN[0]].hittime ||
+						mapdata.note2.up[objectN[0]].hittime < 0) {
 						objectN[0]--;
 					}
-					while (time.now < note2.mid[objectN[1]].hittime ||
-						note2.mid[objectN[1]].hittime < 0) {
+					while (time.now < mapdata.note2.mid[objectN[1]].hittime ||
+						mapdata.note2.mid[objectN[1]].hittime < 0) {
 						objectN[1]--;
 					}
-					while (time.now < note2.low[objectN[2]].hittime ||
-						note2.low[objectN[2]].hittime < 0) {
+					while (time.now < mapdata.note2.low[objectN[2]].hittime ||
+						mapdata.note2.low[objectN[2]].hittime < 0) {
 						objectN[2]--;
 					}
 #endif
@@ -1736,18 +1744,18 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					time.now += 10000;
 #if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
-						while (note[objectN[i[0]]].hittime < time.now) {
+						while (mapdata.note[objectN[i[0]]].hittime < time.now) {
 							objectN[i[0]]++;
 						}
 					}
 #else
-					while (note2.up[objectN[0]].hittime < time.now) {
+					while (mapdata.note2.up[objectN[0]].hittime < time.now) {
 						objectN[0]++;
 					}
-					while (note2.mid[objectN[1]].hittime < time.now) {
+					while (mapdata.note2.mid[objectN[1]].hittime < time.now) {
 						objectN[1]++;
 					}
-					while (note2.low[objectN[2]].hittime < time.now) {
+					while (mapdata.note2.low[objectN[2]].hittime < time.now) {
 						objectN[2]++;
 					}
 #endif
@@ -1806,7 +1814,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ret_gap[0] = gap2.sum;
 		ret_gap[1] = gap2.count;
 		ret_gap[2] = gap2.ssum;
-		return result(o, Lv, drop, mdif, nameset.songN, nameset.DifFN, fileN, judge, score.sum, Mcombo, notes, ret_gap, Dscore.point);
+		return result(o, mapdata.Lv, drop, mapdata.mdif, nameset.songN, nameset.DifFN, fileN, judge, score.sum, Mcombo, mapdata.notes, ret_gap, Dscore.point);
 	}
 }
 
