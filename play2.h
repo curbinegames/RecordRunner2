@@ -171,8 +171,26 @@ typedef struct rec_map_detail_s {
 /* proto */
 
 void AddGap(gap_box* const box, int data);
-void cal_back_x(int *xpos, double Gspeed, double Wspeed, double scrool,
-	int cam);
+
+/* (ret / 100) */
+void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int scroolN, int cam) {
+	xpos[0] -= (int)(100 * mapeff->speedt[3][speedN[3]][1] * mapeff->scrool[scroolN].speed);
+	while (xpos[0] + 100 * cam / 5 > 0) {
+		xpos[0] -= 64000;
+	}
+	while (xpos[0] + 100 * cam / 5 < -64000) {
+		xpos[0] += 64000;
+	}
+	xpos[1] -= (int)(500 * mapeff->speedt[4][speedN[4]][1] * mapeff->scrool[scroolN].speed);
+	while (xpos[1] + 100 * cam > 0) {
+		xpos[1] -= 64000;
+	}
+	while (xpos[1] + 100 * cam < -64000) {
+		xpos[1] += 64000;
+	}
+	xpos[2] = xpos[1];
+	return;
+}
 
 note_judge CheckJudge(int gap);
 int CheckNearHitNote(
@@ -1122,8 +1140,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			{
 				speedN[3]++;
 			}
-			cal_back_x(bgp, mapeff.speedt[3][speedN[3]][1],
-				mapeff.speedt[4][speedN[4]][1], mapeff.scrool[scroolN].speed, nowcamera.x);
+			cal_back_x(bgp, &mapeff, speedN, scroolN, nowcamera.x);
 			G[18] = 0;
 			G[19] = bgp[1];
 			//draw background picture
@@ -1835,27 +1852,6 @@ void AddGap(gap_box* const box, int data){
 	box->sum += data;
 	box->ssum += data * data;
 	box->count++;
-	return;
-}
-
-/* (ret / 100) */
-void cal_back_x(int *xpos, double Gspeed, double Wspeed, double scrool,
-	int cam) {
-	xpos[0] -= (int)(100 * Gspeed * scrool);
-	while (xpos[0] + 100 * cam / 5 > 0) {
-		xpos[0] -= 64000;
-	}
-	while (xpos[0] + 100 * cam / 5 < -64000) {
-		xpos[0] += 64000;
-	}
-	xpos[1] -= (int)(500 * Wspeed * scrool);
-	while (xpos[1] + 100 * cam > 0) {
-		xpos[1] -= 64000;
-	}
-	while (xpos[1] + 100 * cam < -64000) {
-		xpos[1] += 64000;
-	}
-	xpos[2] = xpos[1];
 	return;
 }
 
