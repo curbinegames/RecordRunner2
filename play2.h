@@ -333,26 +333,26 @@ static int StepNoDrawNote(
 #else
 	note_box_t *note,
 #endif
-	int *viewT0, int *viewT1,
-	short viewTN, int lock01[], int lock11[], short lockN[], double speedt[],
-	short speedN, int Ntime, int G[]) {
+	rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
+	short speedN, int Ntime, int G[])
+{
 	double sppedt_temp[99];
-	G[7] = StepViewNoDrawNote(note->hittime, viewT0, viewT1, viewTN,
+	G[7] = StepViewNoDrawNote(note->hittime, mapeff->viewT[0], mapeff->viewT[1], viewTN,
 		&G[0], Ntime);
 	if (G[7] == 1) { return 1; }
 	else if (G[7] == 2) { return 2; }
 	//ノーツロックナンバーを進める
-	if (note->hittime >= lock01[lockN[0] + G[3] + 1] &&
-		lock01[lockN[0] + G[3] + 1] >= 0) {
+	if (note->hittime >= mapeff->lock[0][1][lockN[0] + G[3] + 1] &&
+		mapeff->lock[0][1][lockN[0] + G[3] + 1] >= 0) {
 		G[3]++;
 	}
-	if (note->hittime >= lock11[lockN[1] + G[4] + 1] &&
-		lock11[lockN[1] + G[4] + 1] >= 0) {
+	if (note->hittime >= mapeff->lock[1][1][lockN[1] + G[4] + 1] &&
+		mapeff->lock[1][1][lockN[1] + G[4] + 1] >= 0) {
 		G[4]++;
 	}
 	// スピードナンバーを進める
 	for (int i = 0; i < 99; i++) {
-		sppedt_temp[i] = speedt[i * 2];
+		sppedt_temp[i] = mapeff->speedt[iLine][0][i * 2];
 	}
 	while (note->hittime >= sppedt_temp[speedN + G[5] + 1] &&
 		sppedt_temp[speedN + G[5] + 1] >= 0) {
@@ -395,14 +395,12 @@ static int DrawNoteOne(int G[],
 	short speedN, int Ntime, int Xline, int Yline, int scroolN,
 	rec_play_xy_set_t *nowcamera, struct note_img *noteimg)
 {
-	double *speedtp = &mapeff->speedt[iLine][0][0];
-	G[7] = StepNoDrawNote(note, mapeff->viewT[0], mapeff->viewT[1], viewTN,
-		mapeff->lock[0][1], mapeff->lock[1][1], lockN, speedtp, speedN, Ntime, G);
+	G[7] = StepNoDrawNote(note, mapeff, viewTN, lockN, iLine, speedN, Ntime, G);
 	if (G[7] == 1) { return 1; }
 	else if (G[7] == 2) { return 2; }
 	CalPalCrawNote(mapeff->lock[0][0][lockN[0] + G[3]], mapeff->lock[1][0][lockN[1] + G[4]],
-		note, Xline, Yline, speedtp[(speedN + G[5]) * 2 + 1], &mapeff->scrool[scroolN],
-		nowcamera, Ntime, G);
+		note, Xline, Yline, mapeff->speedt[iLine][0][(speedN + G[5]) * 2 + 1],
+		&mapeff->scrool[scroolN], nowcamera, Ntime, G);
 	switch (note->object) {
 	case 1:
 		DrawGraph(G[1], G[2], noteimg->notebase, TRUE);
