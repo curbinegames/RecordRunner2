@@ -146,6 +146,9 @@ typedef struct rec_map_eff_data_s {
 	rec_chara_arrow_t carrow;
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	rec_move_all_set_t move;
+	rec_chara_gra_data_t chamo;
+	rec_fall_data_t fall;
+	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
 } rec_map_eff_data_t;
 
 typedef struct rec_map_detail_s {
@@ -672,8 +675,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/* struct */
 	rec_map_detail_t mapdata;
 	rec_play_nameset_t nameset;
-	rec_fall_data_t fall;
-	rec_chara_gra_data_t chamo;
 	rec_play_key_hold_t keyhold;
 	rec_play_time_set_t time;
 	rec_play_xy_set_t nowcamera;
@@ -694,7 +695,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/* double */
 	double GD[5];
 	double SumRate[2] = { 0,0 };
-	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
 	double DifRate; //譜面定数
 	/* wchar_t */
@@ -868,21 +868,21 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			int buf[99][2];
 			fread(buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 			for (int i = 0; i < 99; i++) {
-				fall.d[i].time = buf[i][0];
-				fall.d[i].No   = buf[i][1];
+				mapeff.fall.d[i].time = buf[i][0];
+				mapeff.fall.d[i].No   = buf[i][1];
 			}
 		}
-		fread(&speedt, sizeof(double), 990, fp);//レーン速度
+		fread(&mapeff.speedt, sizeof(double), 990, fp);//レーン速度
 		{
 			int buf[3][99][2];
 			fread(buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
 			for (int i = 0; i < 99; i++) {
-				chamo[0].gra[i]  = buf[0][i][0];
-				chamo[0].time[i] = buf[0][i][1];
-				chamo[1].gra[i]  = buf[1][i][0];
-				chamo[1].time[i] = buf[1][i][1];
-				chamo[2].gra[i]  = buf[2][i][0];
-				chamo[2].time[i] = buf[2][i][1];
+				mapeff.chamo[0].gra[i]  = buf[0][i][0];
+				mapeff.chamo[0].time[i] = buf[0][i][1];
+				mapeff.chamo[1].gra[i]  = buf[1][i][0];
+				mapeff.chamo[1].time[i] = buf[1][i][1];
+				mapeff.chamo[2].gra[i]  = buf[2][i][0];
+				mapeff.chamo[2].time[i] = buf[2][i][1];
 			}
 		}
 		{
@@ -1063,12 +1063,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			}
 #endif
-			while (0 <= chamo[iLine].time[chamo[iLine].num + 1] &&
-						chamo[iLine].time[chamo[iLine].num + 1] <= time.now) {
-				chamo[iLine].num++;
+			while (0 <= mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] &&
+						mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] <= time.now) {
+				mapeff.chamo[iLine].num++;
 			}
-			while (0 <= speedt[iLine][speedN[iLine] + 1][0] &&
-						speedt[iLine][speedN[iLine] + 1][0] <= time.now) {
+			while (0 <= mapeff.speedt[iLine][speedN[iLine] + 1][0] &&
+						mapeff.speedt[iLine][speedN[iLine] + 1][0] <= time.now) {
 				speedN[iLine]++;
 			}
 		}
@@ -1117,11 +1117,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		PlaySetCamera(&nowcamera, mapeff.camera, cameraN, time.now);
 		//背景表示
 		if (system.backLight != 0) {
-			if (speedt[3][speedN[3] + 1][0] < time.now && speedt[3][speedN[3] + 1][0] >= 0) {
+			if (mapeff.speedt[3][speedN[3] + 1][0] < time.now &&
+				mapeff.speedt[3][speedN[3] + 1][0] >= 0)
+			{
 				speedN[3]++;
 			}
-			cal_back_x(bgp, speedt[3][speedN[3]][1], speedt[4][speedN[4]][1],
-				mapeff.scrool[scroolN].speed, nowcamera.x);
+			cal_back_x(bgp, mapeff.speedt[3][speedN[3]][1],
+				mapeff.speedt[4][speedN[4]][1], mapeff.scrool[scroolN].speed, nowcamera.x);
 			G[18] = 0;
 			G[19] = bgp[1];
 			//draw background picture
@@ -1143,13 +1145,18 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[0] += 640;
 			}
 			//落ち物背景表示
-			if (time.now >= fall.d[fall.num + 1].time && fall.d[fall.num + 1].time >= 0) fall.num++;
-			if (fall.d[fall.num].No >= 0) {
+			if (time.now >= mapeff.fall.d[mapeff.fall.num + 1].time &&
+				mapeff.fall.d[mapeff.fall.num + 1].time >= 0)
+			{
+				mapeff.fall.num++;
+			}
+			if (mapeff.fall.d[mapeff.fall.num].No >= 0) {
 				G[0] = bgf[0];//横
 				G[1] = bgf[1] + Yline[3];//縦
 				for (i[0] = 0; i[0] < 2; i[0]++) {
 					for (i[1] = 0; i[1] < 3; i[1]++) {
-						DrawGraph(G[0] + i[0] * 640, G[1] - i[1] * 480, item[fall.d[fall.num].No], TRUE);
+						DrawGraph(G[0] + i[0] * 640, G[1] - i[1] * 480,
+							item[mapeff.fall.d[mapeff.fall.num].No], TRUE);
 					}
 				}
 				bgf[0] -= 5;
@@ -1249,12 +1256,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (mapeff.carrow.d[mapeff.carrow.num].data == 1) {
 				DrawGraph(Xline[charaput] - 160 + nowcamera.x, G[4] - 75 + nowcamera.y,
 					charaimg[time.now * mapeff.v_BPM.data[mapeff.v_BPM.num].BPM / 20000 % 6 +
-					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
+					mapeff.chamo[charaput].gra[mapeff.chamo[charaput].num] * 6], TRUE);
 			}
 			else {
 				DrawTurnGraph(Xline[0] + 30 + nowcamera.x, G[4] - 75 + nowcamera.y,
 					charaimg[time.now * mapeff.v_BPM.data[mapeff.v_BPM.num].BPM / 20000 % 6 +
-					chamo[charaput].gra[chamo[charaput].num] * 6], TRUE);
+					mapeff.chamo[charaput].gra[mapeff.chamo[charaput].num] * 6], TRUE);
 			}
 		}
 		//キー設定
@@ -1346,9 +1353,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #endif
 					) {
 					G[7] = DrawNoteOne(G, &mapdata.note[i[1]], mapeff.viewT[0], mapeff.viewT[1],
-						viewTN, mapeff.lock[0][0], mapeff.lock[0][1], mapeff.lock[1][0], mapeff.lock[1][1],
-						lockN, speedt[i[0]][speedN[i[0]] + G[5]][1],
-						&speedt[i[0]][0][0], speedN[i[0]], time.now, Xline[i[0]],
+						viewTN, mapeff.lock[0][0], mapeff.lock[0][1], mapeff.lock[1][0],
+						mapeff.lock[1][1], lockN, mapeff.speedt[i[0]][speedN[i[0]] + G[5]][1],
+						&mapeff.speedt[i[0]][0][0], speedN[i[0]], time.now, Xline[i[0]],
 						Yline[i[0]], &mapeff.scrool[scroolN], &nowcamera, &noteimg);
 					if (G[7] == 1) { continue; }
 					else if (G[7] == 2) { break; }
@@ -1716,10 +1723,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					scroolN = 0;
 					itemN = 0;
 					SitemN = 0;
-					chamo[0].num = 0;
-					chamo[1].num = 0;
-					chamo[2].num = 0;
-					fall.num = 0;
+					mapeff.chamo[0].num = 0;
+					mapeff.chamo[1].num = 0;
+					mapeff.chamo[2].num = 0;
+					mapeff.fall.num = 0;
 					mapeff.move.y[0].num = 0;
 					mapeff.move.y[1].num = 0;
 					mapeff.move.y[2].num = 0;
@@ -1766,10 +1773,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					scroolN = 0;
 					itemN = 0;
 					SitemN = 0;
-					chamo[0].num = 0;
-					chamo[1].num = 0;
-					chamo[2].num = 0;
-					fall.num = 0;
+					mapeff.chamo[0].num = 0;
+					mapeff.chamo[1].num = 0;
+					mapeff.chamo[2].num = 0;
+					mapeff.fall.num = 0;
 					mapeff.move.y[0].num = 0;
 					mapeff.move.y[1].num = 0;
 					mapeff.move.y[2].num = 0;
