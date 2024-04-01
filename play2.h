@@ -305,20 +305,21 @@ int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 /**
  * return 0 = normal, 1 = continue, 2 = break;
  */
-static int StepViewNoDrawNote(int hittime, int viewT0[], int viewT1[],
-	short viewTN, int *viewTadd, int Ntime) {
+static int StepViewNoDrawNote(int hittime, rec_map_eff_data_t *mapeff,
+	short viewTN, int *viewTadd, int Ntime)
+{
 	//表示/非表示ナンバーを進める
-	if (hittime >= viewT0[viewTN + *viewTadd + 1] &&
-		viewT0[viewTN + *viewTadd + 1] >= 0) {
+	if (hittime >= mapeff->viewT[0][viewTN + *viewTadd + 1] &&
+		mapeff->viewT[0][viewTN + *viewTadd + 1] >= 0) {
 		(*viewTadd)++;
 	}
 	//非表示スキップ
-	if (hittime - Ntime >= viewT1[viewTN + *viewTadd]) {
+	if (hittime - Ntime >= mapeff->viewT[1][viewTN + *viewTadd]) {
 		return 1;
 	}
 	//3秒ブレーク
 	if (hittime - Ntime >= 3000 &&
-		3000 >= viewT1[viewTN + *viewTadd]) {
+		3000 >= mapeff->viewT[1][viewTN + *viewTadd]) {
 		return 2;
 	}
 	return 0;
@@ -337,8 +338,7 @@ static int StepNoDrawNote(
 	short speedN, int Ntime, int G[])
 {
 	double sppedt_temp[99];
-	G[7] = StepViewNoDrawNote(note->hittime, mapeff->viewT[0], mapeff->viewT[1], viewTN,
-		&G[0], Ntime);
+	G[7] = StepViewNoDrawNote(note->hittime, mapeff, viewTN, &G[0], Ntime);
 	if (G[7] == 1) { return 1; }
 	else if (G[7] == 2) { return 2; }
 	//ノーツロックナンバーを進める
