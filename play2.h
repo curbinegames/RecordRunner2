@@ -577,15 +577,16 @@ void PlaySetCamera(rec_play_xy_set_t *retcam, struct camera_box camset[], int ca
 	return;
 }
 
-void PlayDrawItem(item_box *Movie, int Ntime, rec_play_xy_set_t *camera,
-	view_BPM_box *v_BPM, int Xmidline, int item[])
+void PlayDrawItem(rec_map_eff_data_t *mapeff, short int MovieN, int Ntime,
+	rec_play_xy_set_t *camera, int Xmidline, int item[])
 {
+	view_BPM_box *v_BPM = &mapeff->v_BPM.data[mapeff->v_BPM.num];
 	int drawA;
 	int drawX;
 	int drawY;
 	int drawS;
 	int drawR;
-	for (item_box *pMovie = Movie; pMovie->endtime > -500; pMovie++) {
+	for (item_box *pMovie = &mapeff->Movie[MovieN]; pMovie->endtime > -500; pMovie++) {
 		if (pMovie->starttime <= Ntime && pMovie->endtime >= Ntime) {
 			//base setting
 			drawA = (int)movecal(pMovie->movemode,
@@ -1197,8 +1198,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//アイテム表示
 		if (system.backLight != 0) {
-			PlayDrawItem(&mapeff.Movie[MovieN], time.now, &nowcamera,
-				&mapeff.v_BPM.data[mapeff.v_BPM.num], Xline[1], item);
+			PlayDrawItem(&mapeff, MovieN, time.now, &nowcamera, Xline[1], item);
 		}
 		// view line
 		if (AutoFlag == 1) {
