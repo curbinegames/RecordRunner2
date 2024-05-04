@@ -328,14 +328,8 @@ static int StepViewNoDrawNote(int hittime, rec_map_eff_data_t *mapeff,
 /**
  * return 0 = normal, 1 = continue, 2 = break;
  */
-static int StepNoDrawNote(
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t *note,
-#else
-	note_box_t *note,
-#endif
-	rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
-	short speedN, int Ntime, int G[])
+static int StepNoDrawNote(note_box_2_t *note, rec_map_eff_data_t *mapeff,
+	short viewTN, short lockN[], int iLine, short speedN, int Ntime, int G[])
 {
 	double sppedt_temp[99];
 	G[7] = StepViewNoDrawNote(note->hittime, mapeff, viewTN, &G[0], Ntime);
@@ -361,14 +355,10 @@ static int StepNoDrawNote(
 	return 0;
 }
 
-static void CalPalCrawNote(int lock0, int lock1,
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t *note,
-#else
-	note_box_t *note,
-#endif
-	int Xline, int Yline, double speedt, struct scrool_box *scrool,
-	rec_play_xy_set_t *nowcamera, int Ntime, int G[]) {
+static void CalPalCrawNote(int lock0, int lock1, note_box_2_t *note, int Xline,
+	int Yline, double speedt, struct scrool_box *scrool,
+	rec_play_xy_set_t *nowcamera, int Ntime, int G[])
+{
 	//縦位置
 	G[2] = ((lock1 == 1) ? note->ypos : Yline);
 	//横位置
@@ -385,15 +375,10 @@ static void CalPalCrawNote(int lock0, int lock1,
 /**
  * return 0 = normal, 1 = continue, 2 = break;
  */
-static int DrawNoteOne(int G[],
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t *note,
-#else
-	note_box_t *note,
-#endif
-	rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
-	short speedN, int Ntime, int Xline, int Yline, int scroolN,
-	rec_play_xy_set_t *nowcamera, struct note_img *noteimg)
+static int DrawNoteOne(int G[], note_box_2_t *note, rec_map_eff_data_t *mapeff,
+	short viewTN, short lockN[], int iLine, short speedN, int Ntime, int Xline,
+	int Yline, int scroolN, rec_play_xy_set_t *nowcamera,
+	struct note_img *noteimg)
 {
 	G[7] = StepNoDrawNote(note, mapeff, viewTN, lockN, iLine, speedN, Ntime, G);
 	if (G[7] == 1) { return 1; }
@@ -691,6 +676,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	unsigned int CrR = GetColor(255, 0, 0);
 	int CutTime = 0;
 	int Stime = 0;
+	int adif = 0;
 	/* struct */
 	rec_map_detail_t mapdata;
 	rec_play_nameset_t nameset;
@@ -796,6 +782,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	ReadyBonusPsmat();
 	ReadyEffPicture();
 	ReadyJudgePicture();
+	/* adifのリセット */
+	InitAdif();
 	/* address box */
 	judge_action_box judgeA;
 	judgeA.combo = &combo;
@@ -1059,29 +1047,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		// number step
 		for (int iLine = 0; iLine < 3; iLine++) {
 			objectNG[iLine] = mins(objectNG[iLine], objectN[iLine]);
-#if SWITCH_NOTE_BOX_2 == 1
 			while (mapdata.note[objectNG[iLine]].object == NOTE_GHOST) {
 				objectNG[iLine] = mapdata.note[objectNG[iLine]].next;
 			}
-#else
-			switch (iLine) {
-			case 0:
-				while (mapdata.note2.up[objectNG[0]].object == NOTE_GHOST) {
-					objectNG[0]++;
-				}
-				break;
-			case 1:
-				while (mapdata.note2.mid[objectNG[1]].object == NOTE_GHOST) {
-					objectNG[1]++;
-				}
-				break;
-			case 2:
-				while (mapdata.note2.low[objectNG[2]].object == NOTE_GHOST) {
-					objectNG[2]++;
-				}
-				break;
-			}
-#endif
 			while (0 <= mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] &&
 						mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] <= time.now) {
 				mapeff.chamo[iLine].num++;
@@ -1235,12 +1203,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//キャラグラ変換
 		G[3] = 0;
 		//get chara position
-#if SWITCH_NOTE_BOX_2 == 1
 		charaput = GetCharaPos3(time.now, mapdata.note, objectNG, &keyhold, hitatk[0], hitatk[1]);
-#else
-		charaput = GetCharaPos2(time.now, mapdata.note2.up[objectNG[0]], mapdata.note2.mid[objectNG[1]],
-			mapdata.note2.low[objectNG[2]], &keyhold, hitatk[0], hitatk[1]);
-#endif
 		G[4] = Yline[charaput];
 		//キャラグラフィックを表示
 		if (keyhold.z == 1) {
@@ -1300,14 +1263,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//オートプレイ用コード
 		else if (AutoFlag == 1) {
-			AutoAution(&keyhold.z, &keyhold.x, &keyhold.c, &keyhold.up, &keyhold.down, &keyhold.left, &keyhold.right,
-#if SWITCH_NOTE_BOX_2 == 1
-				mapdata.note, objectNG,
-#else
-				&mapdata.note2.up[objectNG[0]], &mapdata.note2.mid[objectNG[1]],
-				&mapdata.note2.low[objectNG[2]],
-#endif
-				time.now);
+			AutoAution(&keyhold.z, &keyhold.x, &keyhold.c, &keyhold.up, &keyhold.down,
+				&keyhold.left, &keyhold.right, mapdata.note, objectNG, time.now);
 		}
 		//キー押しヒット解除
 		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk[1] + 750 < time.now) {
@@ -1574,6 +1531,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
 			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
 				cal_nowdif_p(mapdata.ddif, &time) / 100.0);
+			DrawFormatString(490, 160, Cr, L"adif:%.2f",
+				(double)lins(0, 0, 2400000, 800, GetAdif()) / 100.0);
 #if 0
 			/* エラー表示 */
 			if (outpoint[1] != 0) {

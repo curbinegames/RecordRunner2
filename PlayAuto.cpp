@@ -2,6 +2,39 @@
 #include "playbox.h"
 #include "define.h"
 
+#define ADIF_NUM 50
+
+typedef struct autodif_s autodif_t;
+
+struct autodif_s {
+	int time = -1;
+	int key = 0;
+	int def = 0;
+	autodif_t *next = NULL;
+	autodif_t *prev = NULL;
+};
+
+static autodif_t adif[ADIF_NUM];
+static int nowNo = 0;
+
+void InitAdif() {
+	for (int i = 0; i < ADIF_NUM; i++) {
+		adif[i].time = -1;
+		adif[i].key = 0;
+		adif[i].def = 0;
+		adif[i].next = &adif[(i + 1) % ADIF_NUM];
+		adif[i].prev = &adif[(i + ADIF_NUM - 1) % ADIF_NUM];
+	}
+}
+
+int GetAdif() {
+	int ret = 0;
+	for (int i = 0; i < 50; i++) {
+		ret += adif[i].def;
+	}
+	return ret;
+}
+
 static void AutoBefTate(int *keyu, int *keyd, int *keyl, int *keyr,
 	note_material umat, note_material mmat, note_material lmat,
 	int uhittime, int mhittime, int lhittime, int Ntime) {
@@ -62,15 +95,10 @@ static void AutoBefTate(int *keyu, int *keyd, int *keyl, int *keyr,
 	return;
 }
 
-static void AutoHit(int *keya, int *keyb, int *keyc,
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t note[], short int objectN[],
-#else
-	struct note_box unote[], struct note_box mnote[], struct note_box lnote[],
-#endif
-	int Ntime) {
+static void AutoHit(int *keya, int *keyb, int *keyc, note_box_2_t note[],
+	short int objectN[], int Ntime)
+{
 	int hitcount = 0;
-#if SWITCH_NOTE_BOX_2 == 1
 	int G[1] = { 0 };
 	for (int j = 0; j < 3; j++) {
 		G[0] = objectN[j];
@@ -83,19 +111,6 @@ static void AutoHit(int *keya, int *keyb, int *keyc,
 			if (G[0] == -1) { break; }
 		}
 	}
-#else
-	for (int i = 0; i < 3; i++) {
-		if (unote[i].object == 1 && unote[i].hittime - Ntime <= 8) {
-			hitcount++;
-		}
-		if (mnote[i].object == 1 && mnote[i].hittime - Ntime <= 8) {
-			hitcount++;
-		}
-		if (lnote[i].object == 1 && lnote[i].hittime - Ntime <= 8) {
-			hitcount++;
-		}
-	}
-#endif
 	if (hitcount == 1) {
 		if (*keyc == 0) {
 			*keyc = 1;
@@ -236,9 +251,10 @@ static void AutoArrowUD(int *keyu, int *keyd, int *keyl, int *keyr,
 	return;
 }
 
-static void AutoCatch(int *keyu, int *keyd,
-	note_material umat, note_material mmat, note_material lmat,
-	int uhittime, int mhittime, int lhittime, int Ntime){
+static void AutoCatch(int *keyu, int *keyd, note_material umat,
+	note_material mmat, note_material lmat, int uhittime, int mhittime,
+	int lhittime, int Ntime)
+{
 	if (*keyu > 0) {
 		if (lmat == 2 && lhittime - Ntime <= 8) {
 			*keyu = 0;
@@ -270,10 +286,10 @@ static void AutoCatch(int *keyu, int *keyd,
 	return;
 }
 
-static void AutoReleaseKey(int *keya, int *keyb, int *keyc,
-	int *keyu, int *keyd, int *keyl, int *keyr,
-	note_material umat, note_material mmat, note_material lmat,
-	int uhittime, int mhittime, int lhittime, int Ntime) {
+static void AutoReleaseKey(int *keya, int *keyb, int *keyc, int *keyu,
+	int *keyd, int *keyl, int *keyr, note_material umat, note_material mmat,
+	note_material lmat, int uhittime, int mhittime, int lhittime, int Ntime)
+{
 	/* ヒットボタン離し */
 	if (*keya > 10) { *keya = 0; }
 	if (*keyb > 10) { *keyb = 0; }
@@ -290,13 +306,70 @@ static void AutoReleaseKey(int *keya, int *keyb, int *keyc,
 	}
 }
 
-void AutoAution(int *keya, int *keyb, int *keyc, int *keyu, int *keyd, int *keyl, int *keyr,
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t note[], short int objectNG[],
-#else
-	struct note_box *unote, struct note_box *mnote, struct note_box *lnote,
-#endif
-	int Ntime) {
+static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
+	int *keyl, int *keyr, int Ntime) {
+	if (*keya == 1) {
+		if (Ntime != adif[nowNo].prev->time) {
+			adif[nowNo].time = Ntime;
+			adif[nowNo].key = 1;
+			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
+			nowNo = (nowNo + 1) % 50;
+		}
+	}
+	if (*keyb == 1) {
+		if (Ntime != adif[nowNo].prev->time) {
+			adif[nowNo].time = Ntime;
+			adif[nowNo].key = 1;
+			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
+			nowNo = (nowNo + 1) % 50;
+		}
+	}
+	if (*keyc == 1) {
+		if (Ntime != adif[nowNo].prev->time) {
+			adif[nowNo].time = Ntime;
+			adif[nowNo].key = 1;
+			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
+			nowNo = (nowNo + 1) % 50;
+		}
+	}
+	if (*keyu == 1) {
+		if (Ntime != adif[nowNo].prev->time) {
+			adif[nowNo].time = Ntime;
+			adif[nowNo].key = 1;
+			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
+			nowNo = (nowNo + 1) % 50;
+		}
+	}
+	if (*keyd == 1) {
+		if (Ntime != adif[nowNo].prev->time) {
+			adif[nowNo].time = Ntime;
+			adif[nowNo].key = 1;
+			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
+			nowNo = (nowNo + 1) % 50;
+		}
+	}
+	if (*keyl == 1) {
+		if (Ntime != adif[nowNo].prev->time) {
+			adif[nowNo].time = Ntime;
+			adif[nowNo].key = 1;
+			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
+			nowNo = (nowNo + 1) % 50;
+		}
+	}
+	if (*keyr == 1) {
+		if (Ntime != adif[nowNo].prev->time) {
+			adif[nowNo].time = Ntime;
+			adif[nowNo].key = 1;
+			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
+			nowNo = (nowNo + 1) % 50;
+		}
+	}
+	return;
+}
+
+void AutoAution(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
+	int *keyl, int *keyr, note_box_2_t note[], short int objectNG[], int Ntime)
+{
 	int hitFG = 0;
 	if (*keya > 0) { (*keya)++; }
 	if (*keyb > 0) { (*keyb)++; }
@@ -307,77 +380,45 @@ void AutoAution(int *keya, int *keyb, int *keyc, int *keyu, int *keyd, int *keyl
 	if (*keyr > 0) { (*keyr)++; }
 	//縦連前ボタン離し
 	AutoBefTate(keyu, keyd, keyl, keyr,
-#if SWITCH_NOTE_BOX_2 == 1
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
-#else
-		unote->object, mnote->object, lnote->object,
-		unote->hittime, mnote->hittime, lnote->hittime,
-#endif
 		Ntime);
 	//ヒットノーツ処理
 	AutoHit(keya, keyb, keyc,
-#if SWITCH_NOTE_BOX_2 == 1
 		note, objectNG,
-#else
-		unote, mnote, lnote,
-#endif
 		Ntime);
 	//左右アローノーツ処理
 	hitFG = AutoArrowLR(keyu, keyd, keyl, keyr,
-#if SWITCH_NOTE_BOX_2 == 1
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
-#else
-		unote->object, mnote->object, lnote->object,
-		unote->hittime, mnote->hittime, lnote->hittime,
-#endif
 		Ntime);
 	//ボムノーツ処理
 	AutoBomb(keyu, keyd,
-#if SWITCH_NOTE_BOX_2 == 1
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
-#else
-		unote->object, mnote->object, lnote->object,
-		unote->hittime, mnote->hittime, lnote->hittime,
-#endif
 		Ntime);
 	//上下アローノーツ処理
 	AutoArrowUD(keyu, keyd, keyl, keyr,
-#if SWITCH_NOTE_BOX_2 == 1
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
-#else
-		unote->object, mnote->object, lnote->object,
-		unote->hittime, mnote->hittime, lnote->hittime,
-#endif
 		Ntime, hitFG);
 	//キャッチノーツ処理
 	AutoCatch(keyu, keyd,
-#if SWITCH_NOTE_BOX_2 == 1
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
-#else
-		unote->object, mnote->object, lnote->object,
-		unote->hittime, mnote->hittime, lnote->hittime,
-#endif
 		Ntime);
 	/* ボタン離し */
 	AutoReleaseKey(keya, keyb, keyc, keyu, keyd, keyl, keyr,
-#if SWITCH_NOTE_BOX_2 == 1
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
-#else
-		unote->object, mnote->object, lnote->object,
-		unote->hittime, mnote->hittime, lnote->hittime,
-#endif
 		Ntime);
+	/* adif計算 */
+	CalAdif(keya, keyb, keyc, keyu, keyd, keyl, keyr, Ntime);
 	return;
 }
