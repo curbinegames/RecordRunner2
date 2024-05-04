@@ -1532,7 +1532,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
 				cal_nowdif_p(mapdata.ddif, &time) / 100.0);
 			DrawFormatString(490, 160, Cr, L"adif:%.2f",
-				(double)lins(0, 0, 2400000, 800, GetAdif()) / 100.0);
+				(double)lins(0, 0, 1500000, 800, GetAdif()) / 100.0);
 #if 0
 			/* ÉGÉâÅ[ï\é¶ */
 			if (outpoint[1] != 0) {

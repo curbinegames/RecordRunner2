@@ -309,60 +309,81 @@ static void AutoReleaseKey(int *keya, int *keyb, int *keyc, int *keyu,
 static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
 	int *keyl, int *keyr, int Ntime) {
 	if (*keya == 1) {
-		if (Ntime != adif[nowNo].prev->time) {
-			adif[nowNo].time = Ntime;
-			adif[nowNo].key = 1;
+		adif[nowNo].time = Ntime;
+		adif[nowNo].key = 1;
+		if (adif[nowNo].prev->time + 10 <= Ntime) {
 			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-			nowNo = (nowNo + 1) % 50;
 		}
+		else {
+			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
+		}
+		nowNo = (nowNo + 1) % 50;
 	}
 	if (*keyb == 1) {
-		if (Ntime != adif[nowNo].prev->time) {
-			adif[nowNo].time = Ntime;
-			adif[nowNo].key = 1;
+		adif[nowNo].time = Ntime;
+		adif[nowNo].key = 1;
+		if (adif[nowNo].prev->time + 10 <= Ntime) {
 			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-			nowNo = (nowNo + 1) % 50;
 		}
+		else {
+			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
+		}
+		nowNo = (nowNo + 1) % 50;
 	}
 	if (*keyc == 1) {
-		if (Ntime != adif[nowNo].prev->time) {
-			adif[nowNo].time = Ntime;
-			adif[nowNo].key = 1;
+		adif[nowNo].time = Ntime;
+		adif[nowNo].key = 1;
+		if (adif[nowNo].prev->time + 10 <= Ntime) {
 			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-			nowNo = (nowNo + 1) % 50;
 		}
+		else {
+			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
+		}
+		nowNo = (nowNo + 1) % 50;
 	}
 	if (*keyu == 1) {
-		if (Ntime != adif[nowNo].prev->time) {
-			adif[nowNo].time = Ntime;
-			adif[nowNo].key = 1;
+		adif[nowNo].time = Ntime;
+		adif[nowNo].key = 1;
+		if (adif[nowNo].prev->time + 10 <= Ntime) {
 			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-			nowNo = (nowNo + 1) % 50;
 		}
+		else {
+			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
+		}
+		nowNo = (nowNo + 1) % 50;
 	}
 	if (*keyd == 1) {
-		if (Ntime != adif[nowNo].prev->time) {
-			adif[nowNo].time = Ntime;
-			adif[nowNo].key = 1;
+		adif[nowNo].time = Ntime;
+		adif[nowNo].key = 1;
+		if (adif[nowNo].prev->time + 10 <= Ntime) {
 			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-			nowNo = (nowNo + 1) % 50;
 		}
+		else {
+			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
+		}
+		nowNo = (nowNo + 1) % 50;
 	}
 	if (*keyl == 1) {
-		if (Ntime != adif[nowNo].prev->time) {
-			adif[nowNo].time = Ntime;
-			adif[nowNo].key = 1;
+		adif[nowNo].time = Ntime;
+		adif[nowNo].key = 1;
+		if (adif[nowNo].prev->time + 10 <= Ntime) {
 			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-			nowNo = (nowNo + 1) % 50;
 		}
+		else {
+			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
+		}
+		nowNo = (nowNo + 1) % 50;
 	}
 	if (*keyr == 1) {
-		if (Ntime != adif[nowNo].prev->time) {
-			adif[nowNo].time = Ntime;
-			adif[nowNo].key = 1;
+		adif[nowNo].time = Ntime;
+		adif[nowNo].key = 1;
+		if (adif[nowNo].prev->time + 10 <= Ntime) {
 			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-			nowNo = (nowNo + 1) % 50;
 		}
+		else {
+			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
+		}
+		nowNo = (nowNo + 1) % 50;
 	}
 	return;
 }
