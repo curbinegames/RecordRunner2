@@ -620,6 +620,21 @@ void PlayDrawItem(rec_map_eff_data_t *mapeff, short int MovieN, int Ntime,
 	}
 }
 
+static void DrawFallBack(int Yline, int item[], rec_fall_data_t *falleff) {
+	static int baseX = 0;
+	static int baseY = 0;
+	for (int ix = 0; ix < 2; ix++) {
+		for (int iy = 0; iy < 3; iy++) {
+			DrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
+				item[falleff->d[falleff->num].No], TRUE);
+		}
+	}
+	baseX -= 5;
+	baseY += 2;
+	if (baseX <= -640) { baseX += 640; }
+	if (baseY >= 640) { baseY -= 480; }
+}
+
 #endif /* filter2 */
 
 /* main action */
@@ -638,7 +653,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	char closeFg = 0;
 	/* short */
 	short int i[3];
-	short int bgf[2] = { 0,0 }; //落ち物背景の[0:横位置,1:縦位置]
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
 	short int drop = 0;
 	short int KeyPushCount[7] = { 0,0,0,0,0,0,0 };
@@ -1051,53 +1065,58 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				objectNG[iLine] = mapdata.note[objectNG[iLine]].next;
 			}
 			while (0 <= mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] &&
-						mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] <= time.now) {
+				mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] <= time.now) {
 				mapeff.chamo[iLine].num++;
 			}
 			while (0 <= mapeff.speedt[iLine][speedN[iLine] + 1][0] &&
-						mapeff.speedt[iLine][speedN[iLine] + 1][0] <= time.now) {
+				mapeff.speedt[iLine][speedN[iLine] + 1][0] <= time.now) {
 				speedN[iLine]++;
 			}
 		}
 		while (-1000 < mapeff.v_BPM.data[mapeff.v_BPM.num + 1].time &&
-					   mapeff.v_BPM.data[mapeff.v_BPM.num + 1].time <= time.now) {
+			mapeff.v_BPM.data[mapeff.v_BPM.num + 1].time <= time.now) {
 			mapeff.v_BPM.num++;
 		}
 		while (0 <= mapeff.camera[cameraN].endtime &&
-					mapeff.camera[cameraN].endtime < time.now) {
+			mapeff.camera[cameraN].endtime < time.now) {
 			cameraN++;
 		}
 		while (0 <= mapeff.scrool[scroolN + 1].starttime &&
-					mapeff.scrool[scroolN + 1].starttime <= time.now) {
+			mapeff.scrool[scroolN + 1].starttime <= time.now) {
 			scroolN++;
 		}
 		if (system.backLight != 0) {
 			while (-500 < mapeff.Movie[MovieN].endtime &&
-						  mapeff.Movie[MovieN].endtime < time.now) {
+				mapeff.Movie[MovieN].endtime < time.now) {
 				MovieN++;
+			}
+			if (0 <= mapeff.fall.d[mapeff.fall.num + 1].time &&
+				mapeff.fall.d[mapeff.fall.num + 1].time <= time.now)
+			{
+				mapeff.fall.num++;
 			}
 		}
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
 				while ((0 <= mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Stime &&
-							 mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Etime <= time.now) ||
-							 mapeff.move.y[i[0]].d[LineMoveN[i[0]]].mode == 4) {
+					mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Etime <= time.now) ||
+					mapeff.move.y[i[0]].d[LineMoveN[i[0]]].mode == 4) {
 					LineMoveN[i[0]]++;
 				}
 			}
 		}
 		while (0 <= mapeff.carrow.d[mapeff.carrow.num + 1].time &&
-					mapeff.carrow.d[mapeff.carrow.num + 1].time < time.now) {
+			mapeff.carrow.d[mapeff.carrow.num + 1].time < time.now) {
 			mapeff.carrow.num++;
 		}
 		for (i[0] = 0; i[0] < 2; i[0]++) {
 			while (0 <= mapeff.lock[i[0]][1][lockN[i[0]] + 1] &&
-						mapeff.lock[i[0]][1][lockN[i[0]] + 1] <= time.now) {
+				mapeff.lock[i[0]][1][lockN[i[0]] + 1] <= time.now) {
 				lockN[i[0]]++;
 			}
 		}
 		while (0 <= mapeff.viewT[0][viewTN + 1] &&
-					mapeff.viewT[0][viewTN + 1] <= time.now) {
+			mapeff.viewT[0][viewTN + 1] <= time.now) {
 			viewTN++;
 		}
 		//カメラ移動
@@ -1131,25 +1150,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[0] += 640;
 			}
 			//落ち物背景表示
-			if (time.now >= mapeff.fall.d[mapeff.fall.num + 1].time &&
-				mapeff.fall.d[mapeff.fall.num + 1].time >= 0)
-			{
-				mapeff.fall.num++;
-			}
 			if (mapeff.fall.d[mapeff.fall.num].No >= 0) {
-				G[0] = bgf[0];//横
-				G[1] = bgf[1] + Yline[3];//縦
-				for (i[0] = 0; i[0] < 2; i[0]++) {
-					for (i[1] = 0; i[1] < 3; i[1]++) {
-						DrawGraph(G[0] + i[0] * 640, G[1] - i[1] * 480,
-							item[mapeff.fall.d[mapeff.fall.num].No], TRUE);
-					}
-				}
-				bgf[0] -= 5;
-				bgf[1] += 2;
+				DrawFallBack(Yline[3], item, &mapeff.fall);
 			}
-			if (bgf[0] <= -640)bgf[0] += 640;
-			if (bgf[1] >= 640)bgf[1] -= 480;
 		}
 		//フィルター表示
 		switch (system.backLight) {
@@ -1448,11 +1451,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				break;
 			}
 			//全ノーツslowmiss
-		while (judgh <= -SAFE_TIME && judgh >= -1000000 &&
-			mapdata.note[objectN[i[0]]].object >= NOTE_HIT &&
-			mapdata.note[objectN[i[0]]].object <= NOTE_RIGHT) {
-			note_judge_event(NOTE_JUDGE_MISS, &Dscore, &mapdata.note[objectN[i[0]]],
-				Sitem, time.now, -SAFE_TIME, i[0], &judgeA);
+			while (judgh <= -SAFE_TIME && judgh >= -1000000 &&
+				mapdata.note[objectN[i[0]]].object >= NOTE_HIT &&
+				mapdata.note[objectN[i[0]]].object <= NOTE_RIGHT) {
+				note_judge_event(NOTE_JUDGE_MISS, &Dscore, &mapdata.note[objectN[i[0]]],
+					Sitem, time.now, -SAFE_TIME, i[0], &judgeA);
 				objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
 				judgh = mapdata.note[objectN[i[0]]].hittime - time.now;
 			}
