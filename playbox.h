@@ -241,7 +241,18 @@ typedef struct judge_action_box_t {
 	struct score_box* score;
 } judge_action_box;
 
-typedef struct  rec_play_xy_set_s {
+typedef struct rec_play_xy_set_s {
 	int x;
 	int y;
 } rec_play_xy_set_t;
+
+/* <=-1: just release, 0: no push, 1: just push, 2<=: hold */
+typedef struct rec_play_key_hold_s {
+	int z = 0;
+	int x = 0;
+	int c = 0;
+	int up = 0;
+	int down = 0;
+	int left = 0;
+	int right = 0;
+} rec_play_key_hold_t;

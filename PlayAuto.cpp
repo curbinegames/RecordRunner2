@@ -35,22 +35,23 @@ int GetAdif() {
 	return ret;
 }
 
-static void AutoBefTate(int *keyu, int *keyd, int *keyl, int *keyr,
+static void AutoBefTate(rec_play_key_hold_t *key,
 	note_material umat, note_material mmat, note_material lmat,
-	int uhittime, int mhittime, int lhittime, int Ntime) {
+	int uhittime, int mhittime, int lhittime, int Ntime)
+{
 	if (uhittime - Ntime <= 40) {
 		switch (umat) {
 		case NOTE_UP:
-			*keyu = 0;
+			key->up = 0;
 			break;
 		case NOTE_DOWN:
-			*keyd = 0;
+			key->down = 0;
 			break;
 		case NOTE_LEFT:
-			*keyl = 0;
+			key->left = 0;
 			break;
 		case NOTE_RIGHT:
-			*keyr = 0;
+			key->right = 0;
 			break;
 		default:
 			break;
@@ -59,16 +60,16 @@ static void AutoBefTate(int *keyu, int *keyd, int *keyl, int *keyr,
 	if (mhittime - Ntime <= 40) {
 		switch (mmat) {
 		case NOTE_UP:
-			*keyu = 0;
+			key->up = 0;
 			break;
 		case NOTE_DOWN:
-			*keyd = 0;
+			key->down = 0;
 			break;
 		case NOTE_LEFT:
-			*keyl = 0;
+			key->left = 0;
 			break;
 		case NOTE_RIGHT:
-			*keyr = 0;
+			key->right = 0;
 			break;
 		default:
 			break;
@@ -77,16 +78,16 @@ static void AutoBefTate(int *keyu, int *keyd, int *keyl, int *keyr,
 	if (lhittime - Ntime <= 40) {
 		switch (lmat) {
 		case NOTE_UP:
-			*keyu = 0;
+			key->up = 0;
 			break;
 		case NOTE_DOWN:
-			*keyd = 0;
+			key->down = 0;
 			break;
 		case NOTE_LEFT:
-			*keyl = 0;
+			key->left = 0;
 			break;
 		case NOTE_RIGHT:
-			*keyr = 0;
+			key->right = 0;
 			break;
 		default:
 			break;
@@ -95,7 +96,7 @@ static void AutoBefTate(int *keyu, int *keyd, int *keyl, int *keyr,
 	return;
 }
 
-static void AutoHit(int *keya, int *keyb, int *keyc, note_box_2_t note[],
+static void AutoHit(rec_play_key_hold_t *key, note_box_2_t note[],
 	short int objectN[], int Ntime)
 {
 	int hitcount = 0;
@@ -112,203 +113,205 @@ static void AutoHit(int *keya, int *keyb, int *keyc, note_box_2_t note[],
 		}
 	}
 	if (hitcount == 1) {
-		if (*keyc == 0) {
-			*keyc = 1;
-			*keya = 0;
+		if (key->c == 0) {
+			key->c = 1;
+			key->z = 0;
 		}
 		else {
-			*keya = 1;
-			*keyc = 0;
+			key->z = 1;
+			key->c = 0;
 		}
-		*keyb = 0;
+		key->x = 0;
 	}
 	else if (hitcount == 2) {
-		if (*keyc == 0) {
-			*keyc = 1;
-			*keya = 0;
+		if (key->c == 0) {
+			key->c = 1;
+			key->z = 0;
 		}
 		else {
-			*keya = 1;
-			*keyc = 0;
+			key->z = 1;
+			key->c = 0;
 		}
-		*keyb = 1;
+		key->x = 1;
 	}
 	else if (hitcount >= 3) {
-		*keya = 1;
-		*keyb = 1;
-		*keyc = 1;
+		key->z = 1;
+		key->x = 1;
+		key->c = 1;
 	}
 	return;
 }
 
-static int AutoArrowLR(int *keyu, int *keyd, int *keyl, int *keyr,
+static int AutoArrowLR(rec_play_key_hold_t *key,
 	note_material umat, note_material mmat, note_material lmat,
-	int uhittime, int mhittime, int lhittime, int Ntime) {
+	int uhittime, int mhittime, int lhittime, int Ntime)
+{
 	int hitFG = 0;
 	if (umat == 5 && uhittime - Ntime <= 8 ||
 		mmat == 5 && mhittime - Ntime <= 8 ||
 		lmat == 5 && lhittime - Ntime <= 8) {
 		if (hitFG == 0) {
-			*keyu = 0;
-			*keyd = 0;
-			*keyl = 0;
-			*keyr = 0;
+			key->up = 0;
+			key->down = 0;
+			key->left = 0;
+			key->right = 0;
 		}
 		hitFG = 1;
-		*keyl = 1;
+		key->left = 1;
 	}
 	if (umat == 6 && uhittime - Ntime <= 8 ||
 		mmat == 6 && mhittime - Ntime <= 8 ||
 		lmat == 6 && lhittime - Ntime <= 8) {
 		if (hitFG == 0) {
-			*keyu = 0;
-			*keyd = 0;
-			*keyl = 0;
-			*keyr = 0;
+			key->up = 0;
+			key->down = 0;
+			key->left = 0;
+			key->right = 0;
 		}
 		hitFG = 1;
-		*keyr = 1;
+		key->right = 1;
 	}
 	return hitFG;
 }
 
-static void AutoBomb(int *keyu, int *keyd,
+static void AutoBomb(rec_play_key_hold_t *key,
 	note_material umat, note_material mmat, note_material lmat,
-	int uhittime, int mhittime, int lhittime, int Ntime){
-	if (*keyd > 0) {
+	int uhittime, int mhittime, int lhittime, int Ntime)
+{
+	if (key->down > 0) {
 		if (lmat == 7 && lhittime - Ntime <= 40) {
-			*keyd = 0;
+			key->down = 0;
 		}
 		if (umat == 7 && uhittime - Ntime <= 40) {
-			*keyu = 0;
+			key->up = 0;
 		}
 		if (mmat == 7 && mhittime - Ntime <= 40) {
 			if (umat == 2 && uhittime - Ntime <= 40 ||
 				lmat == 7 && lhittime - Ntime <= 40) {
-				(*keyu)++;
-				*keyd = 0;
+				(key->up)++;
+				key->down = 0;
 			}
 			else {
-				*keyu = 0;
-				(*keyd)++;
+				key->up = 0;
+				(key->down)++;
 			}
 		}
 	}
 	else {
 		if (umat == 7 && uhittime - Ntime <= 40) {
-			*keyu = 0;
+			key->up = 0;
 		}
 		if (lmat == 7 && lhittime - Ntime <= 40) {
-			*keyd = 0;
+			key->down = 0;
 		}
 		if (mmat == 7 && mhittime - Ntime <= 40) {
 			if (umat == 7 && uhittime - Ntime <= 40 ||
 				lmat == 2 && lhittime - Ntime <= 40) {
-				*keyu = 0;
-				(*keyd)++;
+				key->up = 0;
+				(key->down)++;
 			}
 			else {
-				(*keyu)++;
-				*keyd = 0;
+				(key->up)++;
+				key->down = 0;
 			}
 		}
 	}
 }
 
-static void AutoArrowUD(int *keyu, int *keyd, int *keyl, int *keyr,
+static void AutoArrowUD(rec_play_key_hold_t *key,
 	note_material umat, note_material mmat, note_material lmat,
-	int uhittime, int mhittime, int lhittime, int Ntime, int hitFG) {
+	int uhittime, int mhittime, int lhittime, int Ntime, int hitFG)
+{
 	if (umat == 3 && uhittime - Ntime <= 8 ||
 		mmat == 3 && mhittime - Ntime <= 8 ||
 		lmat == 3 && lhittime - Ntime <= 8) {
 		if (hitFG == 0) {
-			*keyu = 0;
-			*keyd = 0;
-			*keyl = 0;
-			*keyr = 0;
+			key->up = 0;
+			key->down = 0;
+			key->left = 0;
+			key->right = 0;
 		}
 		hitFG = 1;
-		*keyu = 1;
+		key->up = 1;
 		if (umat == 7 && uhittime - Ntime <= 40) {
-			*keyd = 1;
+			key->down = 1;
 		}
 	}
 	if (umat == 4 && uhittime - Ntime <= 8 ||
 		mmat == 4 && mhittime - Ntime <= 8 ||
 		lmat == 4 && lhittime - Ntime <= 8) {
 		if (hitFG == 0) {
-			*keyu = 0;
-			*keyd = 0;
-			*keyl = 0;
-			*keyr = 0;
+			key->up = 0;
+			key->down = 0;
+			key->left = 0;
+			key->right = 0;
 		}
 		hitFG = 1;
-		*keyd = 1;
+		key->down = 1;
 		if (lmat == 7 && lhittime - Ntime <= 40) {
-			*keyu = 1;
+			key->up = 1;
 		}
 	}
 	return;
 }
 
-static void AutoCatch(int *keyu, int *keyd, note_material umat,
-	note_material mmat, note_material lmat, int uhittime, int mhittime,
-	int lhittime, int Ntime)
+static void AutoCatch(rec_play_key_hold_t *key,
+	note_material umat, note_material mmat, note_material lmat,
+	int uhittime, int mhittime, int lhittime, int Ntime)
 {
-	if (*keyu > 0) {
+	if (key->up > 0) {
 		if (lmat == 2 && lhittime - Ntime <= 8) {
-			*keyu = 0;
-			(*keyd)++;
+			key->up = 0;
+			(key->down)++;
 		}
 		if (mmat == 2 && mhittime - Ntime <= 8) {
-			*keyu = 0;
-			*keyd = 0;
+			key->up = 0;
+			key->down = 0;
 		}
 		if (umat == 2 && uhittime - Ntime <= 8) {
-			(*keyu)++;
-			*keyd = 0;
+			(key->up)++;
+			key->down = 0;
 		}
 	}
 	else {
 		if (umat == 2 && uhittime - Ntime <= 8) {
-			(*keyu)++;
-			*keyd = 0;
+			(key->up)++;
+			key->down = 0;
 		}
 		if (mmat == 2 && mhittime - Ntime <= 8) {
-			*keyu = 0;
-			*keyd = 0;
+			key->up = 0;
+			key->down = 0;
 		}
 		if (lmat == 2 && lhittime - Ntime <= 8) {
-			*keyu = 0;
-			(*keyd)++;
+			key->up = 0;
+			(key->down)++;
 		}
 	}
 	return;
 }
 
-static void AutoReleaseKey(int *keya, int *keyb, int *keyc, int *keyu,
-	int *keyd, int *keyl, int *keyr, note_material umat, note_material mmat,
-	note_material lmat, int uhittime, int mhittime, int lhittime, int Ntime)
+static void AutoReleaseKey(rec_play_key_hold_t *key,
+	note_material umat, note_material mmat, note_material lmat,
+	int uhittime, int mhittime, int lhittime, int Ntime)
 {
 	/* ヒットボタン離し */
-	if (*keya > 10) { *keya = 0; }
-	if (*keyb > 10) { *keyb = 0; }
-	if (*keyc > 10) { *keyc = 0; }
+	if (key->z > 10) { key->z = 0; }
+	if (key->x > 10) { key->x = 0; }
+	if (key->c > 10) { key->c = 0; }
 	/* 左右ボタン離し */
-	if (*keyl > 10) { *keyl = 0; }
-	if (*keyr > 10) { *keyr = 0; }
+	if (key->left > 10) { key->left = 0; }
+	if (key->right > 10) { key->right = 0; }
 	/* 上下ボタン離し */
 	if ((umat != 2 && umat != 7 || uhittime - Ntime >= 1000) &&
 		(mmat != 2 && mmat != 7 || mhittime - Ntime >= 1000) &&
 		(lmat != 2 && lmat != 7 || lhittime - Ntime >= 1000)) {
-		if (*keyu > 10) { *keyu = 0; }
-		if (*keyd > 10) { *keyd = 0; }
+		if (key->up > 10) { key->up = 0; }
+		if (key->down > 10) { key->down = 0; }
 	}
 }
 
-static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
-	int *keyl, int *keyr, int Ntime) {
-	if (*keya == 1) {
+static void CalAdif(rec_play_key_hold_t *key, int Ntime) {
+	if (key->z == 1) {
 		adif[nowNo].time = Ntime;
 		adif[nowNo].key = 1;
 		if (adif[nowNo].prev->time + 10 <= Ntime) {
@@ -319,7 +322,7 @@ static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
 		}
 		nowNo = (nowNo + 1) % 50;
 	}
-	if (*keyb == 1) {
+	if (key->x == 1) {
 		adif[nowNo].time = Ntime;
 		adif[nowNo].key = 1;
 		if (adif[nowNo].prev->time + 10 <= Ntime) {
@@ -330,7 +333,7 @@ static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
 		}
 		nowNo = (nowNo + 1) % 50;
 	}
-	if (*keyc == 1) {
+	if (key->c == 1) {
 		adif[nowNo].time = Ntime;
 		adif[nowNo].key = 1;
 		if (adif[nowNo].prev->time + 10 <= Ntime) {
@@ -341,7 +344,7 @@ static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
 		}
 		nowNo = (nowNo + 1) % 50;
 	}
-	if (*keyu == 1) {
+	if (key->up == 1) {
 		adif[nowNo].time = Ntime;
 		adif[nowNo].key = 1;
 		if (adif[nowNo].prev->time + 10 <= Ntime) {
@@ -352,7 +355,7 @@ static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
 		}
 		nowNo = (nowNo + 1) % 50;
 	}
-	if (*keyd == 1) {
+	if (key->down == 1) {
 		adif[nowNo].time = Ntime;
 		adif[nowNo].key = 1;
 		if (adif[nowNo].prev->time + 10 <= Ntime) {
@@ -363,7 +366,7 @@ static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
 		}
 		nowNo = (nowNo + 1) % 50;
 	}
-	if (*keyl == 1) {
+	if (key->left == 1) {
 		adif[nowNo].time = Ntime;
 		adif[nowNo].key = 1;
 		if (adif[nowNo].prev->time + 10 <= Ntime) {
@@ -374,7 +377,7 @@ static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
 		}
 		nowNo = (nowNo + 1) % 50;
 	}
-	if (*keyr == 1) {
+	if (key->right == 1) {
 		adif[nowNo].time = Ntime;
 		adif[nowNo].key = 1;
 		if (adif[nowNo].prev->time + 10 <= Ntime) {
@@ -388,58 +391,56 @@ static void CalAdif(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
 	return;
 }
 
-void AutoAution(int *keya, int *keyb, int *keyc, int *keyu, int *keyd,
-	int *keyl, int *keyr, note_box_2_t note[], short int objectNG[], int Ntime)
+void AutoAution(rec_play_key_hold_t *key, note_box_2_t note[],
+	short int objectNG[], int Ntime)
 {
 	int hitFG = 0;
-	if (*keya > 0) { (*keya)++; }
-	if (*keyb > 0) { (*keyb)++; }
-	if (*keyc > 0) { (*keyc)++; }
-	if (*keyu > 0) { (*keyu)++; }
-	if (*keyd > 0) { (*keyd)++; }
-	if (*keyl > 0) { (*keyl)++; }
-	if (*keyr > 0) { (*keyr)++; }
+	if (key->z > 0) { (key->z)++; }
+	if (key->x > 0) { (key->x)++; }
+	if (key->c > 0) { (key->c)++; }
+	if (key->up > 0) { (key->up)++; }
+	if (key->down > 0) { (key->down)++; }
+	if (key->left > 0) { (key->left)++; }
+	if (key->right > 0) { (key->right)++; }
 	//縦連前ボタン離し
-	AutoBefTate(keyu, keyd, keyl, keyr,
+	AutoBefTate(key,
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
 		Ntime);
 	//ヒットノーツ処理
-	AutoHit(keya, keyb, keyc,
-		note, objectNG,
-		Ntime);
+	AutoHit(key, note, objectNG, Ntime);
 	//左右アローノーツ処理
-	hitFG = AutoArrowLR(keyu, keyd, keyl, keyr,
+	hitFG = AutoArrowLR(key,
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
 		Ntime);
 	//ボムノーツ処理
-	AutoBomb(keyu, keyd,
+	AutoBomb(key,
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
 		Ntime);
 	//上下アローノーツ処理
-	AutoArrowUD(keyu, keyd, keyl, keyr,
+	AutoArrowUD(key,
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
 		Ntime, hitFG);
 	//キャッチノーツ処理
-	AutoCatch(keyu, keyd,
+	AutoCatch(key,
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
 		Ntime);
 	/* ボタン離し */
-	AutoReleaseKey(keya, keyb, keyc, keyu, keyd, keyl, keyr,
+	AutoReleaseKey(key,
 		note[objectNG[0]].object, note[objectNG[1]].object,
 		note[objectNG[2]].object, note[objectNG[0]].hittime,
 		note[objectNG[1]].hittime, note[objectNG[2]].hittime,
 		Ntime);
 	/* adif計算 */
-	CalAdif(keya, keyb, keyc, keyu, keyd, keyl, keyr, Ntime);
+	CalAdif(key, Ntime);
 	return;
 }

@@ -81,17 +81,6 @@ typedef struct rec_move_all_set_s {
 	rec_move_set_t y[5];
 } rec_move_all_set_t;
 
-/* <=-1: just release, 0: no push, 1: just push, 2<=: hold */
-typedef struct rec_play_key_hold_s {
-	int z = 0;
-	int x = 0;
-	int c = 0;
-	int up = 0;
-	int down = 0;
-	int left = 0;
-	int right = 0;
-} rec_play_key_hold_t;
-
 typedef struct rec_paly_time_set_s {
 	int now;
 	int end;
@@ -202,43 +191,6 @@ int CheckNearHitNote(
 	struct note_box *const dnote,
 #endif
 	int Ntime);
-#if SWITCH_NOTE_BOX_2 == 0
-int GetCharaPos2(int time, note_box_t highnote, note_box_t midnote,
-	note_box_t lownote, int keyu, int keyd, int keyl, int keyr, int hitatp,
-	int hitatt) {
-	struct note_box note[3] = { highnote, midnote, lownote };
-	int ans = CHARA_POS_MID;
-	// near catch/bomb
-	for (int i = 0; i < 3; i++) {
-		if ((note[i].object == 2 && note[i].hittime <= time + 40 ||
-			note[i].object == 7 && note[i].hittime <= time + 40) &&
-			keyu == 0 && keyd == 0) {
-			return CHARA_POS_MID;
-		}
-	}
-	// hit note
-	if (keyu != 1 && keyd != 1 && keyl != 1 && keyr != 1 && hitatt != -1000) {
-		return hitatp;
-	}
-	// push up
-	if (1 <= keyu && 0 == keyd) {
-		ans = CHARA_POS_UP;
-	}
-	// push down
-	else if (0 == keyu && 1 <= keyd) {
-		ans = CHARA_POS_DOWN;
-	}
-	// push up and down
-	else if (1 <= keyu && 1 <= keyd) {
-		ans = CHARA_POS_MID;
-	}
-	// not hit
-	else {
-		ans = CHARA_POS_MID;
-	}
-	return ans;
-}
-#endif
 int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes2(struct judge_box judge, int Notes);
 struct score_box GetScore3(struct score_box score, struct judge_box judge,
@@ -271,7 +223,6 @@ char PlayNoteHitSound(
 void PlayNoteHitSound2(play_sound_t* const sound);
 
 /* sub action */
-#if SWITCH_NOTE_BOX_2 == 1
 int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	rec_play_key_hold_t *keyhold, int hitatp, int hitatt) {
 	int ans = CHARA_POS_MID;
@@ -300,7 +251,6 @@ int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	else { ans = CHARA_POS_MID; }
 	return ans;
 }
-#endif
 
 /**
  * return 0 = normal, 1 = continue, 2 = break;
@@ -1266,8 +1216,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//オートプレイ用コード
 		else if (AutoFlag == 1) {
-			AutoAution(&keyhold.z, &keyhold.x, &keyhold.c, &keyhold.up, &keyhold.down,
-				&keyhold.left, &keyhold.right, mapdata.note, objectNG, time.now);
+			AutoAution(&keyhold, mapdata.note, objectNG, time.now);
 		}
 		//キー押しヒット解除
 		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk[1] + 750 < time.now) {
