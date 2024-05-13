@@ -6,9 +6,26 @@
 
 typedef struct autodif_s autodif_t;
 
+#define IS_ACTION_TYPE_ARROW(type) ((type) == ACTION_TYPE_ARROW_UP || (type) == ACTION_TYPE_ARROW_DOWN || (type) == ACTION_TYPE_ARROW_LEFT || (type) == ACTION_TYPE_ARROW_RIGHT)
+
+typedef enum action_type_e {
+	ACTION_TYPE_NONE,
+	ACTION_TYPE_HIT,
+	ACTION_TYPE_ARROW_UP,
+	ACTION_TYPE_ARROW_DOWN,
+	ACTION_TYPE_ARROW_LEFT,
+	ACTION_TYPE_ARROW_RIGHT,
+	ACTION_TYPE_CATCH_HIGH,
+	ACTION_TYPE_CATCH_MID,
+	ACTION_TYPE_CATCH_LOW,
+	ACTION_TYPE_BOMB_HIGH,
+	ACTION_TYPE_BOMB_MID,
+	ACTION_TYPE_BOMB_LOW,
+} action_type_t;
+
 struct autodif_s {
 	int time = -1;
-	int key = 0;
+	action_type_t atype[3] = { ACTION_TYPE_NONE,ACTION_TYPE_NONE,ACTION_TYPE_NONE };
 	int def = 0;
 	autodif_t *next = NULL;
 	autodif_t *prev = NULL;
@@ -16,11 +33,115 @@ struct autodif_s {
 
 static autodif_t adif[ADIF_NUM];
 static int nowNo = 0;
+static action_type_t buf_type[3] = { ACTION_TYPE_NONE,ACTION_TYPE_NONE,ACTION_TYPE_NONE };
+
+static void Set_Type(action_type_t set) {
+	int FG = 0;
+	
+	if (set == ACTION_TYPE_NONE) {
+		return;
+	}
+
+	for (int i = 0; i < 3 && FG == 0; i++) {
+		switch (buf_type[i]) {
+		case ACTION_TYPE_NONE:
+			buf_type[i] = set;
+			FG = 1;
+			break;
+		case ACTION_TYPE_CATCH_HIGH:
+			if (set == ACTION_TYPE_ARROW_UP) {
+				buf_type[i] = ACTION_TYPE_ARROW_UP;
+				FG = 1;
+			}
+			break;
+		case ACTION_TYPE_CATCH_MID:
+			if (set == ACTION_TYPE_HIT || set == ACTION_TYPE_ARROW_LEFT || set == ACTION_TYPE_ARROW_RIGHT) {
+				buf_type[i] = set;
+				FG = 1;
+			}
+			break;
+		case ACTION_TYPE_CATCH_LOW:
+			if (set == ACTION_TYPE_ARROW_DOWN) {
+				buf_type[i] = ACTION_TYPE_ARROW_DOWN;
+				FG = 1;
+			}
+			break;
+		case ACTION_TYPE_BOMB_HIGH:
+			if (set == ACTION_TYPE_ARROW_UP) {
+				buf_type[i] = ACTION_TYPE_ARROW_UP;
+				FG = 1;
+			}
+			break;
+		case ACTION_TYPE_BOMB_MID:
+			if (set == ACTION_TYPE_HIT || set == ACTION_TYPE_ARROW_LEFT || set == ACTION_TYPE_ARROW_RIGHT) {
+				buf_type[i] = set;
+				FG = 1;
+			}
+			break;
+		case ACTION_TYPE_BOMB_LOW:
+			if (set == ACTION_TYPE_ARROW_DOWN) {
+				buf_type[i] = ACTION_TYPE_ARROW_DOWN;
+				FG = 1;
+			}
+			break;
+		}
+	}
+	return;
+}
+
+static int Cal_Type_Mlp() {
+	action_type_t *bbef = adif[nowNo].atype;
+	action_type_t *bef = adif[nowNo].prev->atype;
+	action_type_t *now = adif[nowNo].prev->prev->atype;
+	
+	/* HIT3“¯Žž‰Ÿ‚µ */
+	if (now[0] == ACTION_TYPE_HIT && now[1] == ACTION_TYPE_HIT && now[2] == ACTION_TYPE_HIT) {
+		return 170;
+	}
+	/* HIT2ARROW“¯Žž‰Ÿ‚µ */
+	if (now[0] == ACTION_TYPE_HIT && now[1] == ACTION_TYPE_HIT && IS_ACTION_TYPE_ARROW(now[2]) ||
+		now[0] == ACTION_TYPE_HIT && IS_ACTION_TYPE_ARROW(now[1]) && now[2] == ACTION_TYPE_HIT ||
+		IS_ACTION_TYPE_ARROW(now[0]) && now[1] == ACTION_TYPE_HIT && now[2] == ACTION_TYPE_HIT) {
+		return 210;
+	}
+	/* HIT1ARROW2“¯Žž‰Ÿ‚µ */
+	if (now[0] == ACTION_TYPE_HIT && IS_ACTION_TYPE_ARROW(now[1]) && IS_ACTION_TYPE_ARROW(now[2]) ||
+		IS_ACTION_TYPE_ARROW(now[0]) && now[1] == ACTION_TYPE_HIT && IS_ACTION_TYPE_ARROW(now[2]) ||
+		IS_ACTION_TYPE_ARROW(now[0]) && IS_ACTION_TYPE_ARROW(now[1]) && now[2] == ACTION_TYPE_HIT)
+	{
+		return 260;
+	}
+
+	/* HIT2“¯Žž‰Ÿ‚µ */
+	if (now[0] == ACTION_TYPE_HIT && now[1] == ACTION_TYPE_HIT || 
+		now[0] == ACTION_TYPE_HIT && now[2] == ACTION_TYPE_HIT || 
+		now[1] == ACTION_TYPE_HIT && now[2] == ACTION_TYPE_HIT) {
+		return 130;
+	}
+	/* HIT1ARROW1“¯Žž‰Ÿ‚µ */
+	if (now[0] == ACTION_TYPE_HIT && IS_ACTION_TYPE_ARROW(now[1]) ||
+		IS_ACTION_TYPE_ARROW(now[0]) && now[1] == ACTION_TYPE_HIT ||
+		now[0] == ACTION_TYPE_HIT && IS_ACTION_TYPE_ARROW(now[2]) ||
+		IS_ACTION_TYPE_ARROW(now[0]) && now[2] == ACTION_TYPE_HIT ||
+		now[1] == ACTION_TYPE_HIT && IS_ACTION_TYPE_ARROW(now[2]) ||
+		IS_ACTION_TYPE_ARROW(now[1]) && now[2] == ACTION_TYPE_HIT) {
+		return 160;
+	}
+	/* ARROW2“¯Žž‰Ÿ‚µ */
+	if (IS_ACTION_TYPE_ARROW(now[0]) && IS_ACTION_TYPE_ARROW(now[1]) ||
+		IS_ACTION_TYPE_ARROW(now[0]) && IS_ACTION_TYPE_ARROW(now[2]) ||
+		IS_ACTION_TYPE_ARROW(now[1]) && IS_ACTION_TYPE_ARROW(now[2])) {
+		return 200;
+	}
+	return 100;
+}
 
 void InitAdif() {
 	for (int i = 0; i < ADIF_NUM; i++) {
 		adif[i].time = -1;
-		adif[i].key = 0;
+		adif[i].atype[0] = ACTION_TYPE_NONE;
+		adif[i].atype[1] = ACTION_TYPE_NONE;
+		adif[i].atype[2] = ACTION_TYPE_NONE;
 		adif[i].def = 0;
 		adif[i].next = &adif[(i + 1) % ADIF_NUM];
 		adif[i].prev = &adif[(i + ADIF_NUM - 1) % ADIF_NUM];
@@ -89,6 +210,7 @@ static void AutoHit(rec_play_key_hold_t *key, note_box_2_t note[],
 			key->c = 0;
 		}
 		key->x = 0;
+		Set_Type(ACTION_TYPE_HIT);
 	}
 	else if (hitcount == 2) {
 		if (key->c == 0) {
@@ -100,11 +222,16 @@ static void AutoHit(rec_play_key_hold_t *key, note_box_2_t note[],
 			key->c = 0;
 		}
 		key->x = 1;
+		Set_Type(ACTION_TYPE_HIT);
+		Set_Type(ACTION_TYPE_HIT);
 	}
 	else if (hitcount >= 3) {
 		key->z = 1;
 		key->x = 1;
 		key->c = 1;
+		Set_Type(ACTION_TYPE_HIT);
+		Set_Type(ACTION_TYPE_HIT);
+		Set_Type(ACTION_TYPE_HIT);
 	}
 	return;
 }
@@ -124,6 +251,7 @@ static int AutoArrowLR(rec_play_key_hold_t *key, note_box_2_t note[],
 		}
 		hitFG = 1;
 		key->left = 1;
+		Set_Type(ACTION_TYPE_ARROW_LEFT);
 	}
 	if (note[objectNG[0]].object == 6 && note[objectNG[0]].hittime - Ntime <= 8 ||
 		note[objectNG[1]].object == 6 && note[objectNG[1]].hittime - Ntime <= 8 ||
@@ -136,6 +264,7 @@ static int AutoArrowLR(rec_play_key_hold_t *key, note_box_2_t note[],
 		}
 		hitFG = 1;
 		key->right = 1;
+		Set_Type(ACTION_TYPE_ARROW_RIGHT);
 	}
 	return hitFG;
 }
@@ -146,38 +275,54 @@ static void AutoBomb(rec_play_key_hold_t *key, note_box_2_t note[],
 	if (key->down > 0) {
 		if (note[objectNG[2]].object == 7 && note[objectNG[2]].hittime - Ntime <= 40) {
 			key->down = 0;
+			Set_Type(ACTION_TYPE_BOMB_MID);
 		}
 		if (note[objectNG[0]].object == 7 && note[objectNG[0]].hittime - Ntime <= 40) {
 			key->up = 0;
+			Set_Type(ACTION_TYPE_BOMB_MID);
 		}
 		if (note[objectNG[1]].object == 7 && note[objectNG[1]].hittime - Ntime <= 40) {
 			if (note[objectNG[0]].object == 2 && note[objectNG[0]].hittime - Ntime <= 40 ||
 				note[objectNG[2]].object == 7 && note[objectNG[2]].hittime - Ntime <= 40) {
 				(key->up)++;
 				key->down = 0;
+				if (key->up == 1) {
+					Set_Type(ACTION_TYPE_BOMB_HIGH);
+				}
 			}
 			else {
 				key->up = 0;
 				(key->down)++;
+				if (key->down == 1) {
+					Set_Type(ACTION_TYPE_BOMB_LOW);
+				}
 			}
 		}
 	}
 	else {
 		if (note[objectNG[0]].object == 7 && note[objectNG[0]].hittime - Ntime <= 40) {
 			key->up = 0;
+			Set_Type(ACTION_TYPE_BOMB_MID);
 		}
 		if (note[objectNG[2]].object == 7 && note[objectNG[2]].hittime - Ntime <= 40) {
 			key->down = 0;
+			Set_Type(ACTION_TYPE_BOMB_MID);
 		}
 		if (note[objectNG[1]].object == 7 && note[objectNG[1]].hittime - Ntime <= 40) {
 			if (note[objectNG[0]].object == 7 && note[objectNG[0]].hittime - Ntime <= 40 ||
 				note[objectNG[2]].object == 2 && note[objectNG[2]].hittime - Ntime <= 40) {
 				key->up = 0;
 				(key->down)++;
+				if (key->down == 1) {
+					Set_Type(ACTION_TYPE_BOMB_LOW);
+				}
 			}
 			else {
 				(key->up)++;
 				key->down = 0;
+				if (key->up == 1) {
+					Set_Type(ACTION_TYPE_BOMB_HIGH);
+				}
 			}
 		}
 	}
@@ -197,6 +342,7 @@ static void AutoArrowUD(rec_play_key_hold_t *key, note_box_2_t note[],
 		}
 		hitFG = 1;
 		key->up = 1;
+		Set_Type(ACTION_TYPE_ARROW_UP);
 		if (note[objectNG[0]].object == 7 && note[objectNG[0]].hittime - Ntime <= 40) {
 			key->down = 1;
 		}
@@ -212,6 +358,7 @@ static void AutoArrowUD(rec_play_key_hold_t *key, note_box_2_t note[],
 		}
 		hitFG = 1;
 		key->down = 1;
+		Set_Type(ACTION_TYPE_ARROW_DOWN);
 		if (note[objectNG[2]].object == 7 && note[objectNG[2]].hittime - Ntime <= 40) {
 			key->up = 1;
 		}
@@ -226,28 +373,42 @@ static void AutoCatch(rec_play_key_hold_t *key, note_box_2_t note[],
 		if (note[objectNG[2]].object == 2 && note[objectNG[2]].hittime - Ntime <= 8) {
 			key->up = 0;
 			(key->down)++;
+			if (key->down == 1) {
+				Set_Type(ACTION_TYPE_CATCH_LOW);
+			}
 		}
 		if (note[objectNG[1]].object == 2 && note[objectNG[1]].hittime - Ntime <= 8) {
 			key->up = 0;
 			key->down = 0;
+			Set_Type(ACTION_TYPE_CATCH_MID);
 		}
 		if (note[objectNG[0]].object == 2 && note[objectNG[0]].hittime - Ntime <= 8) {
 			(key->up)++;
 			key->down = 0;
+			if (key->up == 1) {
+				Set_Type(ACTION_TYPE_CATCH_HIGH);
+			}
 		}
 	}
 	else {
 		if (note[objectNG[0]].object == 2 && note[objectNG[0]].hittime - Ntime <= 8) {
 			(key->up)++;
 			key->down = 0;
+			if (key->up == 1) {
+				Set_Type(ACTION_TYPE_CATCH_HIGH);
+			}
 		}
 		if (note[objectNG[1]].object == 2 && note[objectNG[1]].hittime - Ntime <= 8) {
 			key->up = 0;
 			key->down = 0;
+			Set_Type(ACTION_TYPE_CATCH_MID);
 		}
 		if (note[objectNG[2]].object == 2 && note[objectNG[2]].hittime - Ntime <= 8) {
 			key->up = 0;
 			(key->down)++;
+			if (key->down == 1) {
+				Set_Type(ACTION_TYPE_CATCH_LOW);
+			}
 		}
 	}
 	return;
@@ -273,82 +434,21 @@ static void AutoReleaseKey(rec_play_key_hold_t *key, note_box_2_t note[],
 }
 
 static void CalAdif(rec_play_key_hold_t *key, int Ntime) {
-	if (key->z == 1) {
+	if (buf_type[0] != ACTION_TYPE_NONE) {
 		adif[nowNo].time = Ntime;
-		adif[nowNo].key = 1;
+		adif[nowNo].atype[0] = buf_type[0];
+		adif[nowNo].atype[1] = buf_type[1];
+		adif[nowNo].atype[2] = buf_type[2];
 		if (adif[nowNo].prev->time + 10 <= Ntime) {
-			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
+			adif[nowNo].def = 3000000 * Cal_Type_Mlp() / ((Ntime - adif[nowNo].prev->time) * 100);
 		}
 		else {
-			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
+			adif[nowNo].def = adif[nowNo].prev->def * 12 * Cal_Type_Mlp() / 1000;
 		}
 		nowNo = (nowNo + 1) % 50;
-	}
-	if (key->x == 1) {
-		adif[nowNo].time = Ntime;
-		adif[nowNo].key = 1;
-		if (adif[nowNo].prev->time + 10 <= Ntime) {
-			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-		}
-		else {
-			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
-		}
-		nowNo = (nowNo + 1) % 50;
-	}
-	if (key->c == 1) {
-		adif[nowNo].time = Ntime;
-		adif[nowNo].key = 1;
-		if (adif[nowNo].prev->time + 10 <= Ntime) {
-			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-		}
-		else {
-			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
-		}
-		nowNo = (nowNo + 1) % 50;
-	}
-	if (key->up == 1) {
-		adif[nowNo].time = Ntime;
-		adif[nowNo].key = 1;
-		if (adif[nowNo].prev->time + 10 <= Ntime) {
-			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-		}
-		else {
-			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
-		}
-		nowNo = (nowNo + 1) % 50;
-	}
-	if (key->down == 1) {
-		adif[nowNo].time = Ntime;
-		adif[nowNo].key = 1;
-		if (adif[nowNo].prev->time + 10 <= Ntime) {
-			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-		}
-		else {
-			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
-		}
-		nowNo = (nowNo + 1) % 50;
-	}
-	if (key->left == 1) {
-		adif[nowNo].time = Ntime;
-		adif[nowNo].key = 1;
-		if (adif[nowNo].prev->time + 10 <= Ntime) {
-			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-		}
-		else {
-			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
-		}
-		nowNo = (nowNo + 1) % 50;
-	}
-	if (key->right == 1) {
-		adif[nowNo].time = Ntime;
-		adif[nowNo].key = 1;
-		if (adif[nowNo].prev->time + 10 <= Ntime) {
-			adif[nowNo].def = 3000000 / (Ntime - adif[nowNo].prev->time);
-		}
-		else {
-			adif[nowNo].def = adif[nowNo].prev->def * 1.2;
-		}
-		nowNo = (nowNo + 1) % 50;
+		buf_type[0] = ACTION_TYPE_NONE;
+		buf_type[1] = ACTION_TYPE_NONE;
+		buf_type[2] = ACTION_TYPE_NONE;
 	}
 	return;
 }
