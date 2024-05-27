@@ -35,6 +35,12 @@
 #define SAFE_TIME 100
 #define F_MISS_TIME 200
 
+#define DrawGraphRecField(xpos, ypos, cam, pic) DrawGraph((xpos) + (cam)->x, (ypos) + (cam)->y, pic, TRUE)
+#define DrawTurnGraphRecField(xpos, ypos, cam, pic) DrawTurnGraph((xpos) + (cam)->x, (ypos) + (cam)->y, pic, TRUE)
+#define DrawLineRecField(posx1, posy1, posx2, posy2, cam, color, thick) DrawLine((posx1) + (cam)->x, (posy1) + (cam)->y, (posx2) + (cam)->x, (posy2) + (cam)->y, color, thick)
+
+#define DrawGraphRecBackField(xpos, ypos, cam, pic) DrawGraph((xpos) + (cam)->x / 5, (ypos) + (cam)->y / 5, pic, TRUE)
+
 /* debug */
 #if 1
 #define RECR_DEBUG(ofs, data)											\
@@ -306,8 +312,7 @@ static int StepNoDrawNote(note_box_2_t *note, rec_map_eff_data_t *mapeff,
 }
 
 static void CalPalCrawNote(int lock0, int lock1, note_box_2_t *note, int Xline,
-	int Yline, double speedt, struct scrool_box *scrool,
-	rec_play_xy_set_t *nowcamera, int Ntime, int G[])
+	int Yline, double speedt, struct scrool_box *scrool, int Ntime, int G[])
 {
 	//縦位置
 	G[2] = ((lock1 == 1) ? note->ypos : Yline);
@@ -317,9 +322,6 @@ static void CalPalCrawNote(int lock0, int lock1, note_box_2_t *note, int Xline,
 	G[1] += ((lock0 == 1) ? note->xpos - 150 : Xline - 150);
 	//色
 	G[6] = note->color;
-	//カメラ補正
-	G[1] += nowcamera->x;
-	G[2] += nowcamera->y;
 }
 
 /**
@@ -330,43 +332,49 @@ static int DrawNoteOne(int G[], note_box_2_t *note, rec_map_eff_data_t *mapeff,
 	int Yline, int scroolN, rec_play_xy_set_t *nowcamera,
 	struct note_img *noteimg)
 {
+	int DrawID = 0;
 	G[7] = StepNoDrawNote(note, mapeff, viewTN, lockN, iLine, speedN, Ntime, G);
 	if (G[7] == 1) { return 1; }
 	else if (G[7] == 2) { return 2; }
 	CalPalCrawNote(mapeff->lock[0][0][lockN[0] + G[3]], mapeff->lock[1][0][lockN[1] + G[4]],
 		note, Xline, Yline, mapeff->speedt[iLine][0][(speedN + G[5]) * 2 + 1],
-		&mapeff->scrool[scroolN], nowcamera, Ntime, G);
+		&mapeff->scrool[scroolN], Ntime, G);
 	switch (note->object) {
 	case 1:
-		DrawGraph(G[1], G[2], noteimg->notebase, TRUE);
-		DrawGraph(G[1], G[2], noteimg->hitcircle[G[6]], TRUE);
-		break;
-	case 2:
-		DrawGraph(G[1], G[2], noteimg->catchi, TRUE);
-		break;
 	case 3:
-		DrawGraph(G[1], G[2], noteimg->notebase, TRUE);
-		DrawGraph(G[1], G[2], noteimg->up, TRUE);
-		break;
 	case 4:
-		DrawGraph(G[1], G[2], noteimg->notebase, TRUE);
-		DrawGraph(G[1], G[2], noteimg->down, TRUE);
-		break;
 	case 5:
-		DrawGraph(G[1], G[2], noteimg->notebase, TRUE);
-		DrawGraph(G[1], G[2], noteimg->left, TRUE);
-		break;
 	case 6:
-		DrawGraph(G[1], G[2], noteimg->notebase, TRUE);
-		DrawGraph(G[1], G[2], noteimg->right, TRUE);
-		break;
-	case 7:
-		DrawGraph(G[1], G[2], noteimg->bomb, TRUE);
-		break;
-	case 8:
-		DrawGraph(G[1], G[2], noteimg->goust, TRUE);
+		DrawGraphRecField(G[1], G[2], nowcamera, noteimg->notebase);
 		break;
 	}
+	switch (note->object) {
+	case 1:
+		DrawID = noteimg->hitcircle[G[6]];
+		break;
+	case 2:
+		DrawID = noteimg->catchi;
+		break;
+	case 3:
+		DrawID = noteimg->up;
+		break;
+	case 4:
+		DrawID = noteimg->down;
+		break;
+	case 5:
+		DrawID = noteimg->left;
+		break;
+	case 6:
+		DrawID = noteimg->right;
+		break;
+	case 7:
+		DrawID = noteimg->bomb;
+		break;
+	case 8:
+		DrawID = noteimg->goust;
+		break;
+	}
+	DrawGraphRecField(G[1], G[2], nowcamera, DrawID);
 	return 0;
 }
 
@@ -452,18 +460,19 @@ int PlayShowGuideLine(int Ntime, int Line, rec_move_set_t Ymove[], int Xline[],
 	}
 	// cal Xpos1
 	if (iDraw < 1) {
-		drawLeft = Xline[Line] + Xline[Line] + 15 + nowcamera->x;
-		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
-		drawY1 = Yline[Line] + 15 + nowcamera->y;
-		drawY2 = Yline[Line] + 15 + nowcamera->y;
-		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
+		drawLeft = Xline[Line] + Xline[Line] + 15;
+		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15;
+		drawY1 = Yline[Line] + 15;
+		drawY2 = Yline[Line] + 15;
+
+		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, nowcamera, drawC, 2);
 	}
 	else if (Ntime < Ymove[Line].d[iDraw].Etime) {
-		drawLeft = (Ymove[Line].d[iDraw - 1].Etime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
-		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
-		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + nowcamera->y;
-		drawY2 = Ymove[Line].d[iDraw - 1].pos + 15 + nowcamera->y;
-		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
+		drawLeft = (Ymove[Line].d[iDraw - 1].Etime - Ntime) / 2.1 + Xline[Line] + 15;
+		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15;
+		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15;
+		drawY2 = Ymove[Line].d[iDraw - 1].pos + 15;
+		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, nowcamera, drawC, 2);
 	}
 	drawLeft = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15 + nowcamera->x;
 	if (640 < drawLeft) {
@@ -1080,24 +1089,17 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				speedN[3]++;
 			}
 			cal_back_x(bgp, &mapeff, speedN, scroolN, nowcamera.x);
-			G[18] = 0;
-			G[19] = bgp[1];
 			//draw background picture
 			G[0] = bgp[0] / 100;
+
 			while (G[0] + nowcamera.x / 5 < 70000) {
-				DrawGraph(G[0] + nowcamera.x / 5,
-					Yline[3] / 5 - 160 + nowcamera.y / 5,
-					backskyimg, TRUE);
+				DrawGraphRecBackField(G[0], Yline[3] / 5 - 160, &nowcamera, backskyimg);
 				G[0] += 640;
 			}
 			G[0] = bgp[1] / 100;
 			while (G[0] + nowcamera.x < 70000) {
-				DrawGraph(G[0] + nowcamera.x,
-					Yline[3] - 400 + nowcamera.y, backgroundimg,
-					TRUE);
-				DrawGraph(G[0] + nowcamera.x,
-					Yline[4] - 400 + nowcamera.y, backwaterimg,
-					TRUE);
+				DrawGraphRecField(G[0], Yline[3] - 400, &nowcamera, backgroundimg);
+				DrawGraphRecField(G[0], Yline[4] - 400, &nowcamera, backwaterimg);
 				G[0] += 640;
 			}
 			//落ち物背景表示
@@ -1134,12 +1136,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		// view chara pos guide
 		if (mapeff.carrow.d[mapeff.carrow.num].data == 1) {
-			DrawGraph(Xline[charaput] - 4 + nowcamera.x, Yline[charaput] - 4 + nowcamera.y,
-				charaguideimg, TRUE);
+			DrawGraphRecField(Xline[charaput] - 4, Yline[charaput] - 4, &nowcamera, charaguideimg);
 		}
 		else {
-			DrawTurnGraph(Xline[charaput] - 56 + nowcamera.x, Yline[charaput] - 4 + nowcamera.y,
-				charaguideimg, TRUE);
+			DrawTurnGraphRecField(Xline[charaput] - 56, Yline[charaput] - 4, &nowcamera, charaguideimg);
 		}
 		//Xline(横位置)の計算
 		recSetLine(Xline, mapeff.move.x, time.now, 3);
@@ -1152,7 +1152,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
-			DrawGraph(Xline[i[0]] + nowcamera.x, Yline[i[0]] + nowcamera.y, judghimg, TRUE);
+			DrawGraphRecField(Xline[i[0]], Yline[i[0]], &nowcamera, judghimg);
 		}
 		//キャラグラ変換
 		G[3] = 0;
@@ -1176,26 +1176,23 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (GetNowCount() - charahit > 250) { G[5] = 0; }
 		else { G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit); }
 		if (charahit > 0) {
-			G[0] = Xline[charaput] + G[5] + nowcamera.x;
-			G[1] = G[4] - 75 + nowcamera.y;
+			G[0] = Xline[charaput] + G[5];
+			G[1] = G[4] - 75;
 			G[2] = betweens(24 + hitpose * 6, (GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
 			if (mapeff.carrow.d[mapeff.carrow.num].data == 1) {
-				DrawGraph(G[0] - 160, G[1], charaimg[G[2]], TRUE);
+				DrawGraphRecField(G[0] - 160, G[1], &nowcamera, charaimg[G[2]]);
 			}
 			else {
-				DrawTurnGraph(G[0] + 30, G[1], charaimg[G[2]], TRUE);
+				DrawTurnGraphRecField(G[0] + 30, G[1], &nowcamera, charaimg[G[2]]);
 			}
 		}
 		else {
+			G[0] = time.now * mapeff.v_BPM.data[mapeff.v_BPM.num].BPM / 20000 % 6 + mapeff.chamo[charaput].gra[mapeff.chamo[charaput].num] * 6;
 			if (mapeff.carrow.d[mapeff.carrow.num].data == 1) {
-				DrawGraph(Xline[charaput] - 160 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[time.now * mapeff.v_BPM.data[mapeff.v_BPM.num].BPM / 20000 % 6 +
-					mapeff.chamo[charaput].gra[mapeff.chamo[charaput].num] * 6], TRUE);
+				DrawGraphRecField(Xline[charaput] - 160, G[4] - 75, &nowcamera, charaimg[G[0]]);
 			}
 			else {
-				DrawTurnGraph(Xline[0] + 30 + nowcamera.x, G[4] - 75 + nowcamera.y,
-					charaimg[time.now * mapeff.v_BPM.data[mapeff.v_BPM.num].BPM / 20000 % 6 +
-					mapeff.chamo[charaput].gra[mapeff.chamo[charaput].num] * 6], TRUE);
+				DrawTurnGraphRecField(Xline[charaput] + 30, G[4] - 75, &nowcamera, charaimg[G[0]]);
 			}
 		}
 		//キー設定
