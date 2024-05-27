@@ -161,6 +161,12 @@ typedef struct rec_map_detail_s {
 	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
 } rec_map_detail_t;
 
+typedef struct rec_play_back_pic_s {
+	int sky = 0;
+	int ground = 0;
+	int water = 0;
+} rec_play_back_pic_t;
+
 #if 1 /* filter2 */
 
 /* proto */
@@ -594,6 +600,27 @@ static void DrawFallBack(int Yline, int item[], rec_fall_data_t *falleff) {
 	if (baseY >= 640) { baseY -= 480; }
 }
 
+static void PlayDrawBackGround(rec_map_eff_data_t *mapeff, short int *speedN,
+	int scroolN, rec_play_xy_set_t *cam, int Yline[], rec_play_back_pic_t *backpic,
+	int *item)
+{
+	static int bgp[3] = { 0,0,0 };
+	cal_back_x(bgp, mapeff, speedN, scroolN, cam->x);
+	//draw background picture
+	for (int loop = bgp[0] / 100; loop + cam->x / 5 < 70000; loop += 640) {
+		DrawGraphRecBackField(loop, Yline[3] / 5 - 160, cam, backpic->sky);
+	}
+	for (int loop = bgp[1] / 100; loop + cam->x < 70000; loop += 640) {
+		DrawGraphRecField(loop, Yline[3] - 400, cam, backpic->ground);
+		DrawGraphRecField(loop, Yline[4] - 400, cam, backpic->water);
+	}
+	//落ち物背景表示
+	if (mapeff->fall.d[mapeff->fall.num].No >= 0) {
+		DrawFallBack(Yline[3], item, &mapeff->fall);
+	}
+	return;
+}
+
 #endif /* filter2 */
 
 /* main action */
@@ -617,7 +644,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int KeyPushCount[7] = { 0,0,0,0,0,0,0 };
 	short int cameraN = 0;
 	/* int */
-	int bgp[3] = { 0,0,0 }; //[0:sky,1:ground,2:water]の横位置
 	int judgh = 0; //ノーツの時間距離
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20], songT;
@@ -719,9 +745,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		LoadSoundMem(L"sound/melody/highE.wav")
 	};
 	int judghimg = LoadGraph(L"picture/Marker.png");
-	int backskyimg = 0;
-	int backgroundimg = 0;
-	int backwaterimg = 0;
+	rec_play_back_pic_t backpic;
 	int dangerimg = LoadGraph(L"picture/danger.png");
 	int dropimg = LoadGraph(L"picture/drop.png");
 	int sbarimg = LoadGraph(L"picture/scoreber.png");
@@ -961,9 +985,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		fread(&outpoint, sizeof(int), 2, fp);//エラーデータ
 	}
 	musicmp3 = LoadSoundMem(nameset.mp3FN);
-	backskyimg = LoadGraph(nameset.sky);
-	backgroundimg = LoadGraph(nameset.ground);
-	backwaterimg = LoadGraph(nameset.water);
+	backpic.sky = LoadGraph(nameset.sky);
+	backpic.ground = LoadGraph(nameset.ground);
+	backpic.water = LoadGraph(nameset.water);
 	fclose(fp);
 	strcats(DataFN, fileN);
 	strcats(DataFN, ST3);
@@ -1046,14 +1070,20 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			scroolN++;
 		}
 		if (system.backLight != 0) {
-			while (-500 < mapeff.Movie[MovieN].endtime &&
-				mapeff.Movie[MovieN].endtime < time.now) {
+			while (mapeff.Movie[MovieN].endtime < time.now &&
+				mapeff.Movie[MovieN].endtime > -500)
+			{
 				MovieN++;
 			}
-			if (0 <= mapeff.fall.d[mapeff.fall.num + 1].time &&
-				mapeff.fall.d[mapeff.fall.num + 1].time <= time.now)
+			while (mapeff.fall.d[mapeff.fall.num + 1].time <= time.now &&
+				mapeff.fall.d[mapeff.fall.num + 1].time >= 0)
 			{
 				mapeff.fall.num++;
+			}
+			if (mapeff.speedt[3][speedN[3] + 1][0] < time.now &&
+				mapeff.speedt[3][speedN[3] + 1][0] >= 0)
+			{
+				speedN[3]++;
 			}
 		}
 		if (AutoFlag == 1) {
@@ -1083,29 +1113,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		PlaySetCamera(&nowcamera, mapeff.camera, cameraN, time.now);
 		//背景表示
 		if (system.backLight != 0) {
-			if (mapeff.speedt[3][speedN[3] + 1][0] < time.now &&
-				mapeff.speedt[3][speedN[3] + 1][0] >= 0)
-			{
-				speedN[3]++;
-			}
-			cal_back_x(bgp, &mapeff, speedN, scroolN, nowcamera.x);
-			//draw background picture
-			G[0] = bgp[0] / 100;
-
-			while (G[0] + nowcamera.x / 5 < 70000) {
-				DrawGraphRecBackField(G[0], Yline[3] / 5 - 160, &nowcamera, backskyimg);
-				G[0] += 640;
-			}
-			G[0] = bgp[1] / 100;
-			while (G[0] + nowcamera.x < 70000) {
-				DrawGraphRecField(G[0], Yline[3] - 400, &nowcamera, backgroundimg);
-				DrawGraphRecField(G[0], Yline[4] - 400, &nowcamera, backwaterimg);
-				G[0] += 640;
-			}
-			//落ち物背景表示
-			if (mapeff.fall.d[mapeff.fall.num].No >= 0) {
-				DrawFallBack(Yline[3], item, &mapeff.fall);
-			}
+			PlayDrawBackGround(&mapeff, speedN, scroolN, &nowcamera, Yline, &backpic, item);
 		}
 		//フィルター表示
 		switch (system.backLight) {
