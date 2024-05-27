@@ -621,6 +621,41 @@ static void PlayDrawBackGround(rec_map_eff_data_t *mapeff, short int *speedN,
 	return;
 }
 
+void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[],
+	int Yline[], short int charaput, int Ntime, rec_map_eff_data_t *mapeff,
+	rec_play_xy_set_t *cam, int pic[])
+{
+	static int hitpose = 0;
+	int drawX = 0;
+	int drawY = 0;
+	int hitoffset = 0;
+	int picID = 0;
+
+	if (key->z == 1) { hitpose = (hitpose + 1) % 2; }
+	if (key->x == 1) { hitpose = (hitpose + 1) % 2; }
+	if (key->c == 1) { hitpose = (hitpose + 1) % 2; }
+	if (GetNowCount() - charahit > 250) { hitoffset = 0; }
+	else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
+	drawY = Yline[charaput] - 75;
+	if (charahit > 0) {
+		drawX = Xline[charaput] + hitoffset;
+		picID = betweens(24 + hitpose * 6,
+			(GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
+	}
+	else {
+		drawX = Xline[charaput];
+
+		picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
+			20000 % 6 + mapeff->chamo[charaput].gra[mapeff->chamo[charaput].num] * 6;
+	}
+	if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
+		DrawGraphRecField(drawX - 160, drawY, cam, pic[picID]);
+	}
+	else {
+		DrawTurnGraphRecField(drawX + 30, drawY, cam, pic[picID]);
+	}
+}
+
 #endif /* filter2 */
 
 /* main action */
@@ -659,7 +694,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int life = 500;
 	int ret_gap[3] = { 0,0,0 };
 	int StopFrag = -1;
-	int hitpose = 0;
 	int scroolN = 0;
 	int HighSrore; //ハイスコア
 	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
@@ -1162,47 +1196,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			DrawGraphRecField(Xline[i[0]], Yline[i[0]], &nowcamera, judghimg);
 		}
-		//キャラグラ変換
-		G[3] = 0;
-		//get chara position
 		charaput = GetCharaPos3(time.now, mapdata.note, objectNG, &keyhold, hitatk[0], hitatk[1]);
-		G[4] = Yline[charaput];
-		//キャラグラフィックを表示
-		if (keyhold.z == 1) {
-			hitpose = (hitpose + 1) % 2;
-		}
-		if (keyhold.x == 1) {
-			hitpose = (hitpose + 1) % 2;
-		}
-		if (keyhold.c == 1) {
-			hitpose = (hitpose + 1) % 2;
-		}
 		if ((GetNowCount() - charahit > 50) &&
 			(keyhold.up == 1 || keyhold.down == 1 || keyhold.left == 1 || keyhold.right == 1)) {
 			charahit = 0;
 		}
-		if (GetNowCount() - charahit > 250) { G[5] = 0; }
-		else { G[5] = pals(250, 0, 0, 50, GetNowCount() - charahit); }
-		if (charahit > 0) {
-			G[0] = Xline[charaput] + G[5];
-			G[1] = G[4] - 75;
-			G[2] = betweens(24 + hitpose * 6, (GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
-			if (mapeff.carrow.d[mapeff.carrow.num].data == 1) {
-				DrawGraphRecField(G[0] - 160, G[1], &nowcamera, charaimg[G[2]]);
-			}
-			else {
-				DrawTurnGraphRecField(G[0] + 30, G[1], &nowcamera, charaimg[G[2]]);
-			}
-		}
-		else {
-			G[0] = time.now * mapeff.v_BPM.data[mapeff.v_BPM.num].BPM / 20000 % 6 + mapeff.chamo[charaput].gra[mapeff.chamo[charaput].num] * 6;
-			if (mapeff.carrow.d[mapeff.carrow.num].data == 1) {
-				DrawGraphRecField(Xline[charaput] - 160, G[4] - 75, &nowcamera, charaimg[G[0]]);
-			}
-			else {
-				DrawTurnGraphRecField(Xline[charaput] + 30, G[4] - 75, &nowcamera, charaimg[G[0]]);
-			}
-		}
+		/* キャラ表示 */
+		PlayDrawChara(&keyhold, charahit, Xline, Yline, charaput, time.now, &mapeff, &nowcamera, charaimg);
 		//キー設定
 		if (AutoFlag == 0) {
 			if (key[KEY_INPUT_Z] == 0) keyhold.z = 0;
