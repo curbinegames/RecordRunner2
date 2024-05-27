@@ -1074,8 +1074,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	CutTime = Stime = GetNowCount();
 	//ゲーム開始
 	while (1) {
-		ClearDrawScreen();
-		GetHitKeyStateAll(key);
 		// number step
 		for (int iLine = 0; iLine < 3; iLine++) {
 			objectNG[iLine] = mins(objectNG[iLine], objectN[iLine]);
@@ -1143,8 +1141,53 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			mapeff.viewT[0][viewTN + 1] <= time.now) {
 			viewTN++;
 		}
+
 		//カメラ移動
 		PlaySetCamera(&nowcamera, mapeff.camera, cameraN, time.now);
+		//Xline(横位置)の計算
+		recSetLine(Xline, mapeff.move.x, time.now, 3);
+		//Yline(縦位置)の計算
+		if (system.backLight == 0) {
+			recSetLine(Yline, mapeff.move.y, time.now, 3);
+		}
+		else {
+			recSetLine(Yline, mapeff.move.y, time.now, 5);
+		}
+		charaput = GetCharaPos3(time.now, mapdata.note,
+			objectNG, &keyhold, hitatk[0], hitatk[1]);
+		if ((GetNowCount() - charahit > 50) &&
+			(keyhold.up == 1 || keyhold.down == 1 ||
+			keyhold.left == 1 || keyhold.right == 1))
+		{
+			charahit = 0;
+		}
+
+		//キー設定
+		GetHitKeyStateAll(key);
+		if (AutoFlag == 0) {
+			if (key[KEY_INPUT_Z] == 0) keyhold.z = 0;
+			else if (key[KEY_INPUT_Z] == 1) keyhold.z++;
+			if (key[KEY_INPUT_X] == 0) keyhold.x = 0;
+			else if (key[KEY_INPUT_X] == 1) keyhold.x++;
+			if (key[KEY_INPUT_C] == 0) keyhold.c = 0;
+			else if (key[KEY_INPUT_C] == 1) keyhold.c++;
+			if (key[KEY_INPUT_UP] == 0) keyhold.up = 0;
+			else if (key[KEY_INPUT_UP] == 1) keyhold.up++;
+			if (key[KEY_INPUT_LEFT] == 0) keyhold.left = 0;
+			else if (key[KEY_INPUT_LEFT] == 1) keyhold.left++;
+			if (key[KEY_INPUT_RIGHT] == 0) keyhold.right = 0;
+			else if (key[KEY_INPUT_RIGHT] == 1) keyhold.right++;
+			if (key[KEY_INPUT_DOWN] == 0) keyhold.down = 0;
+			else if (key[KEY_INPUT_DOWN] == 1) keyhold.down++;
+		}
+		//オートプレイ用コード
+		else if (AutoFlag == 1) {
+			if (key[KEY_INPUT_G] == 0) { holdG = 0; }
+			else if (key[KEY_INPUT_G] == 1) { holdG++; }
+			AutoAution(&keyhold, mapdata.note, objectNG, time.now);
+		}
+
+		ClearDrawScreen();
 		//背景表示
 		if (system.backLight != 0) {
 			PlayDrawBackGround(&mapeff, speedN, scroolN, &nowcamera, Yline, &backpic, item);
@@ -1183,53 +1226,18 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		else {
 			DrawTurnGraphRecField(Xline[charaput] - 56, Yline[charaput] - 4, &nowcamera, charaguideimg);
 		}
-		//Xline(横位置)の計算
-		recSetLine(Xline, mapeff.move.x, time.now, 3);
-		//Yline(縦位置)の計算
-		if (system.backLight == 0) {
-			recSetLine(Yline, mapeff.move.y, time.now, 3);
-		}
-		else {
-			recSetLine(Yline, mapeff.move.y, time.now, 5);
-		}
 		//判定マーカーの表示
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			DrawGraphRecField(Xline[i[0]], Yline[i[0]], &nowcamera, judghimg);
 		}
-		charaput = GetCharaPos3(time.now, mapdata.note, objectNG, &keyhold, hitatk[0], hitatk[1]);
-		if ((GetNowCount() - charahit > 50) &&
-			(keyhold.up == 1 || keyhold.down == 1 || keyhold.left == 1 || keyhold.right == 1)) {
-			charahit = 0;
-		}
 		/* キャラ表示 */
-		PlayDrawChara(&keyhold, charahit, Xline, Yline, charaput, time.now, &mapeff, &nowcamera, charaimg);
-		//キー設定
-		if (AutoFlag == 0) {
-			if (key[KEY_INPUT_Z] == 0) keyhold.z = 0;
-			else if (key[KEY_INPUT_Z] == 1) keyhold.z++;
-			if (key[KEY_INPUT_X] == 0) keyhold.x = 0;
-			else if (key[KEY_INPUT_X] == 1) keyhold.x++;
-			if (key[KEY_INPUT_C] == 0) keyhold.c = 0;
-			else if (key[KEY_INPUT_C] == 1) keyhold.c++;
-			if (key[KEY_INPUT_UP] == 0) keyhold.up = 0;
-			else if (key[KEY_INPUT_UP] == 1) keyhold.up++;
-			if (key[KEY_INPUT_LEFT] == 0) keyhold.left = 0;
-			else if (key[KEY_INPUT_LEFT] == 1) keyhold.left++;
-			if (key[KEY_INPUT_RIGHT] == 0) keyhold.right = 0;
-			else if (key[KEY_INPUT_RIGHT] == 1) keyhold.right++;
-			if (key[KEY_INPUT_DOWN] == 0) keyhold.down = 0;
-			else if (key[KEY_INPUT_DOWN] == 1) keyhold.down++;
-		}
-		//オートプレイ用コード
-		else if (AutoFlag == 1) {
-			AutoAution(&keyhold, mapdata.note, objectNG, time.now);
-		}
+		PlayDrawChara(&keyhold, charahit, Xline, Yline, charaput, time.now, &mapeff,
+			&nowcamera, charaimg);
+
 		//キー押しヒット解除
 		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk[1] + 750 < time.now) {
 			hitatk[1] = -1000;
 		}
-		if (key[KEY_INPUT_G] == 0) { holdG = 0; }
-		else if (key[KEY_INPUT_G] == 1) { holdG++; }
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		//キャッチ判定に使う数値を計算
 		LaneTrack[charaput] = time.now;
