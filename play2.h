@@ -697,6 +697,19 @@ void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[],
 	}
 }
 
+void PlayShowAllGuideLine(short LineMoveN[], int Ntime, rec_move_set_t Ymove[],
+	int Xline[], int Yline[], rec_play_xy_set_t *nowcamera)
+{
+	int flag = 0;
+	for (int iLine = 0; iLine < 3; iLine++) {
+		for (int iDraw = LineMoveN[iLine]; 1; iDraw++) {
+			flag = PlayShowGuideLine(Ntime, iLine, Ymove, Xline, Yline, nowcamera, iDraw);
+			if (flag != 0) { break; }
+		}
+	}
+	return;
+}
+
 #endif /* sub group */
 
 /* main action */
@@ -1266,13 +1279,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		// view line
 		if (AutoFlag == 1) {
-			for (i[0] = 0; i[0] < 3; i[0]++) {
-				for (int iDraw = LineMoveN[i[0]]; 1; iDraw++) {
-					if (PlayShowGuideLine(time.now, i[0], mapeff.move.y, Xline, Yline, &nowcamera, iDraw) != 0) {
-						break;
-					}
-				}
-			}
+			PlayShowAllGuideLine(LineMoveN, time.now, mapeff.move.y, Xline, Yline, &nowcamera);
 		}
 		// view chara pos guide
 		if (mapeff.carrow.d[mapeff.carrow.num].data == 1) {
