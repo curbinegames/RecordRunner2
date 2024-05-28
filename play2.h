@@ -1330,29 +1330,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		for (int iLine = 0; iLine < 3; iLine++) {
 			G[0] = G[3] = G[4] = G[5] = 0;
 			{
-#if SWITCH_NOTE_BOX_2 == 1
 				note_box_2_t *temp = NULL;
 				temp = &mapdata.note[0];
-#else
-				note_box_t *temp = NULL;
-				switch (iLine) {
-				case 0:
-					temp = &mapdata.note2.up[0];
-					break;
-				case 1:
-					temp = &mapdata.note2.mid[0];
-					break;
-				case 2:
-					temp = &mapdata.note2.low[0];
-					break;
-				}
-#endif
 				for (int iNote = objectN[iLine]; mapdata.note[iNote].hittime > 0;
-#if SWITCH_NOTE_BOX_2 == 1
 					iNote = mapdata.note[iNote].next
-#else
-					iNote++
-#endif
 					)
 				{
 					G[7] = DrawNoteOne(G, &mapdata.note[iNote], &mapeff, viewTN, lockN,
@@ -1360,9 +1341,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 						scroolN, &nowcamera, &noteimg);
 					if (G[7] == 1) { continue; }
 					else if (G[7] == 2) { break; }
-#if SWITCH_NOTE_BOX_2 == 1
 					if (mapdata.note[iNote].next == -1) { break; }
-#endif
 				}
 			}
 		}
@@ -1379,32 +1358,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			 * G[1] = 一番近いHITノーツの位置
 			 * G[2] = 一番近いHITノーツのギャップ */
 			note_judge NJ = NOTE_JUDGE_JUST;
-#if SWITCH_NOTE_BOX_2 == 1
 			G[1] = CheckNearHitNote(&mapdata.note[objectN[0]],
 				&mapdata.note[objectN[1]], &mapdata.note[objectN[2]], time.now);
-#else
-			G[1] = CheckNearHitNote(&mapdata.note2.up[objectN[0]],
-				&mapdata.note2.mid[objectN[1]], &mapdata.note2.low[objectN[2]], time.now);
-#endif
 			if (G[1] == -1) {
 				if (i[0] == 0) { p_sound.flag |= SE_SWING; }
 				break;
 			}
-#if SWITCH_NOTE_BOX_2 == 1
 			G[2] = mapdata.note[objectN[G[1]]].hittime - time.now;
-#else
-			switch (G[1]) {
-			case 0:
-				G[2] = mapdata.note2.up[objectN[G[1]]].hittime - time.now;
-				break;
-			case 1:
-				G[2] = mapdata.note2.mid[objectN[G[1]]].hittime - time.now;
-				break;
-			case 2:
-				G[2] = mapdata.note2.low[objectN[G[1]]].hittime - time.now;
-				break;
-			}
-#endif
 			hitatk2 |= 1 << G[1];
 			NJ = CheckJudge(G[2]);
 			if (NJ == NOTE_JUDGE_MISS) { p_sound.flag |= SE_SWING; }
