@@ -178,32 +178,11 @@ typedef struct rec_play_chara_hit_attack_s {
 
 #endif /* typedef group */
 
-#if 1 /* sub group */
+#if 1 /* proto */
 
 /* proto */
 
 void AddGap(gap_box* const box, int data);
-
-/* (ret / 100) */
-void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int scroolN, int cam) {
-	xpos[0] -= (int)(100 * mapeff->speedt[3][speedN[3]][1] * mapeff->scrool[scroolN].speed);
-	while (xpos[0] + 100 * cam / 5 > 0) {
-		xpos[0] -= 64000;
-	}
-	while (xpos[0] + 100 * cam / 5 < -64000) {
-		xpos[0] += 64000;
-	}
-	xpos[1] -= (int)(500 * mapeff->speedt[4][speedN[4]][1] * mapeff->scrool[scroolN].speed);
-	while (xpos[1] + 100 * cam > 0) {
-		xpos[1] -= 64000;
-	}
-	while (xpos[1] + 100 * cam < -64000) {
-		xpos[1] += 64000;
-	}
-	xpos[2] = xpos[1];
-	return;
-}
-
 note_judge CheckJudge(int gap);
 int CheckNearHitNote(
 #if SWITCH_NOTE_BOX_2 == 1
@@ -229,6 +208,42 @@ void note_judge_event(note_judge judge, distance_score_t *Dscore,
 	int *const Sitem, int Ntime, int Jtime, int lineNo,
 	judge_action_box *const judgeA);
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo);
+void ShowCombo(int combo, int *pic);
+void ShowScore2(struct score_box score, int Hscore, int time);
+void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
+char PlayNoteHitSound(
+#if SWITCH_NOTE_BOX_2 == 1
+	note_box_2_t note,
+#else
+	note_box note,
+#endif
+	int *MelodySnd, int *Sitem, char seflag,
+	int notemat);
+void PlayNoteHitSound2(play_sound_t* const sound);
+
+#endif /* proto */
+
+#if 1 /* sub action */
+
+/* (ret / 100) */
+void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int scroolN, int cam) {
+	xpos[0] -= (int)(100 * mapeff->speedt[3][speedN[3]][1] * mapeff->scrool[scroolN].speed);
+	while (xpos[0] + 100 * cam / 5 > 0) {
+		xpos[0] -= 64000;
+	}
+	while (xpos[0] + 100 * cam / 5 < -64000) {
+		xpos[0] += 64000;
+	}
+	xpos[1] -= (int)(500 * mapeff->speedt[4][speedN[4]][1] * mapeff->scrool[scroolN].speed);
+	while (xpos[1] + 100 * cam > 0) {
+		xpos[1] -= 64000;
+	}
+	while (xpos[1] + 100 * cam < -64000) {
+		xpos[1] += 64000;
+	}
+	xpos[2] = xpos[1];
+	return;
+}
 
 void SetHitPosByHit(rec_play_chara_hit_attack_t *hitatk, char const hitflag, int Ntime) {
 	int n = 0;
@@ -260,20 +275,6 @@ void SetHitPosByHit(rec_play_chara_hit_attack_t *hitatk, char const hitflag, int
 	return;
 }
 
-void ShowCombo(int combo, int *pic);
-void ShowScore2(struct score_box score, int Hscore, int time);
-void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
-
-char PlayNoteHitSound(
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t note,
-#else
-	note_box note,
-#endif
-	int *MelodySnd, int *Sitem, char seflag,
-	int notemat);
-void PlayNoteHitSound2(play_sound_t* const sound);
-
 /* sub action */
 int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
@@ -304,6 +305,190 @@ int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	else { ans = CHARA_POS_MID; }
 	return ans;
 }
+
+void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
+	for (int iLine = 0; iLine < loop; iLine++) {
+		if (move[iLine].d[move[iLine].num].Stime <= Ntime &&
+			move[iLine].d[move[iLine].num].Stime >= 0)
+		{
+			line[iLine] =
+				(int)movecal(
+					move[iLine].d[move[iLine].num].mode,
+					move[iLine].d[move[iLine].num].Stime,
+					move[iLine].d[move[iLine].num - 1].pos,
+					move[iLine].d[move[iLine].num].Etime,
+					move[iLine].d[move[iLine].num].pos, Ntime);
+		}
+		while (
+			move[iLine].d[move[iLine].num].Etime <= Ntime &&
+			move[iLine].d[move[iLine].num].Stime >= 0 ||
+			move[iLine].d[move[iLine].num].mode == 4)
+		{
+			line[iLine] = move[iLine].d[move[iLine].num].pos;
+			move[iLine].num++;
+		}
+	}
+	return;
+}
+
+void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
+	unsigned int color, int thick) {
+	int end = x1 + 10;
+	switch (mode) {
+	case 1: // lin
+		DrawLine(x1, y1, x2, y2, color, thick);
+		break;
+	case 2: // acc
+		for (int i = x1; i <= x2; i++) {
+			end = maxs(i + 10, x2);
+			DrawLine(i, pals(x1, y1, x2, y2, i),
+				end, pals(x1, y1, x2, y2, end),
+				color, thick);
+		}
+		break;
+	case 3: // dec
+		for (int i = x1; i <= x2; i++) {
+			end = maxs(i + 10, x2);
+			DrawLine(i, pals(x2, y2, x1, y1, i),
+				end, pals(x2, y2, x1, y1, end),
+				color, thick);
+		}
+		break;
+	}
+	return;
+}
+
+int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
+	int ret = 0;
+	int sect = 0;
+	int stime = 0;
+	if (time->now - time->offset <= 0) {
+		ret = ddif[0];
+	}
+	else if (time->now - time->end >= 0) {
+		ret = ddif[24];
+	}
+	else {
+		sect = (time->now - time->offset) * 24 / (time->end - time->offset);
+		stime = (time->now - time->offset) % ((time->end - time->offset) / 24);
+		ret = lins(0, ddif[sect], (time->end - time->offset) / 24, ddif[sect + 1], stime);
+	}
+	ret = lins(379 * 50, 100, 34733 * 50, 800, ret);
+	return ret;
+}
+
+void PlaySetCamera(rec_play_xy_set_t *retcam, struct camera_box camset[], int camN, int Ntime) {
+	if (camset[camN].starttime <= Ntime && Ntime <= camset[camN].endtime) {
+		retcam->x = (int)movecal(camset[camN].mode,
+			camset[camN].starttime, camset[camN - 1].xpos,
+			camset[camN].endtime, camset[camN].xpos, Ntime);
+		retcam->y = (int)movecal( camset[camN].mode,
+			camset[camN].starttime, camset[camN - 1].ypos,
+			camset[camN].endtime, camset[camN].ypos, Ntime);
+	}
+	else {
+		retcam->x = camset[camN - 1].xpos;
+		retcam->y = camset[camN - 1].ypos;
+	}
+	return;
+}
+
+void PlayDrawItem(rec_map_eff_data_t *mapeff, short int MovieN, int Ntime,
+	rec_play_xy_set_t *camera, int Xmidline, int item[])
+{
+	view_BPM_box *v_BPM = &mapeff->v_BPM.data[mapeff->v_BPM.num];
+	int drawA;
+	int drawX;
+	int drawY;
+	int drawS;
+	int drawR;
+	for (item_box *pMovie = &mapeff->Movie[MovieN]; pMovie->endtime > -500; pMovie++) {
+		if (pMovie->starttime <= Ntime && pMovie->endtime >= Ntime) {
+			//base setting
+			drawA = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startalpha,
+				pMovie->endtime, pMovie->endalpha, Ntime);
+			drawX = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startXpos,
+				pMovie->endtime, pMovie->endXpos, Ntime) + camera->x;
+			drawY = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startYpos,
+				pMovie->endtime, pMovie->endYpos, Ntime) + camera->y;
+			drawS = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startsize,
+				pMovie->endtime, pMovie->endsize, Ntime);
+			drawR = (int)movecal(pMovie->movemode,
+				pMovie->starttime, pMovie->startrot,
+				pMovie->endtime, pMovie->endrot, Ntime);
+			//material setting
+			if (pMovie->eff.lock == 1) {
+				drawX -= camera->x;
+			}
+			if (pMovie->eff.lock == 1) {
+				drawY -= 25 + camera->y;
+			}
+			if (pMovie->eff.bpm_alphr == 1) {
+				drawA = lins(0, drawA, 60000 / v_BPM->BPM, 0,
+					(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
+			}
+			if (pMovie->eff.chara_alphr == 1) {
+				drawA = lins(320, drawA, 60, 0, betweens(60, abss(Xmidline, drawX), 320));
+			}
+			if (pMovie->eff.bpm_size == 1) {
+				drawS = pals(60000 / v_BPM->BPM, drawS / 2, 0, drawS,
+					(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
+			}
+			if (pMovie->eff.edge_size == 1) {
+				drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
+				drawS = betweens(0, lins(100, drawS, 0, 0, drawX), drawS);
+			}
+			//drawing
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
+			DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR,
+				item[pMovie->ID]);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		}
+	}
+}
+
+void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[],
+	int Yline[], short int charaput, int Ntime, rec_map_eff_data_t *mapeff,
+	rec_play_xy_set_t *cam, int pic[])
+{
+	static int hitpose = 0;
+	int drawX = 0;
+	int drawY = 0;
+	int hitoffset = 0;
+	int picID = 0;
+
+	if (key->z == 1) { hitpose = (hitpose + 1) % 2; }
+	if (key->x == 1) { hitpose = (hitpose + 1) % 2; }
+	if (key->c == 1) { hitpose = (hitpose + 1) % 2; }
+	if (GetNowCount() - charahit > 250) { hitoffset = 0; }
+	else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
+	drawY = Yline[charaput] - 75;
+	if (charahit > 0) {
+		drawX = Xline[charaput] + hitoffset;
+		picID = betweens(24 + hitpose * 6,
+			(GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
+	}
+	else {
+		drawX = Xline[charaput];
+
+		picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
+			20000 % 6 + mapeff->chamo[charaput].gra[mapeff->chamo[charaput].num] * 6;
+	}
+	if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
+		DrawGraphRecField(drawX - 160, drawY, cam, pic[picID]);
+	}
+	else {
+		DrawTurnGraphRecField(drawX + 30, drawY, cam, pic[picID]);
+	}
+}
+
+#endif /* sub action */
+
+#if 1 /* Notes Picture */
 
 /**
  * return 0 = normal, 1 = continue, 2 = break;
@@ -425,57 +610,49 @@ static int DrawNoteOne(int G[], note_box_2_t *note, rec_map_eff_data_t *mapeff,
 	return 0;
 }
 
-void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
-	for (int iLine = 0; iLine < loop; iLine++) {
-		if (move[iLine].d[move[iLine].num].Stime <= Ntime &&
-			move[iLine].d[move[iLine].num].Stime >= 0)
-		{
-			line[iLine] =
-				(int)movecal(
-					move[iLine].d[move[iLine].num].mode,
-					move[iLine].d[move[iLine].num].Stime,
-					move[iLine].d[move[iLine].num - 1].pos,
-					move[iLine].d[move[iLine].num].Etime,
-					move[iLine].d[move[iLine].num].pos, Ntime);
+#endif /* Notes Picture */
+
+#if 1 /* Back Ground */
+
+static void DrawFallBack(int Yline, int item[], rec_fall_data_t *falleff) {
+	static int baseX = 0;
+	static int baseY = 0;
+	for (int ix = 0; ix < 2; ix++) {
+		for (int iy = 0; iy < 3; iy++) {
+			DrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
+				item[falleff->d[falleff->num].No], TRUE);
 		}
-		while (
-			move[iLine].d[move[iLine].num].Etime <= Ntime &&
-			move[iLine].d[move[iLine].num].Stime >= 0 ||
-			move[iLine].d[move[iLine].num].mode == 4)
-		{
-			line[iLine] = move[iLine].d[move[iLine].num].pos;
-			move[iLine].num++;
-		}
+	}
+	baseX -= 5;
+	baseY += 2;
+	if (baseX <= -640) { baseX += 640; }
+	if (baseY >= 640) { baseY -= 480; }
+}
+
+static void PlayDrawBackGround(rec_map_eff_data_t *mapeff, short int *speedN,
+	int scroolN, rec_play_xy_set_t *cam, int Yline[], rec_play_back_pic_t *backpic,
+	int *item)
+{
+	static int bgp[3] = { 0,0,0 };
+	cal_back_x(bgp, mapeff, speedN, scroolN, cam->x);
+	//draw background picture
+	for (int loop = bgp[0] / 100; loop + cam->x / 5 < 70000; loop += 640) {
+		DrawGraphRecBackField(loop, Yline[3] / 5 - 160, cam, backpic->sky);
+	}
+	for (int loop = bgp[1] / 100; loop + cam->x < 70000; loop += 640) {
+		DrawGraphRecField(loop, Yline[3] - 400, cam, backpic->ground);
+		DrawGraphRecField(loop, Yline[4] - 400, cam, backpic->water);
+	}
+	//—Ž‚¿•¨”wŒi•\Ž¦
+	if (mapeff->fall.d[mapeff->fall.num].No >= 0) {
+		DrawFallBack(Yline[3], item, &mapeff->fall);
 	}
 	return;
 }
 
-void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
-	unsigned int color, int thick) {
-	int end = x1 + 10;
-	switch (mode) {
-	case 1: // lin
-		DrawLine(x1, y1, x2, y2, color, thick);
-		break;
-	case 2: // acc
-		for (int i = x1; i <= x2; i++) {
-			end = maxs(i + 10, x2);
-			DrawLine(i, pals(x1, y1, x2, y2, i),
-				end, pals(x1, y1, x2, y2, end),
-				color, thick);
-		}
-		break;
-	case 3: // dec
-		for (int i = x1; i <= x2; i++) {
-			end = maxs(i + 10, x2);
-			DrawLine(i, pals(x2, y2, x1, y1, i),
-				end, pals(x2, y2, x1, y1, end),
-				color, thick);
-		}
-		break;
-	}
-	return;
-}
+#endif /* Back Ground */
+
+#if 1 /* Guide Line */
 
 int PlayShowGuideLine(int Ntime, int Line, rec_move_set_t Ymove[], int Xline[],
 	int Yline[], rec_play_xy_set_t *nowcamera, int iDraw)
@@ -533,170 +710,6 @@ int PlayShowGuideLine(int Ntime, int Line, rec_move_set_t Ymove[], int Xline[],
 	return 0;
 }
 
-int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
-	int ret = 0;
-	int sect = 0;
-	int stime = 0;
-	if (time->now - time->offset <= 0) {
-		ret = ddif[0];
-	}
-	else if (time->now - time->end >= 0) {
-		ret = ddif[24];
-	}
-	else {
-		sect = (time->now - time->offset) * 24 / (time->end - time->offset);
-		stime = (time->now - time->offset) % ((time->end - time->offset) / 24);
-		ret = lins(0, ddif[sect], (time->end - time->offset) / 24, ddif[sect + 1], stime);
-	}
-	ret = lins(379 * 50, 100, 34733 * 50, 800, ret);
-	return ret;
-}
-
-void PlaySetCamera(rec_play_xy_set_t *retcam, struct camera_box camset[], int camN, int Ntime) {
-	if (camset[camN].starttime <= Ntime && Ntime <= camset[camN].endtime) {
-		retcam->x = (int)movecal(camset[camN].mode,
-			camset[camN].starttime, camset[camN - 1].xpos,
-			camset[camN].endtime, camset[camN].xpos, Ntime);
-		retcam->y = (int)movecal( camset[camN].mode,
-			camset[camN].starttime, camset[camN - 1].ypos,
-			camset[camN].endtime, camset[camN].ypos, Ntime);
-	}
-	else {
-		retcam->x = camset[camN - 1].xpos;
-		retcam->y = camset[camN - 1].ypos;
-	}
-	return;
-}
-
-void PlayDrawItem(rec_map_eff_data_t *mapeff, short int MovieN, int Ntime,
-	rec_play_xy_set_t *camera, int Xmidline, int item[])
-{
-	view_BPM_box *v_BPM = &mapeff->v_BPM.data[mapeff->v_BPM.num];
-	int drawA;
-	int drawX;
-	int drawY;
-	int drawS;
-	int drawR;
-	for (item_box *pMovie = &mapeff->Movie[MovieN]; pMovie->endtime > -500; pMovie++) {
-		if (pMovie->starttime <= Ntime && pMovie->endtime >= Ntime) {
-			//base setting
-			drawA = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startalpha,
-				pMovie->endtime, pMovie->endalpha, Ntime);
-			drawX = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startXpos,
-				pMovie->endtime, pMovie->endXpos, Ntime) + camera->x;
-			drawY = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startYpos,
-				pMovie->endtime, pMovie->endYpos, Ntime) + camera->y;
-			drawS = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startsize,
-				pMovie->endtime, pMovie->endsize, Ntime);
-			drawR = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startrot,
-				pMovie->endtime, pMovie->endrot, Ntime);
-			//material setting
-			if (pMovie->eff.lock == 1) {
-				drawX -= camera->x;
-			}
-			if (pMovie->eff.lock == 1) {
-				drawY -= 25 + camera->y;
-			}
-			if (pMovie->eff.bpm_alphr == 1) {
-				drawA = lins(0, drawA, 60000 / v_BPM->BPM, 0,
-					(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
-			}
-			if (pMovie->eff.chara_alphr == 1) {
-				drawA = lins(320, drawA, 60, 0, betweens(60, abss(Xmidline, drawX), 320));
-			}
-			if (pMovie->eff.bpm_size == 1) {
-				drawS = pals(60000 / v_BPM->BPM, drawS / 2, 0, drawS,
-					(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
-			}
-			if (pMovie->eff.edge_size == 1) {
-				drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
-				drawS = betweens(0, lins(100, drawS, 0, 0, drawX), drawS);
-			}
-			//drawing
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-			DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR,
-				item[pMovie->ID]);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		}
-	}
-}
-
-static void DrawFallBack(int Yline, int item[], rec_fall_data_t *falleff) {
-	static int baseX = 0;
-	static int baseY = 0;
-	for (int ix = 0; ix < 2; ix++) {
-		for (int iy = 0; iy < 3; iy++) {
-			DrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
-				item[falleff->d[falleff->num].No], TRUE);
-		}
-	}
-	baseX -= 5;
-	baseY += 2;
-	if (baseX <= -640) { baseX += 640; }
-	if (baseY >= 640) { baseY -= 480; }
-}
-
-static void PlayDrawBackGround(rec_map_eff_data_t *mapeff, short int *speedN,
-	int scroolN, rec_play_xy_set_t *cam, int Yline[], rec_play_back_pic_t *backpic,
-	int *item)
-{
-	static int bgp[3] = { 0,0,0 };
-	cal_back_x(bgp, mapeff, speedN, scroolN, cam->x);
-	//draw background picture
-	for (int loop = bgp[0] / 100; loop + cam->x / 5 < 70000; loop += 640) {
-		DrawGraphRecBackField(loop, Yline[3] / 5 - 160, cam, backpic->sky);
-	}
-	for (int loop = bgp[1] / 100; loop + cam->x < 70000; loop += 640) {
-		DrawGraphRecField(loop, Yline[3] - 400, cam, backpic->ground);
-		DrawGraphRecField(loop, Yline[4] - 400, cam, backpic->water);
-	}
-	//—Ž‚¿•¨”wŒi•\Ž¦
-	if (mapeff->fall.d[mapeff->fall.num].No >= 0) {
-		DrawFallBack(Yline[3], item, &mapeff->fall);
-	}
-	return;
-}
-
-void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[],
-	int Yline[], short int charaput, int Ntime, rec_map_eff_data_t *mapeff,
-	rec_play_xy_set_t *cam, int pic[])
-{
-	static int hitpose = 0;
-	int drawX = 0;
-	int drawY = 0;
-	int hitoffset = 0;
-	int picID = 0;
-
-	if (key->z == 1) { hitpose = (hitpose + 1) % 2; }
-	if (key->x == 1) { hitpose = (hitpose + 1) % 2; }
-	if (key->c == 1) { hitpose = (hitpose + 1) % 2; }
-	if (GetNowCount() - charahit > 250) { hitoffset = 0; }
-	else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
-	drawY = Yline[charaput] - 75;
-	if (charahit > 0) {
-		drawX = Xline[charaput] + hitoffset;
-		picID = betweens(24 + hitpose * 6,
-			(GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
-	}
-	else {
-		drawX = Xline[charaput];
-
-		picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
-			20000 % 6 + mapeff->chamo[charaput].gra[mapeff->chamo[charaput].num] * 6;
-	}
-	if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
-		DrawGraphRecField(drawX - 160, drawY, cam, pic[picID]);
-	}
-	else {
-		DrawTurnGraphRecField(drawX + 30, drawY, cam, pic[picID]);
-	}
-}
-
 void PlayShowAllGuideLine(short LineMoveN[], int Ntime, rec_move_set_t Ymove[],
 	int Xline[], int Yline[], rec_play_xy_set_t *nowcamera)
 {
@@ -710,7 +723,7 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime, rec_move_set_t Ymove[],
 	return;
 }
 
-#endif /* sub group */
+#endif /* Guide Line */
 
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
