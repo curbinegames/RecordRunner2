@@ -1110,9 +1110,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 	}
 #endif
+	CutTime = GetNowCount();
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK);
 	WaitTimer(10);
-	CutTime = Stime = GetNowCount();
+	Stime = GetNowCount();
 	//ゲーム開始
 	while (1) {
 		// number step
@@ -1201,6 +1202,20 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		{
 			charahit = 0;
 		}
+		//キー押しヒット解除
+		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk.time + 750 < time.now) {
+			hitatk.time = -1000;
+		}
+		//キャッチ判定に使う数値を計算
+		LaneTrack[charaput] = time.now;
+		if (keyhold.up == 0 && keyhold.down == 0 || keyhold.up > 0 && keyhold.down > 0) { LaneTrack[1] = time.now; }
+		else if (keyhold.up > 0 && keyhold.down == 0) { LaneTrack[0] = time.now; }
+		else if (keyhold.up == 0 && keyhold.down > 0) { LaneTrack[2] = time.now; }
+		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[0]); }
+		else { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[2]); }
+		//ヒット
+		if (keyhold.z == 1 || keyhold.x == 1 || keyhold.c == 1) { charahit = GetNowCount(); }
+		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 
 		//キー設定
 		GetHitKeyStateAll(key);
@@ -1273,26 +1288,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		/* キャラ表示 */
 		PlayDrawChara(&keyhold, charahit, Xline, Yline, charaput, time.now, &mapeff,
 			&nowcamera, charaimg);
-
-		//キー押しヒット解除
-		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk.time + 750 < time.now) {
-			hitatk.time = -1000;
-		}
-		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-		//キャッチ判定に使う数値を計算
-		LaneTrack[charaput] = time.now;
-		if (keyhold.up == 0 && keyhold.down == 0 || keyhold.up > 0 && keyhold.down > 0) { LaneTrack[1] = time.now; }
-		else if (keyhold.up > 0 && keyhold.down == 0) { LaneTrack[0] = time.now; }
-		else if (keyhold.up == 0 && keyhold.down > 0) { LaneTrack[2] = time.now; }
-		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[0]); }
-		else { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[2]); }
-		//ヒット
-		if (keyhold.z == 1 || keyhold.x == 1 || keyhold.c == 1) charahit = GetNowCount();
-		if (charahit + 750 < GetNowCount()) charahit = 0;
 		//コンボ表示
 		ShowCombo(combo, ComboFontimg);
 		//判定表示
 		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput], &nowcamera);
+
+		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
+
 		/* 音符表示 */
 		/* G[0] = viewN+
 		 * G[1] = 横位置
