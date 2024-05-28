@@ -1,5 +1,5 @@
 
-#if 1 /* filter */
+#if 1 /* define group */
 
 /* include */
 
@@ -55,6 +55,10 @@
 #define RECR_DEBUG_LOOP(n, data_a, data_b)
 #endif
 
+#endif /* define group */
+
+#if 1 /* typedef group */
+
 /* enum */
 
 typedef enum chara_pos_e {
@@ -78,10 +82,12 @@ typedef struct rec_move_data_s {
 	int Etime = -10000;
 	int mode = -10000;
 } rec_move_data_t;
+
 typedef struct rec_move_set_s {
 	rec_move_data_t d[999];
 	int num = 0;
 } rec_move_set_t;
+
 typedef struct rec_move_all_set_s {
 	rec_move_set_t x[3];
 	rec_move_set_t y[5];
@@ -119,8 +125,6 @@ typedef struct rec_view_bpm_set_s {
 	view_BPM_box data[100];
 	int num = 0;
 } rec_view_bpm_set_t;
-
-#endif /* filter */
 
 typedef struct rec_play_nameset_s {
 	wchar_t sky[255] = L"picture/backskynoamal.png";
@@ -167,7 +171,14 @@ typedef struct rec_play_back_pic_s {
 	int water = 0;
 } rec_play_back_pic_t;
 
-#if 1 /* filter2 */
+typedef struct rec_play_chara_hit_attack_s {
+	int pos = 1;
+	int time = -1000;
+} rec_play_chara_hit_attack_t;
+
+#endif /* typedef group */
+
+#if 1 /* sub group */
 
 /* proto */
 
@@ -217,13 +228,42 @@ void note_judge_event(note_judge judge, distance_score_t *Dscore,
 #endif
 	int *const Sitem, int Ntime, int Jtime, int lineNo,
 	judge_action_box *const judgeA);
-int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo,
-	int MaxCombo);
-void SetHitPosByHit(int *const hitatk, char const hitflag, int Ntime);
-void ShowCombo(int combo, int *pic);
+int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo);
 
+void SetHitPosByHit(rec_play_chara_hit_attack_t *hitatk, char const hitflag, int Ntime) {
+	int n = 0;
+	int ret = 0;
+	for (int i = 0; i < 3; i++) {
+		if (hitflag & 1 << i) {
+			n++;
+			ret = i;
+		}
+	}
+	if (n == 0) { return; }
+	if (n >= 2) {
+		hitatk->pos = RECR_CHARP_M;
+		hitatk->time = Ntime;
+		return;
+	}
+	switch (ret) {
+	case 0:
+		hitatk->pos = RECR_CHARP_U;
+		break;
+	case 1:
+		hitatk->pos = RECR_CHARP_M;
+		break;
+	case 2:
+		hitatk->pos = RECR_CHARP_D;
+		break;
+	}
+	hitatk->time = Ntime;
+	return;
+}
+
+void ShowCombo(int combo, int *pic);
 void ShowScore2(struct score_box score, int Hscore, int time);
 void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
+
 char PlayNoteHitSound(
 #if SWITCH_NOTE_BOX_2 == 1
 	note_box_2_t note,
@@ -236,7 +276,8 @@ void PlayNoteHitSound2(play_sound_t* const sound);
 
 /* sub action */
 int GetCharaPos3(int time, note_box_2_t note[], short int No[],
-	rec_play_key_hold_t *keyhold, int hitatp, int hitatt) {
+	rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
+{
 	int ans = CHARA_POS_MID;
 	// near catch/bomb
 	for (int i = 0; i < 3; i++) {
@@ -249,9 +290,9 @@ int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	}
 	// hit note
 	if (keyhold->up != 1 && keyhold->down != 1 &&
-		keyhold->left != 1 && keyhold->right != 1 && hitatt != -1000)
+		keyhold->left != 1 && keyhold->right != 1 && hitatk->time != -1000)
 	{
-		return hitatp;
+		return hitatk->pos;
 	}
 	// push up
 	if (1 <= keyhold->up && 0 == keyhold->down) { ans = CHARA_POS_UP; }
@@ -656,7 +697,7 @@ void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[],
 	}
 }
 
-#endif /* filter2 */
+#endif /* sub group */
 
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
@@ -696,7 +737,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int StopFrag = -1;
 	int scroolN = 0;
 	int HighSrore; //ハイスコア
-	int hitatk[2] = { 1,-1000 }; //0:位置, 1:時間
+	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	short int lockN[2] = { 0,0 }; //↑の番号
@@ -1153,8 +1194,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		else {
 			recSetLine(Yline, mapeff.move.y, time.now, 5);
 		}
-		charaput = GetCharaPos3(time.now, mapdata.note,
-			objectNG, &keyhold, hitatk[0], hitatk[1]);
+		charaput = GetCharaPos3(time.now, mapdata.note, objectNG, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
 			(keyhold.up == 1 || keyhold.down == 1 ||
 			keyhold.left == 1 || keyhold.right == 1))
@@ -1235,8 +1275,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			&nowcamera, charaimg);
 
 		//キー押しヒット解除
-		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk[1] + 750 < time.now) {
-			hitatk[1] = -1000;
+		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk.time + 750 < time.now) {
+			hitatk.time = -1000;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		//キャッチ判定に使う数値を計算
@@ -1350,7 +1390,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				G[2], G[1], &judgeA);
 			objectN[G[1]] = mapdata.note[objectN[G[1]]].next;
 		}
-		SetHitPosByHit(&hitatk[0], hitatk2, time.now);
+		SetHitPosByHit(&hitatk, hitatk2, time.now);
 		for (i[0] = 0; i[0] < 3; i[0]++) {
 			/* i[0] = レーンループ */
 			judgh = mapdata.note[objectN[i[0]]].hittime - time.now;
@@ -1364,7 +1404,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 							&mapdata.note[objectN[i[0]]], Sitem, time.now, 0, i[0],
 							&judgeA);
 						charahit = 0;
-						hitatk[1] = -1000;
+						hitatk.time = -1000;
 						objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
 					}
 				}
@@ -2013,38 +2053,6 @@ void note_judge_event(note_judge judge, distance_score_t *Dscore,
 int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
 	int PosCombo = mins(combo + RemainNotes, MaxCombo);
 	return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
-}
-
-void SetHitPosByHit(int *const hitatk, char const hitflag, int Ntime) {
-	int n = 0;
-	int ret = 0;
-	for (int i = 0; i < 3; i++) {
-		if (hitflag & 1 << i) {
-			n++;
-			ret = i;
-		}
-	}
-	if (n == 0) {
-		return;
-	}
-	if (n >= 2) {
-		hitatk[0] = RECR_CHARP_M;
-		hitatk[1] = Ntime;
-		return;
-	}
-	switch (ret) {
-	case 0:
-		hitatk[0] = RECR_CHARP_U;
-		break;
-	case 1:
-		hitatk[0] = RECR_CHARP_M;
-		break;
-	case 2:
-		hitatk[0] = RECR_CHARP_D;
-		break;
-	}
-	hitatk[1] = Ntime;
-	return;
 }
 
 void ShowCombo(int combo, int *pic) {
