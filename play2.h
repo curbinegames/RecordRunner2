@@ -753,6 +753,25 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime, rec_move_set_t Ymove[],
 
 #endif /* Guide Line */
 
+int CheckArrowInJudge(note_material mat, int judge, rec_play_key_hold_t *key) {
+	if (CheckJudge(judge) == NOTE_JUDGE_NONE) { return 0; }
+	switch (mat) {
+	case NOTE_UP:
+		if (key->up == 1) { return 1; }
+		break;
+	case NOTE_DOWN:
+		if (key->down == 1) { return 1; }
+		break;
+	case NOTE_LEFT:
+		if (key->left == 1) { return 1; }
+		break;
+	case NOTE_RIGHT:
+		if (key->right == 1) { return 1; }
+		break;
+	}
+	return 0;
+}
+
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #if 1 /* filter3 */
@@ -1396,15 +1415,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			case NOTE_DOWN:
 			case NOTE_LEFT:
 			case NOTE_RIGHT:
-				if ((CheckJudge(judgh) != NOTE_JUDGE_NONE) && (
-					(keyhold.up == 1 &&
-						mapdata.note[objectN[i[0]]].object == NOTE_UP) ||
-					(keyhold.down == 1 &&
-						mapdata.note[objectN[i[0]]].object == NOTE_DOWN) ||
-					(keyhold.left == 1 &&
-						mapdata.note[objectN[i[0]]].object == NOTE_LEFT) ||
-					(keyhold.right == 1 &&
-						mapdata.note[objectN[i[0]]].object == NOTE_RIGHT))) {
+				if (CheckArrowInJudge(mapdata.note[objectN[i[0]]].object, judgh, &keyhold)) {
 					note_judge_event(CheckJudge(judgh), &Dscore,
 						&mapdata.note[objectN[i[0]]], Sitem, time.now, judgh, i[0],
 						&judgeA);
@@ -1415,13 +1426,17 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 				if (i[0] == charaput && judgh <= 0) {
 					note_judge_event(NOTE_JUDGE_MISS, &Dscore,
 						&mapdata.note[objectN[i[0]]], Sitem, time.now, 0, i[0], &judgeA);
-					objectN[i[0]]++;
-				}
-				else while (mapdata.note[objectN[i[0]]].hittime - time.now < 0) {
-					note_judge_event(NOTE_JUDGE_JUST, &Dscore,
-						&mapdata.note[objectN[i[0]]], Sitem, time.now, -JUST_TIME - 1,
-						i[0], &judgeA);
 					objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
+				}
+				else {
+					while (mapdata.note[objectN[i[0]]].hittime - time.now <= 0 &&
+						0 <= mapdata.note[objectN[i[0]]].hittime)
+					{
+						note_judge_event(NOTE_JUDGE_JUST, &Dscore,
+							&mapdata.note[objectN[i[0]]], Sitem, time.now, -JUST_TIME - 1,
+							i[0], &judgeA);
+						objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
+					}
 				}
 				break;
 			case NOTE_GHOST:
@@ -1430,10 +1445,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 						MelodySnd, Sitem, p_sound.flag, SE_GHOST);
 					objectN[i[0]] = mapdata.note[objectN[i[0]]].next;
 				}
-				break;
-			case NOTE_HIT:
-			default:
-				/* none */
 				break;
 			}
 			//‘Sƒm[ƒcslowmiss
