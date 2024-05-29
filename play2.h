@@ -3,6 +3,7 @@
 
 /* include */
 
+#include "RecScoreFile.h"
 #include "RecordLoad2.h"
 #include "result.h"
 #include "playbox.h"
@@ -76,95 +77,6 @@ typedef struct distance_score_s {
 	int point = 0;
 } distance_score_t;
 
-typedef struct rec_move_data_s {
-	int Stime = -10000;
-	int pos = -10000;
-	int Etime = -10000;
-	int mode = -10000;
-} rec_move_data_t;
-
-typedef struct rec_move_set_s {
-	rec_move_data_t d[999];
-	int num = 0;
-} rec_move_set_t;
-
-typedef struct rec_move_all_set_s {
-	rec_move_set_t x[3];
-	rec_move_set_t y[5];
-} rec_move_all_set_t;
-
-typedef struct rec_paly_time_set_s {
-	int now;
-	int end;
-	int offset;
-} rec_play_time_set_t;
-
-typedef struct rec_chara_gra_data_s {
-	int gra[99];
-	int time[99];
-	int num = 0;
-} rec_chara_gra_data_t[3];
-
-typedef struct rec_chara_arrow_s {
-	struct {
-		int data = 0;
-		int time = -10000;
-	} d[99];
-	int num = 0;
-} rec_chara_arrow_t;
-
-typedef struct rec_fall_data_s {
-	struct {
-		int No = -10000;
-		int time = -10000;
-	} d[99];
-	int num = 0;
-} rec_fall_data_t;
-
-typedef struct rec_view_bpm_set_s {
-	view_BPM_box data[100];
-	int num = 0;
-} rec_view_bpm_set_t;
-
-typedef struct rec_play_nameset_s {
-	wchar_t sky[255] = L"picture/backskynoamal.png";
-	wchar_t ground[255] = L"picture/groundnaturenormal.png";
-	wchar_t water[255] = L"picture/waternormal.png";
-	wchar_t mp3FN[255] = L"song/";
-	wchar_t songN[255];
-	wchar_t songNE[255];
-	wchar_t DifFN[255] = L"picture/difanother.png";
-} rec_play_nameset_t;
-
-typedef struct rec_map_eff_data_s {
-	struct camera_box camera[255];
-	struct scrool_box scrool[99];
-	item_box Movie[999];
-	rec_view_bpm_set_t v_BPM;
-	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
-	rec_chara_arrow_t carrow;
-	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
-	rec_move_all_set_t move;
-	rec_chara_gra_data_t chamo;
-	rec_fall_data_t fall;
-	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
-} rec_map_eff_data_t;
-
-typedef struct rec_map_detail_s {
-	double bpm = 120;
-	short int Lv = 0;
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t note[6000];
-#else
-	note_lane_t note2;
-#endif
-	short int notes = 0;
-	int mdif = 0;
-	int ldif = 0;
-	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
-	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
-} rec_map_detail_t;
-
 typedef struct rec_play_back_pic_s {
 	int sky = 0;
 	int ground = 0;
@@ -175,15 +87,6 @@ typedef struct rec_play_chara_hit_attack_s {
 	int pos = 1;
 	int time = -1000;
 } rec_play_chara_hit_attack_t;
-
-typedef struct rec_score_file_s {
-	playnum_box allnum;
-	rec_play_nameset_t nameset;
-	rec_map_detail_t mapdata;
-	rec_map_eff_data_t mapeff;
-	rec_play_time_set_t time; /* ? */
-	int outpoint[2] = { -1,0 };
-} rec_score_file_t;
 
 #endif /* typedef group */
 
@@ -475,139 +378,6 @@ void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[],
 	else {
 		DrawTurnGraphRecField(drawX + 30, drawY, cam, pic[picID]);
 	}
-}
-
-/* 0: OK, -1: error */
-int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
-	if (recfp == NULL || fp == NULL) { return -1; }
-
-	fread(&recfp->allnum, sizeof(playnum_box), 1, fp);//各データの個数
-	fread(&recfp->nameset.mp3FN, 255, 1, fp);//音楽ファイル名
-	fread(&recfp->mapdata.bpm, sizeof(double), 1, fp);//BPM
-	fread(&recfp->time.offset, sizeof(int), 1, fp);//offset
-	fread(&recfp->nameset.sky, 255, 1, fp);//空背景名
-	fread(&recfp->nameset.ground, 255, 1, fp);//地面画像名
-	fread(&recfp->nameset.water, 255, 1, fp);//水中画像名
-	fread(&recfp->nameset.songN, 255, 1, fp);//曲名
-	fread(&recfp->nameset.songNE, 255, 1, fp);//曲名(英語)
-	fread(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//レベル
-	//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
-	{
-		int buf[99][2];
-		fread(buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
-		for (int i = 0; i < 99; i++) {
-			recfp->mapeff.fall.d[i].time = buf[i][0];
-			recfp->mapeff.fall.d[i].No   = buf[i][1];
-		}
-	}
-	fread(&recfp->mapeff.speedt, sizeof(double), 990, fp);//レーン速度
-	{
-		int buf[3][99][2];
-		fread(buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
-		for (int i = 0; i < 99; i++) {
-			recfp->mapeff.chamo[0].gra[i]  = buf[0][i][0];
-			recfp->mapeff.chamo[0].time[i] = buf[0][i][1];
-			recfp->mapeff.chamo[1].gra[i]  = buf[1][i][0];
-			recfp->mapeff.chamo[1].time[i] = buf[1][i][1];
-			recfp->mapeff.chamo[2].gra[i]  = buf[2][i][0];
-			recfp->mapeff.chamo[2].time[i] = buf[2][i][1];
-		}
-	}
-	{
-		int buf[999][4];
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
-		for (int i = 0; i < recfp->allnum.Ymovenum[0]; i++) {
-			recfp->mapeff.move.y[0].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[0].d[i].pos   = buf[i][1];
-			recfp->mapeff.move.y[0].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[0].d[i].mode  = buf[i][3];
-		}
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
-		for (int i = 0; i < recfp->allnum.Ymovenum[1]; i++) {
-			recfp->mapeff.move.y[1].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[1].d[i].pos   = buf[i][1];
-			recfp->mapeff.move.y[1].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[1].d[i].mode  = buf[i][3];
-		}
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
-		for (int i = 0; i < recfp->allnum.Ymovenum[2]; i++) {
-			recfp->mapeff.move.y[2].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[2].d[i].pos   = buf[i][1];
-			recfp->mapeff.move.y[2].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[2].d[i].mode  = buf[i][3];
-		}
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
-		for (int i = 0; i < recfp->allnum.Ymovenum[3]; i++) {
-			recfp->mapeff.move.y[3].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[3].d[i].pos   = buf[i][1];
-			recfp->mapeff.move.y[3].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[3].d[i].mode  = buf[i][3];
-		}
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
-		for (int i = 0; i < recfp->allnum.Ymovenum[4]; i++) {
-			recfp->mapeff.move.y[4].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[4].d[i].pos   = buf[i][1];
-			recfp->mapeff.move.y[4].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[4].d[i].mode  = buf[i][3];
-		}
-		fread(buf, sizeof(int), recfp->allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
-		for (int i = 0; i < recfp->allnum.Xmovenum[0]; i++) {
-			recfp->mapeff.move.x[0].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.x[0].d[i].pos   = buf[i][1];
-			recfp->mapeff.move.x[0].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.x[0].d[i].mode  = buf[i][3];
-		}
-		fread(buf, sizeof(int), recfp->allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
-		for (int i = 0; i < recfp->allnum.Xmovenum[1]; i++) {
-			recfp->mapeff.move.x[1].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.x[1].d[i].pos   = buf[i][1];
-			recfp->mapeff.move.x[1].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.x[1].d[i].mode  = buf[i][3];
-		}
-		fread(buf, sizeof(int), recfp->allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
-		for (int i = 0; i < recfp->allnum.Xmovenum[2]; i++) {
-			recfp->mapeff.move.x[2].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.x[2].d[i].pos   = buf[i][1];
-			recfp->mapeff.move.x[2].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.x[2].d[i].mode  = buf[i][3];
-		}
-	}
-	fread(&recfp->mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
-	{
-		int buf[2][99];
-		fread(buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
-		for (int i = 0; i < 99; i++) {
-			recfp->mapeff.carrow.d[i].data = buf[0][i];
-			recfp->mapeff.carrow.d[i].time = buf[1][i];
-		}
-	}
-	fread(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2 == 1
-	fread(&recfp->mapdata.note, sizeof(note_box_2_t),
-		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
-#else
-	fread(&recfp->mapdata.note2.up[0], sizeof(struct note_box), recfp->allnum.notenum[0], fp); /* 上レーンノーツデータ */
-	fread(&recfp->mapdata.note2.mid[0], sizeof(struct note_box), recfp->allnum.notenum[1], fp); /* 中レーンノーツデータ */
-	fread(&recfp->mapdata.note2.low[0], sizeof(struct note_box), recfp->allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
-	fread(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
-	fread(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
-	{
-		int buf[2];
-		fread(buf, sizeof(int), 2, fp);
-		recfp->mapdata.mdif = buf[0];//最高難易度
-		recfp->mapdata.ldif = buf[1];//最終難易度
-	}
-	fread(&recfp->mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
-	fread(&recfp->mapdata.ddifG, sizeof(int), 2, fp);//各区間難易度データ
-	fread(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
-	fread(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//アイテムデータ
-	fread(&recfp->mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
-	fread(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-	fread(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
-	fread(&recfp->outpoint, sizeof(int), 2, fp);//エラーデータ
-
-	return 0;
 }
 
 #endif /* sub action */
