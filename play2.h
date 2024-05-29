@@ -1628,7 +1628,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			case NOTE_GHOST:
 				if (GapTime < 0) {
 					note_judge_while_event(NOTE_GHOST, mapdata.note, objectN, time.now, NOTE_JUDGE_NONE,
-						NULL, Sitem, iLine, NULL, NULL, NULL, p_sound, MelodySnd);
+						NULL, Sitem, iLine, NULL, NULL, NULL, &p_sound, MelodySnd);
 				}
 				break;
 			}
