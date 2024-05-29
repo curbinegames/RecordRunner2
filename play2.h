@@ -610,6 +610,34 @@ static int DrawNoteOne(int G[], note_box_2_t *note, rec_map_eff_data_t *mapeff,
 	return 0;
 }
 
+void RecPlayDrawNoteAll(short int objectN[], note_box_2_t note[], rec_map_eff_data_t *mapeff,
+	short int viewTN, short int *lockN, short int speedN[], int Ntime, int Xline[], int Yline[],
+	int scroolN, rec_play_xy_set_t *cam, struct note_img *noteimg)
+{
+	/* G[0] = viewN+
+	 * G[1] = 横位置
+	 * G[2] = 縦位置
+	 * G[3] = XlockN+
+	 * G[4] = YlockN+
+	 * G[5] = speedN+
+	 * G[6] = color
+	 * G[7] = continue or break
+	 * i[0] = レーンループ
+	 * i[1] = ノーツループ */
+	int G[10] = { 0,0,0,0,0,0,0,0,0,0 };
+	for (int iLine = 0; iLine < 3; iLine++) {
+		G[0] = G[3] = G[4] = G[5] = 0;
+		for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
+			G[7] = DrawNoteOne(G, &note[iNote], mapeff, viewTN, lockN, iLine, speedN[iLine], Ntime,
+				Xline[iLine], Yline[iLine], scroolN, cam, noteimg);
+			if (G[7] == 1) { continue; }
+			else if (G[7] == 2) { break; }
+			if (note[iNote].next == -1) { break; }
+		}
+	}
+	return;
+}
+
 #endif /* Notes Picture */
 
 #if 1 /* Back Ground */
@@ -1312,39 +1340,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ShowCombo(combo, ComboFontimg);
 		//判定表示
 		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput], &nowcamera);
+		/* 音符表示 */
+		RecPlayDrawNoteAll(objectN, mapdata.note, &mapeff, viewTN, lockN, speedN, time.now, Xline,
+			Yline, scroolN, &nowcamera, &noteimg);
 
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
-		/* 音符表示 */
-		/* G[0] = viewN+
-		 * G[1] = 横位置
-		 * G[2] = 縦位置
-		 * G[3] = XlockN+
-		 * G[4] = YlockN+
-		 * G[5] = speedN+
-		 * G[6] = color
-		 * G[7] = continue or break
-		 * i[0] = レーンループ
-		 * i[1] = ノーツループ
-		 */
-		for (int iLine = 0; iLine < 3; iLine++) {
-			G[0] = G[3] = G[4] = G[5] = 0;
-			{
-				note_box_2_t *temp = NULL;
-				temp = &mapdata.note[0];
-				for (int iNote = objectN[iLine]; mapdata.note[iNote].hittime > 0;
-					iNote = mapdata.note[iNote].next
-					)
-				{
-					G[7] = DrawNoteOne(G, &mapdata.note[iNote], &mapeff, viewTN, lockN,
-						iLine, speedN[iLine], time.now, Xline[iLine], Yline[iLine],
-						scroolN, &nowcamera, &noteimg);
-					if (G[7] == 1) { continue; }
-					else if (G[7] == 2) { break; }
-					if (mapdata.note[iNote].next == -1) { break; }
-				}
-			}
-		}
 		//判定
 		//ヒットノーツ
 		G[0] = 0;
