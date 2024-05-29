@@ -176,6 +176,15 @@ typedef struct rec_play_chara_hit_attack_s {
 	int time = -1000;
 } rec_play_chara_hit_attack_t;
 
+typedef struct rec_score_file_s {
+	playnum_box allnum;
+	rec_play_nameset_t nameset;
+	rec_map_detail_t mapdata;
+	rec_map_eff_data_t mapeff;
+	rec_play_time_set_t time; /* ? */
+	int outpoint[2] = { -1,0 };
+} rec_score_file_t;
+
 #endif /* typedef group */
 
 #if 1 /* proto */
@@ -1019,7 +1028,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int viewTN = 0;
 	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
 	int Xline[3] = { 150,150,150 };//[上,中,下]レーンの横位置
-	int outpoint[2] = { -1,0 };
 	unsigned int Cr = GetColor(255, 255, 255);
 	unsigned int Crb = GetColor(0, 0, 0);
 	unsigned int CrR = GetColor(255, 0, 0);
@@ -1028,10 +1036,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int adif = 0;
 	int max_adif = 0;
 	/* struct */
-	rec_map_detail_t mapdata;
-	rec_play_nameset_t nameset;
 	rec_play_key_hold_t keyhold;
-	rec_play_time_set_t time;
 	rec_play_xy_set_t nowcamera;
 	nowcamera.x = 320;
 	nowcamera.y = 240;
@@ -1039,14 +1044,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	distance_score_t Dscore;
 	play_key_stat_t key_stat;
 	gap_box gap2;
-	rec_map_eff_data_t mapeff;
 	struct judge_box judge;
 	struct score_box score;
 	short int MovieN = 0;
 	rec_view_bpm_set_t v_BPM;
 	short int objectN[3] = { 5999,5999,5999 }; //note number
 	short int objectNG[3] = { 0,0,0 }; //note number without ghost note
-	playnum_box allnum;
+	rec_score_file_t recfp;
 	/* double */
 	double GD[5];
 	double SumRate[2] = { 0,0 };
@@ -1208,136 +1212,136 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを読み込む
 	}
 	if (fp != NULL) {
-		fread(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
-		fread(&nameset.mp3FN, 255, 1, fp);//音楽ファイル名
-		fread(&mapdata.bpm, sizeof(double), 1, fp);//BPM
-		fread(&time.offset, sizeof(int), 1, fp);//offset
-		fread(&nameset.sky, 255, 1, fp);//空背景名
-		fread(&nameset.ground, 255, 1, fp);//地面画像名
-		fread(&nameset.water, 255, 1, fp);//水中画像名
-		fread(&nameset.songN, 255, 1, fp);//曲名
-		fread(&nameset.songNE, 255, 1, fp);//曲名(英語)
-		fread(&mapdata.Lv, sizeof(short int), 1, fp);//レベル
+		fread(&recfp.allnum, sizeof(playnum_box), 1, fp);//各データの個数
+		fread(&recfp.nameset.mp3FN, 255, 1, fp);//音楽ファイル名
+		fread(&recfp.mapdata.bpm, sizeof(double), 1, fp);//BPM
+		fread(&recfp.time.offset, sizeof(int), 1, fp);//offset
+		fread(&recfp.nameset.sky, 255, 1, fp);//空背景名
+		fread(&recfp.nameset.ground, 255, 1, fp);//地面画像名
+		fread(&recfp.nameset.water, 255, 1, fp);//水中画像名
+		fread(&recfp.nameset.songN, 255, 1, fp);//曲名
+		fread(&recfp.nameset.songNE, 255, 1, fp);//曲名(英語)
+		fread(&recfp.mapdata.Lv, sizeof(short int), 1, fp);//レベル
 		//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 		{
 			int buf[99][2];
 			fread(buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 			for (int i = 0; i < 99; i++) {
-				mapeff.fall.d[i].time = buf[i][0];
-				mapeff.fall.d[i].No   = buf[i][1];
+				recfp.mapeff.fall.d[i].time = buf[i][0];
+				recfp.mapeff.fall.d[i].No   = buf[i][1];
 			}
 		}
-		fread(&mapeff.speedt, sizeof(double), 990, fp);//レーン速度
+		fread(&recfp.mapeff.speedt, sizeof(double), 990, fp);//レーン速度
 		{
 			int buf[3][99][2];
 			fread(buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
 			for (int i = 0; i < 99; i++) {
-				mapeff.chamo[0].gra[i]  = buf[0][i][0];
-				mapeff.chamo[0].time[i] = buf[0][i][1];
-				mapeff.chamo[1].gra[i]  = buf[1][i][0];
-				mapeff.chamo[1].time[i] = buf[1][i][1];
-				mapeff.chamo[2].gra[i]  = buf[2][i][0];
-				mapeff.chamo[2].time[i] = buf[2][i][1];
+				recfp.mapeff.chamo[0].gra[i]  = buf[0][i][0];
+				recfp.mapeff.chamo[0].time[i] = buf[0][i][1];
+				recfp.mapeff.chamo[1].gra[i]  = buf[1][i][0];
+				recfp.mapeff.chamo[1].time[i] = buf[1][i][1];
+				recfp.mapeff.chamo[2].gra[i]  = buf[2][i][0];
+				recfp.mapeff.chamo[2].time[i] = buf[2][i][1];
 			}
 		}
 		{
 			int buf[999][4];
-			fread(buf, sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[0]; i++) {
-				mapeff.move.y[0].d[i].Stime = buf[i][0];
-				mapeff.move.y[0].d[i].pos   = buf[i][1];
-				mapeff.move.y[0].d[i].Etime = buf[i][2];
-				mapeff.move.y[0].d[i].mode  = buf[i][3];
+			fread(buf, sizeof(int), recfp.allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
+			for (int i = 0; i < recfp.allnum.Ymovenum[0]; i++) {
+				recfp.mapeff.move.y[0].d[i].Stime = buf[i][0];
+				recfp.mapeff.move.y[0].d[i].pos   = buf[i][1];
+				recfp.mapeff.move.y[0].d[i].Etime = buf[i][2];
+				recfp.mapeff.move.y[0].d[i].mode  = buf[i][3];
 			}
-			fread(buf, sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[1]; i++) {
-				mapeff.move.y[1].d[i].Stime = buf[i][0];
-				mapeff.move.y[1].d[i].pos   = buf[i][1];
-				mapeff.move.y[1].d[i].Etime = buf[i][2];
-				mapeff.move.y[1].d[i].mode  = buf[i][3];
+			fread(buf, sizeof(int), recfp.allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
+			for (int i = 0; i < recfp.allnum.Ymovenum[1]; i++) {
+				recfp.mapeff.move.y[1].d[i].Stime = buf[i][0];
+				recfp.mapeff.move.y[1].d[i].pos   = buf[i][1];
+				recfp.mapeff.move.y[1].d[i].Etime = buf[i][2];
+				recfp.mapeff.move.y[1].d[i].mode  = buf[i][3];
 			}
-			fread(buf, sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[2]; i++) {
-				mapeff.move.y[2].d[i].Stime = buf[i][0];
-				mapeff.move.y[2].d[i].pos   = buf[i][1];
-				mapeff.move.y[2].d[i].Etime = buf[i][2];
-				mapeff.move.y[2].d[i].mode  = buf[i][3];
+			fread(buf, sizeof(int), recfp.allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
+			for (int i = 0; i < recfp.allnum.Ymovenum[2]; i++) {
+				recfp.mapeff.move.y[2].d[i].Stime = buf[i][0];
+				recfp.mapeff.move.y[2].d[i].pos   = buf[i][1];
+				recfp.mapeff.move.y[2].d[i].Etime = buf[i][2];
+				recfp.mapeff.move.y[2].d[i].mode  = buf[i][3];
 			}
-			fread(buf, sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[3]; i++) {
-				mapeff.move.y[3].d[i].Stime = buf[i][0];
-				mapeff.move.y[3].d[i].pos   = buf[i][1];
-				mapeff.move.y[3].d[i].Etime = buf[i][2];
-				mapeff.move.y[3].d[i].mode  = buf[i][3];
+			fread(buf, sizeof(int), recfp.allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
+			for (int i = 0; i < recfp.allnum.Ymovenum[3]; i++) {
+				recfp.mapeff.move.y[3].d[i].Stime = buf[i][0];
+				recfp.mapeff.move.y[3].d[i].pos   = buf[i][1];
+				recfp.mapeff.move.y[3].d[i].Etime = buf[i][2];
+				recfp.mapeff.move.y[3].d[i].mode  = buf[i][3];
 			}
-			fread(buf, sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
-			for (int i = 0; i < allnum.Ymovenum[4]; i++) {
-				mapeff.move.y[4].d[i].Stime = buf[i][0];
-				mapeff.move.y[4].d[i].pos   = buf[i][1];
-				mapeff.move.y[4].d[i].Etime = buf[i][2];
-				mapeff.move.y[4].d[i].mode  = buf[i][3];
+			fread(buf, sizeof(int), recfp.allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
+			for (int i = 0; i < recfp.allnum.Ymovenum[4]; i++) {
+				recfp.mapeff.move.y[4].d[i].Stime = buf[i][0];
+				recfp.mapeff.move.y[4].d[i].pos   = buf[i][1];
+				recfp.mapeff.move.y[4].d[i].Etime = buf[i][2];
+				recfp.mapeff.move.y[4].d[i].mode  = buf[i][3];
 			}
-			fread(buf, sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
-			for (int i = 0; i < allnum.Xmovenum[0]; i++) {
-				mapeff.move.x[0].d[i].Stime = buf[i][0];
-				mapeff.move.x[0].d[i].pos   = buf[i][1];
-				mapeff.move.x[0].d[i].Etime = buf[i][2];
-				mapeff.move.x[0].d[i].mode  = buf[i][3];
+			fread(buf, sizeof(int), recfp.allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
+			for (int i = 0; i < recfp.allnum.Xmovenum[0]; i++) {
+				recfp.mapeff.move.x[0].d[i].Stime = buf[i][0];
+				recfp.mapeff.move.x[0].d[i].pos   = buf[i][1];
+				recfp.mapeff.move.x[0].d[i].Etime = buf[i][2];
+				recfp.mapeff.move.x[0].d[i].mode  = buf[i][3];
 			}
-			fread(buf, sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
-			for (int i = 0; i < allnum.Xmovenum[1]; i++) {
-				mapeff.move.x[1].d[i].Stime = buf[i][0];
-				mapeff.move.x[1].d[i].pos   = buf[i][1];
-				mapeff.move.x[1].d[i].Etime = buf[i][2];
-				mapeff.move.x[1].d[i].mode  = buf[i][3];
+			fread(buf, sizeof(int), recfp.allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
+			for (int i = 0; i < recfp.allnum.Xmovenum[1]; i++) {
+				recfp.mapeff.move.x[1].d[i].Stime = buf[i][0];
+				recfp.mapeff.move.x[1].d[i].pos   = buf[i][1];
+				recfp.mapeff.move.x[1].d[i].Etime = buf[i][2];
+				recfp.mapeff.move.x[1].d[i].mode  = buf[i][3];
 			}
-			fread(buf, sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
-			for (int i = 0; i < allnum.Xmovenum[2]; i++) {
-				mapeff.move.x[2].d[i].Stime = buf[i][0];
-				mapeff.move.x[2].d[i].pos   = buf[i][1];
-				mapeff.move.x[2].d[i].Etime = buf[i][2];
-				mapeff.move.x[2].d[i].mode  = buf[i][3];
+			fread(buf, sizeof(int), recfp.allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
+			for (int i = 0; i < recfp.allnum.Xmovenum[2]; i++) {
+				recfp.mapeff.move.x[2].d[i].Stime = buf[i][0];
+				recfp.mapeff.move.x[2].d[i].pos   = buf[i][1];
+				recfp.mapeff.move.x[2].d[i].Etime = buf[i][2];
+				recfp.mapeff.move.x[2].d[i].mode  = buf[i][3];
 			}
 		}
-		fread(&mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
+		fread(&recfp.mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 		{
 			int buf[2][99];
 			fread(buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 			for (int i = 0; i < 99; i++) {
-				mapeff.carrow.d[i].data = buf[0][i];
-				mapeff.carrow.d[i].time = buf[1][i];
+				recfp.mapeff.carrow.d[i].data = buf[0][i];
+				recfp.mapeff.carrow.d[i].time = buf[1][i];
 			}
 		}
-		fread(&mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
+		fread(&recfp.mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
 #if SWITCH_NOTE_BOX_2 == 1
-		fread(&mapdata.note, sizeof(note_box_2_t),
-			allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
+		fread(&recfp.mapdata.note, sizeof(note_box_2_t),
+			recfp.allnum.notenum[0] + recfp.allnum.notenum[1] + recfp.allnum.notenum[2], fp); /* ノーツデータ */
 #else
-		fread(&mapdata.note2.up[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
-		fread(&mapdata.note2.mid[0], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
-		fread(&mapdata.note2.low[0], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
+		fread(&recfp.mapdata.note2.up[0], sizeof(struct note_box), recfp.allnum.notenum[0], fp); /* 上レーンノーツデータ */
+		fread(&recfp.mapdata.note2.mid[0], sizeof(struct note_box), recfp.allnum.notenum[1], fp); /* 中レーンノーツデータ */
+		fread(&recfp.mapdata.note2.low[0], sizeof(struct note_box), recfp.allnum.notenum[2], fp); /* 下レーンノーツデータ */
 #endif
-		fread(&mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
-		fread(&time.end, sizeof(int), 1, fp);//曲終了時間
+		fread(&recfp.mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
+		fread(&recfp.time.end, sizeof(int), 1, fp);//曲終了時間
 		{
 			int buf[2];
 			fread(buf, sizeof(int), 2, fp);
-			mapdata.mdif = buf[0];//最高難易度
-			mapdata.ldif = buf[1];//最終難易度
+			recfp.mapdata.mdif = buf[0];//最高難易度
+			recfp.mapdata.ldif = buf[1];//最終難易度
 		}
-		fread(&mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
-		fread(&mapdata.ddifG, sizeof(int), 2, fp);//各区間難易度データ
-		fread(&nameset.DifFN, 255, 1, fp);//難易度バー名
-		fread(&mapeff.Movie, sizeof(item_box), allnum.movienum, fp);//アイテムデータ
-		fread(&mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
-		fread(&mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-		fread(&mapeff.v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
-		fread(&outpoint, sizeof(int), 2, fp);//エラーデータ
+		fread(&recfp.mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
+		fread(&recfp.mapdata.ddifG, sizeof(int), 2, fp);//各区間難易度データ
+		fread(&recfp.nameset.DifFN, 255, 1, fp);//難易度バー名
+		fread(&recfp.mapeff.Movie, sizeof(item_box), recfp.allnum.movienum, fp);//アイテムデータ
+		fread(&recfp.mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
+		fread(&recfp.mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+		fread(&recfp.mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp.allnum.v_BPMnum, fp);//見た目のBPMデータ
+		fread(&recfp.outpoint, sizeof(int), 2, fp);//エラーデータ
 	}
-	musicmp3 = LoadSoundMem(nameset.mp3FN);
-	backpic.sky = LoadGraph(nameset.sky);
-	backpic.ground = LoadGraph(nameset.ground);
-	backpic.water = LoadGraph(nameset.water);
+	musicmp3 = LoadSoundMem(recfp.nameset.mp3FN);
+	backpic.sky = LoadGraph(recfp.nameset.sky);
+	backpic.ground = LoadGraph(recfp.nameset.ground);
+	backpic.water = LoadGraph(recfp.nameset.water);
 	fclose(fp);
 	strcats(DataFN, fileN);
 	strcats(DataFN, ST3);
@@ -1359,27 +1363,27 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (Sitem[i[0] - 1] == -1) { break; }
 	}
 	//ゲーム開始前の下準備
-	mapdata.notes = notzero(mapdata.notes);
-	GD[0] = mapdata.mdif / 100.0 - mapdata.Lv;//mdifと難易度表記の差
-	if (mapdata.Lv == 0) { DifRate = 0; }
-	else if (2 <= GD[0]) { DifRate = mapdata.Lv + 0.9; }
-	else if (0 <= GD[0] && GD[0] < 2) { DifRate = mapdata.Lv + 0.45 * GD[0]; }
-	else { DifRate = mapdata.mdif / 100.0; }
+	recfp.mapdata.notes = notzero(recfp.mapdata.notes);
+	GD[0] = recfp.mapdata.mdif / 100.0 - recfp.mapdata.Lv;//mdifと難易度表記の差
+	if (recfp.mapdata.Lv == 0) { DifRate = 0; }
+	else if (2 <= GD[0]) { DifRate = recfp.mapdata.Lv + 0.9; }
+	else if (0 <= GD[0] && GD[0] < 2) { DifRate = recfp.mapdata.Lv + 0.45 * GD[0]; }
+	else { DifRate = recfp.mapdata.mdif / 100.0; }
 #if SWITCH_NOTE_BOX_2 == 1
-	for (i[0] = 0; i[0] < allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2]; i[0]++) {
-		if (mapdata.note[i[0]].lane == NOTE_LANE_UP) {
+	for (i[0] = 0; i[0] < recfp.allnum.notenum[0] + recfp.allnum.notenum[1] + recfp.allnum.notenum[2]; i[0]++) {
+		if (recfp.mapdata.note[i[0]].lane == NOTE_LANE_UP) {
 			objectN[0] = i[0];
 			break;
 		}
 	}
-	for (i[0] = 0; i[0] < allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2]; i[0]++) {
-		if (mapdata.note[i[0]].lane == NOTE_LANE_MID) {
+	for (i[0] = 0; i[0] < recfp.allnum.notenum[0] + recfp.allnum.notenum[1] + recfp.allnum.notenum[2]; i[0]++) {
+		if (recfp.mapdata.note[i[0]].lane == NOTE_LANE_MID) {
 			objectN[1] = i[0];
 			break;
 		}
 	}
-	for (i[0] = 0; i[0] < allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2]; i[0]++) {
-		if (mapdata.note[i[0]].lane == NOTE_LANE_LOW) {
+	for (i[0] = 0; i[0] < recfp.allnum.notenum[0] + recfp.allnum.notenum[1] + recfp.allnum.notenum[2]; i[0]++) {
+		if (recfp.mapdata.note[i[0]].lane == NOTE_LANE_LOW) {
 			objectN[2] = i[0];
 			break;
 		}
@@ -1394,83 +1398,83 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		// number step
 		for (int iLine = 0; iLine < 3; iLine++) {
 			objectNG[iLine] = mins(objectNG[iLine], objectN[iLine]);
-			while (mapdata.note[objectNG[iLine]].object == NOTE_GHOST) {
-				objectNG[iLine] = mapdata.note[objectNG[iLine]].next;
+			while (recfp.mapdata.note[objectNG[iLine]].object == NOTE_GHOST) {
+				objectNG[iLine] = recfp.mapdata.note[objectNG[iLine]].next;
 			}
-			while (0 <= mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] &&
-				mapeff.chamo[iLine].time[mapeff.chamo[iLine].num + 1] <= time.now) {
-				mapeff.chamo[iLine].num++;
+			while (0 <= recfp.mapeff.chamo[iLine].time[recfp.mapeff.chamo[iLine].num + 1] &&
+				recfp.mapeff.chamo[iLine].time[recfp.mapeff.chamo[iLine].num + 1] <= recfp.time.now) {
+				recfp.mapeff.chamo[iLine].num++;
 			}
-			while (0 <= mapeff.speedt[iLine][speedN[iLine] + 1][0] &&
-				mapeff.speedt[iLine][speedN[iLine] + 1][0] <= time.now) {
+			while (0 <= recfp.mapeff.speedt[iLine][speedN[iLine] + 1][0] &&
+				recfp.mapeff.speedt[iLine][speedN[iLine] + 1][0] <= recfp.time.now) {
 				speedN[iLine]++;
 			}
 		}
-		while (-1000 < mapeff.v_BPM.data[mapeff.v_BPM.num + 1].time &&
-			mapeff.v_BPM.data[mapeff.v_BPM.num + 1].time <= time.now) {
-			mapeff.v_BPM.num++;
+		while (-1000 < recfp.mapeff.v_BPM.data[recfp.mapeff.v_BPM.num + 1].time &&
+			recfp.mapeff.v_BPM.data[recfp.mapeff.v_BPM.num + 1].time <= recfp.time.now) {
+			recfp.mapeff.v_BPM.num++;
 		}
-		while (0 <= mapeff.camera[cameraN].endtime &&
-			mapeff.camera[cameraN].endtime < time.now) {
+		while (0 <= recfp.mapeff.camera[cameraN].endtime &&
+			recfp.mapeff.camera[cameraN].endtime < recfp.time.now) {
 			cameraN++;
 		}
-		while (0 <= mapeff.scrool[scroolN + 1].starttime &&
-			mapeff.scrool[scroolN + 1].starttime <= time.now) {
+		while (0 <= recfp.mapeff.scrool[scroolN + 1].starttime &&
+			recfp.mapeff.scrool[scroolN + 1].starttime <= recfp.time.now) {
 			scroolN++;
 		}
 		if (system.backLight != 0) {
-			while (mapeff.Movie[MovieN].endtime < time.now &&
-				mapeff.Movie[MovieN].endtime > -500)
+			while (recfp.mapeff.Movie[MovieN].endtime < recfp.time.now &&
+				recfp.mapeff.Movie[MovieN].endtime > -500)
 			{
 				MovieN++;
 			}
-			while (mapeff.fall.d[mapeff.fall.num + 1].time <= time.now &&
-				mapeff.fall.d[mapeff.fall.num + 1].time >= 0)
+			while (recfp.mapeff.fall.d[recfp.mapeff.fall.num + 1].time <= recfp.time.now &&
+				recfp.mapeff.fall.d[recfp.mapeff.fall.num + 1].time >= 0)
 			{
-				mapeff.fall.num++;
+				recfp.mapeff.fall.num++;
 			}
-			if (mapeff.speedt[3][speedN[3] + 1][0] < time.now &&
-				mapeff.speedt[3][speedN[3] + 1][0] >= 0)
+			if (recfp.mapeff.speedt[3][speedN[3] + 1][0] < recfp.time.now &&
+				recfp.mapeff.speedt[3][speedN[3] + 1][0] >= 0)
 			{
 				speedN[3]++;
 			}
 		}
 		if (AutoFlag == 1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
-				while ((0 <= mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Stime &&
-					mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Etime <= time.now) ||
-					mapeff.move.y[i[0]].d[LineMoveN[i[0]]].mode == 4) {
+				while ((0 <= recfp.mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Stime &&
+					recfp.mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Etime <= recfp.time.now) ||
+					recfp.mapeff.move.y[i[0]].d[LineMoveN[i[0]]].mode == 4) {
 					LineMoveN[i[0]]++;
 				}
 			}
 		}
-		while (0 <= mapeff.carrow.d[mapeff.carrow.num + 1].time &&
-			mapeff.carrow.d[mapeff.carrow.num + 1].time < time.now) {
-			mapeff.carrow.num++;
+		while (0 <= recfp.mapeff.carrow.d[recfp.mapeff.carrow.num + 1].time &&
+			recfp.mapeff.carrow.d[recfp.mapeff.carrow.num + 1].time < recfp.time.now) {
+			recfp.mapeff.carrow.num++;
 		}
 		for (i[0] = 0; i[0] < 2; i[0]++) {
-			while (0 <= mapeff.lock[i[0]][1][lockN[i[0]] + 1] &&
-				mapeff.lock[i[0]][1][lockN[i[0]] + 1] <= time.now) {
+			while (0 <= recfp.mapeff.lock[i[0]][1][lockN[i[0]] + 1] &&
+				recfp.mapeff.lock[i[0]][1][lockN[i[0]] + 1] <= recfp.time.now) {
 				lockN[i[0]]++;
 			}
 		}
-		while (0 <= mapeff.viewT[0][viewTN + 1] &&
-			mapeff.viewT[0][viewTN + 1] <= time.now) {
+		while (0 <= recfp.mapeff.viewT[0][viewTN + 1] &&
+			recfp.mapeff.viewT[0][viewTN + 1] <= recfp.time.now) {
 			viewTN++;
 		}
 
 		//カメラ移動
-		PlaySetCamera(&nowcamera, mapeff.camera, cameraN, time.now);
+		PlaySetCamera(&nowcamera, recfp.mapeff.camera, cameraN, recfp.time.now);
 		//Xline(横位置)の計算
-		recSetLine(Xline, mapeff.move.x, time.now, 3);
+		recSetLine(Xline, recfp.mapeff.move.x, recfp.time.now, 3);
 		//Yline(縦位置)の計算
 		if (system.backLight == 0) {
-			recSetLine(Yline, mapeff.move.y, time.now, 3);
+			recSetLine(Yline, recfp.mapeff.move.y, recfp.time.now, 3);
 		}
 		else {
-			recSetLine(Yline, mapeff.move.y, time.now, 5);
+			recSetLine(Yline, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
-		charaput = GetCharaPos3(time.now, mapdata.note, objectNG, &keyhold, &hitatk);
+		charaput = GetCharaPos3(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
 			(keyhold.up == 1 || keyhold.down == 1 ||
 			keyhold.left == 1 || keyhold.right == 1))
@@ -1478,14 +1482,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			charahit = 0;
 		}
 		//キー押しヒット解除
-		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk.time + 750 < time.now) {
+		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk.time + 750 < recfp.time.now) {
 			hitatk.time = -1000;
 		}
 		//キャッチ判定に使う数値を計算
-		LaneTrack[charaput] = time.now;
-		if (keyhold.up == 0 && keyhold.down == 0 || keyhold.up > 0 && keyhold.down > 0) { LaneTrack[1] = time.now; }
-		else if (keyhold.up > 0 && keyhold.down == 0) { LaneTrack[0] = time.now; }
-		else if (keyhold.up == 0 && keyhold.down > 0) { LaneTrack[2] = time.now; }
+		LaneTrack[charaput] = recfp.time.now;
+		if (keyhold.up == 0 && keyhold.down == 0 || keyhold.up > 0 && keyhold.down > 0) { LaneTrack[1] = recfp.time.now; }
+		else if (keyhold.up > 0 && keyhold.down == 0) { LaneTrack[0] = recfp.time.now; }
+		else if (keyhold.up == 0 && keyhold.down > 0) { LaneTrack[2] = recfp.time.now; }
 		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[0]); }
 		else { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[2]); }
 		//ヒット
@@ -1514,13 +1518,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		else if (AutoFlag == 1) {
 			if (key[KEY_INPUT_G] == 0) { holdG = 0; }
 			else if (key[KEY_INPUT_G] == 1) { holdG++; }
-			AutoAution(&keyhold, mapdata.note, objectNG, time.now);
+			AutoAution(&keyhold, recfp.mapdata.note, objectNG, recfp.time.now);
 		}
 
 		ClearDrawScreen();
 		//背景表示
 		if (system.backLight != 0) {
-			PlayDrawBackGround(&mapeff, speedN, scroolN, &nowcamera, Yline, &backpic, item);
+			PlayDrawBackGround(&recfp.mapeff, speedN, scroolN, &nowcamera, Yline, &backpic, item);
 		}
 		//フィルター表示
 		switch (system.backLight) {
@@ -1537,14 +1541,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//アイテム表示
 		if (system.backLight != 0) {
-			PlayDrawItem(&mapeff, MovieN, time.now, &nowcamera, Xline[1], item);
+			PlayDrawItem(&recfp.mapeff, MovieN, recfp.time.now, &nowcamera, Xline[1], item);
 		}
 		// view line
 		if (AutoFlag == 1) {
-			PlayShowAllGuideLine(LineMoveN, time.now, mapeff.move.y, Xline, Yline, &nowcamera);
+			PlayShowAllGuideLine(LineMoveN, recfp.time.now, recfp.mapeff.move.y, Xline, Yline, &nowcamera);
 		}
 		// view chara pos guide
-		if (mapeff.carrow.d[mapeff.carrow.num].data == 1) {
+		if (recfp.mapeff.carrow.d[recfp.mapeff.carrow.num].data == 1) {
 			DrawGraphRecField(Xline[charaput] - 4, Yline[charaput] - 4, &nowcamera, charaguideimg);
 		}
 		else {
@@ -1555,14 +1559,14 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			DrawGraphRecField(Xline[i[0]], Yline[i[0]], &nowcamera, judghimg);
 		}
 		/* キャラ表示 */
-		PlayDrawChara(&keyhold, charahit, Xline, Yline, charaput, time.now, &mapeff,
+		PlayDrawChara(&keyhold, charahit, Xline, Yline, charaput, recfp.time.now, &recfp.mapeff,
 			&nowcamera, charaimg);
 		//コンボ表示
 		ShowCombo(combo, ComboFontimg);
 		//判定表示
 		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput], &nowcamera);
 		/* 音符表示 */
-		RecPlayDrawNoteAll(objectN, mapdata.note, &mapeff, viewTN, lockN, speedN, time.now, Xline,
+		RecPlayDrawNoteAll(objectN, recfp.mapdata.note, &recfp.mapeff, viewTN, lockN, speedN, recfp.time.now, Xline,
 			Yline, scroolN, &nowcamera, &noteimg);
 
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
@@ -1580,67 +1584,67 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			 * G[1] = 一番近いHITノーツの位置
 			 * G[2] = 一番近いHITノーツのギャップ */
 			note_judge NJ = NOTE_JUDGE_JUST;
-			G[1] = CheckNearHitNote(&mapdata.note[objectN[0]],
-				&mapdata.note[objectN[1]], &mapdata.note[objectN[2]], time.now);
+			G[1] = CheckNearHitNote(&recfp.mapdata.note[objectN[0]],
+				&recfp.mapdata.note[objectN[1]], &recfp.mapdata.note[objectN[2]], recfp.time.now);
 			if (G[1] == -1) {
 				if (i[0] == 0) { p_sound.flag |= SE_SWING; }
 				break;
 			}
-			G[2] = mapdata.note[objectN[G[1]]].hittime - time.now;
+			G[2] = recfp.mapdata.note[objectN[G[1]]].hittime - recfp.time.now;
 			hitatk2 |= 1 << G[1];
 			NJ = CheckJudge(G[2]);
 			if (NJ == NOTE_JUDGE_MISS) { p_sound.flag |= SE_SWING; }
-			note_judge_event(NJ, &Dscore, &mapdata.note[objectN[G[1]]], Sitem, time.now,
+			note_judge_event(NJ, &Dscore, &recfp.mapdata.note[objectN[G[1]]], Sitem, recfp.time.now,
 				G[2], G[1], &judgeA);
-			objectN[G[1]] = mapdata.note[objectN[G[1]]].next;
+			objectN[G[1]] = recfp.mapdata.note[objectN[G[1]]].next;
 		}
-		SetHitPosByHit(&hitatk, hitatk2, time.now);
+		SetHitPosByHit(&hitatk, hitatk2, recfp.time.now);
 		for (int iLine = 0; iLine < 3; iLine++) {
-			int GapTime = mapdata.note[objectN[iLine]].hittime - time.now;
-			switch (mapdata.note[objectN[iLine]].object) {
+			int GapTime = recfp.mapdata.note[objectN[iLine]].hittime - recfp.time.now;
+			switch (recfp.mapdata.note[objectN[iLine]].object) {
 			case NOTE_UP:
 			case NOTE_DOWN:
 			case NOTE_LEFT:
 			case NOTE_RIGHT:
-				if (CheckArrowInJudge(mapdata.note[objectN[iLine]].object, GapTime, &keyhold)) {
+				if (CheckArrowInJudge(recfp.mapdata.note[objectN[iLine]].object, GapTime, &keyhold)) {
 					note_judge_event(CheckJudge(GapTime), &Dscore,
-						&mapdata.note[objectN[iLine]], Sitem, time.now, GapTime, iLine,
+						&recfp.mapdata.note[objectN[iLine]], Sitem, recfp.time.now, GapTime, iLine,
 						&judgeA);
-					objectN[iLine] = mapdata.note[objectN[iLine]].next;
+					objectN[iLine] = recfp.mapdata.note[objectN[iLine]].next;
 				}
 				break;
 			case NOTE_CATCH:
-				if (LaneTrack[iLine] + SAFE_TIME >= mapdata.note[objectN[iLine]].hittime) {
-					note_judge_while_event(NOTE_CATCH, mapdata.note, objectN, time.now, NOTE_JUDGE_JUST,
+				if (LaneTrack[iLine] + SAFE_TIME >= recfp.mapdata.note[objectN[iLine]].hittime) {
+					note_judge_while_event(NOTE_CATCH, recfp.mapdata.note, objectN, recfp.time.now, NOTE_JUDGE_JUST,
 						&Dscore, Sitem, iLine, &judgeA, &charahit, &hitatk, NULL, NULL);
 				}
 				break;
 			case NOTE_BOMB:
 				if (iLine == charaput && GapTime <= 0) {
-					note_judge_while_event(NOTE_BOMB, mapdata.note, objectN, time.now, NOTE_JUDGE_MISS,
+					note_judge_while_event(NOTE_BOMB, recfp.mapdata.note, objectN, recfp.time.now, NOTE_JUDGE_MISS,
 						&Dscore, Sitem, iLine, &judgeA, NULL, NULL, NULL, NULL);
 				}
 				else {
-					note_judge_while_event(NOTE_BOMB, mapdata.note, objectN, time.now, NOTE_JUDGE_JUST,
+					note_judge_while_event(NOTE_BOMB, recfp.mapdata.note, objectN, recfp.time.now, NOTE_JUDGE_JUST,
 						&Dscore, Sitem, iLine, &judgeA, NULL, NULL, NULL, NULL);
 				}
 				break;
 			case NOTE_GHOST:
 				if (GapTime < 0) {
-					note_judge_while_event(NOTE_GHOST, mapdata.note, objectN, time.now, NOTE_JUDGE_NONE,
+					note_judge_while_event(NOTE_GHOST, recfp.mapdata.note, objectN, recfp.time.now, NOTE_JUDGE_NONE,
 						NULL, Sitem, iLine, NULL, NULL, NULL, &p_sound, MelodySnd);
 				}
 				break;
 			}
 			//全ノーツslowmiss
 			while (GapTime <= -SAFE_TIME && GapTime >= -1000000 &&
-				mapdata.note[objectN[iLine]].object >= NOTE_HIT &&
-				mapdata.note[objectN[iLine]].object <= NOTE_RIGHT)
+				recfp.mapdata.note[objectN[iLine]].object >= NOTE_HIT &&
+				recfp.mapdata.note[objectN[iLine]].object <= NOTE_RIGHT)
 			{
-				note_judge_event(NOTE_JUDGE_MISS, &Dscore, &mapdata.note[objectN[iLine]],
-					Sitem, time.now, -SAFE_TIME, iLine, &judgeA);
-				objectN[iLine] = mapdata.note[objectN[iLine]].next;
-				GapTime = mapdata.note[objectN[iLine]].hittime - time.now;
+				note_judge_event(NOTE_JUDGE_MISS, &Dscore, &recfp.mapdata.note[objectN[iLine]],
+					Sitem, recfp.time.now, -SAFE_TIME, iLine, &judgeA);
+				objectN[iLine] = recfp.mapdata.note[objectN[iLine]].next;
+				GapTime = recfp.mapdata.note[objectN[iLine]].hittime - recfp.time.now;
 			}
 		}
 		PlayNoteHitSound2(&p_sound);
@@ -1656,23 +1660,23 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//ライフ上限
 		life = maxs(life, 500);
 		//スコア計算
-		score = GetScore3(score, judge, mapdata.notes, Mcombo);
+		score = GetScore3(score, judge, recfp.mapdata.notes, Mcombo);
 		//距離計算
 		if (drop != 0) { //DROPED
 			Dscore.now_dis = Dscore.dis_save;
 		}
-		else if (mins(time.now - time.offset, 0) > time.end - time.offset) { //CLEARED
-			Dscore.now_dis = time.end - time.offset;
+		else if (mins(recfp.time.now - recfp.time.offset, 0) > recfp.time.end - recfp.time.offset) { //CLEARED
+			Dscore.now_dis = recfp.time.end - recfp.time.offset;
 			Dscore.add_save = Dscore.add;
 		}
 		else { //PLAYING
-			Dscore.now_dis = mins(time.now - time.offset, 0);
+			Dscore.now_dis = mins(recfp.time.now - recfp.time.offset, 0);
 			Dscore.add_save = Dscore.add;
 		}
 		//スコアバー表示
 		DrawGraph(0, 0, sbarimg, TRUE);
 		//スコア表示
-		ShowScore2(score, HighSrore, time.now);
+		ShowScore2(score, HighSrore, recfp.time.now);
 		//ライフ表示
 		G[0] = lins(0, -114, 500, 177, life);
 		if (life > 100) {
@@ -1688,11 +1692,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//距離表示
 		UG[0] = 0xffffffff;
 		G[1] = 0;
-		if ((drop == 0) && (mins(time.now - time.offset, 0) > time.end - time.offset)) {
+		if ((drop == 0) && (mins(recfp.time.now - recfp.time.offset, 0) > recfp.time.end - recfp.time.offset)) {
 			G[1] = 1;
 			UG[0] = 0xff000000;
 		}
-		G[0] = (291 * Dscore.now_dis - 136 * time.end + 136 * time.offset) / (time.end - time.offset);
+		G[0] = (291 * Dscore.now_dis - 136 * recfp.time.end + 136 * recfp.time.offset) / (recfp.time.end - recfp.time.offset);
 		GD[0] = Dscore.now_dis / 100000.0;
 		DrawGraph(G[0], 38, Tbarimg[G[1]], TRUE);
 		DrawFormatString(180, 45, UG[0], L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
@@ -1700,33 +1704,33 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//スコアバー隠し表示
 		DrawGraph(0, 0, sbbarimg, TRUE);
 		//ランニングステータス表示
-		G[0] = GetRemainNotes2(judge, mapdata.notes);
-		G[1] = CalPosScore2(score, G[0], mapdata.notes, combo, Mcombo);
+		G[0] = GetRemainNotes2(judge, recfp.mapdata.notes);
+		G[1] = CalPosScore2(score, G[0], recfp.mapdata.notes, combo, Mcombo);
 		RunningStats2(judge, G[1], HighSrore);
 		//部分難易度表示 (only auto mode)
 		if (holdG >= 1 && AutoFlag == 1) {
-			G[0] = mapdata.ddif[0] * 20 / notzero(mapdata.ddifG[1]) + 155;
-			G[1] = mapdata.ddif[24] * 20 / notzero(mapdata.ddifG[1]) + 447;
+			G[0] = recfp.mapdata.ddif[0] * 20 / notzero(recfp.mapdata.ddifG[1]) + 155;
+			G[1] = recfp.mapdata.ddif[24] * 20 / notzero(recfp.mapdata.ddifG[1]) + 447;
 			for (i[0] = 0; i[0] <= 23; i[0]++)
 				DrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24,
-					-mapdata.ddif[i[0]] * 34 / notzero(mapdata.ddifG[1]) + 72,
+					-recfp.mapdata.ddif[i[0]] * 34 / notzero(recfp.mapdata.ddifG[1]) + 72,
 					(G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24,
-					-mapdata.ddif[i[0] + 1] * 34 / notzero(mapdata.ddifG[1]) + 72, Cr);
-			DrawFormatString(490, 80, Cr, L"mdif:%.2f", mapdata.mdif / 100.0);
-			DrawFormatString(490, 100, Cr, L"ldif:%.2f", mapdata.ldif / 100.0);
+					-recfp.mapdata.ddif[i[0] + 1] * 34 / notzero(recfp.mapdata.ddifG[1]) + 72, Cr);
+			DrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mdif / 100.0);
+			DrawFormatString(490, 100, Cr, L"ldif:%.2f", recfp.mapdata.ldif / 100.0);
 			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
 			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
-				cal_nowdif_p(mapdata.ddif, &time) / 100.0);
+				cal_nowdif_p(recfp.mapdata.ddif, &recfp.time) / 100.0);
 			DrawFormatString(490, 160, Cr, L"adif:%.2f",
 				(double)lins(0, 0, 453007, 950, GetAdif()) / 100.0);
 			max_adif = mins(max_adif, GetAdif());
 			DrawFormatString(490, 180, Cr, L"madif:%d", max_adif);
 #if 0
 			/* エラー表示 */
-			if (outpoint[1] != 0) {
+			if (recfp.outpoint[1] != 0) {
 				DrawFormatString(20, 120, CrR, L"MAPERROR");
-				DrawLine(lins(time.offset, 155, time.end, 446, outpoint[0]), 71,
-					lins(time.offset, 175, time.end, 465, outpoint[0]), 38, CrR);
+				DrawLine(lins(recfp.time.offset, 155, recfp.time.end, 446, recfp.outpoint[0]), 71,
+					lins(recfp.time.offset, 175, recfp.time.end, 465, recfp.outpoint[0]), 38, CrR);
 			}
 #endif
 		}
@@ -1773,9 +1777,9 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバック
-		fps[fps[60]++] = time.now - fps[61];
+		fps[fps[60]++] = recfp.time.now - fps[61];
 		if (fps[60] > 59)fps[60] -= 60;
-		fps[61] = time.now;
+		fps[61] = recfp.time.now;
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (AutoFlag == 1) {
@@ -1787,13 +1791,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//RECR_DEBUG(2, speedN[2]);
 		//データオーバーフローで警告文表示
 #if 0
-		if (0 <= mapdata.note2.up[1999].hittime) {
+		if (0 <= recfp.mapdata.note2.up[1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"UPPER OVER");
 		}
-		else if (0 <= mapdata.note2.mid[1999].hittime) {
+		else if (0 <= recfp.mapdata.note2.mid[1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"MIDDLE OVER");
 		}
-		else if (0 <= mapdata.note2.low[1999].hittime) {
+		else if (0 <= recfp.mapdata.note2.low[1999].hittime) {
 			DrawFormatString(20, 120, CrR, L"LOWER OVER");
 		}
 #endif
@@ -1803,11 +1807,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (life <= 0 && drop == 0 && AutoFlag == 0) {
 			drop = 1;
 			Dscore.add_save = Dscore.add;
-			Dscore.dis_save = mins(time.now - time.offset, 0);
+			Dscore.dis_save = mins(recfp.time.now - recfp.time.offset, 0);
 		}
 		if (drop) { DrawGraph(0, 0, dropimg, TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
-		if (GetRemainNotes2(judge, mapdata.notes) == 0 && AllNotesHitTime < 0) {
+		if (GetRemainNotes2(judge, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
 			AllNotesHitTime = GetNowCount();
 		}
 		//オートでなく、ノーミス以上を出したら演出
@@ -1816,7 +1820,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
 		if (closeFg == 0 &&
-			time.end + 5000 <= time.now &&
+			recfp.time.end + 5000 <= recfp.time.now &&
 			(musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
 			SetCutTipFg(CUTIN_TIPS_NONE);
 			closeFg = 1;
@@ -1842,7 +1846,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 						StopSoundMem(musicmp3);
 					}
 					else {
-						SetCurrentPositionSoundMem((int)((double)time.now / 1000.0 * 44100.0), musicmp3);
+						SetCurrentPositionSoundMem((int)((double)recfp.time.now / 1000.0 * 44100.0), musicmp3);
 						PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK, FALSE);
 					}
 				}
@@ -1855,27 +1859,27 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (StopFrag == 1) {
 			if (CheckHitKey(KEY_INPUT_LEFT) == 1) {
 				if (key3 == 0) {
-					time.now = mins(time.now - 10000, 0);
+					recfp.time.now = mins(recfp.time.now - 10000, 0);
 #if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
-						for (objectN[i[0]] = 0; mapdata.note[objectN[i[0]]].lane != NOTE_LANE_UP; objectN[i[0]] += 0) {
+						for (objectN[i[0]] = 0; recfp.mapdata.note[objectN[i[0]]].lane != NOTE_LANE_UP; objectN[i[0]] += 0) {
 							objectN[i[0]]++;
 						}
-						while (mapdata.note[objectN[i[0]]].hittime < time.now) {
+						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
 							objectN[i[0]]++;
 						}
 					}
 #else
-					while (time.now < mapdata.note2.up[objectN[0]].hittime ||
-						mapdata.note2.up[objectN[0]].hittime < 0) {
+					while (recfp.time.now < recfp.mapdata.note2.up[objectN[0]].hittime ||
+						recfp.mapdata.note2.up[objectN[0]].hittime < 0) {
 						objectN[0]--;
 					}
-					while (time.now < mapdata.note2.mid[objectN[1]].hittime ||
-						mapdata.note2.mid[objectN[1]].hittime < 0) {
+					while (recfp.time.now < recfp.mapdata.note2.mid[objectN[1]].hittime ||
+						recfp.mapdata.note2.mid[objectN[1]].hittime < 0) {
 						objectN[1]--;
 					}
-					while (time.now < mapdata.note2.low[objectN[2]].hittime ||
-						mapdata.note2.low[objectN[2]].hittime < 0) {
+					while (recfp.time.now < recfp.mapdata.note2.low[objectN[2]].hittime ||
+						recfp.mapdata.note2.low[objectN[2]].hittime < 0) {
 						objectN[2]--;
 					}
 #endif
@@ -1886,24 +1890,24 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					scroolN = 0;
 					itemN = 0;
 					SitemN = 0;
-					mapeff.chamo[0].num = 0;
-					mapeff.chamo[1].num = 0;
-					mapeff.chamo[2].num = 0;
-					mapeff.fall.num = 0;
-					mapeff.move.y[0].num = 0;
-					mapeff.move.y[1].num = 0;
-					mapeff.move.y[2].num = 0;
-					mapeff.move.y[3].num = 0;
-					mapeff.move.y[4].num = 0;
-					mapeff.move.x[0].num = 0;
-					mapeff.move.x[1].num = 0;
-					mapeff.move.x[2].num = 0;
+					recfp.mapeff.chamo[0].num = 0;
+					recfp.mapeff.chamo[1].num = 0;
+					recfp.mapeff.chamo[2].num = 0;
+					recfp.mapeff.fall.num = 0;
+					recfp.mapeff.move.y[0].num = 0;
+					recfp.mapeff.move.y[1].num = 0;
+					recfp.mapeff.move.y[2].num = 0;
+					recfp.mapeff.move.y[3].num = 0;
+					recfp.mapeff.move.y[4].num = 0;
+					recfp.mapeff.move.x[0].num = 0;
+					recfp.mapeff.move.x[1].num = 0;
+					recfp.mapeff.move.x[2].num = 0;
 					LineMoveN[0] = 0;
 					LineMoveN[1] = 0;
 					LineMoveN[2] = 0;
 					lockN[0] = 0;
 					lockN[1] = 0;
-					mapeff.carrow.num = 0;
+					recfp.mapeff.carrow.num = 0;
 					viewTN = 0;
 					MovieN = 0;
 				}
@@ -1911,21 +1915,21 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			}
 			else if (CheckHitKey(KEY_INPUT_RIGHT) == 1) {
 				if (key3 == 0) {
-					time.now += 10000;
+					recfp.time.now += 10000;
 #if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
-						while (mapdata.note[objectN[i[0]]].hittime < time.now) {
+						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
 							objectN[i[0]]++;
 						}
 					}
 #else
-					while (mapdata.note2.up[objectN[0]].hittime < time.now) {
+					while (recfp.mapdata.note2.up[objectN[0]].hittime < recfp.time.now) {
 						objectN[0]++;
 					}
-					while (mapdata.note2.mid[objectN[1]].hittime < time.now) {
+					while (recfp.mapdata.note2.mid[objectN[1]].hittime < recfp.time.now) {
 						objectN[1]++;
 					}
-					while (mapdata.note2.low[objectN[2]].hittime < time.now) {
+					while (recfp.mapdata.note2.low[objectN[2]].hittime < recfp.time.now) {
 						objectN[2]++;
 					}
 #endif
@@ -1936,24 +1940,24 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 					scroolN = 0;
 					itemN = 0;
 					SitemN = 0;
-					mapeff.chamo[0].num = 0;
-					mapeff.chamo[1].num = 0;
-					mapeff.chamo[2].num = 0;
-					mapeff.fall.num = 0;
-					mapeff.move.y[0].num = 0;
-					mapeff.move.y[1].num = 0;
-					mapeff.move.y[2].num = 0;
-					mapeff.move.y[3].num = 0;
-					mapeff.move.y[4].num = 0;
-					mapeff.move.x[0].num = 0;
-					mapeff.move.x[1].num = 0;
-					mapeff.move.x[2].num = 0;
+					recfp.mapeff.chamo[0].num = 0;
+					recfp.mapeff.chamo[1].num = 0;
+					recfp.mapeff.chamo[2].num = 0;
+					recfp.mapeff.fall.num = 0;
+					recfp.mapeff.move.y[0].num = 0;
+					recfp.mapeff.move.y[1].num = 0;
+					recfp.mapeff.move.y[2].num = 0;
+					recfp.mapeff.move.y[3].num = 0;
+					recfp.mapeff.move.y[4].num = 0;
+					recfp.mapeff.move.x[0].num = 0;
+					recfp.mapeff.move.x[1].num = 0;
+					recfp.mapeff.move.x[2].num = 0;
 					LineMoveN[0] = 0;
 					LineMoveN[1] = 0;
 					LineMoveN[2] = 0;
 					lockN[0] = 0;
 					lockN[1] = 0;
-					mapeff.carrow.num = 0;
+					recfp.mapeff.carrow.num = 0;
 					viewTN = 0;
 					MovieN = 0;
 				}
@@ -1971,10 +1975,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		WaitTimer(5);
 		if (StopFrag == -1) {
-			time.now = GetNowCount() - Stime + system.offset * 5;
+			recfp.time.now = GetNowCount() - Stime + system.offset * 5;
 		}
 		else {
-			Stime = GetNowCount() - time.now + system.offset * 5;
+			Stime = GetNowCount() - recfp.time.now + system.offset * 5;
 		}
 		ScreenFlip();
 	}
@@ -1984,7 +1988,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		ret_gap[0] = gap2.sum;
 		ret_gap[1] = gap2.count;
 		ret_gap[2] = gap2.ssum;
-		return result(o, mapdata.Lv, drop, mapdata.mdif, nameset.songN, nameset.DifFN, fileN, judge, score.sum, Mcombo, mapdata.notes, ret_gap, Dscore.point);
+		return result(o, recfp.mapdata.Lv, drop, recfp.mapdata.mdif, recfp.nameset.songN, recfp.nameset.DifFN,
+			fileN, judge, score.sum, Mcombo, recfp.mapdata.notes, ret_gap, Dscore.point);
 	}
 }
 
