@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "sancur.h"
 #include "playbox.h"
+#include "PlayCamera.h"
 
 static int JudgePic[4];
 static int viewjudge[4] = { 0,0,0,0 };
@@ -19,7 +20,7 @@ void PlaySetJudge(note_judge judge) {
 	return;
 }
 
-void PlayShowJudge(int posMode, int charaposX, int charaposY, rec_play_xy_set_t *camera) {
+void PlayShowJudge(int posMode, int charaposX, int charaposY) {
 	int BaseDrawX = 0;
 	int BaseDrawY = 0;
 	int drawY = 0;
@@ -41,8 +42,9 @@ void PlayShowJudge(int posMode, int charaposX, int charaposY, rec_play_xy_set_t 
 		BaseDrawY = 260;
 		break;
 	case 4:
-		BaseDrawX = charaposX + camera->x - 120;
-		BaseDrawY = charaposY + camera->y - 100;
+		RecPlayGetCameraPos(&BaseDrawX, &BaseDrawY);
+		BaseDrawX += charaposX - 120;
+		BaseDrawY += charaposY - 100;
 		break;
 	default:
 		return;

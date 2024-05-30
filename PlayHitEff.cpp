@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "playbox.h"
 #include "PlayHitEff.h"
+#include "PlayCamera.h"
 
 typedef struct rec_play_hit_effect_picture_s {
 	int hit[5];
@@ -52,12 +53,12 @@ void PlayCheckHitEffect() {
 	return;
 }
 
-static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo, rec_play_xy_set_t *camera) {
+static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo) {
 	note_material notemat = NOTE_NONE;
 	int *img = NULL;
 	int frame = 0;
-	int xpos = xline[lineNo] - 10 + camera->x;
-	int ypos = yline[lineNo] - 10 + camera->y;
+	int xpos = xline[lineNo] - 10;
+	int ypos = yline[lineNo] - 10;
 
 	switch (EffState[lineNo].note - 1) {
 	case 0:
@@ -135,13 +136,13 @@ static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo, rec_play_x
 
 	frame = (GetNowCount() - EffState[lineNo].time + 250) / 50 % 5;
 
-	DrawGraph(xpos, ypos, img[frame], TRUE);
+	DrawGraphRecField(xpos, ypos, img[frame]);
 	return;
 }
 
-void PlayShowHitEffect(int *xline, int *yline, rec_play_xy_set_t *camera) {
-	PlayShowHitEffectCap1(xline, yline, 0, camera);
-	PlayShowHitEffectCap1(xline, yline, 1, camera);
-	PlayShowHitEffectCap1(xline, yline, 2, camera);
+void PlayShowHitEffect(int *xline, int *yline) {
+	PlayShowHitEffectCap1(xline, yline, 0);
+	PlayShowHitEffectCap1(xline, yline, 1);
+	PlayShowHitEffectCap1(xline, yline, 2);
 	return;
 }

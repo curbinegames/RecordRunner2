@@ -929,7 +929,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int max_adif = 0;
 	/* struct */
 	rec_play_key_hold_t keyhold;
-	rec_play_xy_set_t nowcamera;
 	rec_system_t system;
 	distance_score_t Dscore;
 	play_key_stat_t key_stat;
@@ -1234,7 +1233,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 
 		//カメラ移動
 		RecPlaySetCamera(recfp.mapeff.camera, cameraN, recfp.time.now);
-		RecPlayGetCameraPos(&nowcamera.x, &nowcamera.y);
 		//Xline(横位置)の計算
 		recSetLine(Xline, recfp.mapeff.move.x, recfp.time.now, 3);
 		//Yline(縦位置)の計算
@@ -1334,7 +1332,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//コンボ表示
 		ShowCombo(combo, ComboFontimg);
 		//判定表示
-		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput], &nowcamera);
+		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput]);
 		/* 音符表示 */
 		RecPlayDrawNoteAll(objectN, recfp.mapdata.note, &recfp.mapeff, viewTN,
 			lockN, speedN, recfp.time.now, Xline, Yline, scroolN, &noteimg);
@@ -1420,7 +1418,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		PlayNoteHitSound2(&p_sound);
 		Mcombo = mins(Mcombo, combo);
 		//ヒットエフェクト表示
-		PlayShowHitEffect(Xline, Yline, &nowcamera);
+		PlayShowHitEffect(Xline, Yline);
 		PlayCheckHitEffect();
 		//ライフが0未満の時、1毎に減点スコアを20増やす。
 		if (life < 0) {
