@@ -410,73 +410,81 @@ static int StepViewNoDrawNote(int hittime, rec_map_eff_data_t *mapeff,
 /**
  * return 0 = normal, 1 = continue, 2 = break;
  */
-static int StepNoDrawNote(note_box_2_t *note, rec_map_eff_data_t *mapeff,
-	short viewTN, short lockN[], int iLine, short speedN, int Ntime, int G[])
+static int StepNoDrawNote(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *SpeedNoAdd,
+	note_box_2_t *note, rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
+	short speedN, int Ntime)
 {
+	int ret = 0;
 	double sppedt_temp[99];
-	G[7] = StepViewNoDrawNote(note->hittime, mapeff, viewTN, &G[0], Ntime);
-	if (G[7] == 1) { return 1; }
-	else if (G[7] == 2) { return 2; }
+	ret = StepViewNoDrawNote(note->hittime, mapeff, viewTN, viewTadd, Ntime);
+	if (ret == 1) { return 1; }
+	else if (ret == 2) { return 2; }
 	//ノーツロックナンバーを進める
-	if (note->hittime >= mapeff->lock[0][1][lockN[0] + G[3] + 1] &&
-		mapeff->lock[0][1][lockN[0] + G[3] + 1] >= 0) {
-		G[3]++;
+	if (note->hittime >= mapeff->lock[0][1][lockN[0] + *XLockNoAdd + 1] &&
+		mapeff->lock[0][1][lockN[0] + *XLockNoAdd + 1] >= 0) {
+		(*XLockNoAdd)++;
 	}
-	if (note->hittime >= mapeff->lock[1][1][lockN[1] + G[4] + 1] &&
-		mapeff->lock[1][1][lockN[1] + G[4] + 1] >= 0) {
-		G[4]++;
+	if (note->hittime >= mapeff->lock[1][1][lockN[1] + *YLockNoAdd + 1] &&
+		mapeff->lock[1][1][lockN[1] + *YLockNoAdd + 1] >= 0) {
+		(*YLockNoAdd)++;
 	}
 	// スピードナンバーを進める
 	for (int i = 0; i < 99; i++) {
 		sppedt_temp[i] = mapeff->speedt[iLine][0][i * 2];
 	}
-	while (note->hittime >= sppedt_temp[speedN + G[5] + 1] &&
-		sppedt_temp[speedN + G[5] + 1] >= 0) {
-		G[5]++;
+	while (note->hittime >= sppedt_temp[speedN + *SpeedNoAdd + 1] &&
+		sppedt_temp[speedN + *SpeedNoAdd + 1] >= 0) {
+		(*SpeedNoAdd)++;
 	}
 	return 0;
 }
 
-static void CalPalCrawNote(int lock0, int lock1, note_box_2_t *note, int Xline,
-	int Yline, double speedt, struct scrool_box *scrool, int Ntime, int G[])
+static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, int lock0, int lock1,
+	note_box_2_t *note, int Xline, int Yline, double speedt, struct scrool_box *scrool, int Ntime)
 {
 	//縦位置
-	G[2] = ((lock1 == 1) ? note->ypos : Yline);
+	*DrawY = ((lock1 == 1) ? note->ypos : Yline);
 	//横位置
-	G[1] = (int)((speedt * 20 * (note->viewtime -
+	*DrawX = (int)((speedt * 20 * (note->viewtime -
 		(scrool->speed * Ntime + scrool->basetime)) + 5000) / 50) + 50;
-	G[1] += ((lock0 == 1) ? note->xpos - 150 : Xline - 150);
+	*DrawX += ((lock0 == 1) ? note->xpos - 150 : Xline - 150);
 	//色
-	G[6] = note->color;
+	*DrawC = note->color;
 }
 
 /**
  * return 0 = normal, 1 = continue, 2 = break;
  */
-static int DrawNoteOne(int G[], note_box_2_t *note, rec_map_eff_data_t *mapeff,
-	short viewTN, short lockN[], int iLine, short speedN, int Ntime, int Xline,
-	int Yline, int scroolN, rec_play_xy_set_t *nowcamera,
+static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *SpeedNoAdd,
+	note_box_2_t *note, rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
+	short speedN, int Ntime, int Xline, int Yline, int scroolN, rec_play_xy_set_t *nowcamera,
 	struct note_img *noteimg)
 {
+	int ret = 0;
+	int DrawX = 0;
+	int DrawY = 0;
+	int DrawC = 0;
 	int DrawID = 0;
-	G[7] = StepNoDrawNote(note, mapeff, viewTN, lockN, iLine, speedN, Ntime, G);
-	if (G[7] == 1) { return 1; }
-	else if (G[7] == 2) { return 2; }
-	CalPalCrawNote(mapeff->lock[0][0][lockN[0] + G[3]], mapeff->lock[1][0][lockN[1] + G[4]],
-		note, Xline, Yline, mapeff->speedt[iLine][0][(speedN + G[5]) * 2 + 1],
-		&mapeff->scrool[scroolN], Ntime, G);
+	ret = StepNoDrawNote(viewTadd, XLockNoAdd, YLockNoAdd, SpeedNoAdd,
+		note, mapeff, viewTN, lockN, iLine, speedN, Ntime);
+	if (ret == 1) { return 1; }
+	else if (ret == 2) { return 2; }
+	CalPalCrawNote(&DrawX, &DrawY, &DrawC, mapeff->lock[0][0][lockN[0] + *XLockNoAdd],
+		mapeff->lock[1][0][lockN[1] + *YLockNoAdd], note, Xline, Yline,
+		mapeff->speedt[iLine][0][(speedN + *SpeedNoAdd) * 2 + 1],
+		&mapeff->scrool[scroolN], Ntime);
 	switch (note->object) {
 	case 1:
 	case 3:
 	case 4:
 	case 5:
 	case 6:
-		DrawGraphRecField(G[1], G[2], nowcamera, noteimg->notebase);
+		DrawGraphRecField(DrawX, DrawY, nowcamera, noteimg->notebase);
 		break;
 	}
 	switch (note->object) {
 	case 1:
-		DrawID = noteimg->hitcircle[G[6]];
+		DrawID = noteimg->hitcircle[DrawC];
 		break;
 	case 2:
 		DrawID = noteimg->catchi;
@@ -500,7 +508,7 @@ static int DrawNoteOne(int G[], note_box_2_t *note, rec_map_eff_data_t *mapeff,
 		DrawID = noteimg->goust;
 		break;
 	}
-	DrawGraphRecField(G[1], G[2], nowcamera, DrawID);
+	DrawGraphRecField(DrawX, DrawY, nowcamera, DrawID);
 	return 0;
 }
 
@@ -508,24 +516,24 @@ void RecPlayDrawNoteAll(short int objectN[], note_box_2_t note[], rec_map_eff_da
 	short int viewTN, short int *lockN, short int speedN[], int Ntime, int Xline[], int Yline[],
 	int scroolN, rec_play_xy_set_t *cam, struct note_img *noteimg)
 {
-	/* G[0] = viewN+
-	 * G[1] = 横位置
-	 * G[2] = 縦位置
-	 * G[3] = XlockN+
-	 * G[4] = YlockN+
-	 * G[5] = speedN+
-	 * G[6] = color
-	 * G[7] = continue or break
-	 * i[0] = レーンループ
-	 * i[1] = ノーツループ */
+	int ret = 0;
+	int viewTadd = 0;
+	int XLockNoAdd = 0;
+	int YLockNoAdd = 0;
+	int SpeedNoAdd = 0;
 	int G[10] = { 0,0,0,0,0,0,0,0,0,0 };
+
 	for (int iLine = 0; iLine < 3; iLine++) {
-		G[0] = G[3] = G[4] = G[5] = 0;
+		viewTadd = 0;
+		XLockNoAdd = 0;
+		YLockNoAdd = 0;
+		SpeedNoAdd = 0;
 		for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
-			G[7] = DrawNoteOne(G, &note[iNote], mapeff, viewTN, lockN, iLine, speedN[iLine], Ntime,
-				Xline[iLine], Yline[iLine], scroolN, cam, noteimg);
-			if (G[7] == 1) { continue; }
-			else if (G[7] == 2) { break; }
+			ret = DrawNoteOne(&viewTadd, &XLockNoAdd, &YLockNoAdd, &SpeedNoAdd, &note[iNote],
+				mapeff, viewTN, lockN, iLine, speedN[iLine], Ntime, Xline[iLine], Yline[iLine],
+				scroolN, cam, noteimg);
+			if (ret == 1) { continue; }
+			else if (ret == 2) { break; }
 			if (note[iNote].next == -1) { break; }
 		}
 	}
