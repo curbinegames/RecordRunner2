@@ -39,63 +39,74 @@ int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
 		}
 	}
 	{
+#if 0
 		int buf[999][4];
 		fread(buf, sizeof(int), recfp->allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
 		for (int i = 0; i < recfp->allnum.Ymovenum[0]; i++) {
 			recfp->mapeff.move.y[0].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[0].d[i].pos   = buf[i][1];
+			recfp->mapeff.move.y[0].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[0].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[0].d[i].mode  = buf[i][3];
+			recfp->mapeff.move.y[0].d[i].mode = buf[i][3];
 		}
 		fread(buf, sizeof(int), recfp->allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
 		for (int i = 0; i < recfp->allnum.Ymovenum[1]; i++) {
 			recfp->mapeff.move.y[1].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[1].d[i].pos   = buf[i][1];
+			recfp->mapeff.move.y[1].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[1].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[1].d[i].mode  = buf[i][3];
+			recfp->mapeff.move.y[1].d[i].mode = buf[i][3];
 		}
 		fread(buf, sizeof(int), recfp->allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
 		for (int i = 0; i < recfp->allnum.Ymovenum[2]; i++) {
 			recfp->mapeff.move.y[2].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[2].d[i].pos   = buf[i][1];
+			recfp->mapeff.move.y[2].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[2].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[2].d[i].mode  = buf[i][3];
+			recfp->mapeff.move.y[2].d[i].mode = buf[i][3];
 		}
 		fread(buf, sizeof(int), recfp->allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
 		for (int i = 0; i < recfp->allnum.Ymovenum[3]; i++) {
 			recfp->mapeff.move.y[3].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[3].d[i].pos   = buf[i][1];
+			recfp->mapeff.move.y[3].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[3].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[3].d[i].mode  = buf[i][3];
+			recfp->mapeff.move.y[3].d[i].mode = buf[i][3];
 		}
 		fread(buf, sizeof(int), recfp->allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
 		for (int i = 0; i < recfp->allnum.Ymovenum[4]; i++) {
 			recfp->mapeff.move.y[4].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.y[4].d[i].pos   = buf[i][1];
+			recfp->mapeff.move.y[4].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[4].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.y[4].d[i].mode  = buf[i][3];
+			recfp->mapeff.move.y[4].d[i].mode = buf[i][3];
 		}
 		fread(buf, sizeof(int), recfp->allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
 		for (int i = 0; i < recfp->allnum.Xmovenum[0]; i++) {
 			recfp->mapeff.move.x[0].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.x[0].d[i].pos   = buf[i][1];
+			recfp->mapeff.move.x[0].d[i].pos = buf[i][1];
 			recfp->mapeff.move.x[0].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.x[0].d[i].mode  = buf[i][3];
+			recfp->mapeff.move.x[0].d[i].mode = buf[i][3];
 		}
 		fread(buf, sizeof(int), recfp->allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
 		for (int i = 0; i < recfp->allnum.Xmovenum[1]; i++) {
 			recfp->mapeff.move.x[1].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.x[1].d[i].pos   = buf[i][1];
+			recfp->mapeff.move.x[1].d[i].pos = buf[i][1];
 			recfp->mapeff.move.x[1].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.x[1].d[i].mode  = buf[i][3];
+			recfp->mapeff.move.x[1].d[i].mode = buf[i][3];
 		}
 		fread(buf, sizeof(int), recfp->allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
 		for (int i = 0; i < recfp->allnum.Xmovenum[2]; i++) {
 			recfp->mapeff.move.x[2].d[i].Stime = buf[i][0];
-			recfp->mapeff.move.x[2].d[i].pos   = buf[i][1];
+			recfp->mapeff.move.x[2].d[i].pos = buf[i][1];
 			recfp->mapeff.move.x[2].d[i].Etime = buf[i][2];
-			recfp->mapeff.move.x[2].d[i].mode  = buf[i][3];
+			recfp->mapeff.move.x[2].d[i].mode = buf[i][3];
 		}
+#else
+		fread(&recfp->mapeff.move.y[0].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
+		fread(&recfp->mapeff.move.y[1].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[1], fp);//上レーン縦位置移動タイミング
+		fread(&recfp->mapeff.move.y[2].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[2], fp);//上レーン縦位置移動タイミング
+		fread(&recfp->mapeff.move.y[3].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[3], fp);//上レーン縦位置移動タイミング
+		fread(&recfp->mapeff.move.y[4].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[4], fp);//上レーン縦位置移動タイミング
+		fread(&recfp->mapeff.move.x[0].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[0], fp);//上レーン縦位置移動タイミング
+		fread(&recfp->mapeff.move.x[1].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[1], fp);//上レーン縦位置移動タイミング
+		fread(&recfp->mapeff.move.x[2].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[2], fp);//上レーン縦位置移動タイミング
+#endif
 	}
 	fread(&recfp->mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 	{

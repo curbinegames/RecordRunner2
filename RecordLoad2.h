@@ -1,4 +1,5 @@
 #include "playbox.h"
+#include "RecScoreFile.h"
 #include "recp_cal_ddif.h"
 #include "recp_cal_difkey.h"
 #include "recp_cal_ddif_2.h"
@@ -70,12 +71,12 @@ int shifttime(double n, double bpm, int time) {
 }
 
 void SETMove(double NowTime, double StartTime, double MovePoint,
-	double MoveType, double EndTime, double bpm, int* StaetTimeBuff,
-	int* MovePointBuff, int* EndTimeBuff, int* MoveTypeBuff) {
-	*StaetTimeBuff = shifttime(StartTime, bpm, (int)NowTime);
-	*MovePointBuff = (int)(MovePoint * 50.0 + 100.0);
-	*EndTimeBuff = shifttime(EndTime, bpm, (int)NowTime) - 5;
-	*MoveTypeBuff = (int)MoveType;
+	double MoveType, double EndTime, double bpm, rec_move_data_t *Buff)
+{
+	Buff->Stime = shifttime(StartTime, bpm, (int)NowTime);
+	Buff->pos = (int)(MovePoint * 50.0 + 100.0);
+	Buff->Etime = shifttime(EndTime, bpm, (int)NowTime) - 5;
+	Buff->mode = (int)MoveType;
 }
 
 /* sub action */
@@ -153,43 +154,48 @@ void RecordLoad2(int p, int n, int o) {
 	fall[0][0] = 0;
 	fall[0][1] = -1;
 	short int fallN = 1; //↑の番号
-	int Ymove[5][999][4]; //[上, 中, 下, (地面), (水中)]レーン縦移動の[0:開始時間,1:位置,2:終了時間,3:種類]
-	Ymove[0][0][0] = 0;
-	Ymove[0][0][1] = 300;
-	Ymove[0][0][2] = 0;
-	Ymove[0][0][3] = 1;
-	Ymove[1][0][0] = 0;
-	Ymove[1][0][1] = 350;
-	Ymove[1][0][2] = 0;
-	Ymove[1][0][3] = 1;
-	Ymove[2][0][0] = 0;
-	Ymove[2][0][1] = 400;
-	Ymove[2][0][2] = 0;
-	Ymove[2][0][3] = 1;
-	Ymove[3][0][0] = 0;
-	Ymove[3][0][1] = 350;
-	Ymove[3][0][2] = 0;
-	Ymove[3][0][3] = 1;
-	Ymove[4][0][0] = 0;
-	Ymove[4][0][1] = 600;
-	Ymove[4][0][2] = 0;
-	Ymove[4][0][3] = 1;
-	short int YmoveN[5] = { 1,1,1,1,1 }; //↑の番号
+	rec_move_all_set_t move; // レーン移動セット
+	move.y[0].d[0].Stime = 0;
+	move.y[0].d[0].pos = 300;
+	move.y[0].d[0].Etime = 0;
+	move.y[0].d[0].mode = 1;
+	move.y[0].num = 1;
+	move.y[1].d[0].Stime = 0;
+	move.y[1].d[0].pos = 350;
+	move.y[1].d[0].Etime = 0;
+	move.y[1].d[0].mode = 1;
+	move.y[1].num = 1;
+	move.y[2].d[0].Stime = 0;
+	move.y[2].d[0].pos = 400;
+	move.y[2].d[0].Etime = 0;
+	move.y[2].d[0].mode = 1;
+	move.y[2].num = 1;
+	move.y[3].d[0].Stime = 0;
+	move.y[3].d[0].pos = 350;
+	move.y[3].d[0].Etime = 0;
+	move.y[3].d[0].mode = 1;
+	move.y[3].num = 1;
+	move.y[4].d[0].Stime = 0;
+	move.y[4].d[0].pos = 600;
+	move.y[4].d[0].Etime = 0;
+	move.y[4].d[0].mode = 1;
+	move.y[4].num = 1;
+	move.x[0].d[0].Stime = 0;
+	move.x[0].d[0].pos = 150;
+	move.x[0].d[0].Etime = 0;
+	move.x[0].d[0].mode = 1;
+	move.x[0].num = 1;
+	move.x[1].d[0].Stime = 0;
+	move.x[1].d[0].pos = 150;
+	move.x[1].d[0].Etime = 0;
+	move.x[1].d[0].mode = 1;
+	move.x[1].num = 1;
+	move.x[2].d[0].Stime = 0;
+	move.x[2].d[0].pos = 150;
+	move.x[2].d[0].Etime = 0;
+	move.x[2].d[0].mode = 1;
+	move.x[2].num = 1;
 	short int YmoveN2[3] = { 0,0,0 };
-	int Xmove[3][999][4]; //[上, 中, 下]レーン横移動の[0:開始時間,1:位置,2:終了時間,3:種類]
-	Xmove[0][0][0] = 0;
-	Xmove[0][0][1] = 150;
-	Xmove[0][0][2] = 0;
-	Xmove[0][0][3] = 1;
-	Xmove[1][0][0] = 0;
-	Xmove[1][0][1] = 150;
-	Xmove[1][0][2] = 0;
-	Xmove[1][0][3] = 1;
-	Xmove[2][0][0] = 0;
-	Xmove[2][0][1] = 150;
-	Xmove[2][0][2] = 0;
-	Xmove[2][0][3] = 1;
-	short int XmoveN[3] = { 1,1,1 }; //↑の番号
 	short int XmoveN2[3] = { 0,0,0 };
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	lock[0][0][0] = -1;
@@ -355,14 +361,6 @@ void RecordLoad2(int p, int n, int o) {
 		}
 		//レベルを読み込む
 		else if (strands(GT1, L"#LEVEL:")) Lv = SETLv(GT1);
-		//アイテムを読み込む
-		/*else if (strands(GT1, L"#ITEM:")) {
-			strmods(GT1, 6);
-			strcopy(dataE, GT15, 1);
-			stradds(GT15, L'/');
-			strcats(GT15, GT1);
-			item[itemN++] = LoadGraph(GT15);
-		}*/
 		//落ち物背景指定
 		else if (strands(GT1, L"#FALL:")) {
 			strmods(GT1, 6);
@@ -473,75 +471,45 @@ void RecordLoad2(int p, int n, int o) {
 						case 2:
 						case 3:
 							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								G[1], GD[2], bpmG,
-								&Ymove[i[0]][YmoveN[i[0]]][0],
-								&Ymove[i[0]][YmoveN[i[0]]][1],
-								&Ymove[i[0]][YmoveN[i[0]]][2],
-								&Ymove[i[0]][YmoveN[i[0]]][3]);
+								G[1], GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
 							break;
 						case 4:
 							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								1, GD[2], bpmG, &Ymove[i[0]][YmoveN[i[0]]][0],
-								&Ymove[i[0]][YmoveN[i[0]]][1],
-								&Ymove[i[0]][YmoveN[i[0]]][2],
-								&Ymove[i[0]][YmoveN[i[0]]][3]);
-							Ymove[i[0]][YmoveN[i[0]]][0] -= 5;
-							Ymove[i[0]][YmoveN[i[0]]][2] -= 5;
+								1, GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
+							move.y[i[0]].d[move.y[i[0]].num].Stime -= 5;
+							move.y[i[0]].d[move.y[i[0]].num].Etime -= 5;
 							break;
 						case 5:
 							SETMove(timer[0], GD[0],
-								(Ymove[i[0]][YmoveN[i[0]] - 1][1] +
+								(move.y[i[0]].d[move.y[i[0]].num - 1].pos +
 								(GD[1] + G[3] * i[0] - G[3]) * 50 - 100) / 100,
 								2, (GD[2] + GD[0]) / 2.0, bpmG,
-								&Ymove[i[0]][YmoveN[i[0]]][0],
-								&Ymove[i[0]][YmoveN[i[0]]][1],
-								&Ymove[i[0]][YmoveN[i[0]]][2],
-								&Ymove[i[0]][YmoveN[i[0]]][3]);
-							YmoveN[i[0]]++;
+								&move.y[i[0]].d[move.y[i[0]].num]);
+							move.y[i[0]].num++;
 							allnum.Ymovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
-								GD[1] + G[3] * i[0] - G[3], 3, GD[2], bpmG,
-								&Ymove[i[0]][YmoveN[i[0]]][0],
-								&Ymove[i[0]][YmoveN[i[0]]][1],
-								&Ymove[i[0]][YmoveN[i[0]]][2],
-								&Ymove[i[0]][YmoveN[i[0]]][3]);
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, GD[1] + G[3] * i[0] - G[3],
+								3, GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
 							break;
 						case 6:
 							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								3, (GD[2] + GD[0]) / 2.0, bpmG,
-								&Ymove[i[0]][YmoveN[i[0]]][0],
-								&Ymove[i[0]][YmoveN[i[0]]][1],
-								&Ymove[i[0]][YmoveN[i[0]]][2],
-								&Ymove[i[0]][YmoveN[i[0]]][3]);
-							YmoveN[i[0]]++;
+								3, (GD[2] + GD[0]) / 2.0, bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
+							move.y[i[0]].num++;
 							allnum.Ymovenum[i[0]]++;
 							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
-								(Ymove[i[0]][YmoveN[i[0]] - 2][1] - 100.0)
-								/ 50.0, 2, GD[2], bpmG,
-								&Ymove[i[0]][YmoveN[i[0]]][0],
-								&Ymove[i[0]][YmoveN[i[0]]][1],
-								&Ymove[i[0]][YmoveN[i[0]]][2],
-								&Ymove[i[0]][YmoveN[i[0]]][3]);
+								(move.y[i[0]].d[move.y[i[0]].num - 2].pos - 100.0)
+								/ 50.0, 2, GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
 							break;
 						case 7:
 							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								2, (GD[2] + GD[0]) / 2.0, bpmG,
-								&Ymove[i[0]][YmoveN[i[0]]][0],
-								&Ymove[i[0]][YmoveN[i[0]]][1],
-								&Ymove[i[0]][YmoveN[i[0]]][2],
-								&Ymove[i[0]][YmoveN[i[0]]][3]);
-							YmoveN[i[0]]++;
+								2, (GD[2] + GD[0]) / 2.0, bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
+							move.y[i[0]].num++;
 							allnum.Ymovenum[i[0]]++;
 							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
-								(Ymove[i[0]][YmoveN[i[0]] - 2][1] - 100.0)
-								/ 50.0, 3, GD[2], bpmG,
-								&Ymove[i[0]][YmoveN[i[0]]][0],
-								&Ymove[i[0]][YmoveN[i[0]]][1],
-								&Ymove[i[0]][YmoveN[i[0]]][2],
-								&Ymove[i[0]][YmoveN[i[0]]][3]);
+								(move.y[i[0]].d[move.y[i[0]].num - 2].pos - 100.0)
+								/ 50.0, 3, GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
 							break;
 						}
-						YmoveN[i[0]]++;
+						move.y[i[0]].num++;
 						allnum.Ymovenum[i[0]]++;
 					}
 					break;
@@ -604,33 +572,42 @@ void RecordLoad2(int p, int n, int o) {
 						case 1:
 						case 2:
 						case 3:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], G[1], GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
+								G[1], GD[2], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
 							break;
 						case 4:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 1, GD[0], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
-							Xmove[i[0]][XmoveN[i[0]]][0] -= 5;
-							Xmove[i[0]][XmoveN[i[0]]][2] -= 5;
+							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
+								1, GD[0], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
+							move.x[i[0]].d[move.x[i[0]].num].Stime -= 5;
+							move.x[i[0]].d[move.x[i[0]].num].Etime -= 5;
 							break;
 						case 5:
-							SETMove(timer[0], GD[0], (Xmove[i[0]][XmoveN[i[0]] - 1][1] + GD[1] * 50 - 100) / 100, 2, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
-							XmoveN[i[0]]++;
+							SETMove(timer[0], GD[0],
+								(move.x[i[0]].d[move.x[i[0]].num - 1].pos + GD[1] * 50 - 100) / 100, 2,
+								(GD[2] + GD[0]) / 2.0, bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
+							move.x[i[0]].num++;
 							allnum.Xmovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, GD[1] + G[3] * i[0] - G[3], 3, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
+								GD[1] + G[3] * i[0] - G[3], 3, GD[2], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
 							break;
 						case 6:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 3, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
-							XmoveN[i[0]]++;
+							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
+								3, (GD[2] + GD[0]) / 2.0, bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
+							move.x[i[0]].num++;
 							allnum.Xmovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Xmove[i[0]][XmoveN[i[0]] - 2][1] - 100.0) / 50.0, 2, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (move.x[i[0]].d[move.x[i[0]].num - 2].pos - 100.0) / 50.0,
+								2, GD[2], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
 							break;
 						case 7:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 2, (GD[2] + GD[0]) / 2.0, bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
-							XmoveN[i[0]]++;
+							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 2,
+								(GD[2] + GD[0]) / 2.0, bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
+							move.x[i[0]].num++;
 							allnum.Xmovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (Xmove[i[0]][XmoveN[i[0]] - 2][1] - 100.0) / 50.0, 3, GD[2], bpmG, &Xmove[i[0]][XmoveN[i[0]]][0], &Xmove[i[0]][XmoveN[i[0]]][1], &Xmove[i[0]][XmoveN[i[0]]][2], &Xmove[i[0]][XmoveN[i[0]]][3]);
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (move.x[i[0]].d[move.x[i[0]].num - 2].pos - 100.0) / 50.0,
+								3, GD[2], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
 							break;
 						}
-						XmoveN[i[0]]++;
+						move.x[i[0]].num++;
 						allnum.Xmovenum[i[0]]++;
 					}
 					break;
@@ -649,40 +626,25 @@ void RecordLoad2(int p, int n, int o) {
 					if (G[1] == 1) {
 						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
 							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2],
-								bpmG, &Ymove[G[0]][YmoveN[G[0]]][0],
-								&Ymove[G[0]][YmoveN[G[0]]][1],
-								&Ymove[G[0]][YmoveN[G[0]]][2],
-								&Ymove[G[0]][YmoveN[G[0]]][3]);
+								bpmG, &move.y[G[0]].d[move.y[G[0]].num]);
 							SETMove(timer[0], GD[0] + GD[2],
-								(Ymove[G[0]][YmoveN[G[0]] - 1][1] - 100.0) /
-								50.0, 1, GD[0] + GD[2] * 2, bpmG,
-								&Ymove[G[0]][YmoveN[G[0]] + 1][0],
-								&Ymove[G[0]][YmoveN[G[0]] + 1][1],
-								&Ymove[G[0]][YmoveN[G[0]] + 1][2],
-								&Ymove[G[0]][YmoveN[G[0]] + 1][3]);
+								(move.y[G[0]].d[move.y[G[0]].num - 1].pos - 100.0) / 50.0,
+								1, GD[0] + GD[2] * 2, bpmG, &move.y[G[0]].d[move.y[G[0]].num + 1]);
 							GD[0] += GD[2] * 2;
-							YmoveN[G[0]] += 2;
+							move.y[G[0]].num += 2;
 							allnum.Ymovenum[G[0]] += 2;
 						}
 					}
 					else {
+						rec_move_data_t buf;
 						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
-							SETMove(timer[0], GD[0],
-								GD[1],
-								1, GD[0] + GD[2], bpmG,
-								&Xmove[G[0]][XmoveN[G[0]]][0],
-								&Xmove[G[0]][XmoveN[G[0]]][1],
-								&Xmove[G[0]][XmoveN[G[0]]][2],
-								&Xmove[G[0]][XmoveN[G[0]]][3]);
+							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2],
+								bpmG, &move.x[G[0]].d[move.x[G[0]].num]);
 							SETMove(timer[0], GD[0] + GD[2],
-								(Xmove[G[0]][XmoveN[G[0]] - 1][1] - 100.0) /
-								50.0, 1, GD[0] + GD[2] * 2, bpmG,
-								&Xmove[G[0]][XmoveN[G[0]] + 1][0],
-								&Xmove[G[0]][XmoveN[G[0]] + 1][1],
-								&Xmove[G[0]][XmoveN[G[0]] + 1][2],
-								&Xmove[G[0]][XmoveN[G[0]] + 1][3]);
+								(move.x[G[0]].d[move.x[G[0]].num - 1].pos - 100.0) /
+								50.0, 1, GD[0] + GD[2] * 2, bpmG, &move.x[G[0]].d[move.x[G[0]].num] + 1);
 							GD[0] += GD[2] * 2;
-							XmoveN[G[0]] += 2;
+							move.x[G[0]].num += 2;
 							allnum.Xmovenum[G[0]] += 2;
 						}
 					}
@@ -719,43 +681,43 @@ void RecordLoad2(int p, int n, int o) {
 					case 1:
 					case 2:
 					case 3:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, (int)timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]]][3] = G[1];
+						move.y[G[0]].d[move.y[G[0]].num].Stime = shifttime(GD[0], bpmG, (int)timer[0]);
+						move.y[G[0]].d[move.y[G[0]].num].pos = GD[1] * 50.0 + 100.0;
+						move.y[G[0]].d[move.y[G[0]].num].Etime = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
+						move.y[G[0]].d[move.y[G[0]].num].mode = G[1];
 						break;
 					case 4:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, (int)timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime(GD[2], bpmG, (int)timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][3] = 1;
+						move.y[G[0]].d[move.y[G[0]].num].Stime = shifttime(GD[0], bpmG, (int)timer[0]) - 5;
+						move.y[G[0]].d[move.y[G[0]].num].pos = GD[1] * 50.0 + 100.0;
+						move.y[G[0]].d[move.y[G[0]].num].Etime = shifttime(GD[2], bpmG, (int)timer[0]);
+						move.y[G[0]].d[move.y[G[0]].num].mode = 1;
 						break;
 					case 5:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, (int)timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][1] = (Ymove[G[0]][YmoveN[G[0]] - 1][1] + GD[1] * 50 + 100) / 2;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][3] = 2;
-						Ymove[G[0]][YmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
-						Ymove[G[0]][YmoveN[G[0]] + 1][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 3;
-						YmoveN[G[0]]++;
+						move.y[G[0]].d[move.y[G[0]].num].Stime = shifttime(GD[0], bpmG, (int)timer[0]);
+						move.y[G[0]].d[move.y[G[0]].num].pos = (move.y[G[0]].d[move.y[G[0]].num - 1].pos + GD[1] * 50 + 100) / 2;
+						move.y[G[0]].d[move.y[G[0]].num].Etime = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
+						move.y[G[0]].d[move.y[G[0]].num].mode = 2;
+						move.y[G[0]].d[move.y[G[0]].num + 1].Stime = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
+						move.y[G[0]].d[move.y[G[0]].num + 1].pos = GD[1] * 50.0 + 100.0;
+						move.y[G[0]].d[move.y[G[0]].num + 1].Etime = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
+						move.y[G[0]].d[move.y[G[0]].num + 1].mode = 3;
+						move.y[G[0]].num++;
 						allnum.Ymovenum[i[0]]++;
 						break;
 					case 6:
-						Ymove[G[0]][YmoveN[G[0]]][0] = shifttime(GD[0], bpmG, (int)timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][1] = GD[1] * 50.0 + 100.0;
-						Ymove[G[0]][YmoveN[G[0]]][2] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
-						Ymove[G[0]][YmoveN[G[0]]][3] = 3;
-						Ymove[G[0]][YmoveN[G[0]] + 1][0] = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
-						Ymove[G[0]][YmoveN[G[0]] + 1][1] = Ymove[G[0]][YmoveN[G[0]] - 1][1];
-						Ymove[G[0]][YmoveN[G[0]] + 1][2] = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
-						Ymove[G[0]][YmoveN[G[0]] + 1][3] = 2;
-						YmoveN[G[0]]++;
+						move.y[G[0]].d[move.y[G[0]].num].Stime = shifttime(GD[0], bpmG, (int)timer[0]);
+						move.y[G[0]].d[move.y[G[0]].num].pos = GD[1] * 50.0 + 100.0;
+						move.y[G[0]].d[move.y[G[0]].num].Etime = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
+						move.y[G[0]].d[move.y[G[0]].num].mode = 3;
+						move.y[G[0]].d[move.y[G[0]].num + 1].Stime = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
+						move.y[G[0]].d[move.y[G[0]].num + 1].pos = move.y[G[0]].d[move.y[G[0]].num - 1].pos;
+						move.y[G[0]].d[move.y[G[0]].num + 1].Etime = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
+						move.y[G[0]].d[move.y[G[0]].num + 1].mode = 2;
+						move.y[G[0]].num++;
 						allnum.Ymovenum[i[0]]++;
 						break;
 					}
-					YmoveN[G[0]]++;
+					move.y[G[0]].num++;
 					allnum.Ymovenum[i[0]]++;
 					break;
 				case OBJ_CODE_XLOCK: //横ロック
@@ -1150,72 +1112,72 @@ void RecordLoad2(int p, int n, int o) {
 					#endif
 							//縦位置を計算する
 					#if SWITCH_NOTE_BOX_2
-							while (Ymove[i[0]][YmoveN2[i[0]]][2] <= note[objectN].hittime &&
-								Ymove[i[0]][YmoveN2[i[0]]][2] >= 0) {
+							while (move.y[i[0]].d[YmoveN2[i[0]]].Etime <= note[objectN].hittime &&
+								move.y[i[0]].d[YmoveN2[i[0]]].Etime >= 0) {
 								YmoveN2[i[0]]++;
 							}
-							if (Ymove[i[0]][YmoveN2[i[0]]][0] >= 0 &&
-								Ymove[i[0]][YmoveN2[i[0]]][0] <= note[objectN].hittime &&
-								Ymove[i[0]][YmoveN2[i[0]]][2] > note[objectN].hittime) {
-								note[objectN].ypos = movecal(Ymove[i[0]][YmoveN2[i[0]]][3],
-									Ymove[i[0]][YmoveN2[i[0]]][0], 
-									Ymove[i[0]][YmoveN2[i[0]] - 1][1],
-									Ymove[i[0]][YmoveN2[i[0]]][2], Ymove[i[0]][YmoveN2[i[0]]][1],
+							if (move.y[i[0]].d[YmoveN2[i[0]]].Stime >= 0 &&
+								move.y[i[0]].d[YmoveN2[i[0]]].Stime <= note[objectN].hittime &&
+								move.y[i[0]].d[YmoveN2[i[0]]].Etime > note[objectN].hittime) {
+								note[objectN].ypos = movecal(move.y[i[0]].d[YmoveN2[i[0]]].mode,
+									move.y[i[0]].d[YmoveN2[i[0]]].Stime,
+									move.y[i[0]].d[YmoveN2[i[0]] - 1].pos,
+									move.y[i[0]].d[YmoveN2[i[0]]].Etime, move.y[i[0]].d[YmoveN2[i[0]]].pos,
 									note[objectN].hittime);
 							}
 							else {
-								note[objectN].ypos = Ymove[i[0]][YmoveN2[i[0]] - 1][1];
+								note[objectN].ypos = move.y[i[0]].d[YmoveN2[i[0]] - 1].pos;
 							}
 					#else
-							while (Ymove[i[0]][YmoveN2[i[0]]][2] <= note[i[0]][objectN[i[0]]].hittime &&
-								Ymove[i[0]][YmoveN2[i[0]]][2] >= 0) {
+							while (move.y[i[0]].d[YmoveN2[i[0]]].Etime <= note[i[0]][objectN[i[0]]].hittime &&
+								move.y[i[0]].d[YmoveN2[i[0]]].Etime >= 0) {
 								YmoveN2[i[0]]++;
 							}
-							if (Ymove[i[0]][YmoveN2[i[0]]][0] >= 0 &&
-								Ymove[i[0]][YmoveN2[i[0]]][0] <= note[i[0]][objectN[i[0]]].hittime &&
-								Ymove[i[0]][YmoveN2[i[0]]][2] > note[i[0]][objectN[i[0]]].hittime) {
-								note[i[0]][objectN[i[0]]].ypos = movecal(Ymove[i[0]][YmoveN2[i[0]]][3],
-									Ymove[i[0]][YmoveN2[i[0]]][0], Ymove[i[0]][YmoveN2[i[0]] - 1][1],
-									Ymove[i[0]][YmoveN2[i[0]]][2], Ymove[i[0]][YmoveN2[i[0]]][1],
+							if (move.y[i[0]].d[YmoveN2[i[0]]].Stime >= 0 &&
+								move.y[i[0]].d[YmoveN2[i[0]]].Stime <= note[i[0]][objectN[i[0]]].hittime &&
+								move.y[i[0]].d[YmoveN2[i[0]]].Etime > note[i[0]][objectN[i[0]]].hittime) {
+								note[i[0]][objectN[i[0]]].ypos = movecal(move.y[i[0]].d[YmoveN2[i[0]]].mode,
+									move.y[i[0]].d[YmoveN2[i[0]]].Stime, move.y[i[0]].d[YmoveN2[i[0]] - 1].pos,
+									move.y[i[0]].d[YmoveN2[i[0]]].Etime, move.y[i[0]].d[YmoveN2[i[0]]].pos,
 									note[i[0]][objectN[i[0]]].hittime);
 							}
 							else {
-								note[i[0]][objectN[i[0]]].ypos = Ymove[i[0]][YmoveN2[i[0]] - 1][1];
+								note[i[0]][objectN[i[0]]].ypos = move.y[i[0]].d[YmoveN2[i[0]] - 1].pos;
 							}
 					#endif
 							//横位置を計算する
 					#if SWITCH_NOTE_BOX_2
-							while (Xmove[i[0]][XmoveN2[i[0]]][2] <= note[objectN].hittime &&
-								Xmove[i[0]][XmoveN2[i[0]]][2] >= 0) {
+							while (move.x[i[0]].d[XmoveN2[i[0]]].Etime <= note[objectN].hittime &&
+								move.x[i[0]].d[XmoveN2[i[0]]].Etime >= 0) {
 								XmoveN2[i[0]]++;
 							}
-							if (Xmove[i[0]][XmoveN2[i[0]]][0] >= 0 &&
-								Xmove[i[0]][XmoveN2[i[0]]][0] <= note[objectN].hittime &&
-								Xmove[i[0]][XmoveN2[i[0]]][2] > note[objectN].hittime) {
-								note[objectN].xpos = movecal(Xmove[i[0]][XmoveN2[i[0]]][3],
-									Xmove[i[0]][XmoveN2[i[0]]][0], 
-									Xmove[i[0]][XmoveN2[i[0]] - 1][1],
-									Xmove[i[0]][XmoveN2[i[0]]][2], Xmove[i[0]][XmoveN2[i[0]]][1],
+							if (move.x[i[0]].d[XmoveN2[i[0]]].Stime >= 0 &&
+								move.x[i[0]].d[XmoveN2[i[0]]].Stime <= note[objectN].hittime &&
+								move.x[i[0]].d[XmoveN2[i[0]]].Stime > note[objectN].hittime) {
+								note[objectN].xpos = movecal(move.x[i[0]].d[XmoveN2[i[0]]].mode,
+									move.x[i[0]].d[XmoveN2[i[0]]].Stime, 
+									move.x[i[0]].d[XmoveN2[i[0]] - 1].pos,
+									move.x[i[0]].d[XmoveN2[i[0]]].Etime, move.x[i[0]].d[XmoveN2[i[0]]].pos,
 									note[objectN].hittime);
 							}
 							else {
-								note[objectN].xpos = Xmove[i[0]][XmoveN2[i[0]] - 1][1];
+								note[objectN].xpos = move.x[i[0]].d[XmoveN2[i[0]] - 1].mode;
 							}
 					#else
-							while (Xmove[i[0]][XmoveN2[i[0]]][2] <= note[i[0]][objectN[i[0]]].hittime &&
-								Xmove[i[0]][XmoveN2[i[0]]][2] >= 0) {
+							while (move.x[i[0]].d[XmoveN2[i[0]]].Etime <= note[i[0]][objectN[i[0]]].hittime &&
+								move.x[i[0]].d[XmoveN2[i[0]]].Etime >= 0) {
 								XmoveN2[i[0]]++;
 							}
-							if (Xmove[i[0]][XmoveN2[i[0]]][0] >= 0 &&
-								Xmove[i[0]][XmoveN2[i[0]]][0] <= note[i[0]][objectN[i[0]]].hittime &&
-								Xmove[i[0]][XmoveN2[i[0]]][2] > note[i[0]][objectN[i[0]]].hittime) {
-								note[i[0]][objectN[i[0]]].xpos = movecal(Xmove[i[0]][XmoveN2[i[0]]][3],
-									Xmove[i[0]][XmoveN2[i[0]]][0], Xmove[i[0]][XmoveN2[i[0]] - 1][1],
-									Xmove[i[0]][XmoveN2[i[0]]][2], Xmove[i[0]][XmoveN2[i[0]]][1],
+							if (move.x[i[0]].d[XmoveN2[i[0]]].Stime >= 0 &&
+								move.x[i[0]].d[XmoveN2[i[0]]].Stime <= note[i[0]][objectN[i[0]]].hittime &&
+								move.x[i[0]].d[XmoveN2[i[0]]].Etime > note[i[0]][objectN[i[0]]].hittime) {
+								note[i[0]][objectN[i[0]]].xpos = movecal(move.x[i[0]].d[XmoveN2[i[0]]].mode,
+									move.x[i[0]].d[XmoveN2[i[0]]].Stime, move.x[i[0]].d[XmoveN2[i[0]] - 1].pos,
+									move.x[i[0]].d[XmoveN2[i[0]]].Etime, move.x[i[0]].d[XmoveN2[i[0]]].pos,
 									note[i[0]][objectN[i[0]]].hittime);
 							}
 							else {
-								note[i[0]][objectN[i[0]]].xpos = Xmove[i[0]][XmoveN2[i[0]] - 1][1];
+								note[i[0]][objectN[i[0]]].xpos = move.x[i[0]].d[XmoveN2[i[0]] - 1].pos;
 							}
 					#endif
 							//効果音を設定する
@@ -1530,14 +1492,14 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 	fwrite(&speedt, sizeof(double), 990, fp);//レーン速度
 	fwrite(&chamo, sizeof(int), 594, fp);//キャラグラ変換タイミング
-	fwrite(&Ymove[0], sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
-	fwrite(&Ymove[1], sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
-	fwrite(&Ymove[2], sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
-	fwrite(&Ymove[3], sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
-	fwrite(&Ymove[4], sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
-	fwrite(&Xmove[0], sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
-	fwrite(&Xmove[1], sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
-	fwrite(&Xmove[2], sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
+	fwrite(&move.y[0].d, sizeof(rec_move_data_t), allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
+	fwrite(&move.y[1].d, sizeof(rec_move_data_t), allnum.Ymovenum[1], fp);//中レーン縦位置移動タイミング
+	fwrite(&move.y[2].d, sizeof(rec_move_data_t), allnum.Ymovenum[2], fp);//下レーン縦位置移動タイミング
+	fwrite(&move.y[3].d, sizeof(rec_move_data_t), allnum.Ymovenum[3], fp);//地面縦位置移動タイミング
+	fwrite(&move.y[4].d, sizeof(rec_move_data_t), allnum.Ymovenum[4], fp);//水面縦位置移動タイミング
+	fwrite(&move.x[0].d, sizeof(rec_move_data_t), allnum.Xmovenum[0], fp);//上レーン横位置移動タイミング
+	fwrite(&move.x[1].d, sizeof(rec_move_data_t), allnum.Xmovenum[1], fp);//中レーン横位置移動タイミング
+	fwrite(&move.x[2].d, sizeof(rec_move_data_t), allnum.Xmovenum[2], fp);//下レーン横位置移動タイミング
 	fwrite(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
 	fwrite(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 	fwrite(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
