@@ -672,50 +672,46 @@ void RecordLoad2(int p, int n, int o) {
 					strnex(GT1);
 					GD[2] = strsans2(GT1);
 					for (i[0] = G[0]; i[0] <= G[2]; i[0]++) {
+						rec_move_set_t *p_buf = &move.y[i[0]];
+						double Spos = (p_buf->d[p_buf->num - 1].pos - 100.0) / 50.0;
+						double Epos = GD[1] + G[3] * i[0] - G[3];
 						switch (G[1]) {
 						case 1:
 						case 2:
 						case 3:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								G[1], GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
+							SETMove(timer[0], GD[0], Epos, G[1], GD[2], bpmG, &p_buf->d[p_buf->num]);
 							break;
 						case 4:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								1, GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
-							move.y[i[0]].d[move.y[i[0]].num].Stime -= 5;
-							move.y[i[0]].d[move.y[i[0]].num].Etime -= 5;
+							SETMove(timer[0], GD[0], Epos, 1, GD[2], bpmG, &p_buf->d[p_buf->num]);
+							p_buf->d[p_buf->num].Stime -= 5;
+							p_buf->d[p_buf->num].Etime -= 5;
 							break;
 						case 5:
-							SETMove(timer[0], GD[0],
-								(move.y[i[0]].d[move.y[i[0]].num - 1].pos +
-								(GD[1] + G[3] * i[0] - G[3]) * 50 - 100) / 100,
-								2, (GD[2] + GD[0]) / 2.0, bpmG,
-								&move.y[i[0]].d[move.y[i[0]].num]);
-							move.y[i[0]].num++;
+							SETMove(timer[0], GD[0], (Spos + Epos) / 2.0, 2,
+								(GD[2] + GD[0]) / 2.0, bpmG, &p_buf->d[p_buf->num]);
+							p_buf->num++;
 							allnum.Ymovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, GD[1] + G[3] * i[0] - G[3],
-								3, GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, Epos,
+								3, GD[2], bpmG, &p_buf->d[p_buf->num]);
 							break;
 						case 6:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								3, (GD[2] + GD[0]) / 2.0, bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
-							move.y[i[0]].num++;
+							SETMove(timer[0], GD[0], Epos, 3,
+								(GD[2] + GD[0]) / 2.0, bpmG, &p_buf->d[p_buf->num]);
+							p_buf->num++;
 							allnum.Ymovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
-								(move.y[i[0]].d[move.y[i[0]].num - 2].pos - 100.0)
-								/ 50.0, 2, GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, Spos,
+								2, GD[2], bpmG, &p_buf->d[p_buf->num]);
 							break;
 						case 7:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								2, (GD[2] + GD[0]) / 2.0, bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
-							move.y[i[0]].num++;
+							SETMove(timer[0], GD[0], Epos, 2,
+								(GD[2] + GD[0]) / 2.0, bpmG, &p_buf->d[p_buf->num]);
+							p_buf->num++;
 							allnum.Ymovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
-								(move.y[i[0]].d[move.y[i[0]].num - 2].pos - 100.0)
-								/ 50.0, 3, GD[2], bpmG, &move.y[i[0]].d[move.y[i[0]].num]);
+							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, Spos,
+								3, GD[2], bpmG, &p_buf->d[p_buf->num]);
 							break;
 						}
-						move.y[i[0]].num++;
+						p_buf->num++;
 						allnum.Ymovenum[i[0]]++;
 					}
 					break;
