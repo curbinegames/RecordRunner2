@@ -1161,7 +1161,7 @@ void RecordLoad2(int p, int n, int o) {
 									note[objectN].hittime);
 							}
 							else {
-								note[objectN].xpos = move.x[i[0]].d[XmoveN2[i[0]] - 1].mode;
+								note[objectN].xpos = move.x[i[0]].d[XmoveN2[i[0]] - 1].pos;
 							}
 					#else
 							while (move.x[i[0]].d[XmoveN2[i[0]]].Etime <= note[i[0]][objectN[i[0]]].hittime &&

@@ -106,6 +106,14 @@ int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
 		fread(&recfp->mapeff.move.x[0].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[0], fp);//上レーン縦位置移動タイミング
 		fread(&recfp->mapeff.move.x[1].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[1], fp);//上レーン縦位置移動タイミング
 		fread(&recfp->mapeff.move.x[2].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[2], fp);//上レーン縦位置移動タイミング
+		recfp->mapeff.move.y[0].num = 0;
+		recfp->mapeff.move.y[1].num = 0;
+		recfp->mapeff.move.y[2].num = 0;
+		recfp->mapeff.move.y[3].num = 0;
+		recfp->mapeff.move.y[4].num = 0;
+		recfp->mapeff.move.x[0].num = 0;
+		recfp->mapeff.move.x[1].num = 0;
+		recfp->mapeff.move.x[2].num = 0;
 #endif
 	}
 	fread(&recfp->mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
