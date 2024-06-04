@@ -122,6 +122,144 @@ static void CalNoteViewTime(note_box *note, scrool_box scrool[]) {
 }
 #endif
 
+int RecMapLoadGetc(TCHAR c, int istr, note_box_2_t note[], int *objectN, int iLine, double timer[],
+	int noteLaneNo[], double bpmG, int BlockNoteNum, struct custom_note_box customnote[],
+	struct scrool_box scrool[], rec_move_all_set_t *move, short int YmoveN2[], short int XmoveN2[],
+	short int *notes, playnum_box *allnum)
+{
+	TCHAR strcode = L'0';
+	if (IsNoteCode(c) == 0) { return -1; }
+	if (0 <= noteLaneNo[iLine]) {
+		note[noteLaneNo[iLine]].next = *objectN;
+	}
+	noteLaneNo[iLine] = *objectN;
+	switch (iLine) {
+	case 0:
+		note[*objectN].lane = NOTE_LANE_UP;
+		break;
+	case 1:
+		note[*objectN].lane = NOTE_LANE_MID;
+		break;
+	case 2:
+		note[*objectN].lane = NOTE_LANE_LOW;
+		break;
+	}
+	note[*objectN].hittime = timer[iLine] + 240000 * istr / (bpmG * BlockNoteNum);
+	if (L'1' <= c && c <= L'9') {
+		strcode = customnote[c - L'1'].note;
+	}
+	else {
+		strcode = c;
+	}
+	if (strcode == L'?') {
+		switch (GetRand(4)) {
+		case 0:
+			strcode = L'H';
+			break;
+		case 1:
+			strcode = L'U';
+			break;
+		case 2:
+			strcode = L'D';
+			break;
+		case 3:
+			strcode = L'L';
+			break;
+		case 4:
+			strcode = L'R';
+			break;
+		}
+	}
+	if (strcode == L'!') {
+		switch (GetRand(7)) {
+		case 0:
+			strcode = L'H';
+			break;
+		case 1:
+			strcode = L'U';
+			break;
+		case 2:
+			strcode = L'D';
+			break;
+		case 3:
+			strcode = L'L';
+			break;
+		case 4:
+			strcode = L'R';
+			break;
+		case 5:
+			strcode = L'C';
+			break;
+		case 6:
+			strcode = L'B';
+			break;
+		case 7:
+			strcode = L'G';
+			break;
+		}
+	}
+	note[*objectN].object = GetNoteObjMat(strcode);
+	//viewtimeÇåvéZÇ∑ÇÈ
+	CalNoteViewTime(&note[*objectN], scrool);
+	note[*objectN].ypos = 50 * iLine + 300;
+	note[*objectN].xpos = 150;
+	//ècà íuÇåvéZÇ∑ÇÈ
+	while (move->y[iLine].d[YmoveN2[iLine]].Etime <= note[*objectN].hittime &&
+		move->y[iLine].d[YmoveN2[iLine]].Etime >= 0) {
+		YmoveN2[iLine]++;
+	}
+	if (move->y[iLine].d[YmoveN2[iLine]].Stime >= 0 &&
+		move->y[iLine].d[YmoveN2[iLine]].Stime <= note[*objectN].hittime &&
+		move->y[iLine].d[YmoveN2[iLine]].Etime > note[*objectN].hittime) {
+		note[*objectN].ypos = movecal(move->y[iLine].d[YmoveN2[iLine]].mode,
+			move->y[iLine].d[YmoveN2[iLine]].Stime,
+			move->y[iLine].d[YmoveN2[iLine] - 1].pos,
+			move->y[iLine].d[YmoveN2[iLine]].Etime, move->y[iLine].d[YmoveN2[iLine]].pos,
+			note[*objectN].hittime);
+	}
+	else {
+		note[*objectN].ypos = move->y[iLine].d[YmoveN2[iLine] - 1].pos;
+	}
+	//â°à íuÇåvéZÇ∑ÇÈ
+	while (move->x[iLine].d[XmoveN2[iLine]].Etime <= note[*objectN].hittime &&
+		move->x[iLine].d[XmoveN2[iLine]].Etime >= 0) {
+		XmoveN2[iLine]++;
+	}
+	if (move->x[iLine].d[XmoveN2[iLine]].Stime >= 0 &&
+		move->x[iLine].d[XmoveN2[iLine]].Stime <= note[*objectN].hittime &&
+		move->x[iLine].d[XmoveN2[iLine]].Stime > note[*objectN].hittime) {
+		note[*objectN].xpos = movecal(move->x[iLine].d[XmoveN2[iLine]].mode,
+			move->x[iLine].d[XmoveN2[iLine]].Stime, 
+			move->x[iLine].d[XmoveN2[iLine] - 1].pos,
+			move->x[iLine].d[XmoveN2[iLine]].Etime, move->x[iLine].d[XmoveN2[iLine]].pos,
+			note[*objectN].hittime);
+	}
+	else {
+		note[*objectN].xpos = move->x[iLine].d[XmoveN2[iLine] - 1].pos;
+	}
+	//å¯â âπÇê›íËÇ∑ÇÈ
+	if (L'1' <= c && c <= L'9') {
+		note[*objectN].sound = customnote[c - L'1'].sound;
+		note[*objectN].melody = customnote[c - L'1'].melody;
+	}
+	else {
+		note[*objectN].sound = 0;
+	}
+	//êFÇê›íËÇ∑ÇÈ
+	if (L'1' <= c && c <= L'9') {
+		note[*objectN].color = customnote[c - L'1'].color;
+	}
+	else {
+		note[*objectN].color = 0;
+	}
+	if (note[*objectN].object != 8) {
+		(*notes)++;
+	}
+	(*objectN)++;
+	allnum->notenum[iLine]++;
+	return 0;
+}
+
 enum melodysound RecMapLoad_GetMelSnd(TCHAR str[]) {
 	enum melodysound ret;
 	switch (str[1]) {
@@ -1025,219 +1163,16 @@ void RecordLoad2(int p, int n, int o) {
 					break;
 				default:
 					//Ç±ÇÍà»äO
-					for (i[0] = 0; i[0] <= 2; i[0]++) {
+					for (int iLine = 0; iLine <= 2; iLine++) {
+						int BlockNoteNum = 0;
 						G[0] = 0;
-						while (GT1[G[0]] != L'\0' && GT1[G[0]] != L',') G[0]++;
-						for (i[1] = 0; i[1] < G[0]; i[1]++) {
-							if (IsNoteCode(GT1[i[1]]) == 0) {
-								continue;
-							}
-					#if SWITCH_NOTE_BOX_2
-							if (0 <= noteLaneNo[i[0]]) {
-								note[noteLaneNo[i[0]]].next = objectN;
-							}
-							noteLaneNo[i[0]] = objectN;
-							switch (i[0]) {
-							case 0:
-								note[objectN].lane = NOTE_LANE_UP;
-								break;
-							case 1:
-								note[objectN].lane = NOTE_LANE_MID;
-								break;
-							case 2:
-								note[objectN].lane = NOTE_LANE_LOW;
-								break;
-							}
-							note[objectN].hittime = 
-								timer[i[0]] + 240000 * i[1] / (bpmG * G[0]);
-					#else
-							note[i[0]][objectN[i[0]]].hittime = 
-								timer[i[0]] + 240000 * i[1] / (bpmG * G[0]);
-					#endif
-							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
-								G[2] = (int)(customnote[GT1[i[1]] - L'1'].note);
-							}
-							else {
-								G[2] = (int)(GT1[i[1]]);
-							}
-							if ((wchar_t)(G[2]) == L'?') {
-								switch (GetRand(4)) {
-								case 0:
-									G[2] = L'H';
-									break;
-								case 1:
-									G[2] = L'U';
-									break;
-								case 2:
-									G[2] = L'D';
-									break;
-								case 3:
-									G[2] = L'L';
-									break;
-								case 4:
-									G[2] = L'R';
-									break;
-								}
-								GetRand(4);
-							}
-							if ((wchar_t)(G[2]) == L'!') {
-								switch (GetRand(7)) {
-								case 0:
-									G[2] = L'H';
-									break;
-								case 1:
-									G[2] = L'U';
-									break;
-								case 2:
-									G[2] = L'D';
-									break;
-								case 3:
-									G[2] = L'L';
-									break;
-								case 4:
-									G[2] = L'R';
-									break;
-								case 5:
-									G[2] = L'C';
-									break;
-								case 6:
-									G[2] = L'B';
-									break;
-								case 7:
-									G[2] = L'G';
-									break;
-								}
-							}
-					#if SWITCH_NOTE_BOX_2
-							note[objectN].object = GetNoteObjMat((TCHAR)G[2]);
-					#else
-							note[i[0]][objectN[i[0]]].object = GetNoteObjMat((TCHAR)G[2]);
-					#endif
-							//viewtimeÇåvéZÇ∑ÇÈ
-					#if SWITCH_NOTE_BOX_2
-							CalNoteViewTime(&note[objectN], scrool);
-							note[objectN].ypos = 50 * i[0] + 300;
-							note[objectN].xpos = 150;
-					#else
-							CalNoteViewTime(&note[i[0]][objectN[i[0]]], scrool);
-							note[i[0]][objectN[i[0]]].ypos = 50 * i[0] + 300;
-							note[i[0]][objectN[i[0]]].xpos = 150;
-					#endif
-							//ècà íuÇåvéZÇ∑ÇÈ
-					#if SWITCH_NOTE_BOX_2
-							while (move.y[i[0]].d[YmoveN2[i[0]]].Etime <= note[objectN].hittime &&
-								move.y[i[0]].d[YmoveN2[i[0]]].Etime >= 0) {
-								YmoveN2[i[0]]++;
-							}
-							if (move.y[i[0]].d[YmoveN2[i[0]]].Stime >= 0 &&
-								move.y[i[0]].d[YmoveN2[i[0]]].Stime <= note[objectN].hittime &&
-								move.y[i[0]].d[YmoveN2[i[0]]].Etime > note[objectN].hittime) {
-								note[objectN].ypos = movecal(move.y[i[0]].d[YmoveN2[i[0]]].mode,
-									move.y[i[0]].d[YmoveN2[i[0]]].Stime,
-									move.y[i[0]].d[YmoveN2[i[0]] - 1].pos,
-									move.y[i[0]].d[YmoveN2[i[0]]].Etime, move.y[i[0]].d[YmoveN2[i[0]]].pos,
-									note[objectN].hittime);
-							}
-							else {
-								note[objectN].ypos = move.y[i[0]].d[YmoveN2[i[0]] - 1].pos;
-							}
-					#else
-							while (move.y[i[0]].d[YmoveN2[i[0]]].Etime <= note[i[0]][objectN[i[0]]].hittime &&
-								move.y[i[0]].d[YmoveN2[i[0]]].Etime >= 0) {
-								YmoveN2[i[0]]++;
-							}
-							if (move.y[i[0]].d[YmoveN2[i[0]]].Stime >= 0 &&
-								move.y[i[0]].d[YmoveN2[i[0]]].Stime <= note[i[0]][objectN[i[0]]].hittime &&
-								move.y[i[0]].d[YmoveN2[i[0]]].Etime > note[i[0]][objectN[i[0]]].hittime) {
-								note[i[0]][objectN[i[0]]].ypos = movecal(move.y[i[0]].d[YmoveN2[i[0]]].mode,
-									move.y[i[0]].d[YmoveN2[i[0]]].Stime, move.y[i[0]].d[YmoveN2[i[0]] - 1].pos,
-									move.y[i[0]].d[YmoveN2[i[0]]].Etime, move.y[i[0]].d[YmoveN2[i[0]]].pos,
-									note[i[0]][objectN[i[0]]].hittime);
-							}
-							else {
-								note[i[0]][objectN[i[0]]].ypos = move.y[i[0]].d[YmoveN2[i[0]] - 1].pos;
-							}
-					#endif
-							//â°à íuÇåvéZÇ∑ÇÈ
-					#if SWITCH_NOTE_BOX_2
-							while (move.x[i[0]].d[XmoveN2[i[0]]].Etime <= note[objectN].hittime &&
-								move.x[i[0]].d[XmoveN2[i[0]]].Etime >= 0) {
-								XmoveN2[i[0]]++;
-							}
-							if (move.x[i[0]].d[XmoveN2[i[0]]].Stime >= 0 &&
-								move.x[i[0]].d[XmoveN2[i[0]]].Stime <= note[objectN].hittime &&
-								move.x[i[0]].d[XmoveN2[i[0]]].Stime > note[objectN].hittime) {
-								note[objectN].xpos = movecal(move.x[i[0]].d[XmoveN2[i[0]]].mode,
-									move.x[i[0]].d[XmoveN2[i[0]]].Stime, 
-									move.x[i[0]].d[XmoveN2[i[0]] - 1].pos,
-									move.x[i[0]].d[XmoveN2[i[0]]].Etime, move.x[i[0]].d[XmoveN2[i[0]]].pos,
-									note[objectN].hittime);
-							}
-							else {
-								note[objectN].xpos = move.x[i[0]].d[XmoveN2[i[0]] - 1].pos;
-							}
-					#else
-							while (move.x[i[0]].d[XmoveN2[i[0]]].Etime <= note[i[0]][objectN[i[0]]].hittime &&
-								move.x[i[0]].d[XmoveN2[i[0]]].Etime >= 0) {
-								XmoveN2[i[0]]++;
-							}
-							if (move.x[i[0]].d[XmoveN2[i[0]]].Stime >= 0 &&
-								move.x[i[0]].d[XmoveN2[i[0]]].Stime <= note[i[0]][objectN[i[0]]].hittime &&
-								move.x[i[0]].d[XmoveN2[i[0]]].Etime > note[i[0]][objectN[i[0]]].hittime) {
-								note[i[0]][objectN[i[0]]].xpos = movecal(move.x[i[0]].d[XmoveN2[i[0]]].mode,
-									move.x[i[0]].d[XmoveN2[i[0]]].Stime, move.x[i[0]].d[XmoveN2[i[0]] - 1].pos,
-									move.x[i[0]].d[XmoveN2[i[0]]].Etime, move.x[i[0]].d[XmoveN2[i[0]]].pos,
-									note[i[0]][objectN[i[0]]].hittime);
-							}
-							else {
-								note[i[0]][objectN[i[0]]].xpos = move.x[i[0]].d[XmoveN2[i[0]] - 1].pos;
-							}
-					#endif
-							//å¯â âπÇê›íËÇ∑ÇÈ
-					#if SWITCH_NOTE_BOX_2
-							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
-								note[objectN].sound = customnote[GT1[i[1]] - L'1'].sound;
-								note[objectN].melody = customnote[GT1[i[1]] - L'1'].melody;
-							}
-							else {
-								note[objectN].sound = 0;
-							}
-					#else
-							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
-								note[i[0]][objectN[i[0]]].sound = customnote[GT1[i[1]] - L'1'].sound;
-								note[i[0]][objectN[i[0]]].melody = customnote[GT1[i[1]] - L'1'].melody;
-							}
-							else {
-								note[i[0]][objectN[i[0]]].sound = 0;
-							}
-					#endif
-							//êFÇê›íËÇ∑ÇÈ
-					#if SWITCH_NOTE_BOX_2
-							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
-								note[objectN].color = customnote[GT1[i[1]] - L'1'].color;
-							}
-							else {
-								note[objectN].color = 0;
-							}
-							if (note[objectN].object != 8) {
-								notes++;
-							}
-							objectN++;
-					#else
-							if (L'1' <= GT1[i[1]] && GT1[i[1]] <= L'9') {
-								note[i[0]][objectN[i[0]]].color = customnote[GT1[i[1]] - L'1'].color;
-							}
-							else {
-								note[i[0]][objectN[i[0]]].color = 0;
-							}
-							if (note[i[0]][objectN[i[0]]].object != 8) {
-								notes++;
-							}
-							objectN[i[0]]++;
-					#endif
-							allnum.notenum[i[0]]++;
+						while (GT1[BlockNoteNum] != L'\0' && GT1[BlockNoteNum] != L',') { BlockNoteNum++; }
+						for (int istr = 0; istr < BlockNoteNum; istr++) {
+							RecMapLoadGetc(GT1[istr], istr, note, &objectN, iLine, timer,
+								noteLaneNo, bpmG, BlockNoteNum, customnote, scrool, &move, YmoveN2,
+								XmoveN2, &notes, &allnum);
 						}
-						if (i[0] <= 1) FileRead_gets(GT1, 256, songdata);
+						if (iLine <= 1) { FileRead_gets(GT1, 256, songdata); }
 					}
 					timer[0] = timer[1] = timer[2] += 240000.0 / bpmG;
 					break;
