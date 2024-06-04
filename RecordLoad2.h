@@ -122,6 +122,74 @@ static void CalNoteViewTime(note_box *note, scrool_box scrool[]) {
 }
 #endif
 
+enum melodysound RecMapLoad_GetMelSnd(TCHAR str[]) {
+	enum melodysound ret;
+	switch (str[1]) {
+	case L'F':
+		ret = (enum melodysound)(LOW_F + (str[0] == L'H' ? 12 : 0) + (str[2] == L'#' ? 1 : 0));
+		break;
+	case L'G':
+		ret = (enum melodysound)(LOW_G + (str[0] == L'H' ? 12 : 0) + (str[2] == L'#' ? 1 : 0));
+		break;
+	case L'A':
+		ret = (enum melodysound)(LOW_A + (str[0] == L'H' ? 12 : 0) + (str[2] == L'#' ? 1 : 0));
+		break;
+	case L'B':
+		ret = (enum melodysound)(LOW_B + (str[0] == L'H' ? 12 : 0));
+		break;
+	case L'C':
+		ret = (enum melodysound)(LOW_C + (str[0] == L'H' ? 12 : 0) + (str[2] == L'#' ? 1 : 0));
+		break;
+	case L'D':
+		ret = (enum melodysound)(LOW_D + (str[0] == L'H' ? 12 : 0) + (str[2] == L'#' ? 1 : 0));
+		break;
+	case L'E':
+		ret = (enum melodysound)(LOW_E + (str[0] == L'H' ? 12 : 0));
+		break;
+	default:
+		ret = MELODYSOUND_NONE;
+		break;
+	}
+	return ret;
+}
+
+void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) {
+	int No = 0;
+	struct custom_note_box *ptr;
+	strmods(str, 8);
+	No = strsans2(str) - 1;
+	ptr = &customnote[No];
+	ptr->color = 0;
+	ptr->melody = MELODYSOUND_NONE;
+	ptr->note = 0;
+	ptr->sound = 0;
+	strnex(str);
+	while (str[0] != L'\0') {
+		if (strands(str, L"NOTE=")) {
+			strmods(str, 5);
+			ptr->note = str[0];
+		}
+		else if (strands(str, L"SOUND=")) {
+			strmods(str, 6);
+			if (str[0] == L'L' || str[0] == L'H') {
+				ptr->melody = RecMapLoad_GetMelSnd(str);
+			}
+			else {
+				ptr->sound = strsans2(str);
+			}
+		}
+		else if (strands(str, L"COLOR=")) {
+			strmods(str, 6);
+			ptr->color = strsans2(str);
+		}
+		else {
+			break;
+		}
+		strnex(str);
+	}
+	return;
+}
+
 /* main action */
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
@@ -636,7 +704,6 @@ void RecordLoad2(int p, int n, int o) {
 						}
 					}
 					else {
-						rec_move_data_t buf;
 						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
 							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2],
 								bpmG, &move.x[G[0]].d[move.x[G[0]].num]);
@@ -954,61 +1021,7 @@ void RecordLoad2(int p, int n, int o) {
 					scroolN++;
 					break;
 				case OBJ_CODE_CUSTOM: //カスタムノーツセット
-					strmods(GT1, 8);
-					G[0] = strsans2(GT1) - 1;
-					customnote[G[0]].color = 0;
-					customnote[G[0]].melody = MELODYSOUND_NONE;
-					customnote[G[0]].note = 0;
-					customnote[G[0]].sound = 0;
-					strnex(GT1);
-					while (GT1[0] != L'\0') {
-						if (strands(GT1, L"NOTE=")) {
-							strmods(GT1, 5);
-							customnote[G[0]].note = GT1[0];
-						}
-						else if (strands(GT1, L"SOUND=")) {
-							strmods(GT1, 6);
-							if (GT1[0] == L'L' || GT1[0] == L'H') {
-								switch (GT1[1]) {
-								case L'F':
-									customnote[G[0]].melody = (enum melodysound)(LOW_F + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
-									break;
-								case L'G':
-									customnote[G[0]].melody = (enum melodysound)(LOW_G + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
-									break;
-								case L'A':
-									customnote[G[0]].melody = (enum melodysound)(LOW_A + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
-									break;
-								case L'B':
-									customnote[G[0]].melody = (enum melodysound)(LOW_B + (GT1[0] == L'H' ? 12 : 0));
-									break;
-								case L'C':
-									customnote[G[0]].melody = (enum melodysound)(LOW_C + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
-									break;
-								case L'D':
-									customnote[G[0]].melody = (enum melodysound)(LOW_D + (GT1[0] == L'H' ? 12 : 0) + (GT1[2] == L'#' ? 1 : 0));
-									break;
-								case L'E':
-									customnote[G[0]].melody = (enum melodysound)(LOW_E + (GT1[0] == L'H' ? 12 : 0));
-									break;
-								default:
-									customnote[G[0]].melody = MELODYSOUND_NONE;
-									break;
-								}
-							}
-							else {
-								customnote[G[0]].sound = strsans2(GT1);
-							}
-						}
-						else if (strands(GT1, L"COLOR=")) {
-							strmods(GT1, 6);
-							customnote[G[0]].color = strsans2(GT1);
-						}
-						else {
-							break;
-						}
-						strnex(GT1);
-					}
+					RecMapLoad_ComCustomNote(GT1, customnote);
 					break;
 				default:
 					//これ以外
