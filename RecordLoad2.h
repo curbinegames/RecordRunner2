@@ -33,12 +33,32 @@ typedef enum rrs_obj_code_e {
 	OBJ_CODE_SPACE,
 } rrs_obj_code_t;
 
+typedef enum rec_map_move_code_e {
+	REC_MAP_MOVE_CODE_LIN = 1,
+	REC_MAP_MOVE_CODE_ACC,
+	REC_MAP_MOVE_CODE_DEC,
+	REC_MAP_MOVE_CODE_MOM,
+	REC_MAP_MOVE_CODE_SLI,
+	REC_MAP_MOVE_CODE_PAL,
+	REC_MAP_MOVE_CODE_EDG,
+} rec_map_move_code_t;
+
 typedef struct ddef_box {
 	int maxdif = 0;
 	int lastdif = 0;
 	int nowdifsection = 1;
 	int datanum = -1;
 } ddef_box;
+
+typedef struct rec_map_move_pal_s {
+	int StartLine = 0;
+	int EndLine = 0;
+	int AllGap = 0;
+	int MoveMode = 0;
+	double StartTime = 0;
+	double EndTime = 0;
+	double MovePos = 0;
+} rec_map_move_pal_t;
 
 int IsNoteCode(wchar_t c);
 int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
@@ -121,6 +141,46 @@ static void CalNoteViewTime(note_box *note, scrool_box scrool[]) {
 	note->viewtime = note->hittime * scrool[num].speed + scrool[num].basetime;
 }
 #endif
+
+void RecMapLoadSetMove(rec_move_set_t *p_buf, unsigned int *allnum, int iLine,
+	double Stime, double Epos, double Etime, int MoveMode, double bpmG,
+	double timer[])
+{
+	double Spos = (p_buf->d[p_buf->num - 1].pos - 100.0) / 50.0;
+	switch (MoveMode) {
+	case REC_MAP_MOVE_CODE_LIN:
+	case REC_MAP_MOVE_CODE_ACC:
+	case REC_MAP_MOVE_CODE_DEC:
+		SETMove(timer[0], Stime, Epos, MoveMode, Etime, bpmG, &p_buf->d[p_buf->num]);
+		break;
+	case REC_MAP_MOVE_CODE_MOM:
+		SETMove(timer[0], Stime, Epos, 1, Etime, bpmG, &p_buf->d[p_buf->num]);
+		p_buf->d[p_buf->num].Stime -= 5;
+		p_buf->d[p_buf->num].Etime -= 5;
+		break;
+	case REC_MAP_MOVE_CODE_SLI:
+		SETMove(timer[0], Stime, (Spos + Epos) / 2.0, 2,
+			(Etime + Stime) / 2.0, bpmG, &p_buf->d[p_buf->num]);
+		p_buf->num++;
+		allnum[iLine]++;
+		SETMove(timer[0], (Etime + Stime) / 2.0, Epos, 3, Etime, bpmG, &p_buf->d[p_buf->num]);
+		break;
+	case REC_MAP_MOVE_CODE_PAL:
+		SETMove(timer[0], Stime, Epos, 3, (Etime + Stime) / 2.0, bpmG, &p_buf->d[p_buf->num]);
+		p_buf->num++;
+		allnum[iLine]++;
+		SETMove(timer[0], (Etime + Stime) / 2.0, Spos, 2, Etime, bpmG, &p_buf->d[p_buf->num]);
+		break;
+	case REC_MAP_MOVE_CODE_EDG:
+		SETMove(timer[0], Stime, Epos, 2, (Etime + Stime) / 2.0, bpmG, &p_buf->d[p_buf->num]);
+		p_buf->num++;
+		allnum[iLine]++;
+		SETMove(timer[0], (Etime + Stime) / 2.0, Spos, 3, Etime, bpmG, &p_buf->d[p_buf->num]);
+		break;
+	}
+	p_buf->num++;
+	allnum[iLine]++;
+}
 
 int RecMapLoadGetc(TCHAR c, int istr, note_box_2_t note[], int *objectN, int iLine, double timer[],
 	int noteLaneNo[], double bpmG, int BlockNoteNum, struct custom_note_box customnote[],
@@ -672,47 +732,8 @@ void RecordLoad2(int p, int n, int o) {
 					strnex(GT1);
 					GD[2] = strsans2(GT1);
 					for (i[0] = G[0]; i[0] <= G[2]; i[0]++) {
-						rec_move_set_t *p_buf = &move.y[i[0]];
-						double Spos = (p_buf->d[p_buf->num - 1].pos - 100.0) / 50.0;
-						double Epos = GD[1] + G[3] * i[0] - G[3];
-						switch (G[1]) {
-						case 1:
-						case 2:
-						case 3:
-							SETMove(timer[0], GD[0], Epos, G[1], GD[2], bpmG, &p_buf->d[p_buf->num]);
-							break;
-						case 4:
-							SETMove(timer[0], GD[0], Epos, 1, GD[2], bpmG, &p_buf->d[p_buf->num]);
-							p_buf->d[p_buf->num].Stime -= 5;
-							p_buf->d[p_buf->num].Etime -= 5;
-							break;
-						case 5:
-							SETMove(timer[0], GD[0], (Spos + Epos) / 2.0, 2,
-								(GD[2] + GD[0]) / 2.0, bpmG, &p_buf->d[p_buf->num]);
-							p_buf->num++;
-							allnum.Ymovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, Epos,
-								3, GD[2], bpmG, &p_buf->d[p_buf->num]);
-							break;
-						case 6:
-							SETMove(timer[0], GD[0], Epos, 3,
-								(GD[2] + GD[0]) / 2.0, bpmG, &p_buf->d[p_buf->num]);
-							p_buf->num++;
-							allnum.Ymovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, Spos,
-								2, GD[2], bpmG, &p_buf->d[p_buf->num]);
-							break;
-						case 7:
-							SETMove(timer[0], GD[0], Epos, 2,
-								(GD[2] + GD[0]) / 2.0, bpmG, &p_buf->d[p_buf->num]);
-							p_buf->num++;
-							allnum.Ymovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, Spos,
-								3, GD[2], bpmG, &p_buf->d[p_buf->num]);
-							break;
-						}
-						p_buf->num++;
-						allnum.Ymovenum[i[0]]++;
+						RecMapLoadSetMove(&move.y[i[0]], allnum.Ymovenum, i[0], GD[0],
+							GD[1] + G[3] * i[0] - G[3], GD[2], G[1], bpmG, timer);
 					}
 					break;
 				case OBJ_CODE_XMOV: //‰¡ˆÚ“®
@@ -770,47 +791,8 @@ void RecordLoad2(int p, int n, int o) {
 					strnex(GT1);
 					GD[2] = strsans2(GT1);
 					for (i[0] = G[0]; i[0] <= G[2]; i[0]++) {
-						switch (G[1]) {
-						case 1:
-						case 2:
-						case 3:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								G[1], GD[2], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
-							break;
-						case 4:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								1, GD[0], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
-							move.x[i[0]].d[move.x[i[0]].num].Stime -= 5;
-							move.x[i[0]].d[move.x[i[0]].num].Etime -= 5;
-							break;
-						case 5:
-							SETMove(timer[0], GD[0],
-								(move.x[i[0]].d[move.x[i[0]].num - 1].pos + GD[1] * 50 - 100) / 100, 2,
-								(GD[2] + GD[0]) / 2.0, bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
-							move.x[i[0]].num++;
-							allnum.Xmovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0,
-								GD[1] + G[3] * i[0] - G[3], 3, GD[2], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
-							break;
-						case 6:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3],
-								3, (GD[2] + GD[0]) / 2.0, bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
-							move.x[i[0]].num++;
-							allnum.Xmovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (move.x[i[0]].d[move.x[i[0]].num - 2].pos - 100.0) / 50.0,
-								2, GD[2], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
-							break;
-						case 7:
-							SETMove(timer[0], GD[0], GD[1] + G[3] * i[0] - G[3], 2,
-								(GD[2] + GD[0]) / 2.0, bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
-							move.x[i[0]].num++;
-							allnum.Xmovenum[i[0]]++;
-							SETMove(timer[0], (GD[2] + GD[0]) / 2.0, (move.x[i[0]].d[move.x[i[0]].num - 2].pos - 100.0) / 50.0,
-								3, GD[2], bpmG, &move.x[i[0]].d[move.x[i[0]].num]);
-							break;
-						}
-						move.x[i[0]].num++;
-						allnum.Xmovenum[i[0]]++;
+						RecMapLoadSetMove(&move.x[i[0]], allnum.Xmovenum, i[0], GD[0],
+							GD[1] + G[3] * i[0] - G[3], GD[2], G[1], bpmG, timer);
 					}
 					break;
 				case OBJ_CODE_DIV: //U“®
@@ -878,48 +860,8 @@ void RecordLoad2(int p, int n, int o) {
 					GD[1] = strsans2(GT1);
 					strnex(GT1);
 					GD[2] = strsans2(GT1);
-					switch (G[1]) {
-					case 1:
-					case 2:
-					case 3:
-						move.y[G[0]].d[move.y[G[0]].num].Stime = shifttime(GD[0], bpmG, (int)timer[0]);
-						move.y[G[0]].d[move.y[G[0]].num].pos = GD[1] * 50.0 + 100.0;
-						move.y[G[0]].d[move.y[G[0]].num].Etime = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
-						move.y[G[0]].d[move.y[G[0]].num].mode = G[1];
-						break;
-					case 4:
-						move.y[G[0]].d[move.y[G[0]].num].Stime = shifttime(GD[0], bpmG, (int)timer[0]) - 5;
-						move.y[G[0]].d[move.y[G[0]].num].pos = GD[1] * 50.0 + 100.0;
-						move.y[G[0]].d[move.y[G[0]].num].Etime = shifttime(GD[2], bpmG, (int)timer[0]);
-						move.y[G[0]].d[move.y[G[0]].num].mode = 1;
-						break;
-					case 5:
-						move.y[G[0]].d[move.y[G[0]].num].Stime = shifttime(GD[0], bpmG, (int)timer[0]);
-						move.y[G[0]].d[move.y[G[0]].num].pos = (move.y[G[0]].d[move.y[G[0]].num - 1].pos + GD[1] * 50 + 100) / 2;
-						move.y[G[0]].d[move.y[G[0]].num].Etime = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
-						move.y[G[0]].d[move.y[G[0]].num].mode = 2;
-						move.y[G[0]].d[move.y[G[0]].num + 1].Stime = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
-						move.y[G[0]].d[move.y[G[0]].num + 1].pos = GD[1] * 50.0 + 100.0;
-						move.y[G[0]].d[move.y[G[0]].num + 1].Etime = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
-						move.y[G[0]].d[move.y[G[0]].num + 1].mode = 3;
-						move.y[G[0]].num++;
-						allnum.Ymovenum[i[0]]++;
-						break;
-					case 6:
-						move.y[G[0]].d[move.y[G[0]].num].Stime = shifttime(GD[0], bpmG, (int)timer[0]);
-						move.y[G[0]].d[move.y[G[0]].num].pos = GD[1] * 50.0 + 100.0;
-						move.y[G[0]].d[move.y[G[0]].num].Etime = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
-						move.y[G[0]].d[move.y[G[0]].num].mode = 3;
-						move.y[G[0]].d[move.y[G[0]].num + 1].Stime = shifttime((GD[2] + GD[0]) / 2.0, bpmG, (int)timer[0]);
-						move.y[G[0]].d[move.y[G[0]].num + 1].pos = move.y[G[0]].d[move.y[G[0]].num - 1].pos;
-						move.y[G[0]].d[move.y[G[0]].num + 1].Etime = shifttime(GD[2], bpmG, (int)timer[0]) - 5;
-						move.y[G[0]].d[move.y[G[0]].num + 1].mode = 2;
-						move.y[G[0]].num++;
-						allnum.Ymovenum[i[0]]++;
-						break;
-					}
-					move.y[G[0]].num++;
-					allnum.Ymovenum[i[0]]++;
+					RecMapLoadSetMove(&move.y[3], allnum.Ymovenum, 3,
+						GD[0], GD[1], GD[2], G[1], bpmG, timer);
 					break;
 				case OBJ_CODE_XLOCK: //‰¡ƒƒbƒN
 					strmods(GT1, 7);
