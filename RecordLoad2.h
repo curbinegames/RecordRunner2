@@ -152,34 +152,35 @@ void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 	case REC_MAP_MOVE_CODE_ACC:
 	case REC_MAP_MOVE_CODE_DEC:
 		SETMove(timer[0], StartTime, MovePos, MoveMode, EndTime, bpmG, &move->d[move->num]);
+		move->num++;
+		allnum[iLine]++;
 		break;
 	case REC_MAP_MOVE_CODE_MOM:
-		SETMove(timer[0], StartTime, MovePos, 1, EndTime, bpmG, &move->d[move->num]);
-		move->d[move->num].Stime -= 5;
-		move->d[move->num].Etime -= 5;
+		RecMapLoadSetMove(move, allnum, iLine, StartTime, MovePos,
+			EndTime, REC_MAP_MOVE_CODE_LIN, bpmG, timer);
+		move->d[move->num - 1].Stime -= 5;
+		move->d[move->num - 1].Etime -= 5;
 		break;
 	case REC_MAP_MOVE_CODE_SLI:
-		SETMove(timer[0], StartTime, (Spos + MovePos) / 2.0, 2,
-			(EndTime + StartTime) / 2.0, bpmG, &move->d[move->num]);
-		move->num++;
-		allnum[iLine]++;
-		SETMove(timer[0], (EndTime + StartTime) / 2.0, MovePos, 3, EndTime, bpmG, &move->d[move->num]);
+		RecMapLoadSetMove(move, allnum, iLine, StartTime, (Spos + MovePos) / 2.0,
+			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
+		RecMapLoadSetMove(move, allnum, iLine, (StartTime + EndTime) / 2.0,
+			MovePos, EndTime, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
 		break;
 	case REC_MAP_MOVE_CODE_PAL:
-		SETMove(timer[0], StartTime, MovePos, 3, (EndTime + StartTime) / 2.0, bpmG, &move->d[move->num]);
-		move->num++;
-		allnum[iLine]++;
-		SETMove(timer[0], (EndTime + StartTime) / 2.0, Spos, 2, EndTime, bpmG, &move->d[move->num]);
+		RecMapLoadSetMove(move, allnum, iLine, StartTime, MovePos,
+			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
+		RecMapLoadSetMove(move, allnum, iLine, (StartTime + EndTime) / 2.0,
+			Spos, EndTime, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
 		break;
 	case REC_MAP_MOVE_CODE_EDG:
-		SETMove(timer[0], StartTime, MovePos, 2, (EndTime + StartTime) / 2.0, bpmG, &move->d[move->num]);
-		move->num++;
-		allnum[iLine]++;
-		SETMove(timer[0], (EndTime + StartTime) / 2.0, Spos, 3, EndTime, bpmG, &move->d[move->num]);
+		RecMapLoadSetMove(move, allnum, iLine, StartTime, MovePos,
+			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
+		RecMapLoadSetMove(move, allnum, iLine, (StartTime + EndTime) / 2.0,
+			Spos, EndTime, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
 		break;
 	}
-	move->num++;
-	allnum[iLine]++;
+	return;
 }
 
 int RecMapLoadGetc(TCHAR c, int istr, note_box_2_t note[], int *objectN, int iLine, double timer[],
