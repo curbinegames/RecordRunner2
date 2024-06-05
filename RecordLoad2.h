@@ -90,8 +90,8 @@ int shifttime(double n, double bpm, int time) {
 	return (int)(time + 240000.0 * (n - 1.0) / (bpm * 16.0));
 }
 
-void SETMove(double NowTime, double StartTime, double MovePoint,
-	double MoveType, double EndTime, double bpm, rec_move_data_t *Buff)
+void SETMove(rec_move_data_t *Buff, double StartTime, double MovePoint,
+	double EndTime, double MoveType, double bpm, double NowTime)
 {
 	Buff->Stime = shifttime(StartTime, bpm, (int)NowTime);
 	Buff->pos = (int)(MovePoint * 50.0 + 100.0);
@@ -151,7 +151,7 @@ void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 	case REC_MAP_MOVE_CODE_LIN:
 	case REC_MAP_MOVE_CODE_ACC:
 	case REC_MAP_MOVE_CODE_DEC:
-		SETMove(timer[0], StartTime, MovePos, MoveMode, EndTime, bpmG, &move->d[move->num]);
+		SETMove(&move->d[move->num], StartTime, MovePos, EndTime, MoveMode, bpmG, timer[0]);
 		move->num++;
 		allnum[iLine]++;
 		break;
@@ -810,11 +810,11 @@ void RecordLoad2(int p, int n, int o) {
 					GD[3] = strsans2(GT1);//‰•œ‰ñ”
 					if (G[1] == 1) {
 						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
-							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2],
-								bpmG, &move.y[G[0]].d[move.y[G[0]].num]);
-							SETMove(timer[0], GD[0] + GD[2],
+							SETMove(&move.y[G[0]].d[move.y[G[0]].num], GD[0],
+								GD[1], GD[0] + GD[2], 1, bpmG, timer[0]);
+							SETMove(&move.y[G[0]].d[move.y[G[0]].num + 1], GD[0] + GD[2],
 								(move.y[G[0]].d[move.y[G[0]].num - 1].pos - 100.0) / 50.0,
-								1, GD[0] + GD[2] * 2, bpmG, &move.y[G[0]].d[move.y[G[0]].num + 1]);
+								GD[0] + GD[2] * 2, 1, bpmG, timer[0]);
 							GD[0] += GD[2] * 2;
 							move.y[G[0]].num += 2;
 							allnum.Ymovenum[G[0]] += 2;
@@ -822,11 +822,11 @@ void RecordLoad2(int p, int n, int o) {
 					}
 					else {
 						for (i[0] = 0; i[0] < GD[3]; i[0]++) {
-							SETMove(timer[0], GD[0], GD[1], 1, GD[0] + GD[2],
-								bpmG, &move.x[G[0]].d[move.x[G[0]].num]);
-							SETMove(timer[0], GD[0] + GD[2],
-								(move.x[G[0]].d[move.x[G[0]].num - 1].pos - 100.0) /
-								50.0, 1, GD[0] + GD[2] * 2, bpmG, &move.x[G[0]].d[move.x[G[0]].num] + 1);
+							SETMove(&move.x[G[0]].d[move.x[G[0]].num], GD[0],
+								GD[1], GD[0] + GD[2], 1, bpmG, timer[0]);
+							SETMove(&move.x[G[0]].d[move.x[G[0]].num] + 1, GD[0] + GD[2],
+								(move.x[G[0]].d[move.x[G[0]].num - 1].pos - 100.0) / 50.0,
+								GD[0] + GD[2] * 2, 1, bpmG, timer[0]);
 							GD[0] += GD[2] * 2;
 							move.x[G[0]].num += 2;
 							allnum.Xmovenum[G[0]] += 2;
