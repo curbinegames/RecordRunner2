@@ -142,43 +142,43 @@ static void CalNoteViewTime(note_box *note, scrool_box scrool[]) {
 }
 #endif
 
-void RecMapLoadSetMove(rec_move_set_t *p_buf, unsigned int *allnum, int iLine,
-	double Stime, double Epos, double Etime, int MoveMode, double bpmG,
+void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
+	double StartTime, double MovePos, double EndTime, int MoveMode, double bpmG,
 	double timer[])
 {
-	double Spos = (p_buf->d[p_buf->num - 1].pos - 100.0) / 50.0;
+	double Spos = (move->d[move->num - 1].pos - 100.0) / 50.0;
 	switch (MoveMode) {
 	case REC_MAP_MOVE_CODE_LIN:
 	case REC_MAP_MOVE_CODE_ACC:
 	case REC_MAP_MOVE_CODE_DEC:
-		SETMove(timer[0], Stime, Epos, MoveMode, Etime, bpmG, &p_buf->d[p_buf->num]);
+		SETMove(timer[0], StartTime, MovePos, MoveMode, EndTime, bpmG, &move->d[move->num]);
 		break;
 	case REC_MAP_MOVE_CODE_MOM:
-		SETMove(timer[0], Stime, Epos, 1, Etime, bpmG, &p_buf->d[p_buf->num]);
-		p_buf->d[p_buf->num].Stime -= 5;
-		p_buf->d[p_buf->num].Etime -= 5;
+		SETMove(timer[0], StartTime, MovePos, 1, EndTime, bpmG, &move->d[move->num]);
+		move->d[move->num].Stime -= 5;
+		move->d[move->num].Etime -= 5;
 		break;
 	case REC_MAP_MOVE_CODE_SLI:
-		SETMove(timer[0], Stime, (Spos + Epos) / 2.0, 2,
-			(Etime + Stime) / 2.0, bpmG, &p_buf->d[p_buf->num]);
-		p_buf->num++;
+		SETMove(timer[0], StartTime, (Spos + MovePos) / 2.0, 2,
+			(EndTime + StartTime) / 2.0, bpmG, &move->d[move->num]);
+		move->num++;
 		allnum[iLine]++;
-		SETMove(timer[0], (Etime + Stime) / 2.0, Epos, 3, Etime, bpmG, &p_buf->d[p_buf->num]);
+		SETMove(timer[0], (EndTime + StartTime) / 2.0, MovePos, 3, EndTime, bpmG, &move->d[move->num]);
 		break;
 	case REC_MAP_MOVE_CODE_PAL:
-		SETMove(timer[0], Stime, Epos, 3, (Etime + Stime) / 2.0, bpmG, &p_buf->d[p_buf->num]);
-		p_buf->num++;
+		SETMove(timer[0], StartTime, MovePos, 3, (EndTime + StartTime) / 2.0, bpmG, &move->d[move->num]);
+		move->num++;
 		allnum[iLine]++;
-		SETMove(timer[0], (Etime + Stime) / 2.0, Spos, 2, Etime, bpmG, &p_buf->d[p_buf->num]);
+		SETMove(timer[0], (EndTime + StartTime) / 2.0, Spos, 2, EndTime, bpmG, &move->d[move->num]);
 		break;
 	case REC_MAP_MOVE_CODE_EDG:
-		SETMove(timer[0], Stime, Epos, 2, (Etime + Stime) / 2.0, bpmG, &p_buf->d[p_buf->num]);
-		p_buf->num++;
+		SETMove(timer[0], StartTime, MovePos, 2, (EndTime + StartTime) / 2.0, bpmG, &move->d[move->num]);
+		move->num++;
 		allnum[iLine]++;
-		SETMove(timer[0], (Etime + Stime) / 2.0, Spos, 3, Etime, bpmG, &p_buf->d[p_buf->num]);
+		SETMove(timer[0], (EndTime + StartTime) / 2.0, Spos, 3, EndTime, bpmG, &move->d[move->num]);
 		break;
 	}
-	p_buf->num++;
+	move->num++;
 	allnum[iLine]++;
 }
 
