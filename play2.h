@@ -1521,27 +1521,27 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (keyhold.down == 1) { KeyPushCount[4]++; }
 			if (keyhold.left == 1) { KeyPushCount[5]++; }
 			if (keyhold.right == 1) { KeyPushCount[6]++; }
-			RecRescaleDrawGraph(5, 445, KeyViewimg[maxs(keyhold.z, 1)], TRUE);
-			RecRescaleDrawGraph(40, 445, KeyViewimg[maxs(keyhold.x, 1)], TRUE);
-			RecRescaleDrawGraph(75, 445, KeyViewimg[maxs(keyhold.c, 1)], TRUE);
-			RecRescaleDrawGraph(570, 410, KeyViewimg[maxs(keyhold.up, 1)], TRUE);
-			RecRescaleDrawGraph(570, 445, KeyViewimg[maxs(keyhold.down, 1)], TRUE);
-			RecRescaleDrawGraph(535, 445, KeyViewimg[maxs(keyhold.left, 1)], TRUE);
-			RecRescaleDrawGraph(605, 445, KeyViewimg[maxs(keyhold.right, 1)], TRUE);
-			if (KeyPushCount[0] == 0) { RecRescaleDrawString(10, 450, L"Z", Cr); }
-			else { RecRescaleDrawFormatString(10, 450, Cr, L"%2d", KeyPushCount[0] % 100); }
-			if (KeyPushCount[1] == 0) { RecRescaleDrawString(45, 450, L"X", Cr); }
-			else { RecRescaleDrawFormatString(45, 450, Cr, L"%2d", KeyPushCount[1] % 100); }
-			if (KeyPushCount[2] == 0) { RecRescaleDrawString(80, 450, L"C", Cr); }
-			else { RecRescaleDrawFormatString(80, 450, Cr, L"%2d", KeyPushCount[2] % 100); }
-			if (KeyPushCount[3] == 0) { RecRescaleDrawString(575, 415, L"↑", Cr); }
-			else { RecRescaleDrawFormatString(575, 415, Cr, L"%2d", KeyPushCount[3] % 100); }
-			if (KeyPushCount[4] == 0) { RecRescaleDrawString(575, 450, L"↓", Cr); }
-			else { RecRescaleDrawFormatString(575, 450, Cr, L"%2d", KeyPushCount[4] % 100); }
-			if (KeyPushCount[5] == 0) { RecRescaleDrawString(540, 450, L"←", Cr); }
-			else { RecRescaleDrawFormatString(540, 450, Cr, L"%2d", KeyPushCount[5] % 100); }
-			if (KeyPushCount[6] == 0) { RecRescaleDrawString(610, 450, L"→", Cr); }
-			else { RecRescaleDrawFormatString(610, 450, Cr, L"%2d", KeyPushCount[6] % 100); }
+			RecRescaleDrawGraph(5, 445, KeyViewimg[maxs(keyhold.z, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(40, 445, KeyViewimg[maxs(keyhold.x, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(75, 445, KeyViewimg[maxs(keyhold.c, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(570, 410, KeyViewimg[maxs(keyhold.up, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(570, 445, KeyViewimg[maxs(keyhold.down, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(535, 445, KeyViewimg[maxs(keyhold.left, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(605, 445, KeyViewimg[maxs(keyhold.right, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			if (KeyPushCount[0] == 0) { RecRescaleAnchorDrawString(10, 450, L"Z", Cr, REC_RESCALE_BOTTOM_LEFT); }
+			else { RecRescaleAnchorDrawFormatString(10, 450, Cr, REC_RESCALE_BOTTOM_LEFT, L"%2d", KeyPushCount[0] % 100); }
+			if (KeyPushCount[1] == 0) { RecRescaleAnchorDrawString(45, 450, L"X", Cr, REC_RESCALE_BOTTOM_LEFT); }
+			else { RecRescaleAnchorDrawFormatString(45, 450, Cr, REC_RESCALE_BOTTOM_LEFT, L"%2d", KeyPushCount[1] % 100); }
+			if (KeyPushCount[2] == 0) { RecRescaleAnchorDrawString(80, 450, L"C", Cr, REC_RESCALE_BOTTOM_LEFT); }
+			else { RecRescaleAnchorDrawFormatString(80, 450, Cr, REC_RESCALE_BOTTOM_LEFT, L"%2d", KeyPushCount[2] % 100); }
+			if (KeyPushCount[3] == 0) { RecRescaleAnchorDrawString(575, 415, L"↑", Cr, REC_RESCALE_BOTTOM_RIGHT); }
+			else { RecRescaleAnchorDrawFormatString(575, 415, Cr, REC_RESCALE_BOTTOM_RIGHT, L"%2d", KeyPushCount[3] % 100); }
+			if (KeyPushCount[4] == 0) { RecRescaleAnchorDrawString(575, 450, L"↓", Cr, REC_RESCALE_BOTTOM_RIGHT); }
+			else { RecRescaleAnchorDrawFormatString(575, 450, Cr, REC_RESCALE_BOTTOM_RIGHT, L"%2d", KeyPushCount[4] % 100); }
+			if (KeyPushCount[5] == 0) { RecRescaleAnchorDrawString(540, 450, L"←", Cr, REC_RESCALE_BOTTOM_RIGHT); }
+			else { RecRescaleAnchorDrawFormatString(540, 450, Cr, REC_RESCALE_BOTTOM_RIGHT, L"%2d", KeyPushCount[5] % 100); }
+			if (KeyPushCount[6] == 0) { RecRescaleAnchorDrawString(610, 450, L"→", Cr, REC_RESCALE_BOTTOM_RIGHT); }
+			else { RecRescaleAnchorDrawFormatString(610, 450, Cr, REC_RESCALE_BOTTOM_RIGHT, L"%2d", KeyPushCount[6] % 100); }
 		}
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバック

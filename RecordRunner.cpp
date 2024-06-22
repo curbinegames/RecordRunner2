@@ -105,6 +105,8 @@ int WINAPI WinMain(DX_MAIN_DEF) {
 	SetFontSize(lins(OLD_WINDOW_SIZE_Y, 16, 720, 24, WINDOW_SIZE_Y)); //文字の大きさ
 	if (DxLib_Init() == -1) { return -1; } // エラーで中断
 	SetDrawScreen(DX_SCREEN_BACK); // 作画モード変更
+	SmallFontData = CreateFontToHandle(NULL, -1, -1);
+	LargeFontData = CreateFontToHandle(NULL, lins(OLD_WINDOW_SIZE_Y, 16, 720, 24, WINDOW_SIZE_Y), -1);
 	GameMain(); // ゲーム処理
 	DxLib_End(); // DxLib終わり
 	return 0; // プログラム終わり

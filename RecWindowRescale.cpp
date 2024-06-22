@@ -47,70 +47,70 @@ void RecRescaleDrawGraph(int x, int y, int pic, int anchor) {
 
 	GetGraphSize(pic, &sizeX, &sizeY);
 
+	/* Xpos */
 	switch (anchor) {
-		case REC_RESCALE_STRETCH:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_TOP_LEFT:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_TOP_CENTRE:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_TOP_RIGHT:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_CENTRE_LEFT:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_CENTRE:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_CENTRE_RIGHT:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_BOTTOM_LEFT:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_BOTTOM_CENTRE:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
-		case REC_RESCALE_BOTTOM_RIGHT:
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-			drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
-			drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-			break;
+	case REC_RESCALE_TOP_RIGHT:
+	case REC_RESCALE_CENTRE_RIGHT:
+	case REC_RESCALE_BOTTOM_RIGHT:
+		drawX = x - OLD_WINDOW_SIZE_X + WINDOW_SIZE_X;
+		drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
+		break;
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_BOTTOM_LEFT:
+		drawX = x;
+		drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
+		break;
+	case REC_RESCALE_STRETCH:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_BOTTOM_CENTRE:
+		drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+		drawX2 = drawX + sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X;
+		break;
 	}
 
-	DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic, TRUE);
+	/* Ypos */
+	switch (anchor) {
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_TOP_RIGHT:
+		drawY = y;
+		drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+		break;
+	case REC_RESCALE_BOTTOM_LEFT:
+	case REC_RESCALE_BOTTOM_CENTRE:
+	case REC_RESCALE_BOTTOM_RIGHT:
+		drawY = y - OLD_WINDOW_SIZE_Y + WINDOW_SIZE_Y;
+		drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+		break;
+	case REC_RESCALE_STRETCH:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_CENTRE_RIGHT:
+		drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+		drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+		break;
+	}
+
+	/* draw */
+	switch (anchor) {
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_TOP_RIGHT:
+	case REC_RESCALE_BOTTOM_LEFT:
+	case REC_RESCALE_BOTTOM_RIGHT:
+		DrawGraph(drawX, drawY, pic, TRUE);
+		break;
+	case REC_RESCALE_STRETCH:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_CENTRE_RIGHT:
+	case REC_RESCALE_BOTTOM_CENTRE:
+		DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic, TRUE);
+		break;
+	}
+
 	return;
 }
 
@@ -213,6 +213,71 @@ void RecRescaleDrawString(int x, int y, const TCHAR *s, uint cr) {
 	return;
 }
 
+void RecRescaleAnchorDrawString(int x, int y, const TCHAR *s, uint cr, int anchor) {
+	int drawX = 0;
+	int drawY = 0;
+
+	/* Xpos */
+	switch (anchor) {
+	case REC_RESCALE_TOP_RIGHT:
+	case REC_RESCALE_CENTRE_RIGHT:
+	case REC_RESCALE_BOTTOM_RIGHT:
+		drawX = x - OLD_WINDOW_SIZE_X + WINDOW_SIZE_X;
+		break;
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_BOTTOM_LEFT:
+		drawX = x;
+		break;
+	case REC_RESCALE_STRETCH:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_BOTTOM_CENTRE:
+		drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+		break;
+	}
+
+	/* Ypos */
+	switch (anchor) {
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_TOP_RIGHT:
+		drawY = y;
+		break;
+	case REC_RESCALE_BOTTOM_LEFT:
+	case REC_RESCALE_BOTTOM_CENTRE:
+	case REC_RESCALE_BOTTOM_RIGHT:
+		drawY = y - OLD_WINDOW_SIZE_Y + WINDOW_SIZE_Y;
+		break;
+	case REC_RESCALE_STRETCH:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_CENTRE_RIGHT:
+		drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+		break;
+	}
+
+	/* draw */
+	switch (anchor) {
+	case REC_RESCALE_STRETCH:
+		DrawString(drawX, drawY, s, cr);
+		break;
+	case REC_RESCALE_TOP_RIGHT:
+	case REC_RESCALE_CENTRE_RIGHT:
+	case REC_RESCALE_BOTTOM_RIGHT:
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_BOTTOM_LEFT:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_BOTTOM_CENTRE:
+		DrawStringToHandle(drawX, drawY, s, cr, SmallFontData);
+		break;
+	}
+
+	return;
+}
+
 void RecRescaleDrawFormatString(int x, int y, uint cr, const TCHAR *s, ...) {
 	va_list as;
 	va_start(as, s);
@@ -224,6 +289,75 @@ void RecRescaleDrawFormatString(int x, int y, uint cr, const TCHAR *s, ...) {
 	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
 
 	DrawFormatString(drawX, drawY, cr, s, as);
+
+	va_end(as);
+	return;
+}
+
+void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const TCHAR *s, ...) {
+	va_list as;
+	va_start(as, s);
+
+	int drawX = 0;
+	int drawY = 0;
+
+	/* Xpos */
+	switch (anchor) {
+	case REC_RESCALE_TOP_RIGHT:
+	case REC_RESCALE_CENTRE_RIGHT:
+	case REC_RESCALE_BOTTOM_RIGHT:
+		drawX = x - OLD_WINDOW_SIZE_X + WINDOW_SIZE_X;
+		break;
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_BOTTOM_LEFT:
+		drawX = x;
+		break;
+	case REC_RESCALE_STRETCH:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_BOTTOM_CENTRE:
+		drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+		break;
+	}
+
+	/* Ypos */
+	switch (anchor) {
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_TOP_RIGHT:
+		drawY = y;
+		break;
+	case REC_RESCALE_BOTTOM_LEFT:
+	case REC_RESCALE_BOTTOM_CENTRE:
+	case REC_RESCALE_BOTTOM_RIGHT:
+		drawY = y - OLD_WINDOW_SIZE_Y + WINDOW_SIZE_Y;
+		break;
+	case REC_RESCALE_STRETCH:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_CENTRE_RIGHT:
+		drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+		break;
+	}
+
+	/* draw */
+	switch (anchor) {
+	case REC_RESCALE_STRETCH:
+		DrawFormatString(drawX, drawY, cr, s, as);
+		break;
+	case REC_RESCALE_TOP_RIGHT:
+	case REC_RESCALE_CENTRE_RIGHT:
+	case REC_RESCALE_BOTTOM_RIGHT:
+	case REC_RESCALE_TOP_LEFT:
+	case REC_RESCALE_CENTRE_LEFT:
+	case REC_RESCALE_BOTTOM_LEFT:
+	case REC_RESCALE_TOP_CENTRE:
+	case REC_RESCALE_CENTRE:
+	case REC_RESCALE_BOTTOM_CENTRE:
+		DrawFormatStringToHandle(drawX, drawY, cr, SmallFontData, s, as);
+		break;
+	}
 
 	va_end(as);
 	return;

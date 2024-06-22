@@ -21,4 +21,6 @@ extern void RecRescaleDrawGraph(int x, int y, int pic, int anchor);
 extern void RecRescaleDrawExtendGraph(int x1, int y1, int x2, int y2, int pic, int anchor);
 extern void RecRescaleDrawRotaGraph(int x, int y, double ExRate, double Angle, int pic, int anchor);
 extern void RecRescaleDrawString(int x, int y, const TCHAR *s, uint cr);
+extern void RecRescaleAnchorDrawString(int x, int y, const TCHAR *s, uint cr, int anchor);
 extern void RecRescaleDrawFormatString(int x, int y, uint cr, const TCHAR *s, ...);
+extern void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const TCHAR *s, ...);
