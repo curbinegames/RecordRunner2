@@ -3,6 +3,7 @@
 #include "sancur.h"
 #include "playbox.h"
 #include "PlayCamera.h"
+#include "RecWindowRescale.h"
 
 static int JudgePic[4];
 static int viewjudge[4] = { 0,0,0,0 };
@@ -52,7 +53,7 @@ void PlayShowJudge(int posMode, int charaposX, int charaposY) {
 	for (int i = 0; i < 4; i++) {
 		if (GetNowCount() - viewjudge[i] < 750) {
 			drawY = BaseDrawY + pals(250, 0, 0, 25, maxs(GetNowCount() - viewjudge[i], 250));
-			DrawGraph(BaseDrawX, drawY, JudgePic[i], TRUE);
+			RecRescaleDrawGraph(BaseDrawX, drawY, JudgePic[i], TRUE);
 		}
 	}
 	return;

@@ -3,11 +3,12 @@
 #include "sancur.h"
 #include "strcur.h"
 #include "recr_cutin.h"
+#include "RecWindowRescale.h"
 
 #define CUT_MES_POSX 75
 
 #define RECR_DEBUG(ofs, data)											\
-		DrawFormatString(20, 120 + ofs * 20, 0xffffffff, L#data": %d", data)
+		RecRescaleDrawFormatString(20, 120 + ofs * 20, 0xffffffff, L#data": %d", data)
 
 static char TipNo = 0;
 static int pic_cutin[5];
@@ -114,26 +115,26 @@ void ViewCutIn(int Stime) {
 	int PosS = pals(350, 0, 0, 100, EffTime);
 	int Rot = pals(500, 0, 0, -300, EffTime);
 	int Alpha = lins(500, 255, 0, 0, EffTime);
-	DrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
-	DrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
-	DrawRotaGraph(320 - PosY, 240 - PosY, 1,
+	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
+	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
+	RecRescaleDrawRotaGraph(320 - PosY, 240 - PosY, 1,
 		(double)Rot / 50.0, pic_cutin[2], TRUE);
 	switch (CutFg) {
 	case CUTIN_TIPS_ON:
-		DrawString(CUT_MES_POSX + PosY * 640 / 360, 430, tip[TipNo], 0xFF000000);
+		RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, tip[TipNo], 0xFF000000);
 		break;
 	case CUTIN_TIPS_SONG:
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
-		DrawExtendGraph(200 - PosY, 120 - PosY, 440 + PosY, 360 + PosY, pic_cutin[3], TRUE);
+		RecRescaleDrawExtendGraph(200 - PosY, 120 - PosY, 440 + PosY, 360 + PosY, pic_cutin[3], TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		DrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, 0xFF000000);
+		RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, 0xFF000000);
 		break;
 	default:
 		/* none */
 		break;
 	}
-	DrawGraph(0 - PosS, 0, pic_cutin[4], TRUE);
-	DrawGraph(590 + PosS, 0, pic_cutin[4], TRUE);
+	RecRescaleDrawGraph(0 - PosS, 0, pic_cutin[4], TRUE);
+	RecRescaleDrawGraph(590 + PosS, 0, pic_cutin[4], TRUE);
 	if (CutInSndLastPlayTime + 3000 < Ntime) {
 		PlaySoundMem(snd_cutin[0], DX_PLAYTYPE_BACK);
 		CutInSndLastPlayTime = Ntime;
@@ -151,26 +152,26 @@ void ViewCutOut(int Stime) {
 	int Rot = pals(0, 0, 500, 300, EffTime);
 	int PosS = pals(150, 0, 500, 100, EffTime);
 	int Alpha = lins(500, 0, 0, 255, EffTime);
-	DrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
-	DrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
-	DrawRotaGraph(320 + PosY, 240 - PosY, 1,
+	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
+	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
+	RecRescaleDrawRotaGraph(320 + PosY, 240 - PosY, 1,
 		(double)Rot / 50.0, pic_cutin[2], TRUE);
 	switch (CutFg) {
 	case CUTIN_TIPS_ON:
-		DrawString(CUT_MES_POSX - PosY * 640 / 360, 430, tip[TipNo], 0xFF000000);
+		RecRescaleDrawString(CUT_MES_POSX - PosY * 640 / 360, 430, tip[TipNo], 0xFF000000);
 		break;
 	case CUTIN_TIPS_SONG:
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
-		DrawExtendGraph(200 - PosY, 120 - PosY, 440 + PosY, 360 + PosY, pic_cutin[3], TRUE);
+		RecRescaleDrawExtendGraph(200 - PosY, 120 - PosY, 440 + PosY, 360 + PosY, pic_cutin[3], TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		DrawString(CUT_MES_POSX - PosY * 640 / 360, 430, CutSongName, 0xFF000000);
+		RecRescaleDrawString(CUT_MES_POSX - PosY * 640 / 360, 430, CutSongName, 0xFF000000);
 		break;
 	default:
 		/* none */
 		break;
 	}
-	DrawGraph(0 - PosS, 0, pic_cutin[4], TRUE);
-	DrawGraph(590 + PosS, 0, pic_cutin[4], TRUE);
+	RecRescaleDrawGraph(0 - PosS, 0, pic_cutin[4], TRUE);
+	RecRescaleDrawGraph(590 + PosS, 0, pic_cutin[4], TRUE);
 	if (CutOutSndLastPlayTime + 3000 < Ntime) {
 		PlaySoundMem(snd_cutin[1], DX_PLAYTYPE_BACK);
 		CutOutSndLastPlayTime = Ntime;

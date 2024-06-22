@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DxLib.h"
+#include "RecWindowRescale.h"
 
 int mins(int a, int b);
 int maxs(int a, int b);
@@ -177,7 +178,7 @@ void DrawFixPic(int x1, int y1, int x2, int y2, int pic) {
 	}
 	GetGraphSize(pic, &SizeX, &SizeY);
 	if (SizeX / ratio >= SizeY) {
-		DrawExtendGraph(
+		RecRescaleDrawExtendGraph(
 			x1,
 			CSizeYHalf - CSizeYHalf * SizeY * ratio / SizeX + y1,
 			CSizeX + x1,
@@ -185,7 +186,7 @@ void DrawFixPic(int x1, int y1, int x2, int y2, int pic) {
 		);
 	}
 	else {
-		DrawExtendGraph(
+		RecRescaleDrawExtendGraph(
 			CSizeXHalf - CSizeXHalf * SizeX / ratio / SizeY + x1,
 			y1,
 			CSizeXHalf + CSizeXHalf * SizeX / ratio / SizeY + x1,
@@ -217,7 +218,7 @@ void _DrawDeformationPic1(int x, int y, int handle) {
 	GetGraphSize(handle, &PSizeX, &PSizeY);
 	x -= PSizeX / 2;
 	y -= PSizeY / 2;
-	DrawGraph(x, y, handle, TRUE);
+	RecRescaleDrawGraph(x, y, handle, TRUE);
 	return;
 }
 
@@ -232,7 +233,7 @@ void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle) 
 	};
 	pos[2] = pos[0] + TSizeX + 1;
 	pos[3] = pos[1] + TSizeY + 1;
-	DrawExtendGraph(pos[0], pos[1], pos[2], pos[3], handle, TRUE);
+	RecRescaleDrawExtendGraph(pos[0], pos[1], pos[2], pos[3], handle, TRUE);
 	return;
 }
 

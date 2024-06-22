@@ -1,6 +1,7 @@
 #include "DxLib.h"
 #include "sancur.h"
 #include "playbox.h"
+#include "RecWindowRescale.h"
 
 /* define */
 #define NO_MISS 2
@@ -97,13 +98,13 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 	//BlackCover
 	if (GetNowCount() < EffStartTime + 1800) {
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 127);
-		DrawGraph(0, 0, g_bonus_psmat.pic.filter, TRUE);
+		RecRescaleDrawGraph(0, 0, g_bonus_psmat.pic.filter, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 	if (EffStartTime + 1800 <= GetNowCount() && GetNowCount() < EffStartTime + 2000) {
 		int alpha = lins(1800, 127, 2000, 0, GetNowCount() - EffStartTime);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-		DrawGraph(0, 0, g_bonus_psmat.pic.filter, TRUE);
+		RecRescaleDrawGraph(0, 0, g_bonus_psmat.pic.filter, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 	//SmallLight
@@ -115,7 +116,7 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 				int alpha = lins(100, 720, 1000, -240, GetNowCount() - EffStartTime);
 				alpha = mins(pals(posY, 255, posY + 240, 0, alpha), 0);
 				SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-				DrawGraph(posX, posY, smalllight, TRUE);
+				RecRescaleDrawGraph(posX, posY, smalllight, TRUE);
 				SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 			}
 		}
@@ -127,7 +128,7 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 			double angle = double(GetNowCount() - EffStartTime) / 200.0;
 			angle += 3.14 * (180.0 / (3 - Bonus)) * i / 180.0;
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-			DrawRotaGraph(PIC_X, PIC_Y, 1, angle, g_bonus_psmat.pic.BigLight, TRUE, FALSE);
+			RecRescaleDrawRotaGraph(PIC_X, PIC_Y, 1, angle, g_bonus_psmat.pic.BigLight, TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 		}
 	}
@@ -139,7 +140,7 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 		int DownPos  = lins(100, PIC_Y + 160, 1000, PIC_Y + 240, GetNowCount() - EffStartTime);
 		int alpha    = maxs(lins(700, 255, 1000, 0, GetNowCount() - EffStartTime), 255);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-		DrawExtendGraph(LeftPos, UpPos, RightPos, DownPos, g_bonus_psmat.pic.ring, TRUE);
+		RecRescaleDrawExtendGraph(LeftPos, UpPos, RightPos, DownPos, g_bonus_psmat.pic.ring, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 	//flash
@@ -147,7 +148,7 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 		for (int i = 0; i < 3 - Bonus; i++) {
 			int alpha = lins(100, 191, 300, 0, GetNowCount() - EffStartTime);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-			DrawGraph(0, 0, g_bonus_psmat.pic.flash, TRUE);
+			RecRescaleDrawGraph(0, 0, g_bonus_psmat.pic.flash, TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 		}
 	}
@@ -157,10 +158,10 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 		int UpPos    = lins(0, PIC_Y - SIZE_Y * BIG / 2, 100, PIC_Y - SIZE_Y / 2, GetNowCount() - EffStartTime);
 		int RightPos = lins(0, PIC_X + SIZE_X * BIG / 2, 100, PIC_X + SIZE_X / 2, GetNowCount() - EffStartTime);
 		int DownPos  = lins(0, PIC_Y + SIZE_Y * BIG / 2, 100, PIC_Y + SIZE_Y / 2, GetNowCount() - EffStartTime);
-		DrawExtendGraph(LeftPos, UpPos, RightPos, DownPos, pic, TRUE);
+		RecRescaleDrawExtendGraph(LeftPos, UpPos, RightPos, DownPos, pic, TRUE);
 	}
 	else if (EffStartTime + 100 <= GetNowCount() && GetNowCount() < EffStartTime + 1800) {
-		DrawGraph(PIC_X - SIZE_X / 2, PIC_Y - SIZE_Y / 2, pic, TRUE);
+		RecRescaleDrawGraph(PIC_X - SIZE_X / 2, PIC_Y - SIZE_Y / 2, pic, TRUE);
 	}
 	else if (EffStartTime + 1800 <= GetNowCount() && GetNowCount() < EffStartTime + 2000) {
 		int LeftPos  = lins(2000, PIC_X - SIZE_X, 1800, PIC_X - SIZE_X / 2, GetNowCount() - EffStartTime);
@@ -169,7 +170,7 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 		int DownPos  = lins(2000, PIC_Y + SIZE_Y, 1800, PIC_Y + SIZE_Y / 2, GetNowCount() - EffStartTime);
 		int alpha    = lins(1800, 255, 2000, 0, GetNowCount() - EffStartTime);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-		DrawExtendGraph(LeftPos, UpPos, RightPos, DownPos, pic, TRUE);
+		RecRescaleDrawExtendGraph(LeftPos, UpPos, RightPos, DownPos, pic, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 	return;

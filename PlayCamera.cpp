@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "sancur.h"
 #include "PlayCamera.h"
+#include "RecWindowRescale.h"
 
 static rec_play_xy_set_t camera_pos;
 
@@ -34,7 +35,7 @@ void RecPlayGetCameraPos(int *retX, int *retY) {
 }
 
 void DrawGraphRecField(int xpos, int ypos, int pic) {
-	DrawGraph(xpos + camera_pos.x, ypos + camera_pos.y, pic, TRUE);
+	RecRescaleDrawGraph(xpos + camera_pos.x, ypos + camera_pos.y, pic, TRUE);
 	return;
 }
 
@@ -44,12 +45,12 @@ void DrawTurnGraphRecField(int xpos, int ypos, int pic) {
 }
 
 void DrawLineRecField(int posx1, int posy1, int posx2, int posy2, unsigned int color, int thick) {
-	DrawLine(posx1 + camera_pos.x, posy1 + camera_pos.y,
+	RecRescaleDrawLine(posx1 + camera_pos.x, posy1 + camera_pos.y,
 		posx2 + camera_pos.x, posy2 + camera_pos.y, color, thick);
 	return;
 }
 
 void DrawGraphRecBackField(int xpos, int ypos, int pic) {
-	DrawGraph(xpos + camera_pos.x / 5, ypos + camera_pos.y / 5, pic, TRUE);
+	RecRescaleDrawGraph(xpos + camera_pos.x / 5, ypos + camera_pos.y / 5, pic, TRUE);
 	return;
 }

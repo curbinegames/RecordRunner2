@@ -82,19 +82,19 @@ void DrawCurFont(double dn, short int x, short int y, int sizeY,
 	for (int i = k; i >= 0; i--) {
 		m = n % 10;
 		if (a != 1 || zero == 1 || m != 0) {
-			DrawExtendGraph(x + i * width + (a > 0) * pointX + ZeroP * width, y,
+			RecRescaleDrawExtendGraph(x + i * width + (a > 0) * pointX + ZeroP * width, y,
 				x + sizeX + i * width + (a > 0) * pointX + ZeroP * width,
 				y + sizeY, font[m], TRUE);
 		}
 		n /= 10;
 		if (a == 1) {
-			DrawExtendGraph(x + i * width + ZeroP * width, y,
+			RecRescaleDrawExtendGraph(x + i * width + ZeroP * width, y,
 				x + sizeX + i * width + ZeroP * width, y + sizeY, font[11],
 				TRUE);
 		}
 		a--;
 	}
-	if (ZeroP) { DrawExtendGraph(x, y, x + sizeX, y + sizeY, font[10], TRUE); }
+	if (ZeroP) { RecRescaleDrawExtendGraph(x, y, x + sizeX, y + sizeY, font[10], TRUE); }
 	for (int i = 0; i < 12; i++) { DeleteGraph(font[i]); }
 	return;
 }

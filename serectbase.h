@@ -1,6 +1,7 @@
 #ifndef SECERT_BASE
-
 #define SECERT_BASE
+
+#include "RecWindowRescale.h"
 
 #define PackNumLim 8
 #define SongNumLim 64
@@ -50,8 +51,8 @@ void ChangeSortMode(int *mode) {
 
 void DrawBackPicture(int img) {
 	const int posx = (-GetNowCount() / 10) % 640;
-	DrawGraph(posx, 0, img, TRUE);
-	DrawGraph(posx + 640, 0, img, TRUE);
+	RecRescaleDrawGraph(posx, 0, img, TRUE);
+	RecRescaleDrawGraph(posx + 640, 0, img, TRUE);
 	return;
 }
 
@@ -65,7 +66,7 @@ void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
 		if (comdif < i) posX = 1;
 		if (strands(songdata.SongFileName[i], L"NULL") == 0
 			&& i <= songdata.limit) {
-			DrawGraph(550 + 11 * posX + 16 * i, 290 - 11 * posY,
+			RecRescaleDrawGraph(550 + 11 * posX + 16 * i, 290 - 11 * posY,
 				difC[i * 2 + posY], TRUE);
 		}
 	}
@@ -106,25 +107,25 @@ void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
 			MarkPosY = 163;
 		}
 		BasePosX = lins(480, 80, 240, 40, BasePosY);
-		DrawGraph(BasePosX - 120, BasePosY - 170, bar[BarColor], TRUE);
-		DrawString(BasePosX - 30, BasePosY - 157,
+		RecRescaleDrawGraph(BasePosX - 120, BasePosY - 170, bar[BarColor], TRUE);
+		RecRescaleDrawString(BasePosX - 30, BasePosY - 157,
 			songdata[Mapping[picsong]].SongName[cmd2], Cr[BarColor]);
-		DrawString(BasePosX - 30, BasePosY - 129,
+		RecRescaleDrawString(BasePosX - 30, BasePosY - 129,
 			songdata[Mapping[picsong]].artist[cmd2], Cr[BarColor]);
 		if (1 <= songdata[Mapping[picsong]].ClearRate[cmd2]) {
-			DrawGraph(BasePosX + MarkPosX, BasePosY - MarkPosY,
+			RecRescaleDrawGraph(BasePosX + MarkPosX, BasePosY - MarkPosY,
 				CRatepic[songdata[Mapping[picsong]].ClearRate[cmd2] - 1],
 				TRUE);
 		}
 		if (0 <= songdata[Mapping[picsong]].ClearRank[cmd2]
 			&& songdata[Mapping[picsong]].ClearRank[cmd2] <= 5) {
-			DrawGraph(BasePosX + MarkPosX, BasePosY - MarkPosY,
+			RecRescaleDrawGraph(BasePosX + MarkPosX, BasePosY - MarkPosY,
 				CRankpic[songdata[Mapping[picsong]].ClearRank[cmd2]],
 				TRUE);
 		}
 		if (i == 3) {
 			for (int j = 0; j < 3; j++) {
-				DrawFormatString(BasePosX - 25 + j * 70, BasePosY - 97, Cr[1],
+				RecRescaleDrawFormatString(BasePosX - 25 + j * 70, BasePosY - 97, Cr[1],
 					L"%2d", songdata[Mapping[cmd1]].level[1 + j]);
 			}
 		}
@@ -135,10 +136,10 @@ void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
 
 /* レートだけじゃなくなってるw */
 void DrawRate(int rate, int bar, int chap, int charaimg) {
-	DrawGraph(250, 0, bar, TRUE);
-	DrawGraph(370, 0, charaimg, TRUE);
-	DrawFormatString(265, 12, GetColor(0, 0, 0), L"Lv:%2d", chap + 1);
-	DrawFormatString(270, 37, GetColor(0, 0, 0), L"RATE:%d.%02d", rate / 100, rate % 100);
+	RecRescaleDrawGraph(250, 0, bar, TRUE);
+	RecRescaleDrawGraph(370, 0, charaimg, TRUE);
+	RecRescaleDrawFormatString(265, 12, GetColor(0, 0, 0), L"Lv:%2d", chap + 1);
+	RecRescaleDrawFormatString(270, 37, GetColor(0, 0, 0), L"RATE:%d.%02d", rate / 100, rate % 100);
 	return;
 }
 
@@ -182,25 +183,25 @@ int GetRateBarPic(int rate) {
 }
 
 void ShowHelpBar(unsigned int Cr, int bar, int lan) {
-	DrawGraph(0, 0, bar, TRUE);
+	RecRescaleDrawGraph(0, 0, bar, TRUE);
 	switch (int(GetNowCount() / 10000 % 3) * 10 + lan) {
 	case 0:
-		DrawString(5, 460, L"Enterキー: 決定, BackSpaceキー: 戻る", Cr);
+		RecRescaleDrawString(5, 460, L"Enterキー: 決定, BackSpaceキー: 戻る", Cr);
 		break;
 	case 1:
-		DrawString(5, 460, L"Enter key: start, BackSpace key: back to menu", Cr);
+		RecRescaleDrawString(5, 460, L"Enter key: start, BackSpace key: back to menu", Cr);
 		break;
 	case 10:
-		DrawString(5, 460, L"上下キー: 曲選択, 左右キー: 難易度選択", Cr);
+		RecRescaleDrawString(5, 460, L"上下キー: 曲選択, 左右キー: 難易度選択", Cr);
 		break;
 	case 11:
-		DrawString(5, 460, L"↑↓key: music select, ←→key: dif select", Cr);
+		RecRescaleDrawString(5, 460, L"↑↓key: music select, ←→key: dif select", Cr);
 		break;
 	case 20:
-		DrawString(5, 460, L"Zキー: 楽曲を並び替える, Pキー+Enterキー: オートプレイ", Cr);
+		RecRescaleDrawString(5, 460, L"Zキー: 楽曲を並び替える, Pキー+Enterキー: オートプレイ", Cr);
 		break;
 	case 21:
-		DrawString(5, 460, L"Z key: Sort Songs, P and Enter key: Auto Play", Cr);
+		RecRescaleDrawString(5, 460, L"Z key: Sort Songs, P and Enter key: Auto Play", Cr);
 		break;
 	}
 	return;
@@ -271,26 +272,26 @@ void ViewSortMode(int mode, int lan) {
 	if (lan == 1) {
 		switch (mode) {
 		case SORT_DEFAULT:
-			DrawString(POS_X, POS_Y, L"default", GetColor(255, 255, 255));
+			RecRescaleDrawString(POS_X, POS_Y, L"default", GetColor(255, 255, 255));
 			break;
 		case SORT_LEVEL:
-			DrawString(POS_X, POS_Y, L"level", GetColor(255, 255, 255));
+			RecRescaleDrawString(POS_X, POS_Y, L"level", GetColor(255, 255, 255));
 			break;
 		case SORT_SCORE:
-			DrawString(POS_X, POS_Y, L"score", GetColor(255, 255, 255));
+			RecRescaleDrawString(POS_X, POS_Y, L"score", GetColor(255, 255, 255));
 			break;
 		}
 	}
 	else {
 		switch (mode) {
 		case SORT_DEFAULT:
-			DrawString(POS_X, POS_Y, L"デフォルト", GetColor(255, 255, 255));
+			RecRescaleDrawString(POS_X, POS_Y, L"デフォルト", GetColor(255, 255, 255));
 			break;
 		case SORT_LEVEL:
-			DrawString(POS_X, POS_Y, L"レベル順", GetColor(255, 255, 255));
+			RecRescaleDrawString(POS_X, POS_Y, L"レベル順", GetColor(255, 255, 255));
 			break;
 		case SORT_SCORE:
-			DrawString(POS_X, POS_Y, L"スコア順", GetColor(255, 255, 255));
+			RecRescaleDrawString(POS_X, POS_Y, L"スコア順", GetColor(255, 255, 255));
 			break;
 		}
 	}

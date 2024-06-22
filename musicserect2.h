@@ -283,8 +283,8 @@ now_scene_t musicserect2(int *p1) {
 		NTime = GetNowCount();
 		ClearDrawScreen();
 		//背景の表示
-		DrawGraph(backpos, 0, back, TRUE);
-		DrawGraph(backpos + 640, 0, back, TRUE);
+		RecRescaleDrawGraph(backpos, 0, back, TRUE);
+		RecRescaleDrawGraph(backpos + 640, 0, back, TRUE);
 		backpos = (backpos - 2) % 640;
 		//時間設定
 		moveC = mins(-1 * (NTime - startC) + MUSE_FADTM, 0);
@@ -298,7 +298,7 @@ now_scene_t musicserect2(int *p1) {
 			strcopy(songdata[Mapping[command[0]]].jacketP[command[1]], viewingjacket, 1);
 			jacketpic = LoadGraph(viewingjacket);
 		}
-		DrawExtendGraph(305, 75, 545, 315, jacketpic, TRUE);
+		RecRescaleDrawExtendGraph(305, 75, 545, 315, jacketpic, TRUE);
 		//難易度マーカーを表示する
 		DrawDifMaker(songdata[Mapping[command[0]]], command[1], command[0], difC);
 		//難易度バーを表示する
@@ -314,29 +314,29 @@ now_scene_t musicserect2(int *p1) {
 			}
 		}
 		if (LR == 1) {
-			DrawGraph(460, 320, difbar[command[1]], TRUE);
-			DrawGraph(pals(0, 640, MUSE_FADTM, 460, XmoveC), 320, difbar[command[1] + 1], TRUE);
+			RecRescaleDrawGraph(460, 320, difbar[command[1]], TRUE);
+			RecRescaleDrawGraph(pals(0, 640, MUSE_FADTM, 460, XmoveC), 320, difbar[command[1] + 1], TRUE);
 		}
 		else if (LR == -1) {
-			DrawGraph(460, 320, difbar[command[1] - 1], TRUE);
-			DrawGraph(pals(0, 460, MUSE_FADTM, 640, XmoveC), 320, difbar[command[1]], TRUE);
+			RecRescaleDrawGraph(460, 320, difbar[command[1] - 1], TRUE);
+			RecRescaleDrawGraph(pals(0, 460, MUSE_FADTM, 640, XmoveC), 320, difbar[command[1]], TRUE);
 		}
 		//詳細を表示する
-		DrawGraph(316, 370, detail, TRUE);
-		DrawFormatString(330, 380, Cr[3], L"%s", songdata[Mapping[command[0]]].packName);
-		DrawFormatString(335, 405, Cr[3], L"Lv.%2d", songdata[Mapping[command[0]]].level[command[1]]);
+		RecRescaleDrawGraph(316, 370, detail, TRUE);
+		RecRescaleDrawFormatString(330, 380, Cr[3], L"%s", songdata[Mapping[command[0]]].packName);
+		RecRescaleDrawFormatString(335, 405, Cr[3], L"Lv.%2d", songdata[Mapping[command[0]]].level[command[1]]);
 		for (int i = 0; i < 15; i++) {
 			if (10 <= i && songdata[Mapping[command[0]]].level[command[1]] <= i) {
 				break;
 			}
 			if (i < songdata[Mapping[command[0]]].level[command[1]]) {
-				DrawString(16 * i + 390, 405, L"★", Cr[3]);
+				RecRescaleDrawString(16 * i + 390, 405, L"★", Cr[3]);
 			}
 			else {
-				DrawString(16 * i + 390, 405, L"☆", Cr[3]);
+				RecRescaleDrawString(16 * i + 390, 405, L"☆", Cr[3]);
 			}
 		}
-		DrawFormatString(340, 430, Cr[3], L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
+		RecRescaleDrawFormatString(340, 430, Cr[3], L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
 			songdata[Mapping[command[0]]].Hscore[command[1]],
 			songdata[Mapping[command[0]]].Hacc[command[1]],
 			songdata[Mapping[command[0]]].Hdis[command[1]] / 1000.0);
@@ -381,13 +381,13 @@ now_scene_t musicserect2(int *p1) {
 		else { diskr += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
 		if (diskr > 6.28) { diskr -= 6.28; }
 		else if (diskr < 0) { diskr += 6.28; }
-		DrawRotaGraph(610, 25, 1, diskr, disk, TRUE);
+		RecRescaleDrawRotaGraph(610, 25, 1, diskr, disk, TRUE);
 		//今のソート内容を表示する
 		ViewSortMode(SortMode, lan[4]);
 		//操作説明を表示する
 		ShowHelpBar(Cr[0], help, lan[4]);
 		//デバッグ(320,410スタート)
-		//DrawFormatString(320, 410, Cr[0], L"%d", SortMode);
+		//RecRescaleDrawFormatString(320, 410, Cr[0], L"%d", SortMode);
 		if (closeFg == 0) {
 			ViewCutOut(CutTime);
 		}

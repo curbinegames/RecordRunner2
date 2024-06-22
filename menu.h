@@ -1,4 +1,5 @@
 #include "recr_cutin.h"
+#include "RecWindowRescale.h"
 
 #define MENU_NUM 4
 
@@ -63,12 +64,12 @@ now_scene_t menu(void) {
 		//背景表示
 		DrawBack(menu_item[command], menu_item[before], GetNowCount() - starttime);
 		DrawCard(menu_item, command, LR, GetNowCount() - starttime);
-		DrawGraph(0, 0, help, TRUE);
+		RecRescaleDrawGraph(0, 0, help, TRUE);
 		if (lan[4] == 0) {
-			DrawString(5, 460, L"左右キー:選択   Enterキー:決定", Cr);
+			RecRescaleDrawString(5, 460, L"左右キー:選択   Enterキー:決定", Cr);
 		}
 		else if (lan[4] == 1) {
-			DrawString(5, 460, L"←→key:choose   Enter key:enter", Cr);
+			RecRescaleDrawString(5, 460, L"←→key:choose   Enter key:enter", Cr);
 		}
 		if (closeFg == 0) {
 			ViewCutOut(CutTime);
@@ -134,12 +135,12 @@ now_scene_t menu(void) {
 
 void DrawBack(_menu_item now, _menu_item before, int time) {
 	time = betweens(0, time, 250);
-	DrawGraph(0, 0, before.back, TRUE);
+	RecRescaleDrawGraph(0, 0, before.back, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 0, 250, 255, time));
-	DrawGraph(0, 0, now.back, TRUE);
+	RecRescaleDrawGraph(0, 0, now.back, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-	DrawGraph(0, pals(250, 240, 0, 0, time), before.ground, TRUE);
-	DrawGraph(0, pals(250, 0, 0, 240, time), now.ground, TRUE);
+	RecRescaleDrawGraph(0, pals(250, 240, 0, 0, time), before.ground, TRUE);
+	RecRescaleDrawGraph(0, pals(250, 0, 0, 240, time), now.ground, TRUE);
 	return;
 }
 
@@ -150,7 +151,7 @@ void DrawCard(_menu_item *card, int num, int LR, int time) {
 		num += MENU_NUM;
 	}
 	for (int i = 0; i < 5; i++) {
-		DrawGraph(pals(250, 420 * i - 680, 0, 420 * i + 420 * LR - 680, time),
+		RecRescaleDrawGraph(pals(250, 420 * i - 680, 0, 420 * i + 420 * LR - 680, time),
 			pals(250, 100, -250, 0, -time * LR + 250 * i + 250 * LR - 250),
 			card[num].card, TRUE);
 		num++;

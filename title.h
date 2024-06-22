@@ -1,4 +1,5 @@
 #include "recr_cutin.h"
+#include "RecWindowRescale.h"
 
 #define EFF_TIME_1 750
 #define EFF_TIME_2 EFF_TIME_1 + 200
@@ -68,7 +69,7 @@ void ShowTitle1(const int *pic, const int time) {
 	int posY[2] = { 37,120 };
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 6; j++) {
-			DrawGraph(
+			RecRescaleDrawGraph(
 				pals(EFF_TIME_1 * (i * 6 + j + 3) / 14,
 					posX[i * 6 + j],
 					EFF_TIME_1 * (i * 6 + j) / 14,
@@ -80,13 +81,13 @@ void ShowTitle1(const int *pic, const int time) {
 }
 
 void ShowTitle2(const int back, const int string, const int white, const int time) {
-	DrawGraph(0, 0, back, TRUE);
+	RecRescaleDrawGraph(0, 0, back, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(-1, 0, 1, 255, sinC((GetNowCount() / 4) % 360)));
-	DrawGraph(0, 0, string, TRUE);
+	RecRescaleDrawGraph(0, 0, string, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	if (EFF_TIME_1 <= time && time < EFF_TIME_2) {
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(EFF_TIME_1, 255, EFF_TIME_2, 0, time));
-		DrawGraph(0, 0, white, TRUE);
+		RecRescaleDrawGraph(0, 0, white, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 	return;

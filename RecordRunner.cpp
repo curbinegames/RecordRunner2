@@ -14,15 +14,18 @@
 #include "edit.h"
 #include "recr_cutin.h"
 #include "versionup.h"
+#include "RecWindowRescale.h"
 
 #define DX_MAIN_DEF HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
+
+#define TOOL_NAME L"Record Runner Florting Style" // ツールの名前
 
 static void GameMain() {
 	int now = 0, bgm, mnom[7] = { 0,1,0,1,1,0,0 };
 	int G[5] = { 0,0,0,0,0 };
 	unsigned int Cr = GetColor(255, 255, 255);
 	now_scene_t next = SCENE_TITLE;
-	FILE* fp;
+	FILE *fp;
 	bgm = LoadSoundMem(L"song/no.mp3");
 	INIT_MAT();
 	upgrade_rate_f(); // レートのセーブデータ更新(Ver.1.04 -> Ver.1.05)
@@ -76,7 +79,7 @@ static void GameMain() {
 		default:
 #if 0
 			ClearDrawScreen();
-			DrawString(200, 200, L"error:001\n予期されない数値", Cr);
+			RecRescaleDrawString(200, 200, L"error:001\n予期されない数値", Cr);
 			ScreenFlip();
 			WaitTimer(100);
 			WaitKey();
@@ -87,19 +90,22 @@ static void GameMain() {
 	}
 }
 
+/* WinMain関数はもう編集する必要なし */
 int WINAPI WinMain(DX_MAIN_DEF) {
 	(void)hInstance;
 	(void)hPrevInstance;
 	(void)lpCmdLine;
 	(void)nCmdShow;
-	ChangeWindowMode(TRUE);
-	SetAlwaysRunFlag(TRUE);
-	SetWindowUserCloseEnableFlag(FALSE);
-	SetMainWindowText(L"Record Runner");
-	SetWindowSizeChangeEnableFlag(TRUE);
-	if (DxLib_Init() == -1) { return -1; }
-	SetDrawScreen(DX_SCREEN_BACK);
+	ChangeWindowMode(TRUE); // ウィンドウモードにする
+	SetGraphMode(WINDOW_SIZE_X, WINDOW_SIZE_Y, 32); // ウィンドウサイズの変更
+	SetAlwaysRunFlag(TRUE); // 非アクティブでも動くようにする
+	SetWindowUserCloseEnableFlag(FALSE); // ×ボタンで勝手に閉じないようにする
+	SetMainWindowText(TOOL_NAME); // ウィンドウの名前
+	SetWindowSizeChangeEnableFlag(TRUE); // ウィンドウサイズを変えれるようにする
+	SetFontSize(lins(OLD_WINDOW_SIZE_Y, 16, 720, 24, WINDOW_SIZE_Y)); //文字の大きさ
+	if (DxLib_Init() == -1) { return -1; } // エラーで中断
+	SetDrawScreen(DX_SCREEN_BACK); // 作画モード変更
 	GameMain(); // ゲーム処理
-	DxLib_End();
-	return 0;
+	DxLib_End(); // DxLib終わり
+	return 0; // プログラム終わり
 }

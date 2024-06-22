@@ -40,10 +40,10 @@
 /* debug */
 #if 1
 #define RECR_DEBUG(ofs, data)											\
-		DrawFormatString(20, 120 + ofs * 20, Cr, L#data": %d", data)
+		RecRescaleDrawFormatString(20, 120 + ofs * 20, Cr, L#data": %d", data)
 #define RECR_DEBUG_LOOP(ofs, n, data_a, data_b)							\
 	for (int _rep = 0; _rep < n; _rep++) {								\
-		DrawFormatString(20, 120 + _rep * 20 + ofs * 20, Cr,			\
+		RecRescaleDrawFormatString(20, 120 + _rep * 20 + ofs * 20, Cr,			\
 		L#data_a"[%d]"#data_b": %d", _rep, data_a[_rep]data_b);			\
 	}
 #else
@@ -224,12 +224,12 @@ void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 	int end = x1 + 10;
 	switch (mode) {
 	case 1: // lin
-		DrawLine(x1, y1, x2, y2, color, thick);
+		RecRescaleDrawLine(x1, y1, x2, y2, color, thick);
 		break;
 	case 2: // acc
 		for (int i = x1; i <= x2; i++) {
 			end = maxs(i + 10, x2);
-			DrawLine(i, pals(x1, y1, x2, y2, i),
+			RecRescaleDrawLine(i, pals(x1, y1, x2, y2, i),
 				end, pals(x1, y1, x2, y2, end),
 				color, thick);
 		}
@@ -237,7 +237,7 @@ void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 	case 3: // dec
 		for (int i = x1; i <= x2; i++) {
 			end = maxs(i + 10, x2);
-			DrawLine(i, pals(x2, y2, x1, y1, i),
+			RecRescaleDrawLine(i, pals(x2, y2, x1, y1, i),
 				end, pals(x2, y2, x1, y1, end),
 				color, thick);
 		}
@@ -527,7 +527,7 @@ static void DrawFallBack(int Yline, int item[], rec_fall_data_t *falleff) {
 	static int baseY = 0;
 	for (int ix = 0; ix < 2; ix++) {
 		for (int iy = 0; iy < 3; iy++) {
-			DrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
+			RecRescaleDrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
 				item[falleff->d[falleff->num].No], TRUE);
 		}
 	}
@@ -591,7 +591,7 @@ int PlayShowGuideLine(int Ntime, int Line,
 		drawRight = 640;
 		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + camera.y;
 		drawY2 = Ymove[Line].d[iDraw - 1].pos + 15 + camera.y;
-		DrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
+		RecRescaleDrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 		return 1;
 	}
 	// cal Xpos1
@@ -1298,12 +1298,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		switch (system.backLight) {
 		case 1:
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
-			DrawGraph(0, 0, filterimg, TRUE);
+			RecRescaleDrawGraph(0, 0, filterimg, TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 			break;
 		case 2:
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 85);
-			DrawGraph(0, 0, filterimg, TRUE);
+			RecRescaleDrawGraph(0, 0, filterimg, TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 			break;
 		}
@@ -1442,21 +1442,21 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			Dscore.add_save = Dscore.add;
 		}
 		//スコアバー表示
-		DrawGraph(0, 0, sbarimg, TRUE);
+		RecRescaleDrawGraph(0, 0, sbarimg, TRUE);
 		//スコア表示
 		ShowScore2(score, HighSrore, recfp.time.now);
 		//ライフ表示
 		G[0] = lins(0, -114, 500, 177, life);
 		if (life > 100) {
-			DrawGraph(G[0], 3, Lbarimg[0], TRUE);
+			RecRescaleDrawGraph(G[0], 3, Lbarimg[0], TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 255, 500, 0, life));
-			DrawGraph(G[0], 3, Lbarimg[1], TRUE);
+			RecRescaleDrawGraph(G[0], 3, Lbarimg[1], TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
 		else {
-			DrawGraph(G[0], 3, Lbarimg[2], TRUE);
+			RecRescaleDrawGraph(G[0], 3, Lbarimg[2], TRUE);
 		}
-		DrawFormatString(440, 10, 0xffffffff, L"%3d", life);
+		RecRescaleDrawFormatString(440, 10, 0xffffffff, L"%3d", life);
 		//距離表示
 		UG[0] = 0xffffffff;
 		G[1] = 0;
@@ -1466,11 +1466,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		G[0] = (291 * Dscore.now_dis - 136 * recfp.time.end + 136 * recfp.time.offset) / (recfp.time.end - recfp.time.offset);
 		GD[0] = Dscore.now_dis / 100000.0;
-		DrawGraph(G[0], 38, Tbarimg[G[1]], TRUE);
-		DrawFormatString(180, 45, UG[0], L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
+		RecRescaleDrawGraph(G[0], 38, Tbarimg[G[1]], TRUE);
+		RecRescaleDrawFormatString(180, 45, UG[0], L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
 		Dscore.point = (int)(GD[0] * 1000 + Dscore.add_save);
 		//スコアバー隠し表示
-		DrawGraph(0, 0, sbbarimg, TRUE);
+		RecRescaleDrawGraph(0, 0, sbbarimg, TRUE);
 		//ランニングステータス表示
 		G[0] = GetRemainNotes2(judge, recfp.mapdata.notes);
 		G[1] = CalPosScore2(score, G[0], recfp.mapdata.notes, combo, Mcombo);
@@ -1480,36 +1480,36 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			G[0] = recfp.mapdata.ddif[0] * 20 / notzero(recfp.mapdata.ddifG[1]) + 155;
 			G[1] = recfp.mapdata.ddif[24] * 20 / notzero(recfp.mapdata.ddifG[1]) + 447;
 			for (i[0] = 0; i[0] <= 23; i[0]++)
-				DrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24,
+				RecRescaleDrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24,
 					-recfp.mapdata.ddif[i[0]] * 34 / notzero(recfp.mapdata.ddifG[1]) + 72,
 					(G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24,
 					-recfp.mapdata.ddif[i[0] + 1] * 34 / notzero(recfp.mapdata.ddifG[1]) + 72, Cr);
-			DrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mdif / 100.0);
-			DrawFormatString(490, 100, Cr, L"ldif:%.2f", recfp.mapdata.ldif / 100.0);
-			DrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
-			DrawFormatString(490, 140, Cr, L"ndif:%.2f",
+			RecRescaleDrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mdif / 100.0);
+			RecRescaleDrawFormatString(490, 100, Cr, L"ldif:%.2f", recfp.mapdata.ldif / 100.0);
+			RecRescaleDrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
+			RecRescaleDrawFormatString(490, 140, Cr, L"ndif:%.2f",
 				cal_nowdif_p(recfp.mapdata.ddif, &recfp.time) / 100.0);
-			DrawFormatString(490, 160, Cr, L"adif:%.2f",
+			RecRescaleDrawFormatString(490, 160, Cr, L"adif:%.2f",
 				(double)lins(0, 0, 453007, 950, GetAdif()) / 100.0);
 			max_adif = mins(max_adif, GetAdif());
-			DrawFormatString(490, 180, Cr, L"madif:%d", max_adif);
+			RecRescaleDrawFormatString(490, 180, Cr, L"madif:%d", max_adif);
 #if 0
 			/* エラー表示 */
 			if (recfp.outpoint[1] != 0) {
-				DrawFormatString(20, 120, CrR, L"MAPERROR");
-				DrawLine(lins(recfp.time.offset, 155, recfp.time.end, 446, recfp.outpoint[0]), 71,
+				RecRescaleDrawFormatString(20, 120, CrR, L"MAPERROR");
+				RecRescaleDrawLine(lins(recfp.time.offset, 155, recfp.time.end, 446, recfp.outpoint[0]), 71,
 					lins(recfp.time.offset, 175, recfp.time.end, 465, recfp.outpoint[0]), 38, CrR);
 			}
 #endif
 		}
 		//判定ずれバー表示
-		DrawGraph(219, 460, gapbarimg, TRUE);
+		RecRescaleDrawGraph(219, 460, gapbarimg, TRUE);
 		G[0] = gap2.count % 30;
 		for (i[0] = 0; i[0] < 30; i[0]++) {
 			G[0]--;
 			if (G[0] < 0) G[0] += 30;
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (510 - G[0] * 17) / 2);
-			DrawGraph(318 - gap2.view[i[0]], 460, gaplineimg, TRUE);
+			RecRescaleDrawGraph(318 - gap2.view[i[0]], 460, gaplineimg, TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
 		}
 		//キー押し状況表示(オプション)
@@ -1521,27 +1521,27 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			if (keyhold.down == 1) { KeyPushCount[4]++; }
 			if (keyhold.left == 1) { KeyPushCount[5]++; }
 			if (keyhold.right == 1) { KeyPushCount[6]++; }
-			DrawGraph(5, 445, KeyViewimg[maxs(keyhold.z, 1)], TRUE);
-			DrawGraph(40, 445, KeyViewimg[maxs(keyhold.x, 1)], TRUE);
-			DrawGraph(75, 445, KeyViewimg[maxs(keyhold.c, 1)], TRUE);
-			DrawGraph(570, 410, KeyViewimg[maxs(keyhold.up, 1)], TRUE);
-			DrawGraph(570, 445, KeyViewimg[maxs(keyhold.down, 1)], TRUE);
-			DrawGraph(535, 445, KeyViewimg[maxs(keyhold.left, 1)], TRUE);
-			DrawGraph(605, 445, KeyViewimg[maxs(keyhold.right, 1)], TRUE);
-			if (KeyPushCount[0] == 0) { DrawString(10, 450, L"Z", Cr); }
-			else { DrawFormatString(10, 450, Cr, L"%2d", KeyPushCount[0] % 100); }
-			if (KeyPushCount[1] == 0) { DrawString(45, 450, L"X", Cr); }
-			else { DrawFormatString(45, 450, Cr, L"%2d", KeyPushCount[1] % 100); }
-			if (KeyPushCount[2] == 0) { DrawString(80, 450, L"C", Cr); }
-			else { DrawFormatString(80, 450, Cr, L"%2d", KeyPushCount[2] % 100); }
-			if (KeyPushCount[3] == 0) { DrawString(575, 415, L"↑", Cr); }
-			else { DrawFormatString(575, 415, Cr, L"%2d", KeyPushCount[3] % 100); }
-			if (KeyPushCount[4] == 0) { DrawString(575, 450, L"↓", Cr); }
-			else { DrawFormatString(575, 450, Cr, L"%2d", KeyPushCount[4] % 100); }
-			if (KeyPushCount[5] == 0) { DrawString(540, 450, L"←", Cr); }
-			else { DrawFormatString(540, 450, Cr, L"%2d", KeyPushCount[5] % 100); }
-			if (KeyPushCount[6] == 0) { DrawString(610, 450, L"→", Cr); }
-			else { DrawFormatString(610, 450, Cr, L"%2d", KeyPushCount[6] % 100); }
+			RecRescaleDrawGraph(5, 445, KeyViewimg[maxs(keyhold.z, 1)], TRUE);
+			RecRescaleDrawGraph(40, 445, KeyViewimg[maxs(keyhold.x, 1)], TRUE);
+			RecRescaleDrawGraph(75, 445, KeyViewimg[maxs(keyhold.c, 1)], TRUE);
+			RecRescaleDrawGraph(570, 410, KeyViewimg[maxs(keyhold.up, 1)], TRUE);
+			RecRescaleDrawGraph(570, 445, KeyViewimg[maxs(keyhold.down, 1)], TRUE);
+			RecRescaleDrawGraph(535, 445, KeyViewimg[maxs(keyhold.left, 1)], TRUE);
+			RecRescaleDrawGraph(605, 445, KeyViewimg[maxs(keyhold.right, 1)], TRUE);
+			if (KeyPushCount[0] == 0) { RecRescaleDrawString(10, 450, L"Z", Cr); }
+			else { RecRescaleDrawFormatString(10, 450, Cr, L"%2d", KeyPushCount[0] % 100); }
+			if (KeyPushCount[1] == 0) { RecRescaleDrawString(45, 450, L"X", Cr); }
+			else { RecRescaleDrawFormatString(45, 450, Cr, L"%2d", KeyPushCount[1] % 100); }
+			if (KeyPushCount[2] == 0) { RecRescaleDrawString(80, 450, L"C", Cr); }
+			else { RecRescaleDrawFormatString(80, 450, Cr, L"%2d", KeyPushCount[2] % 100); }
+			if (KeyPushCount[3] == 0) { RecRescaleDrawString(575, 415, L"↑", Cr); }
+			else { RecRescaleDrawFormatString(575, 415, Cr, L"%2d", KeyPushCount[3] % 100); }
+			if (KeyPushCount[4] == 0) { RecRescaleDrawString(575, 450, L"↓", Cr); }
+			else { RecRescaleDrawFormatString(575, 450, Cr, L"%2d", KeyPushCount[4] % 100); }
+			if (KeyPushCount[5] == 0) { RecRescaleDrawString(540, 450, L"←", Cr); }
+			else { RecRescaleDrawFormatString(540, 450, Cr, L"%2d", KeyPushCount[5] % 100); }
+			if (KeyPushCount[6] == 0) { RecRescaleDrawString(610, 450, L"→", Cr); }
+			else { RecRescaleDrawFormatString(610, 450, Cr, L"%2d", KeyPushCount[6] % 100); }
 		}
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバック
@@ -1551,8 +1551,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		G[0] = 0;
 		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (AutoFlag == 1) {
-			DrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
-			DrawFormatString(20, 100, Cr, L"Autoplay");
+			RecRescaleDrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
+			RecRescaleDrawFormatString(20, 100, Cr, L"Autoplay");
 		}
 		//RECR_DEBUG(0, speedN[0]);
 		//RECR_DEBUG(1, speedN[1]);
@@ -1560,24 +1560,24 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//データオーバーフローで警告文表示
 #if 0
 		if (0 <= recfp.mapdata.note2.up[1999].hittime) {
-			DrawFormatString(20, 120, CrR, L"UPPER OVER");
+			RecRescaleDrawFormatString(20, 120, CrR, L"UPPER OVER");
 		}
 		else if (0 <= recfp.mapdata.note2.mid[1999].hittime) {
-			DrawFormatString(20, 120, CrR, L"MIDDLE OVER");
+			RecRescaleDrawFormatString(20, 120, CrR, L"MIDDLE OVER");
 		}
 		else if (0 <= recfp.mapdata.note2.low[1999].hittime) {
-			DrawFormatString(20, 120, CrR, L"LOWER OVER");
+			RecRescaleDrawFormatString(20, 120, CrR, L"LOWER OVER");
 		}
 #endif
 		//ライフが20%以下の時、危険信号(ピクチャ)を出す
-		if (life <= 100 && drop == 0) DrawGraph(0, 0, dangerimg, TRUE);
+		if (life <= 100 && drop == 0) RecRescaleDrawGraph(0, 0, dangerimg, TRUE);
 		//ライフがなくなったらDROPED扱い
 		if (life <= 0 && drop == 0 && AutoFlag == 0) {
 			drop = 1;
 			Dscore.add_save = Dscore.add;
 			Dscore.dis_save = mins(recfp.time.now - recfp.time.offset, 0);
 		}
-		if (drop) { DrawGraph(0, 0, dropimg, TRUE); }
+		if (drop) { RecRescaleDrawGraph(0, 0, dropimg, TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
 		if (GetRemainNotes2(judge, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
 			AllNotesHitTime = GetNowCount();
@@ -1881,7 +1881,7 @@ void ShowCombo(int combo, int *pic) {
 			s /= 10;
 		}
 		s %= 10;
-		DrawGraph(t * CHARA_WIDTH / 2 - CHARA_WIDTH / 2 - i * CHARA_WIDTH - xx / 2 + ROCATION_X, ROCATION_Y, pic[s], TRUE);
+		RecRescaleDrawGraph(t * CHARA_WIDTH / 2 - CHARA_WIDTH / 2 - i * CHARA_WIDTH - xx / 2 + ROCATION_X, ROCATION_Y, pic[s], TRUE);
 	}
 }
 
@@ -1894,7 +1894,7 @@ void ShowScore2(struct score_box score, int Hscore, int time) {
 	if (Hscore <= s_score) {
 		Cr = GetColor(255, 255, 0);
 	}
-	DrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
+	RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
 }
 
 void PlayNoteHitSound2(play_sound_t* const sound) {
@@ -1931,21 +1931,21 @@ void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {
 	unsigned int CrY = GetColor(255, 255, 0);
 	unsigned int CrC = GetColor(0, 255, 255);
 	if (judge.miss > 0) {
-		DrawTriangle(x1, y1, x2, y2, x3, y3, CrG, TRUE);
+		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrG, TRUE);
 	}
 	else if (judge.safe > 0) {
-		DrawTriangle(x1, y1, x2, y2, x3, y3, CrD, TRUE);
+		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrD, TRUE);
 	}
 	else if (judge.good > 0) {
-		DrawTriangle(x1, y1, x2, y2, x3, y3, CrY, TRUE);
+		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrY, TRUE);
 	}
 	else {
-		DrawTriangle(x1, y1, x2, y2, x3, y3, CrC, TRUE);
+		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrC, TRUE);
 	}
 	if (PosScore < HighScore) {
-		DrawTriangle(x1, y1, x3, y3, x4, y4, CrG, TRUE);
+		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, CrG, TRUE);
 	}
 	else {
-		DrawTriangle(x1, y1, x3, y3, x4, y4, GetColor(lins(HighScore, 255, 100000, 0, PosScore), 255, lins(HighScore, 0, 100000, 255, PosScore)), TRUE);
+		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, GetColor(lins(HighScore, 255, 100000, 0, PosScore), 255, lins(HighScore, 0, 100000, 255, PosScore)), TRUE);
 	}
 }

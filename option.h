@@ -21,114 +21,114 @@ now_scene_t option(void) {
 	Cr = GetColor(255, 255, 255);
 	while (1) {
 		ClearDrawScreen();
-		DrawGraph(0, 0, backimg, TRUE);
-		DrawGraph(40, 45 + command * 50, cimg, TRUE);
+		RecRescaleDrawGraph(0, 0, backimg, TRUE);
+		RecRescaleDrawGraph(40, 45 + command * 50, cimg, TRUE);
 		switch (data[0]) {
 		case 0:
-			if (data[4] == 0)DrawString(100, 50, L"キャラクター: ピッカー", Cr);
-			else if (data[4] == 1)DrawString(100, 50, L"Character: Picker", Cr);
+			if (data[4] == 0)RecRescaleDrawString(100, 50, L"キャラクター: ピッカー", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(100, 50, L"Character: Picker", Cr);
 			break;
 		case 1:
-			if (data[4] == 0)DrawString(100, 50, L"キャラクター: マップゲーター", Cr);
-			else if (data[4] == 1)DrawString(100, 50, L"Character: MapGator", Cr);
+			if (data[4] == 0)RecRescaleDrawString(100, 50, L"キャラクター: マップゲーター", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(100, 50, L"Character: MapGator", Cr);
 			break;
 		case 2:
-			if (data[4] == 0)DrawString(100, 50, L"キャラクター: テイラー", Cr);
-			else if (data[4] == 1)DrawString(100, 50, L"Character: Taylor", Cr);
+			if (data[4] == 0)RecRescaleDrawString(100, 50, L"キャラクター: テイラー", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(100, 50, L"Character: Taylor", Cr);
 			break;
 		}
-		if (data[4] == 0)DrawFormatString(100, 100, Cr, L"オフセット: %dms", data[1] * 5);
-		else if (data[4] == 1)DrawFormatString(100, 100, Cr, L"Offset: %dms", data[1] * 5);
-		if (data[2] == 0 && data[4] == 0) DrawString(100, 150, L"効果音: あり", Cr);
-		else if (data[2] == 0 && data[4] == 1) DrawString(100, 150, L"SE: ON", Cr);
-		else if (data[2] == 1 && data[4] == 0)DrawString(100, 150, L"効果音: なし", Cr);
-		else if (data[2] == 1 && data[4] == 1)DrawString(100, 150, L"SE: OFF", Cr);
+		if (data[4] == 0)RecRescaleDrawFormatString(100, 100, Cr, L"オフセット: %dms", data[1] * 5);
+		else if (data[4] == 1)RecRescaleDrawFormatString(100, 100, Cr, L"Offset: %dms", data[1] * 5);
+		if (data[2] == 0 && data[4] == 0) RecRescaleDrawString(100, 150, L"効果音: あり", Cr);
+		else if (data[2] == 0 && data[4] == 1) RecRescaleDrawString(100, 150, L"SE: ON", Cr);
+		else if (data[2] == 1 && data[4] == 0)RecRescaleDrawString(100, 150, L"効果音: なし", Cr);
+		else if (data[2] == 1 && data[4] == 1)RecRescaleDrawString(100, 150, L"SE: OFF", Cr);
 		switch (data[3]) {
 		case 0:
-			if (data[4] == 0)DrawString(100, 200, L"背景の明るさ: 真っ黒", Cr);
-			else if (data[4] == 1)DrawString(100, 200, L"BackGroundBrightness: Black", Cr);
+			if (data[4] == 0)RecRescaleDrawString(100, 200, L"背景の明るさ: 真っ黒", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(100, 200, L"BackGroundBrightness: Black", Cr);
 			break;
 		case 1:
-			if (data[4] == 0)DrawString(100, 200, L"背景の明るさ: 暗い", Cr);
-			else if (data[4] == 1)DrawString(100, 200, L"BackGroundBrightness: Dark", Cr);
+			if (data[4] == 0)RecRescaleDrawString(100, 200, L"背景の明るさ: 暗い", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(100, 200, L"BackGroundBrightness: Dark", Cr);
 			break;
 		case 2:
-			if (data[4] == 0)DrawString(100, 200, L"背景の明るさ: 中間", Cr);
-			else if (data[4] == 1)DrawString(100, 200, L"BackGroundBrightness: Middle", Cr);
+			if (data[4] == 0)RecRescaleDrawString(100, 200, L"背景の明るさ: 中間", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(100, 200, L"BackGroundBrightness: Middle", Cr);
 			break;
 		case 3:
-			if (data[4] == 0)DrawString(100, 200, L"背景の明るさ: 明るい", Cr);
-			else if (data[4] == 1)DrawString(100, 200, L"BackGroundBrightness: Bright", Cr);
+			if (data[4] == 0)RecRescaleDrawString(100, 200, L"背景の明るさ: 明るい", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(100, 200, L"BackGroundBrightness: Bright", Cr);
 			break;
 		}
 		switch (data[4]) {
 		case 0:
-			DrawString(100, 250, L"言語 Language: 日本語", Cr);
+			RecRescaleDrawString(100, 250, L"言語 Language: 日本語", Cr);
 			break;
 		case 1:
-			DrawString(100, 250, L"言語 Language: English", Cr);
+			RecRescaleDrawString(100, 250, L"言語 Language: English", Cr);
 			break;
 		}
 		switch (data[5]) {
 		case 0:
-			DrawString(100, 300, L"ボタン表示: off", Cr);
+			RecRescaleDrawString(100, 300, L"ボタン表示: off", Cr);
 			break;
 		case 1:
-			DrawString(100, 300, L"ボタン表示: on", Cr);
+			RecRescaleDrawString(100, 300, L"ボタン表示: on", Cr);
 			break;
 		}
 		switch (data[6]) {
 		case 0:
-			DrawString(100, 350, L"判定表示位置: 中央の上", Cr);
+			RecRescaleDrawString(100, 350, L"判定表示位置: 中央の上", Cr);
 			break;
 		case 1:
-			DrawString(100, 350, L"判定表示位置: 左上", Cr);
+			RecRescaleDrawString(100, 350, L"判定表示位置: 左上", Cr);
 			break;
 		case 2:
-			DrawString(100, 350, L"判定表示位置: 右上", Cr);
+			RecRescaleDrawString(100, 350, L"判定表示位置: 右上", Cr);
 			break;
 		case 3:
-			DrawString(100, 350, L"判定表示位置: 中央", Cr);
+			RecRescaleDrawString(100, 350, L"判定表示位置: 中央", Cr);
 			break;
 		case 4:
-			DrawString(100, 350, L"判定表示位置: キャラの上", Cr);
+			RecRescaleDrawString(100, 350, L"判定表示位置: キャラの上", Cr);
 			break;
 		case 5:
-			DrawString(100, 350, L"判定表示位置: 表示しない", Cr);
+			RecRescaleDrawString(100, 350, L"判定表示位置: 表示しない", Cr);
 			break;
 		}
 		switch (command) {
 		case 0:
-			if (data[4] == 0)DrawString(20, 420, L"使用するキャラクターを変えます。", Cr);
-			else if (data[4] == 1)DrawString(20, 420, L"Choose the character you use.", Cr);
+			if (data[4] == 0)RecRescaleDrawString(20, 420, L"使用するキャラクターを変えます。", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(20, 420, L"Choose the character you use.", Cr);
 			break;
 		case 1:
-			if (data[4] == 0)DrawString(20, 420, L"音符が流れてくるタイミングを変えます。\n増やすと遅れて、減らすと早めに流れます。", Cr);
-			else if (data[4] == 1)DrawString(20, 420, L"Change the timing of note. Increase to late, Decrease to early.", Cr);
+			if (data[4] == 0)RecRescaleDrawString(20, 420, L"音符が流れてくるタイミングを変えます。\n増やすと遅れて、減らすと早めに流れます。", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(20, 420, L"Change the timing of note. Increase to late, Decrease to early.", Cr);
 			break;
 		case 2:
-			if (data[4] == 0)DrawString(20, 420, L"音符をたたいた時の効果音を鳴らすかどうかを変えます", Cr);
-			else if (data[4] == 1)DrawString(20, 420, L"Choose whether to sound of hitting the note.", Cr);
+			if (data[4] == 0)RecRescaleDrawString(20, 420, L"音符をたたいた時の効果音を鳴らすかどうかを変えます", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(20, 420, L"Choose whether to sound of hitting the note.", Cr);
 			break;
 		case 3:
-			if (data[4] == 0)DrawString(20, 420, L"背景の明るさを変えます。", Cr);
-			else if (data[4] == 1)DrawString(20, 420, L"Choose brightness of background.", Cr);
+			if (data[4] == 0)RecRescaleDrawString(20, 420, L"背景の明るさを変えます。", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(20, 420, L"Choose brightness of background.", Cr);
 			break;
 		case 4:
-			DrawString(20, 420, L"ゲームで使う言語を変えます。\nChoose the lunguage in this game.", Cr);
+			RecRescaleDrawString(20, 420, L"ゲームで使う言語を変えます。\nChoose the lunguage in this game.", Cr);
 			break;
 		case 5:
-			if (data[4] == 0)DrawString(20, 420, L"ボタンの押し状況をプレイ画面に表示します。", Cr);
-			else if (data[4] == 1)DrawString(20, 420, L"Choose whether to display the key states on playing mode.", Cr);
+			if (data[4] == 0)RecRescaleDrawString(20, 420, L"ボタンの押し状況をプレイ画面に表示します。", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(20, 420, L"Choose whether to display the key states on playing mode.", Cr);
 			break;
 		case 6:
-			if (data[4] == 0)DrawString(20, 420, L"判定の表示場所を決めます。", Cr);
-			else if (data[4] == 1)DrawString(20, 420, L"Choose judge position.", Cr);
+			if (data[4] == 0)RecRescaleDrawString(20, 420, L"判定の表示場所を決めます。", Cr);
+			else if (data[4] == 1)RecRescaleDrawString(20, 420, L"Choose judge position.", Cr);
 			break;
 		}
-		DrawGraph(0, 0, help, TRUE);
-		if (data[4] == 0)DrawString(5, 460, L"上下左右キー:選択   BackSpaceキー:保存して戻る", Cr);
-		else if (data[4] == 1)DrawString(5, 460, L"←↓↑→ key:choose   BackSpace key:save the option and return", Cr);
+		RecRescaleDrawGraph(0, 0, help, TRUE);
+		if (data[4] == 0)RecRescaleDrawString(5, 460, L"上下左右キー:選択   BackSpaceキー:保存して戻る", Cr);
+		else if (data[4] == 1)RecRescaleDrawString(5, 460, L"←↓↑→ key:choose   BackSpace key:save the option and return", Cr);
 		ScreenFlip();
 		if (CheckHitKey(KEY_INPUT_LEFT)) {
 			//左が押された
