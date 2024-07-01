@@ -3,6 +3,7 @@
 typedef enum help_bar_mat_e {
 	HELP_MAT_MUSIC_NONE = 0,
 	HELP_MAT_MUSIC_SELECT,
+	HELP_MAT_OPTION,
 } help_bar_mat_t;
 
 extern void InitHelpBar();

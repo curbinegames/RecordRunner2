@@ -1,5 +1,6 @@
 #pragma once
 
+#if 0
 #include "sancur.h"
 #include "DxLib.h"
 
@@ -31,3 +32,4 @@ int keycur(int const* const mat, int num) {
 	key = 0;
 	return 0;
 }
+#endif
