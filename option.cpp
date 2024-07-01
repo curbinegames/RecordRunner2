@@ -1,12 +1,16 @@
 
 #include "DxLib.h"
 #include "dxcur.h"
+#include "sancur.h"
 #include "RecWindowRescale.h"
 #include "system.h"
 #include "helpBar.h"
 #include "option.h"
 
 #define COLOR_WHITE 0xffffffff
+
+static const int det_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 20);
+static const int det_txposy = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 410);
 
 typedef struct grobal_text_mini_s {
 	wchar_t jp[8];
@@ -21,8 +25,8 @@ typedef struct rec_opt_text_s {
 		wchar_t jp[64];
 		wchar_t en[64];
 	} detail;
-	const int max;
 	const int min;
+	const int max;
 	const int loop;
 	int *val_p;
 } rec_opt_text_t;
@@ -80,37 +84,55 @@ static void RecOptionChar(int pos, int pal, int lang) {
 		L"Picker", L"MapGator", L"Taylor"
 	};
 
+	int drawX = 0;
+	int drawY = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
+
 	if (lang == 0) {
-		RecRescaleDrawFormatString(100, 50 * pos + 50, COLOR_WHITE, L"キャラクター: %s", jp[pal]);
+		DrawFormatString(drawX, drawY, COLOR_WHITE, L"キャラクター: %s", jp[pal]);
 	}
 	else if (lang == 1) {
-		RecRescaleDrawFormatString(100, 50 * pos + 50, COLOR_WHITE, L"Character: %s", en[pal]);
+		DrawFormatString(drawX, drawY, COLOR_WHITE, L"Character: %s", en[pal]);
 	}
 	return;
 }
 
 static void RecOptionOffset(int pos, int pal, int lang) {
+	int drawX = 0;
+	int drawY = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
+
 	if (lang == 0) {
-		RecRescaleDrawFormatString(100, 50 * pos + 50, COLOR_WHITE, L"オフセット: %dms", pal * 5);
+		DrawFormatString(drawX, drawY, COLOR_WHITE, L"オフセット: %dms", pal * 5);
 	}
 	else if (lang == 1) {
-		RecRescaleDrawFormatString(100, 50 * pos + 50, COLOR_WHITE, L"Offset: %dms", pal * 5);
+		DrawFormatString(drawX, drawY, COLOR_WHITE, L"Offset: %dms", pal * 5);
 	}
 	return;
 }
 
 static void RecOptionSE(int pos, int pal, int lang) {
+	int drawX = 0;
+	int drawY = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
+
 	if (pal == 0 && lang == 0) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"効果音: あり", COLOR_WHITE);
+		DrawString(drawX, drawY, L"効果音: あり", COLOR_WHITE);
 	}
 	else if (pal == 0 && lang == 1) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"SE: ON", COLOR_WHITE);
+		DrawString(drawX, drawY, L"SE: ON", COLOR_WHITE);
 	}
 	else if (pal == 1 && lang == 0) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"効果音: なし", COLOR_WHITE);
+		DrawString(drawX, drawY, L"効果音: なし", COLOR_WHITE);
 	}
 	else if (pal == 1 && lang == 1) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"SE: OFF", COLOR_WHITE);
+		DrawString(drawX, drawY, L"SE: OFF", COLOR_WHITE);
 	}
 	return;
 }
@@ -124,37 +146,55 @@ static void RecOptionBackBright(int pos, int pal, int lang) {
 		L"Black", L"Dark", L"Middle", L"Bright"
 	};
 
+	int drawX = 0;
+	int drawY = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
+
 	if (lang == 0) {
-		RecRescaleDrawFormatString(100, 50 * pos + 50, COLOR_WHITE, L"背景の明るさ: %s", jp[pal]);
+		DrawFormatString(drawX, drawY, COLOR_WHITE, L"背景の明るさ: %s", jp[pal]);
 	}
 	else if (lang == 1) {
-		RecRescaleDrawFormatString(100, 50 * pos + 50, COLOR_WHITE, L"BackGroundBrightness: %s", en[pal]);
+		DrawFormatString(drawX, drawY, COLOR_WHITE, L"BackGroundBrightness: %s", en[pal]);
 	}
 	return;
 }
 
 static void RecOptionLang(int pos, int pal, int lang) {
+	int drawX = 0;
+	int drawY = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
+
 	if (pal == 0) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"言語 Language: 日本語", COLOR_WHITE);
+		DrawString(drawX, drawY, L"言語 Language: 日本語", COLOR_WHITE);
 	}
 	else if (pal == 1) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"言語 Language: English", COLOR_WHITE);
+		DrawString(drawX, drawY, L"言語 Language: English", COLOR_WHITE);
 	}
 	return;
 }
 
 static void RecOptionButtonDet(int pos, int pal, int lang) {
+	int drawX = 0;
+	int drawY = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
+
 	if (pal == 0 && lang == 0) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"ボタン表示: off", COLOR_WHITE);
+		DrawString(drawX, drawY, L"ボタン表示: off", COLOR_WHITE);
 	}
 	else if (pal == 0 && lang == 1) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"ButtonGuide: off", COLOR_WHITE);
+		DrawString(drawX, drawY, L"ButtonGuide: off", COLOR_WHITE);
 	}
 	else if (pal == 1 && lang == 0) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"ボタン表示: on", COLOR_WHITE);
+		DrawString(drawX, drawY, L"ボタン表示: on", COLOR_WHITE);
 	}
 	else if (pal == 1 && lang == 1) {
-		RecRescaleDrawString(100, 50 * pos + 50, L"ButtonGuide: on", COLOR_WHITE);
+		DrawString(drawX, drawY, L"ButtonGuide: on", COLOR_WHITE);
 	}
 
 	return;
@@ -169,11 +209,17 @@ static void RecOptionComboPos(int pos, int pal, int lang) {
 		L"top centre", L"top left", L"top right", L"centre", L"near chara", L"nope"
 	};
 
+	int drawX = 0;
+	int drawY = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
+
 	if (lang == 0) {
-		RecRescaleDrawFormatString(100, 50 * pos + 50, COLOR_WHITE, L"判定表示位置: %s", jp[pal]);
+		DrawFormatString(drawX, drawY, COLOR_WHITE, L"判定表示位置: %s", jp[pal]);
 	}
 	else if (lang == 1) {
-		RecRescaleDrawFormatString(100, 50 * pos + 50, COLOR_WHITE, L"Judge Position: %s", en[pal]);
+		DrawFormatString(drawX, drawY, COLOR_WHITE, L"Judge Position: %s", en[pal]);
 	}
 	return;
 }
@@ -211,7 +257,7 @@ static rec_opt_text_t optionstr[] {
 		0, 1, 1
 	}, {
 		RecOptionComboPos,
-		L"判定の表示場所を決めます。"
+		L"判定の表示場所を決めます。",
 		L"Choose judge position.",
 		0, 5, 1
 	}
@@ -406,10 +452,10 @@ now_scene_t option(void) {
 
 		/* 説明 */
 		if (optiondata.lang == 0) {
-			RecRescaleDrawFormatString(20, 420, COLOR_WHITE, L"%s", optionstr[command].detail.jp);
+			DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s", optionstr[command].detail.jp);
 		}
 		else if (optiondata.lang == 1) {
-			RecRescaleDrawFormatString(20, 420, COLOR_WHITE, L"%s", optionstr[command].detail.en);
+			DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s", optionstr[command].detail.en);
 		}
 
 		DrawHelpBar(HELP_MAT_OPTION, optiondata.lang); /* 操作方法 */
@@ -419,6 +465,7 @@ now_scene_t option(void) {
 		if (GetWindowUserCloseFlag(TRUE)) {
 			return SCENE_EXIT;
 		}
+
 		if (exitFg == 1) {
 			break;
 		}
