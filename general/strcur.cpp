@@ -466,6 +466,8 @@ void vScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], va_list as) {
 	TCHAR buf[32];
 	int unsignval = 0;
 
+	ret[0] = L'\0';
+
 	for (int i = 0; s[i] != L'\0'; i++) {
 		switch (mode) {
 		case NON:

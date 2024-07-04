@@ -1,6 +1,7 @@
 
 #include "DxLib.h"
 #include "general/sancur.h"
+#include "general/strcur.h"
 #include "system.h"
 #include "RecWindowRescale.h"
 
@@ -284,11 +285,14 @@ void RecRescaleDrawFormatString(int x, int y, uint cr, const TCHAR *s, ...) {
 
 	int drawX = 0;
 	int drawY = 0;
+	TCHAR buf[64];
 
 	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
 	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
 
-	DrawFormatString(drawX, drawY, cr, s, as);
+	vScanPrintfStr(buf, 64, s, as);
+
+	DrawString(drawX, drawY, buf, cr);
 
 	va_end(as);
 	return;
@@ -300,6 +304,7 @@ void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const T
 
 	int drawX = 0;
 	int drawY = 0;
+	TCHAR buf[64];
 
 	/* Xpos */
 	switch (anchor) {
@@ -341,10 +346,13 @@ void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const T
 		break;
 	}
 
+	/* string */
+	vScanPrintfStr(buf, 64, s, as);
+
 	/* draw */
 	switch (anchor) {
 	case REC_RESCALE_STRETCH:
-		DrawFormatString(drawX, drawY, cr, s, as);
+		DrawString(drawX, drawY, buf, cr);
 		break;
 	case REC_RESCALE_TOP_RIGHT:
 	case REC_RESCALE_CENTRE_RIGHT:
@@ -355,7 +363,7 @@ void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const T
 	case REC_RESCALE_TOP_CENTRE:
 	case REC_RESCALE_CENTRE:
 	case REC_RESCALE_BOTTOM_CENTRE:
-		DrawFormatStringToHandle(drawX, drawY, cr, SmallFontData, s, as);
+		DrawStringToHandle(drawX, drawY, buf, cr, SmallFontData);
 		break;
 	}
 
