@@ -1,7 +1,7 @@
 
 /* include */
 #include "DxLib.h"
-#include "sancur.h"
+#include "general/sancur.h"
 #include "recp_cal_ddif.h"
 #include "playbox.h"
 #include "recp_cal_difkey.h"

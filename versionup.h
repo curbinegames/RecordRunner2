@@ -2,7 +2,7 @@
 
 #include "DxLib.h"
 #include "system.h"
-#include "strcur.h"
+#include "general/strcur.h"
 
 void upgrade_rate_f() {
 	play_rate_t prate[RATE_NUM];

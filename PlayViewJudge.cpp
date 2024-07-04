@@ -1,6 +1,6 @@
 
 #include "DxLib.h"
-#include "sancur.h"
+#include "general/sancur.h"
 #include "playbox.h"
 #include "PlayCamera.h"
 #include "RecWindowRescale.h"

@@ -1,7 +1,7 @@
 
 #include "DxLib.h"
-#include "dxcur.h"
-#include "sancur.h"
+#include "general/dxcur.h"
+#include "general/sancur.h"
 #include "RecWindowRescale.h"
 #include "system.h"
 #include "helpBar.h"

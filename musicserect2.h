@@ -1,6 +1,6 @@
 #include "serectbase.h"
 #include "recr_cutin.h"
-#include "dxcur.h"
+#include "general/dxcur.h"
 
 #define MUSE_FADTM 250
 #define MUSE_KEYTM 500

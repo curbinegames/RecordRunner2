@@ -1,8 +1,8 @@
 
 #include "DxLib.h"
 #include "system.h"
-#include "sancur.h"
-#include "strcur.h"
+#include "general/sancur.h"
+#include "general/strcur.h"
 #include "title.h"
 #include "menu.h"
 #include "musicserect2.h"

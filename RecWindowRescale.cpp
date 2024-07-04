@@ -1,6 +1,6 @@
 
 #include "DxLib.h"
-#include "sancur.h"
+#include "general/sancur.h"
 #include "system.h"
 #include "RecWindowRescale.h"
 

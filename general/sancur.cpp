@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DxLib.h"
-#include "RecWindowRescale.h"
+#include "../RecWindowRescale.h"
 
 int mins(int a, int b);
 int maxs(int a, int b);
