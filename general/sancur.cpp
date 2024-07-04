@@ -26,16 +26,44 @@ void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle);
 void _DrawDeformationPic3(int x, int y, double size, int rot, int handle);
 void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle);
 
-//aをbまで引き上げたものを返す
+/**
+ * この関数はもう使っちゃダメ、代わりにmins_2を使ってください
+ * 大きいほうを返す
+ */
 int mins(int a, int b) {
 	if (a < b)a = b;
 	return a;
 }
-//aをbまで引き下げたものを返す
+
+/**
+ * 小さいほうを返す
+ */
+int mins_2(int a, int b) {
+	if (a > b) {
+		return b;
+	}
+	return a;
+}
+
+/**
+ * この関数はもう使っちゃダメ、代わりにmaxs_2を使ってください
+ * 小さいほうを返す
+ */
 int maxs(int a, int b) {
 	if (a > b)a = b;
 	return a;
 }
+
+/**
+ * 大きいほうを返す
+ */
+int maxs_2(int a, int b) {
+	if (a < b) {
+		return b;
+	}
+	return a;
+}
+
 //aをbまで引き上げたものを返す
 double mins_D(double a, double b) {
 	if (a < b)a = b;

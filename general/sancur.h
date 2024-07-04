@@ -3,7 +3,9 @@
 #include "DxLib.h"
 
 extern int mins(int a, int b);
+extern int mins_2(int a, int b);
 extern int maxs(int a, int b);
+extern int maxs_2(int a, int b);
 extern double mins_D(double a, double b);
 extern double maxs_D(double a, double b);
 extern int betweens(int a, int b, int c);
