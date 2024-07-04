@@ -49,5 +49,6 @@ void AvoidKeyBug() {
 }
 
 int keycur(int const* const mat, int num) {
+	InputAllKeyHold();
 	return GetKeyPushOnce();
 }
