@@ -1,26 +1,29 @@
 
 #include "DxLib.h"
 #include "general/dxcur.h"
+#include "general/strcur.h"
 #include "general/sancur.h"
 #include "RecWindowRescale.h"
 #include "system.h"
 #include "helpBar.h"
 #include "option.h"
 
-#define COLOR_WHITE 0xffffffff
+/**
+ * TODO: 追加したいオプション
+ * 　文字の大きさ
+ * 　BGM音量
+ * 　SE音量
+ * 　PLAYINGバーカスタマイズ
+ */
 
-static const int det_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 20);
-static const int det_txposy = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 410);
-
-typedef struct grobal_text_mini_s {
-	wchar_t jp[8];
-	wchar_t en[20];
-} grobal_text_mini_t;
-
-typedef void (*rec_opt_action_t)(int pos, int pal, int lang);
+typedef void (*rec_opt_action_t)(TCHAR *ret, int pal, int lang);
 
 typedef struct rec_opt_text_s {
 	const rec_opt_action_t action;
+	const struct {
+		wchar_t jp[12];
+		wchar_t en[30];
+	} title;
 	const struct {
 		wchar_t jp[64];
 		wchar_t en[64];
@@ -30,6 +33,13 @@ typedef struct rec_opt_text_s {
 	const int loop;
 	int *val_p;
 } rec_opt_text_t;
+
+static const int title_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+static const int title_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50);
+static const int title_txgapy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50);
+
+static const int det_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 20);
+static const int det_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 410);
 
 int RecOpenOptionFile(int *data) {
 	FILE *fp = NULL;
@@ -75,7 +85,7 @@ int RecWriteOptineFile2(rec_option_t *data) {
 	return 0;
 }
 
-static void RecOptionChar(int pos, int pal, int lang) {
+static void RecOptionChar(TCHAR *ret, int pal, int lang) {
 	const wchar_t jp[3][20] = {
 		L"ピッカー", L"マップゲーター", L"テイラー"
 	};
@@ -84,60 +94,25 @@ static void RecOptionChar(int pos, int pal, int lang) {
 		L"Picker", L"MapGator", L"Taylor"
 	};
 
-	int drawX = 0;
-	int drawY = 0;
+	if (lang == LANG_JP) { strcopy_2(jp[pal], ret, 32); }
+	else if (lang == LANG_EN) { strcopy_2(en[pal], ret, 32); }
 
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
-
-	if (lang == 0) {
-		DrawFormatString(drawX, drawY, COLOR_WHITE, L"キャラクター: %s", jp[pal]);
-	}
-	else if (lang == 1) {
-		DrawFormatString(drawX, drawY, COLOR_WHITE, L"Character: %s", en[pal]);
-	}
 	return;
 }
 
-static void RecOptionOffset(int pos, int pal, int lang) {
-	int drawX = 0;
-	int drawY = 0;
-
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
-
-	if (lang == 0) {
-		DrawFormatString(drawX, drawY, COLOR_WHITE, L"オフセット: %dms", pal * 5);
-	}
-	else if (lang == 1) {
-		DrawFormatString(drawX, drawY, COLOR_WHITE, L"Offset: %dms", pal * 5);
-	}
+static void RecOptionOffset(TCHAR *ret, int pal, int lang) {
+	strnums(ret, pal * 5, 32);
 	return;
 }
 
-static void RecOptionSE(int pos, int pal, int lang) {
-	int drawX = 0;
-	int drawY = 0;
+static void RecOptionSE(TCHAR *ret, int pal, int lang) {
+	if (pal == 0) { strcopy_2(L"on", ret, 32); }
+	else if (pal == 1) { strcopy_2(L"off", ret, 32); }
 
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
-
-	if (pal == 0 && lang == 0) {
-		DrawString(drawX, drawY, L"効果音: あり", COLOR_WHITE);
-	}
-	else if (pal == 0 && lang == 1) {
-		DrawString(drawX, drawY, L"SE: ON", COLOR_WHITE);
-	}
-	else if (pal == 1 && lang == 0) {
-		DrawString(drawX, drawY, L"効果音: なし", COLOR_WHITE);
-	}
-	else if (pal == 1 && lang == 1) {
-		DrawString(drawX, drawY, L"SE: OFF", COLOR_WHITE);
-	}
 	return;
 }
 
-static void RecOptionBackBright(int pos, int pal, int lang) {
+static void RecOptionBackBright(TCHAR *ret, int pal, int lang) {
 	wchar_t jp[4][10] = {
 		L"真っ黒", L"暗い", L"中間", L"明るい"
 	};
@@ -146,61 +121,27 @@ static void RecOptionBackBright(int pos, int pal, int lang) {
 		L"Black", L"Dark", L"Middle", L"Bright"
 	};
 
-	int drawX = 0;
-	int drawY = 0;
-
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
-
-	if (lang == 0) {
-		DrawFormatString(drawX, drawY, COLOR_WHITE, L"背景の明るさ: %s", jp[pal]);
-	}
-	else if (lang == 1) {
-		DrawFormatString(drawX, drawY, COLOR_WHITE, L"BackGroundBrightness: %s", en[pal]);
-	}
-	return;
-}
-
-static void RecOptionLang(int pos, int pal, int lang) {
-	int drawX = 0;
-	int drawY = 0;
-
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
-
-	if (pal == 0) {
-		DrawString(drawX, drawY, L"言語 Language: 日本語", COLOR_WHITE);
-	}
-	else if (pal == 1) {
-		DrawString(drawX, drawY, L"言語 Language: English", COLOR_WHITE);
-	}
-	return;
-}
-
-static void RecOptionButtonDet(int pos, int pal, int lang) {
-	int drawX = 0;
-	int drawY = 0;
-
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
-
-	if (pal == 0 && lang == 0) {
-		DrawString(drawX, drawY, L"ボタン表示: off", COLOR_WHITE);
-	}
-	else if (pal == 0 && lang == 1) {
-		DrawString(drawX, drawY, L"ButtonGuide: off", COLOR_WHITE);
-	}
-	else if (pal == 1 && lang == 0) {
-		DrawString(drawX, drawY, L"ボタン表示: on", COLOR_WHITE);
-	}
-	else if (pal == 1 && lang == 1) {
-		DrawString(drawX, drawY, L"ButtonGuide: on", COLOR_WHITE);
-	}
+	if (lang == LANG_JP) { strcopy_2(jp[pal], ret, 32); }
+	else if (lang == LANG_EN) { strcopy_2(en[pal], ret, 32); }
 
 	return;
 }
 
-static void RecOptionComboPos(int pos, int pal, int lang) {
+static void RecOptionLang(TCHAR *ret, int pal, int lang) {
+	if (pal == 0) { strcopy_2(L"日本語", ret, 32); }
+	else if (pal == 1) { strcopy_2(L"English", ret, 32); }
+
+	return;
+}
+
+static void RecOptionButtonDet(TCHAR *ret, int pal, int lang) {
+	if (pal == 0) { strcopy_2(L"off", ret, 32); }
+	else if (pal == 1) { strcopy_2(L"on", ret, 32); }
+
+	return;
+}
+
+static void RecOptionComboPos(TCHAR *ret, int pal, int lang) {
 	wchar_t jp[6][10] = {
 		L"中央の上", L"左上", L"右上", L"中央", L"キャラの上", L"表示しない"
 	};
@@ -209,57 +150,55 @@ static void RecOptionComboPos(int pos, int pal, int lang) {
 		L"top centre", L"top left", L"top right", L"centre", L"near chara", L"nope"
 	};
 
-	int drawX = 0;
-	int drawY = 0;
+	if (lang == LANG_JP) { strcopy_2(jp[pal], ret, 32); }
+	else if (lang == LANG_EN) { strcopy_2(en[pal], ret, 32); }
 
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50 * pos + 50);
-
-	if (lang == 0) {
-		DrawFormatString(drawX, drawY, COLOR_WHITE, L"判定表示位置: %s", jp[pal]);
-	}
-	else if (lang == 1) {
-		DrawFormatString(drawX, drawY, COLOR_WHITE, L"Judge Position: %s", en[pal]);
-	}
 	return;
 }
 
 static rec_opt_text_t optionstr[] {
 	{
 		RecOptionChar,
+		L"キャラクター", L"Character",
 		L"使用するキャラクターを変えます。",
 		L"Choose the character you use.",
-		0, 2, 1
+		0, 2, TRUE
 	}, {
 		RecOptionOffset,
+		L"オフセット", L"Offset",
 		L"音符が流れてくるタイミングを変えます。\n増やすと遅れて、減らすと早めに流れます。",
 		L"Change the timing of note. Increase to late, Decrease to early.",
-		-2000, 2000, 0
+		-2000, 2000, FALSE
 	}, {
 		RecOptionSE,
+		L"効果音", L"SE",
 		L"音符をたたいた時の効果音を鳴らすかどうかを変えます",
 		L"Choose whether to sound of hitting notes.",
-		0, 1, 1
+		0, 1, TRUE
 	}, {
 		RecOptionBackBright,
+		L"背景の明るさ", L"Background Brightness",
 		L"背景の明るさを変えます。",
 		L"Choose brightness of background.",
-		0, 3, 1
+		0, 3, TRUE
 	}, {
 		RecOptionLang,
+		L"言語 Language", L"言語 Language",
 		L"ゲームで使う言語を変えます。\nChoose the lunguage in this game.",
 		L"ゲームで使う言語を変えます。\nChoose the lunguage in this game.",
-		0, 1, 1
+		0, 1, TRUE
 	}, {
 		RecOptionButtonDet,
+		L"ボタン表示", L"Button Guide",
 		L"ボタンの押し状況をプレイ画面に表示します。",
 		L"Choose whether to display the key states on playing mode.",
-		0, 1, 1
+		0, 1, TRUE
 	}, {
 		RecOptionComboPos,
+		L"判定表示位置", L"Judge Position",
 		L"判定の表示場所を決めます。",
 		L"Choose judge position.",
-		0, 5, 1
+		0, 5, TRUE
 	}
 };
 
@@ -309,7 +248,7 @@ now_scene_t option(void) {
 			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
 			(*optionstr[command].val_p)--;
 			if (*optionstr[command].val_p < optionstr[command].min) {
-				if (optionstr[command].loop == 0) {
+				if (optionstr[command].loop == FALSE) {
 					*optionstr[command].val_p = optionstr[command].min;
 				}
 				else {
@@ -321,7 +260,7 @@ now_scene_t option(void) {
 			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
 			(*optionstr[command].val_p)++;
 			if (optionstr[command].max < *optionstr[command].val_p) {
-				if (optionstr[command].loop == 0) {
+				if (optionstr[command].loop == FALSE) {
 					*optionstr[command].val_p = optionstr[command].max;
 				}
 				else {
@@ -447,14 +386,23 @@ now_scene_t option(void) {
 
 		/* 項目表示 */
 		for (int i = 0; i < 7; i++) {
-			optionstr[i].action(i, *optionstr[i].val_p, optiondata.lang);
+			TCHAR buf[32];
+
+			optionstr[i].action(buf, *optionstr[i].val_p, optiondata.lang);
+
+			if (optiondata.lang == LANG_JP) {
+				DrawFormatString(title_txposx, title_txposy + title_txgapy * i, COLOR_WHITE, L"%s: %s", optionstr[i].title.jp, buf);
+			}
+			else if (optiondata.lang == LANG_EN) {
+				DrawFormatString(title_txposx, title_txposy + title_txgapy * i, COLOR_WHITE, L"%s: %s", optionstr[i].title.en, buf);
+			}
 		}
 
 		/* 説明 */
-		if (optiondata.lang == 0) {
+		if (optiondata.lang == LANG_JP) {
 			DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s", optionstr[command].detail.jp);
 		}
-		else if (optiondata.lang == 1) {
+		else if (optiondata.lang == LANG_EN) {
 			DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s", optionstr[command].detail.en);
 		}
 
@@ -462,13 +410,10 @@ now_scene_t option(void) {
 
 		ScreenFlip(); /* 描画エリアここまで */
 
-		if (GetWindowUserCloseFlag(TRUE)) {
-			return SCENE_EXIT;
-		}
+		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
-		if (exitFg == 1) {
-			break;
-		}
+		if (exitFg == 1) { break; }
 	}
+
 	return SCENE_MENU;
 }

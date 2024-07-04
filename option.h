@@ -1,5 +1,8 @@
 #pragma once
 
+#define LANG_JP 0
+#define LANG_EN 1
+
 typedef struct rec_option_s {
 	int chara      = 0;
 	int offset     = 0;
