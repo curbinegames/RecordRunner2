@@ -1,13 +1,18 @@
 
+/* TODO: ノーツ横位置固定バグが起こってる!!! */
+
 #if 1 /* define group */
 
 /* include */
 
+#include "general/sancur.h"
+#include "system.h"
 #include "RecScoreFile.h"
 #include "RecordLoad2.h"
 #include "result.h"
 #include "playbox.h"
 #include "recr_cutin.h"
+#include "RecPlay/PlayNoteJudge.h"
 #include "PlayBonus.h"
 #include "PlayHitEff.h"
 #include "PlayViewJudge.h"
@@ -24,18 +29,6 @@
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
 #define CHARA_POS_DOWN 2
-#define SE_HIT (1 << 0)
-#define SE_CATCH (1 << 1)
-#define SE_ARROW (1 << 2)
-#define SE_BOMB (1 << 3)
-#define SE_GHOST (1 << 4)
-#define SE_SWING (1 << 5)
-
-#define P_JUST_TIME 15
-#define JUST_TIME 40
-#define GOOD_TIME 70
-#define SAFE_TIME 100
-#define F_MISS_TIME 200
 
 /* debug */
 #if 1
@@ -57,47 +50,18 @@
 
 /* enum */
 
-typedef enum chara_pos_e {
-	RECR_CHARP_U = 0,
-	RECR_CHARP_M,
-	RECR_CHARP_D
-} chara_pos_t;
-
 /* struct */
-typedef struct distance_score_s {
-	int add = 0;
-	int add_save = 0;
-	int now_dis = 0;
-	int dis_save = 0;
-	int point = 0;
-} distance_score_t;
-
 typedef struct rec_play_back_pic_s {
 	int sky = 0;
 	int ground = 0;
 	int water = 0;
 } rec_play_back_pic_t;
 
-typedef struct rec_play_chara_hit_attack_s {
-	int pos = 1;
-	int time = -1000;
-} rec_play_chara_hit_attack_t;
-
 #endif /* typedef group */
 
 #if 1 /* proto */
 
 /* proto */
-
-int CheckNearHitNote(
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t *const unote, note_box_2_t *const mnote,
-	note_box_2_t *const dnote,
-#else
-	struct note_box *const unote, struct note_box *const mnote,
-	struct note_box *const dnote,
-#endif
-	int Ntime);
 int GetHighScore(wchar_t pas[255], int dif);
 int GetRemainNotes2(struct judge_box judge, int Notes);
 struct score_box GetScore3(struct score_box score, struct judge_box judge,
@@ -131,36 +95,6 @@ void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int s
 		xpos[1] += 64000;
 	}
 	xpos[2] = xpos[1];
-	return;
-}
-
-void SetHitPosByHit(rec_play_chara_hit_attack_t *hitatk, char const hitflag, int Ntime) {
-	int n = 0;
-	int ret = 0;
-	for (int i = 0; i < 3; i++) {
-		if (hitflag & 1 << i) {
-			n++;
-			ret = i;
-		}
-	}
-	if (n == 0) { return; }
-	if (n >= 2) {
-		hitatk->pos = RECR_CHARP_M;
-		hitatk->time = Ntime;
-		return;
-	}
-	switch (ret) {
-	case 0:
-		hitatk->pos = RECR_CHARP_U;
-		break;
-	case 1:
-		hitatk->pos = RECR_CHARP_M;
-		break;
-	case 2:
-		hitatk->pos = RECR_CHARP_D;
-		break;
-	}
-	hitatk->time = Ntime;
 	return;
 }
 
@@ -636,246 +570,6 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime,
 
 #endif /* Guide Line */
 
-#if 1 /* Notes Judge */
-
-note_judge CheckJudge(int gap) {
-	if (-JUST_TIME <= gap && gap <= JUST_TIME) {
-		return NOTE_JUDGE_JUST;
-	}
-	else if (-GOOD_TIME <= gap && gap <= GOOD_TIME) {
-		return NOTE_JUDGE_GOOD;
-	}
-	else if (-SAFE_TIME <= gap && gap <= SAFE_TIME) {
-		return NOTE_JUDGE_SAFE;
-	}
-	else if (gap <= F_MISS_TIME) {
-		return NOTE_JUDGE_MISS;
-	}
-	else {
-		return NOTE_JUDGE_NONE;
-	}
-}
-
-int CheckArrowInJudge(note_material mat, int judge, rec_play_key_hold_t *key) {
-	if (CheckJudge(judge) == NOTE_JUDGE_NONE) { return 0; }
-	switch (mat) {
-	case NOTE_UP:
-		if (key->up == 1) { return 1; }
-		break;
-	case NOTE_DOWN:
-		if (key->down == 1) { return 1; }
-		break;
-	case NOTE_LEFT:
-		if (key->left == 1) { return 1; }
-		break;
-	case NOTE_RIGHT:
-		if (key->right == 1) { return 1; }
-		break;
-	}
-	return 0;
-}
-
-void AddGap(gap_box* const box, int data){
-	box->view[box->count % 30] = data;
-	if (box->ssum + data * data < box->ssum) {
-		box->sum /= 2;
-		box->ssum /= 2;
-		box->count /= 2;
-	}
-	box->sum += data;
-	box->ssum += data * data;
-	box->count++;
-	return;
-}
-
-char PlayNoteHitSound(
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t note,
-#else
-	note_box note,
-#endif
-	int *MelodySnd, int *Sitem, char seflag,
-	int notemat) {
-	if (note.melody != MELODYSOUND_NONE) {
-		PlaySoundMem(MelodySnd[note.melody], DX_PLAYTYPE_BACK);
-	}
-	else if (note.sound != 0) {
-		PlaySoundMem(Sitem[note.sound - 1], DX_PLAYTYPE_BACK);
-	}
-	else {
-		seflag |= notemat;
-	}
-	return seflag;
-}
-
-/**
- * 注) note_judge_event()で判定しているのは、
- * p_just, just, good, safe, fast missのみ。
- * slow miss は別関数で判定している。
- * (そのうち slow miss もこっちで判定するようにしたい)
- */
-void note_judge_event(note_judge judge, distance_score_t *Dscore,
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t const *const noteinfo,
-#else
-	note_box const *const noteinfo,
-#endif
-	int* const Sitem, int Ntime, int Jtime, int lineNo,
-	judge_action_box* const judgeA) {
-	if (judge == NOTE_JUDGE_NONE) { return; }
-	int* const combo = judgeA->combo;
-	int* const SoundEnFg = judgeA->soundEnFg;
-	gap_box* const gap = judgeA->gap;
-	struct judge_box* const judge_b = judgeA->judge;
-	int* const life = judgeA->life;
-	int* const MelodySnd = judgeA->melody_snd;
-	play_sound_t* const sound = judgeA->p_sound;
-	struct score_box* const score = judgeA->score;
-	note_material note = noteinfo->object;
-	PlaySetJudge(judge);
-	PlaySetHitEffect(judge, note, lineNo);
-	/* 全ノーツ共通 */
-	if (judge != NOTE_JUDGE_MISS) {
-		score->before = pals(500, score->sum, 0, score->before,
-			maxs(Ntime - score->time, 500));
-		score->time = Ntime;
-	}
-	switch (judge) {
-	case NOTE_JUDGE_JUST:
-		(*combo)++;
-		*life += 2;
-		(Dscore->add)++;
-		(judge_b->just)++;
-		break;
-	case NOTE_JUDGE_GOOD:
-		(*combo)++;
-		(*life)++;
-		// (Dscore->add) += 0;
-		(judge_b->good)++;
-		break;
-	case NOTE_JUDGE_SAFE:
-		// *combo += 0;
-		// *life += 0;
-		// (Dscore->add) += 0;
-		(judge_b->safe)++;
-		break;
-	case NOTE_JUDGE_MISS:
-		*combo = 0;
-		*life -= 20;
-		// (Dscore->add) += 0;
-		(judge_b->miss)++;
-		break;
-	default:
-		/* none */
-		break;
-	}
-	/* ノートごとの処理 */
-	switch (note) {
-	case NOTE_HIT:
-		AddGap(gap, Jtime); // slow miss はやらない
-		if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
-			(judge_b->pjust)++;
-		}
-		if (judge != NOTE_JUDGE_MISS && *SoundEnFg == 0) {
-			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-				sound->flag, SE_HIT);
-		}
-		break;
-	case NOTE_CATCH:
-		if (judge == NOTE_JUDGE_JUST) {
-			(judge_b->pjust)++;
-			if (*SoundEnFg == 0) {
-				sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-					sound->flag, SE_CATCH);
-			}
-		}
-		break;
-	case NOTE_UP:
-	case NOTE_DOWN:
-	case NOTE_LEFT:
-	case NOTE_RIGHT:
-		AddGap(gap, Jtime); // slow miss はやらない
-		if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
-			(judge_b->pjust)++;
-		}
-		if (judge != NOTE_JUDGE_MISS && *SoundEnFg == 0) {
-			sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-				sound->flag, SE_ARROW);
-		}
-		break;
-	case NOTE_BOMB:
-		switch (judge) {
-		case NOTE_JUDGE_JUST:
-			(judge_b->pjust)++;
-			break;
-		case NOTE_JUDGE_MISS:
-			if (*SoundEnFg == 0) {
-				sound->flag = PlayNoteHitSound(*noteinfo, MelodySnd, Sitem,
-					sound->flag, SE_BOMB);
-			}
-			break;
-		default:
-			/* nope */
-			break;
-		}
-		break;
-	default:
-		/* nope */
-		break;
-	}
-	return;
-}
-
-void note_judge_while_event(note_material mat, note_box_2_t note[], short int objectN[], int Ntime,
-	note_judge judge, distance_score_t *Dscore, int Sitem[], int Line, judge_action_box *judgeA,
-	int *charahit, rec_play_chara_hit_attack_t *hitatk, play_sound_t *p_sound, int MelodySnd[])
-{
-	if ((mat == NOTE_CATCH || mat == NOTE_BOMB) && Dscore == NULL) { return; }
-	if ((mat == NOTE_CATCH || mat == NOTE_BOMB) && judgeA == NULL) { return; }
-	if (mat == NOTE_CATCH && charahit == NULL) { return; }
-	if (mat == NOTE_CATCH && hitatk == NULL) { return; }
-	if (mat == NOTE_GHOST && MelodySnd == NULL) { return; }
-	if (mat == NOTE_GHOST && p_sound == NULL) { return; }
-
-	switch (mat) {
-	case NOTE_CATCH:
-		while (note[objectN[Line]].hittime - Ntime <= 0 &&
-			0 <= note[objectN[Line]].hittime &&
-			note[objectN[Line]].object == NOTE_CATCH)
-		{
-			note_judge_event(judge, Dscore,
-				&note[objectN[Line]], Sitem, Ntime, 0,
-				Line, judgeA);
-			*charahit = 0;
-			hitatk->time = -1000;
-			objectN[Line] = note[objectN[Line]].next;
-		}
-		break;
-	case NOTE_BOMB:
-		while (note[objectN[Line]].hittime - Ntime <= 0 &&
-			0 <= note[objectN[Line]].hittime &&
-			note[objectN[Line]].object == NOTE_BOMB)
-		{
-			note_judge_event(judge, Dscore,
-				&note[objectN[Line]], Sitem, Ntime, -JUST_TIME - 1,
-				Line, judgeA);
-			objectN[Line] = note[objectN[Line]].next;
-		}
-		break;
-	case NOTE_GHOST:
-		while (note[objectN[Line]].hittime - Ntime < 0 &&
-			note[objectN[Line]].object == NOTE_GHOST) {
-			p_sound->flag = PlayNoteHitSound(note[objectN[Line]],
-				MelodySnd, Sitem, p_sound->flag, SE_GHOST);
-			objectN[Line] = note[objectN[Line]].next;
-		}
-		break;
-	}
-	return;
-}
-
-#endif /* Notes Judge */
-
 /* main action */
 now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #if 1 /* filter3 */
@@ -887,7 +581,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	//n: 曲ナンバー
 	//o: 難易度ナンバー
 	/* char */
-	char hitatk2 = 0; //hit event, bit unit: 0: upper hit, 1: middle hit, 2: lower hit, 3~7: reserved
 	char key[256];
 	char closeFg = 0;
 	/* short */
@@ -1338,83 +1031,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			lockN, speedN, recfp.time.now, Xline, Yline, scroolN, &noteimg);
 
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
+		/* ノーツ判定 */
+		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, &Dscore, Sitem, &judgeA,
+			&keyhold, &hitatk, &p_sound, LaneTrack, &charahit, MelodySnd, charaput);
 
-		//判定
-		//ヒットノーツ
-		G[0] = 0;
-		if (keyhold.z == 1) { G[0]++; }
-		if (keyhold.x == 1) { G[0]++; }
-		if (keyhold.c == 1) { G[0]++; }
-		hitatk2 = 0;
-		for (i[0] = 0; i[0] < G[0]; i[0]++) {
-			/* i[0] = 押しボタンループ
-			 * G[0] = 押したボタンの数
-			 * G[1] = 一番近いHITノーツの位置
-			 * G[2] = 一番近いHITノーツのギャップ */
-			note_judge NJ = NOTE_JUDGE_JUST;
-			G[1] = CheckNearHitNote(&recfp.mapdata.note[objectN[0]],
-				&recfp.mapdata.note[objectN[1]], &recfp.mapdata.note[objectN[2]], recfp.time.now);
-			if (G[1] == -1) {
-				if (i[0] == 0) { p_sound.flag |= SE_SWING; }
-				break;
-			}
-			G[2] = recfp.mapdata.note[objectN[G[1]]].hittime - recfp.time.now;
-			hitatk2 |= 1 << G[1];
-			NJ = CheckJudge(G[2]);
-			if (NJ == NOTE_JUDGE_MISS) { p_sound.flag |= SE_SWING; }
-			note_judge_event(NJ, &Dscore, &recfp.mapdata.note[objectN[G[1]]], Sitem, recfp.time.now,
-				G[2], G[1], &judgeA);
-			objectN[G[1]] = recfp.mapdata.note[objectN[G[1]]].next;
-		}
-		SetHitPosByHit(&hitatk, hitatk2, recfp.time.now);
-		for (int iLine = 0; iLine < 3; iLine++) {
-			int GapTime = recfp.mapdata.note[objectN[iLine]].hittime - recfp.time.now;
-			switch (recfp.mapdata.note[objectN[iLine]].object) {
-			case NOTE_UP:
-			case NOTE_DOWN:
-			case NOTE_LEFT:
-			case NOTE_RIGHT:
-				if (CheckArrowInJudge(recfp.mapdata.note[objectN[iLine]].object, GapTime, &keyhold)) {
-					note_judge_event(CheckJudge(GapTime), &Dscore,
-						&recfp.mapdata.note[objectN[iLine]], Sitem, recfp.time.now, GapTime, iLine,
-						&judgeA);
-					objectN[iLine] = recfp.mapdata.note[objectN[iLine]].next;
-				}
-				break;
-			case NOTE_CATCH:
-				if (LaneTrack[iLine] + SAFE_TIME >= recfp.mapdata.note[objectN[iLine]].hittime) {
-					note_judge_while_event(NOTE_CATCH, recfp.mapdata.note, objectN, recfp.time.now, NOTE_JUDGE_JUST,
-						&Dscore, Sitem, iLine, &judgeA, &charahit, &hitatk, NULL, NULL);
-				}
-				break;
-			case NOTE_BOMB:
-				if (iLine == charaput && GapTime <= 0) {
-					note_judge_while_event(NOTE_BOMB, recfp.mapdata.note, objectN, recfp.time.now, NOTE_JUDGE_MISS,
-						&Dscore, Sitem, iLine, &judgeA, NULL, NULL, NULL, NULL);
-				}
-				else {
-					note_judge_while_event(NOTE_BOMB, recfp.mapdata.note, objectN, recfp.time.now, NOTE_JUDGE_JUST,
-						&Dscore, Sitem, iLine, &judgeA, NULL, NULL, NULL, NULL);
-				}
-				break;
-			case NOTE_GHOST:
-				if (GapTime < 0) {
-					note_judge_while_event(NOTE_GHOST, recfp.mapdata.note, objectN, recfp.time.now, NOTE_JUDGE_NONE,
-						NULL, Sitem, iLine, NULL, NULL, NULL, &p_sound, MelodySnd);
-				}
-				break;
-			}
-			//全ノーツslowmiss
-			while (GapTime <= -SAFE_TIME && GapTime >= -1000000 &&
-				recfp.mapdata.note[objectN[iLine]].object >= NOTE_HIT &&
-				recfp.mapdata.note[objectN[iLine]].object <= NOTE_RIGHT)
-			{
-				note_judge_event(NOTE_JUDGE_MISS, &Dscore, &recfp.mapdata.note[objectN[iLine]],
-					Sitem, recfp.time.now, -SAFE_TIME, iLine, &judgeA);
-				objectN[iLine] = recfp.mapdata.note[objectN[iLine]].next;
-				GapTime = recfp.mapdata.note[objectN[iLine]].hittime - recfp.time.now;
-			}
-		}
 		PlayNoteHitSound2(&p_sound);
 		Mcombo = mins(Mcombo, combo);
 		//ヒットエフェクト表示
@@ -1759,32 +1379,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		return result(o, recfp.mapdata.Lv, drop, recfp.mapdata.mdif, recfp.nameset.songN, recfp.nameset.DifFN,
 			fileN, judge, score.sum, Mcombo, recfp.mapdata.notes, ret_gap, Dscore.point);
 	}
-}
-
-int CheckNearHitNote(
-#if SWITCH_NOTE_BOX_2 == 1
-	note_box_2_t *const unote, note_box_2_t *const mnote,
-	note_box_2_t *const dnote,
-#else
-	struct note_box *const unote, struct note_box *const mnote,
-	struct note_box *const dnote,
-#endif
-	int Ntime) {
-	int ans = -1;
-	int mintime = 200;
-	if (unote->object == NOTE_HIT && unote->hittime - Ntime < mintime) {
-		ans = 0;
-		mintime = unote->hittime - Ntime;
-	}
-	if (mnote->object == NOTE_HIT && mnote->hittime - Ntime < mintime) {
-		ans = 1;
-		mintime = mnote->hittime - Ntime;
-	}
-	if (dnote->object == NOTE_HIT && dnote->hittime - Ntime < mintime) {
-		ans = 2;
-		mintime = dnote->hittime - Ntime;
-	}
-	return ans;
 }
 
 int GetHighScore(wchar_t pas[255], int dif) {

@@ -2,6 +2,13 @@
 
 #include "DxLib.h"
 
+#define SE_HIT (1 << 0)
+#define SE_CATCH (1 << 1)
+#define SE_ARROW (1 << 2)
+#define SE_BOMB (1 << 3)
+#define SE_GHOST (1 << 4)
+#define SE_SWING (1 << 5)
+
 typedef enum note_lane_num_e {
 	NOTE_LANE_UP = 0,
 	NOTE_LANE_MID,
@@ -256,3 +263,27 @@ typedef struct rec_play_key_hold_s {
 	int left = 0;
 	int right = 0;
 } rec_play_key_hold_t;
+
+typedef struct distance_score_s {
+	int add = 0;
+	int add_save = 0;
+	int now_dis = 0;
+	int dis_save = 0;
+	int point = 0;
+} distance_score_t;
+
+typedef struct rec_play_chara_hit_attack_s {
+	int pos = 1;
+	int time = -1000;
+} rec_play_chara_hit_attack_t;
+
+/* TODO: rec_play_userpal_t �ł܂Ƃ߂� */
+typedef struct rec_play_userpal_s {
+	struct score_box score;
+	distance_score_t Dscore;
+	int Ncombo = 0;
+	int Mcombo = 0;
+	struct judge_box judgeCount;
+	int life = 0;
+	gap_box gap;
+} rec_play_userpal_t;
