@@ -10,17 +10,18 @@
 #include "RecScoreFile.h"
 #include "RecordLoad2.h"
 #include "result.h"
-#include "playbox.h"
 #include "recr_cutin.h"
-#include "RecPlay/PlayNoteJudge.h"
-#include "PlayBonus.h"
-#include "PlayHitEff.h"
-#include "PlayViewJudge.h"
-#include "PlayAuto.h"
 #include "dxlibcur.h"
 #include "define.h"
 #include "RecSystem.h"
-#include "PlayCamera.h"
+
+#include "RecPlay/playbox.h"
+#include "RecPlay/PlayBonus.h"
+#include "RecPlay/PlayAuto.h"
+#include "RecPlay/PlayCamera.h"
+#include "RecPlay/PlayHitEff.h"
+#include "RecPlay/PlayNoteJudge.h"
+#include "RecPlay/PlayViewJudge.h"
 
 /* define */
 

@@ -1,7 +1,7 @@
 #include "DxLib.h"
-#include "sancur.h"
+#include "../general/sancur.h"
 #include "playbox.h"
-#include "RecWindowRescale.h"
+#include "../RecWindowRescale.h"
 
 /* define */
 #define NO_MISS 2

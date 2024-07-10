@@ -1,9 +1,9 @@
 
 #include "DxLib.h"
-#include "general/sancur.h"
+#include "../general/sancur.h"
+#include "../RecWindowRescale.h"
 #include "playbox.h"
 #include "PlayCamera.h"
-#include "RecWindowRescale.h"
 
 static int JudgePic[4];
 static int viewjudge[4] = { 0,0,0,0 };

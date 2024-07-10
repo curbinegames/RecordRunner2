@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include "define.h"
-#include "playbox.h"
+#include "RecPlay/playbox.h"
 
 typedef struct rec_play_nameset_s {
 	wchar_t sky[255] = L"picture/backskynoamal.png";

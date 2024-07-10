@@ -1,11 +1,11 @@
 
-#include "PlayNoteJudge.h"
 #include <DxLib.h>
 #include "../general/sancur.h"
 #include "../system.h"
-#include "../playbox.h"
-#include "../PlayViewJudge.h"
-#include "../PlayHitEff.h"
+#include "PlayNoteJudge.h"
+#include "playbox.h"
+#include "PlayViewJudge.h"
+#include "PlayHitEff.h"
 
 #define P_JUST_TIME 15
 #define JUST_TIME 40

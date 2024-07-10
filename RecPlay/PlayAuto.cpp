@@ -1,6 +1,6 @@
 
+#include "../define.h"
 #include "playbox.h"
-#include "define.h"
 
 #define ADIF_NUM 50
 

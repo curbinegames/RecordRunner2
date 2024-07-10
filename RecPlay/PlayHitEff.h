@@ -1,4 +1,5 @@
 #pragma once
+
 #include "playbox.h"
 
 extern void ReadyEffPicture();

@@ -1,10 +1,10 @@
 
 #include "general/sancur.h"
-#include "playbox.h"
+#include "define.h"
+#include "RecPlay/playbox.h"
 #include "recp_cal_difkey.h"
 #include "recp_cal_ddif.h"
 #include "noteLoad.h"
-#include "define.h"
 
 typedef struct ddef_box_2 {
 	int maxdif = 0;

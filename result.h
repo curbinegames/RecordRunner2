@@ -1,7 +1,7 @@
 #include "fontcur.h"
-#include "playbox.h"
 #include "system.h"
 #include "recr_cutin.h"
+#include "RecPlay/playbox.h"
 
 #define VER_1_6 0
 

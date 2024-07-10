@@ -1,8 +1,8 @@
 
 #include "DxLib.h"
-#include "sancur.h"
+#include "../general/sancur.h"
 #include "PlayCamera.h"
-#include "RecWindowRescale.h"
+#include "../RecWindowRescale.h"
 
 static rec_play_xy_set_t camera_pos;
 

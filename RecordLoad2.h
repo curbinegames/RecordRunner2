@@ -1,9 +1,9 @@
-#include "playbox.h"
+#include "define.h"
 #include "RecScoreFile.h"
+#include "RecPlay/playbox.h"
 #include "recp_cal_ddif.h"
 #include "recp_cal_difkey.h"
 #include "recp_cal_ddif_2.h"
-#include "define.h"
 
 typedef enum rrs_obj_code_e {
 	OBJ_CODE_NONE = -1,
