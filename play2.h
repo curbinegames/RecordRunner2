@@ -856,6 +856,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	Stime = GetNowCount();
 	//ゲーム開始
 	while (1) {
+		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
+
 		// number step
 		for (int iLine = 0; iLine < 3; iLine++) {
 			objectNG[iLine] = mins(objectNG[iLine], objectN[iLine]);
@@ -981,8 +983,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			else if (key[KEY_INPUT_G] == 1) { holdG++; }
 			AutoAution(&keyhold, recfp.mapdata.note, objectNG, recfp.time.now);
 		}
+		/* ノーツ判定 */
+		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, &Dscore, Sitem, &judgeA,
+			&keyhold, &hitatk, &p_sound, LaneTrack, &charahit, MelodySnd, charaput);
 
-		ClearDrawScreen();
+		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示
 		if (system.backLight != 0) {
 			PlayDrawBackGround(&recfp.mapeff, speedN, scroolN, Yline, &backpic, item);
@@ -1029,11 +1034,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		/* 音符表示 */
 		RecPlayDrawNoteAll(objectN, recfp.mapdata.note, &recfp.mapeff, viewTN,
 			lockN, speedN, recfp.time.now, Xline, Yline, scroolN, &noteimg);
-
-		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-		/* ノーツ判定 */
-		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, &Dscore, Sitem, &judgeA,
-			&keyhold, &hitatk, &p_sound, LaneTrack, &charahit, MelodySnd, charaput);
 
 		PlayNoteHitSound2(&p_sound);
 		Mcombo = mins(Mcombo, combo);
