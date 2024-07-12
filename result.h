@@ -170,6 +170,7 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 		break;
 	}
 	int resultimg = LoadGraph(L"picture/result.png");
+	InitCurFont();
 	/* audio */
 	int musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_LOOP);

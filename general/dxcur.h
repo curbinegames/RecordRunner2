@@ -2,6 +2,9 @@
 
 #define COLOR_WHITE 0xffffffff
 
+typedef int DxPic_t; /* DXライブラリのグラフィックのハンドルであることを示す型。int型 */
+typedef int DxSnd_t; /* DXライブラリのサウンドのハンドルであることを示す型。int型 */
+
 extern int GetMouseKeyCur(int* key, int* posX, int* posY, int* PR);
 extern void AvoidKeyRush();
 extern int GetKeyHold(int n);
