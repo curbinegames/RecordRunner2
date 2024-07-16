@@ -1,22 +1,22 @@
 
 #include "fontcur.h"
 #include "DxLib.h"
-#include "general/strcur.h"
-#include "general/dxcur.h"
-#include "RecWindowRescale.h"
+#include "../general/strcur.h"
+#include "../general/dxcur.h"
+#include "../RecWindowRescale.h"
 
 typedef DxPic_t cur_font_pic_t[12];
 
 static cur_font_pic_t cur_font_pic[7];
 
 void InitCurFont() {
-	LoadDivGraph(_TEXT("picture/NumberMono.png"),    12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_MONO]);
-	LoadDivGraph(_TEXT("picture/NumberRed.png"),     12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_RED]);
-	LoadDivGraph(_TEXT("picture/NumberYellow.png"),  12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_YELLOW]);
-	LoadDivGraph(_TEXT("picture/NumberGreen.png"),   12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_GREEN]);
-	LoadDivGraph(_TEXT("picture/NumberBlue.png"),    12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_BLUE]);
-	LoadDivGraph(_TEXT("picture/NumberPurple.png"),  12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_PURPLE]);
-	LoadDivGraph(_TEXT("picture/NumberRainbow.png"), 12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_RAINBOW]);
+	LoadDivGraph(_TEXT("fontcur/NumberMono.png"),    12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_MONO]);
+	LoadDivGraph(_TEXT("fontcur/NumberRed.png"),     12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_RED]);
+	LoadDivGraph(_TEXT("fontcur/NumberYellow.png"),  12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_YELLOW]);
+	LoadDivGraph(_TEXT("fontcur/NumberGreen.png"),   12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_GREEN]);
+	LoadDivGraph(_TEXT("fontcur/NumberBlue.png"),    12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_BLUE]);
+	LoadDivGraph(_TEXT("fontcur/NumberPurple.png"),  12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_PURPLE]);
+	LoadDivGraph(_TEXT("fontcur/NumberRainbow.png"), 12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_RAINBOW]);
 	return;
 }
 

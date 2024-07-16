@@ -1,4 +1,4 @@
-#include "fontcur.h"
+#include "fontcur/fontcur.h"
 #include "system.h"
 #include "recr_cutin.h"
 #include "RecPlay/playbox.h"
