@@ -1,5 +1,6 @@
 
 /* TODO: ノーツ横位置固定バグが起こってる!!! */
+/* TODO: アイテム表示バグが起こってる!!! */
 
 #if 1 /* define group */
 
@@ -73,7 +74,6 @@ int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, 
 void ShowCombo(int combo, int *pic);
 void ShowScore2(struct score_box score, int Hscore, int time);
 void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
-void PlayNoteHitSound2(play_sound_t* const sound);
 
 #endif /* proto */
 
@@ -108,7 +108,8 @@ int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 		if (note[No[i]].hittime <= time + 40 &&
 			(note[No[i]].object == NOTE_CATCH ||
 				note[No[i]].object == NOTE_BOMB) &&
-			keyhold->up == 0 && keyhold->down == 0) {
+			keyhold->up == 0 && keyhold->down == 0)
+		{
 			return CHARA_POS_MID;
 		}
 	}
@@ -292,6 +293,44 @@ void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[], int Ylin
 	else {
 		DrawTurnGraphRecField(drawX + 30, drawY, pic[picID]);
 	}
+}
+
+void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time) {
+	userpal->Mcombo = mins(userpal->Mcombo, userpal->Ncombo);
+	//ライフが0未満の時、1毎に減点スコアを20増やす。
+	if (userpal->life < 0) {
+		userpal->score.loss = maxs(userpal->score.loss - userpal->life * 20, userpal->score.normal + userpal->score.combo);
+		userpal->life = 0;
+	}
+	//ライフ上限
+	userpal->life = maxs(userpal->life, 500);
+	//スコア計算
+	userpal->score = GetScore3(userpal->score, userpal->judgeCount, notes, userpal->Mcombo);
+	//ステータス
+	if (userpal->life <= 0 && userpal->status == REC_PLAY_STATUS_PLAYING) {
+		userpal->status = REC_PLAY_STATUS_DROPED;
+		userpal->Dscore.add_save = userpal->Dscore.add;
+		userpal->Dscore.dis_save = mins(time->now - time->offset, 0);
+	}
+	else if (mins(time->now - time->offset, 0) > time->end - time->offset) { //CLEARED
+		userpal->status = REC_PLAY_STATUS_CLEARED;
+	}
+	//距離計算
+	switch (userpal->status) {
+	case REC_PLAY_STATUS_PLAYING:
+		userpal->Dscore.now_dis = mins(time->now - time->offset, 0);
+		userpal->Dscore.add_save = userpal->Dscore.add;
+		break;
+	case REC_PLAY_STATUS_CLEARED:
+		userpal->Dscore.now_dis = time->end - time->offset;
+		userpal->Dscore.add_save = userpal->Dscore.add;
+		break;
+	case REC_PLAY_STATUS_DROPED:
+		userpal->Dscore.now_dis = userpal->Dscore.dis_save;
+		break;
+	}
+	userpal->Dscore.point = (int)(userpal->Dscore.now_dis / 100.0 + userpal->Dscore.add_save);
+	return;
 }
 
 #endif /* sub action */
@@ -587,23 +626,17 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/* short */
 	short int i[3];
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
-	short int drop = 0;
 	short int KeyPushCount[7] = { 0,0,0,0,0,0,0 };
 	short int cameraN = 0;
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20], songT;
-	unsigned int UG[5];
+	uint UG[5];
 	int holdG = 0;
 	int key2 = 1;
 	int key3 = 1;
-	int combo = 0;
 	int AllNotesHitTime = -1;
 	int LaneTrack[3] = { -150,-150,-150 };
-	int Mcombo = 0;
-	int judghcount[4] = { 0,0,0,0 };
-	int life = 500;
-	int ret_gap[3] = { 0,0,0 };
 	int StopFrag = -1;
 	int scroolN = 0;
 	int HighSrore; //ハイスコア
@@ -624,16 +657,13 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	/* struct */
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
-	distance_score_t Dscore;
 	play_key_stat_t key_stat;
-	gap_box gap2;
-	struct judge_box judge;
-	struct score_box score;
 	short int MovieN = 0;
 	rec_view_bpm_set_t v_BPM;
 	short int objectN[3] = { 5999,5999,5999 }; //note number
 	short int objectNG[3] = { 0,0,0 }; //note number without ghost note
 	rec_score_file_t recfp;
+	rec_play_userpal_t userpal;
 	/* double */
 	double GD[5];
 	double SumRate[2] = { 0,0 };
@@ -655,32 +685,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int SitemN = 0; //↑の番号
 #endif /* filter3 */
 	/* グラフィックと効果音 */
-	int MelodySnd[24] = {
-		LoadSoundMem(L"sound/melody/lowF.wav"),
-		LoadSoundMem(L"sound/melody/lowF#.wav"),
-		LoadSoundMem(L"sound/melody/lowG.wav"),
-		LoadSoundMem(L"sound/melody/lowG#.wav"),
-		LoadSoundMem(L"sound/melody/lowA.wav"),
-		LoadSoundMem(L"sound/melody/lowA#.wav"),
-		LoadSoundMem(L"sound/melody/lowB.wav"),
-		LoadSoundMem(L"sound/melody/lowC.wav"),
-		LoadSoundMem(L"sound/melody/lowC#.wav"),
-		LoadSoundMem(L"sound/melody/lowD.wav"),
-		LoadSoundMem(L"sound/melody/lowD#.wav"),
-		LoadSoundMem(L"sound/melody/lowE.wav"),
-		LoadSoundMem(L"sound/melody/highF.wav"),
-		LoadSoundMem(L"sound/melody/highF#.wav"),
-		LoadSoundMem(L"sound/melody/highG.wav"),
-		LoadSoundMem(L"sound/melody/highG#.wav"),
-		LoadSoundMem(L"sound/melody/highA.wav"),
-		LoadSoundMem(L"sound/melody/highA#.wav"),
-		LoadSoundMem(L"sound/melody/highB.wav"),
-		LoadSoundMem(L"sound/melody/highC.wav"),
-		LoadSoundMem(L"sound/melody/highC#.wav"),
-		LoadSoundMem(L"sound/melody/highD.wav"),
-		LoadSoundMem(L"sound/melody/highD#.wav"),
-		LoadSoundMem(L"sound/melody/highE.wav")
-	};
 	int judghimg = LoadGraph(L"picture/Marker.png");
 	rec_play_back_pic_t backpic;
 	int dangerimg = LoadGraph(L"picture/danger.png");
@@ -705,7 +709,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	int ComboFontimg[10];
 	LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, ComboFontimg);
 	struct note_img noteimg;
-	play_sound_t p_sound;
 	int musicmp3;
 #define DIV_X 6
 #define DIV_Y 6
@@ -719,16 +722,6 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	ReadyJudgePicture();
 	/* adifのリセット */
 	InitAdif();
-	/* address box */
-	judge_action_box judgeA;
-	judgeA.combo = &combo;
-	judgeA.soundEnFg = &system.soundEn;
-	judgeA.gap = &gap2;
-	judgeA.judge = &judge;
-	judgeA.life = &life;
-	judgeA.p_sound = &p_sound;
-	judgeA.score = &score;
-	judgeA.melody_snd = &MelodySnd[0];
 	/* FILE */
 	FILE *fp = NULL;
 	/* action */
@@ -764,11 +757,8 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 #undef PIC_SIZE_X
 #undef PIC_SIZE_Y
 	if (system.soundEn == 0) {
-		p_sound.att = LoadSoundMem(L"sound/attack.wav");
-		p_sound.cat = LoadSoundMem(L"sound/catch.wav");
-		p_sound.arw = LoadSoundMem(L"sound/arrow.wav");
-		p_sound.swi = LoadSoundMem(L"sound/swing.wav");
-		p_sound.bom = LoadSoundMem(L"sound/bomb.wav");
+		RecPlayInitMelodySnd();
+		RecPlayInitPsound();
 	}
 	songT = FileRead_open(L"RecordPack.txt");
 	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
@@ -927,6 +917,31 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			viewTN++;
 		}
 
+		//キー設定
+		GetHitKeyStateAll(key);
+		if (AutoFlag == 0) {
+			if (key[KEY_INPUT_Z] == 0) keyhold.z = 0;
+			else if (key[KEY_INPUT_Z] == 1) keyhold.z++;
+			if (key[KEY_INPUT_X] == 0) keyhold.x = 0;
+			else if (key[KEY_INPUT_X] == 1) keyhold.x++;
+			if (key[KEY_INPUT_C] == 0) keyhold.c = 0;
+			else if (key[KEY_INPUT_C] == 1) keyhold.c++;
+			if (key[KEY_INPUT_UP] == 0) keyhold.up = 0;
+			else if (key[KEY_INPUT_UP] == 1) keyhold.up++;
+			if (key[KEY_INPUT_LEFT] == 0) keyhold.left = 0;
+			else if (key[KEY_INPUT_LEFT] == 1) keyhold.left++;
+			if (key[KEY_INPUT_RIGHT] == 0) keyhold.right = 0;
+			else if (key[KEY_INPUT_RIGHT] == 1) keyhold.right++;
+			if (key[KEY_INPUT_DOWN] == 0) keyhold.down = 0;
+			else if (key[KEY_INPUT_DOWN] == 1) keyhold.down++;
+		}
+		//オートプレイ用コード
+		else if (AutoFlag == 1) {
+			if (key[KEY_INPUT_G] == 0) { holdG = 0; }
+			else if (key[KEY_INPUT_G] == 1) { holdG++; }
+			AutoAution(&keyhold, recfp.mapdata.note, objectNG, recfp.time.now);
+		}
+
 		//カメラ移動
 		RecPlaySetCamera(recfp.mapeff.camera, cameraN, recfp.time.now);
 		//Xline(横位置)の計算
@@ -959,34 +974,10 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		//ヒット
 		if (keyhold.z == 1 || keyhold.x == 1 || keyhold.c == 1) { charahit = GetNowCount(); }
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
-
-		//キー設定
-		GetHitKeyStateAll(key);
-		if (AutoFlag == 0) {
-			if (key[KEY_INPUT_Z] == 0) keyhold.z = 0;
-			else if (key[KEY_INPUT_Z] == 1) keyhold.z++;
-			if (key[KEY_INPUT_X] == 0) keyhold.x = 0;
-			else if (key[KEY_INPUT_X] == 1) keyhold.x++;
-			if (key[KEY_INPUT_C] == 0) keyhold.c = 0;
-			else if (key[KEY_INPUT_C] == 1) keyhold.c++;
-			if (key[KEY_INPUT_UP] == 0) keyhold.up = 0;
-			else if (key[KEY_INPUT_UP] == 1) keyhold.up++;
-			if (key[KEY_INPUT_LEFT] == 0) keyhold.left = 0;
-			else if (key[KEY_INPUT_LEFT] == 1) keyhold.left++;
-			if (key[KEY_INPUT_RIGHT] == 0) keyhold.right = 0;
-			else if (key[KEY_INPUT_RIGHT] == 1) keyhold.right++;
-			if (key[KEY_INPUT_DOWN] == 0) keyhold.down = 0;
-			else if (key[KEY_INPUT_DOWN] == 1) keyhold.down++;
-		}
-		//オートプレイ用コード
-		else if (AutoFlag == 1) {
-			if (key[KEY_INPUT_G] == 0) { holdG = 0; }
-			else if (key[KEY_INPUT_G] == 1) { holdG++; }
-			AutoAution(&keyhold, recfp.mapdata.note, objectNG, recfp.time.now);
-		}
 		/* ノーツ判定 */
-		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, &Dscore, Sitem, &judgeA,
-			&keyhold, &hitatk, &p_sound, LaneTrack, &charahit, MelodySnd, charaput);
+		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
+			system.soundEn, &keyhold, &hitatk, LaneTrack, &charahit, charaput, &userpal);
+		RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time);
 
 		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示
@@ -1029,73 +1020,47 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		PlayDrawChara(&keyhold, charahit, Xline, Yline,
 			charaput, recfp.time.now, &recfp.mapeff, charaimg);
 		//コンボ表示
-		ShowCombo(combo, ComboFontimg);
+		ShowCombo(userpal.Ncombo, ComboFontimg);
 		//判定表示
 		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput]);
 		/* 音符表示 */
 		RecPlayDrawNoteAll(objectN, recfp.mapdata.note, &recfp.mapeff, viewTN,
 			lockN, speedN, recfp.time.now, Xline, Yline, scroolN, &noteimg);
-
-		PlayNoteHitSound2(&p_sound);
-		Mcombo = mins(Mcombo, combo);
 		//ヒットエフェクト表示
 		PlayShowHitEffect(Xline, Yline);
 		PlayCheckHitEffect();
-		//ライフが0未満の時、1毎に減点スコアを20増やす。
-		if (life < 0) {
-			score.loss = maxs(score.loss - life * 20, score.normal + score.combo);
-			life = 0;
-		}
-		//ライフ上限
-		life = maxs(life, 500);
-		//スコア計算
-		score = GetScore3(score, judge, recfp.mapdata.notes, Mcombo);
-		//距離計算
-		if (drop != 0) { //DROPED
-			Dscore.now_dis = Dscore.dis_save;
-		}
-		else if (mins(recfp.time.now - recfp.time.offset, 0) > recfp.time.end - recfp.time.offset) { //CLEARED
-			Dscore.now_dis = recfp.time.end - recfp.time.offset;
-			Dscore.add_save = Dscore.add;
-		}
-		else { //PLAYING
-			Dscore.now_dis = mins(recfp.time.now - recfp.time.offset, 0);
-			Dscore.add_save = Dscore.add;
-		}
 		//スコアバー表示
 		RecRescaleDrawGraph(0, 0, sbarimg, TRUE);
 		//スコア表示
-		ShowScore2(score, HighSrore, recfp.time.now);
+		ShowScore2(userpal.score, HighSrore, recfp.time.now);
 		//ライフ表示
-		G[0] = lins(0, -114, 500, 177, life);
-		if (life > 100) {
+		G[0] = lins(0, -114, 500, 177, userpal.life);
+		if (userpal.life > 100) {
 			RecRescaleDrawGraph(G[0], 3, Lbarimg[0], TRUE);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 255, 500, 0, life));
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 255, 500, 0, userpal.life));
 			RecRescaleDrawGraph(G[0], 3, Lbarimg[1], TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
 		else {
 			RecRescaleDrawGraph(G[0], 3, Lbarimg[2], TRUE);
 		}
-		RecRescaleDrawFormatString(440, 10, 0xffffffff, L"%3d", life);
+		RecRescaleDrawFormatString(440, 10, 0xffffffff, L"%3d", userpal.life);
 		//距離表示
 		UG[0] = 0xffffffff;
 		G[1] = 0;
-		if ((drop == 0) && (mins(recfp.time.now - recfp.time.offset, 0) > recfp.time.end - recfp.time.offset)) {
+		if (userpal.status == REC_PLAY_STATUS_CLEARED) {
 			G[1] = 1;
 			UG[0] = 0xff000000;
 		}
-		G[0] = (291 * Dscore.now_dis - 136 * recfp.time.end + 136 * recfp.time.offset) / (recfp.time.end - recfp.time.offset);
-		GD[0] = Dscore.now_dis / 100000.0;
+		G[0] = (291 * userpal.Dscore.now_dis - 136 * recfp.time.end + 136 * recfp.time.offset) / (recfp.time.end - recfp.time.offset);
 		RecRescaleDrawGraph(G[0], 38, Tbarimg[G[1]], TRUE);
-		RecRescaleDrawFormatString(180, 45, UG[0], L"%.3fkm", GD[0] + Dscore.add_save / 1000.0);
-		Dscore.point = (int)(GD[0] * 1000 + Dscore.add_save);
+		RecRescaleDrawFormatString(180, 45, UG[0], L"%.3fkm", userpal.Dscore.point / 1000.0);
 		//スコアバー隠し表示
 		RecRescaleDrawGraph(0, 0, sbbarimg, TRUE);
 		//ランニングステータス表示
-		G[0] = GetRemainNotes2(judge, recfp.mapdata.notes);
-		G[1] = CalPosScore2(score, G[0], recfp.mapdata.notes, combo, Mcombo);
-		RunningStats2(judge, G[1], HighSrore);
+		G[0] = GetRemainNotes2(userpal.judgeCount, recfp.mapdata.notes);
+		G[1] = CalPosScore2(userpal.score, G[0], recfp.mapdata.notes, userpal.Ncombo, userpal.Mcombo);
+		RunningStats2(userpal.judgeCount, G[1], HighSrore);
 		//部分難易度表示 (only auto mode)
 		if (holdG >= 1 && AutoFlag == 1) {
 			G[0] = recfp.mapdata.ddif[0] * 20 / notzero(recfp.mapdata.ddifG[1]) + 155;
@@ -1125,12 +1090,12 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		//判定ずれバー表示
 		RecRescaleDrawGraph(219, 460, gapbarimg, TRUE);
-		G[0] = gap2.count % 30;
+		G[0] = userpal.gap.count % 30;
 		for (i[0] = 0; i[0] < 30; i[0]++) {
 			G[0]--;
 			if (G[0] < 0) G[0] += 30;
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (510 - G[0] * 17) / 2);
-			RecRescaleDrawGraph(318 - gap2.view[i[0]], 460, gaplineimg, TRUE);
+			RecRescaleDrawGraph(318 - userpal.gap.view[i[0]], 460, gaplineimg, TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
 		}
 		//キー押し状況表示(オプション)
@@ -1190,22 +1155,15 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 			RecRescaleDrawFormatString(20, 120, CrR, L"LOWER OVER");
 		}
 #endif
-		//ライフが20%以下の時、危険信号(ピクチャ)を出す
-		if (life <= 100 && drop == 0) RecRescaleDrawGraph(0, 0, dangerimg, TRUE);
-		//ライフがなくなったらDROPED扱い
-		if (life <= 0 && drop == 0 && AutoFlag == 0) {
-			drop = 1;
-			Dscore.add_save = Dscore.add;
-			Dscore.dis_save = mins(recfp.time.now - recfp.time.offset, 0);
-		}
-		if (drop) { RecRescaleDrawGraph(0, 0, dropimg, TRUE); }
+		if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, dropimg, TRUE); }
+		else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, dangerimg, TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
-		if (GetRemainNotes2(judge, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
+		if (GetRemainNotes2(userpal.judgeCount, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
 			AllNotesHitTime = GetNowCount();
 		}
 		//オートでなく、ノーミス以上を出したら演出
 		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
-			ShowBonusEff(judge, AllNotesHitTime);
+			ShowBonusEff(userpal.judgeCount, AllNotesHitTime);
 		}
 		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
 		if (closeFg == 0 &&
@@ -1221,6 +1179,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		if (closeFg == 1) {
 			ViewCutIn(CutTime);
 		}
+
 		//カットイン再生から2秒以上たったら抜ける。
 		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
 			StopSoundMem(musicmp3);
@@ -1374,11 +1333,17 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	INIT_PIC();
 	if (AutoFlag == 1) { return SCENE_SERECT; }
 	else {
-		ret_gap[0] = gap2.sum;
-		ret_gap[1] = gap2.count;
-		ret_gap[2] = gap2.ssum;
+		/* TODO: result 関数の整理 */
+		int ret_gap[3] = { 0,0,0 };
+		short int drop = 0;
+
+		ret_gap[0] = userpal.gap.sum;
+		ret_gap[1] = userpal.gap.count;
+		ret_gap[2] = userpal.gap.ssum;
+		if (userpal.status == REC_PLAY_STATUS_DROPED) { drop = 1; }
+		else { drop = 0; }
 		return result(o, recfp.mapdata.Lv, drop, recfp.mapdata.mdif, recfp.nameset.songN, recfp.nameset.DifFN,
-			fileN, judge, score.sum, Mcombo, recfp.mapdata.notes, ret_gap, Dscore.point);
+			fileN, userpal.judgeCount, userpal.score.sum, userpal.Mcombo, recfp.mapdata.notes, ret_gap, userpal.Dscore.point);
 	}
 }
 
@@ -1490,26 +1455,6 @@ void ShowScore2(struct score_box score, int Hscore, int time) {
 		Cr = GetColor(255, 255, 0);
 	}
 	RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
-}
-
-void PlayNoteHitSound2(play_sound_t* const sound) {
-	if ((sound->flag & SE_HIT) != 0) {
-		PlaySoundMem(sound->att, DX_PLAYTYPE_BACK);
-	}
-	if ((sound->flag & SE_CATCH) != 0) {
-		PlaySoundMem(sound->cat, DX_PLAYTYPE_BACK);
-	}
-	if ((sound->flag & SE_ARROW) != 0) {
-		PlaySoundMem(sound->arw, DX_PLAYTYPE_BACK);
-	}
-	if ((sound->flag & SE_BOMB) != 0) {
-		PlaySoundMem(sound->bom, DX_PLAYTYPE_BACK);
-	}
-	if ((sound->flag & SE_SWING) != 0) {
-		PlaySoundMem(sound->swi, DX_PLAYTYPE_BACK);
-	}
-	sound->flag = 0;
-	return;
 }
 
 void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {

@@ -67,6 +67,13 @@ enum melodysound {
 	HIGH_Ds,
 	HIGH_E
 };
+
+typedef enum rec_play_status_e {
+	REC_PLAY_STATUS_PLAYING = 0,
+	REC_PLAY_STATUS_CLEARED,
+	REC_PLAY_STATUS_DROPED,
+} rec_play_status_t;
+
 struct camera_box {
 	int starttime = -1;
 	int endtime = -1;
@@ -82,6 +89,7 @@ struct custom_note_box {
 	int sound = 0;
 	enum melodysound melody = MELODYSOUND_NONE;
 };
+
 struct judge_box {
 	int pjust = 0;
 	int just = 0;
@@ -89,6 +97,7 @@ struct judge_box {
 	int safe = 0;
 	int miss = 0;
 };
+
 struct note_img {
 	int notebase = LoadGraph(L"picture/hit.png");
 	int hitcircle[6] = {
@@ -222,6 +231,7 @@ typedef struct gap_box_t {
 	int ssum = 0;
 	int count = 0;
 } gap_box;
+
 struct score_box {
 	int normal = 0;
 	int combo = 0;
@@ -231,6 +241,7 @@ struct score_box {
 	int before = 0;
 	int time = 0;
 };
+
 struct scrool_box {
 	int starttime = -1;
 	double basetime = -1;
@@ -277,13 +288,13 @@ typedef struct rec_play_chara_hit_attack_s {
 	int time = -1000;
 } rec_play_chara_hit_attack_t;
 
-/* TODO: rec_play_userpal_t �ł܂Ƃ߂� */
 typedef struct rec_play_userpal_s {
 	struct score_box score;
 	distance_score_t Dscore;
+	rec_play_status_t status = REC_PLAY_STATUS_PLAYING;
 	int Ncombo = 0;
 	int Mcombo = 0;
 	struct judge_box judgeCount;
-	int life = 0;
+	int life = 500;
 	gap_box gap;
 } rec_play_userpal_t;

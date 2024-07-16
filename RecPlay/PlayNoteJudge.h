@@ -2,7 +2,9 @@
 
 #include "playbox.h"
 
-extern void RecJudgeAllNotes(note_box_2_t note[], short int noteNo[], int Ntime,
-	distance_score_t *Dscore, int Sitem[], judge_action_box *judgeA, rec_play_key_hold_t *keyhold,
-	rec_play_chara_hit_attack_t *hitatk, play_sound_t *p_sound, int LaneTrack[], int *charahit,
-	int MelodySnd[], short int charaput);
+/* DOTO: Œø‰Ê‰¹Œn‚ð•Êƒtƒ@ƒCƒ‹‚ÉˆÚ“®‚·‚é */
+extern void RecPlayInitMelodySnd();
+extern void RecPlayInitPsound();
+extern void RecJudgeAllNotes(note_box_2_t note[], short int noteNo[], int Ntime, int Sitem[],
+	int soundEn, rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk,
+	int LaneTrack[], int *charahit, short int charaput, rec_play_userpal_t *userpal);
