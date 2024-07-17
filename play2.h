@@ -312,7 +312,9 @@ void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_s
 		userpal->Dscore.add_save = userpal->Dscore.add;
 		userpal->Dscore.dis_save = mins(time->now - time->offset, 0);
 	}
-	else if (mins(time->now - time->offset, 0) > time->end - time->offset) { //CLEARED
+	else if (userpal->status != REC_PLAY_STATUS_DROPED &&
+		mins(time->now - time->offset, 0) > time->end - time->offset)
+	{ //CLEARED
 		userpal->status = REC_PLAY_STATUS_CLEARED;
 	}
 	//‹——£ŒvŽZ
