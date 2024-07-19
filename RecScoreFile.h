@@ -25,8 +25,8 @@ typedef struct rec_map_detail_s {
 	short int notes = 0;
 	int mdif = 0;
 	int ldif = 0;
-	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//å„åŒºé–“ã®é›£æ˜“åº¦
-	int ddifG[2] = { 1,25 };//0=ä»Šã„ã‚‹åŒºé–“ç•ªå·(1ï½25),1=æœ€å¤§å€¤
+	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//Še‹æŠÔ‚Ì“ïˆÕ“x
+	int ddifG[2] = { 1,25 };//0=¡‚¢‚é‹æŠÔ”Ô†(1`25),1=Å‘å’l
 } rec_map_detail_t;
 
 #if 1 /* rec_map_eff_data_t */
@@ -80,13 +80,13 @@ typedef struct rec_map_eff_data_s {
 	struct scrool_box scrool[99];
 	item_box Movie[999];
 	rec_view_bpm_set_t v_BPM;
-	int viewT[2][99];//[éŸ³ç¬¦è¡¨ç¤ºæ™‚é–“,å®Ÿè¡Œæ™‚é–“,[0]=ç¾ãƒŠãƒ³ãƒãƒ¼]
+	int viewT[2][99];//[‰¹•„•\¦ŠÔ,ÀsŠÔ,[0]=Œ»ƒiƒ“ƒo[]
 	rec_chara_arrow_t carrow;
-	int lock[2][2][99]; //lock = [æ¨ª,ç¸¦]ã®éŸ³ç¬¦ã®ä½ç½®ã‚’[(1=å›ºå®šã™ã‚‹,-1ä»¥å¤–=å›ºå®šã—ãªã„),æ™‚é–“]
+	int lock[2][2][99]; //lock = [‰¡,c]‚Ì‰¹•„‚ÌˆÊ’u‚ğ[(1=ŒÅ’è‚·‚é,-1ˆÈŠO=ŒÅ’è‚µ‚È‚¢),ŠÔ]
 	rec_move_all_set_t move;
 	rec_chara_gra_data_t chamo;
 	rec_fall_data_t fall;
-	double speedt[5][99][2]; //[ä¸Š, ä¸­, ä¸‹, (åœ°é¢), (æ°´ä¸­)]ãƒ¬ãƒ¼ãƒ³ã®[0:åˆ‡ã‚Šæ›¿ãˆæ™‚é–“,1:é€Ÿåº¦]
+	double speedt[5][99][2]; //[ã, ’†, ‰º, (’n–Ê), (…’†)]ƒŒ[ƒ“‚Ì[0:Ø‚è‘Ö‚¦ŠÔ,1:‘¬“x]
 } rec_map_eff_data_t;
 
 #endif /* rec_map_eff_data_t */
