@@ -655,15 +655,17 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime,
 #endif /* Guide Line */
 
 /* main action */
+
+/**
+ * @param[in] p パックナンバー
+ * @param[in] n 曲ナンバー
+ * @param[in] o 難易度ナンバー
+ * @param[in] shift マップ生成フラフ
+ * @param[in] AutoFlag オートプレイフラグ
+ * @return now_scene_t 次のシーン
+ */
 now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
 #if 1 /* filter3 */
-	/*---用語定義-----
-	ユーザー用譜面データ: ユーザーが作った譜面データ。ユーザーに分かりやすい。
-	PC用譜面データ: ユーザー用譜面データから計算で作られた、PC専用の譜面データ。PCに分かりやすい。
-	----------------*/
-	//p: パックナンバー
-	//n: 曲ナンバー
-	//o: 難易度ナンバー
 	/* char */
 	char key[256];
 	char closeFg = 0;
@@ -797,6 +799,7 @@ now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
 #undef PIC_NUM
 #undef PIC_SIZE_X
 #undef PIC_SIZE_Y
+
 	if (system.soundEn == 0) {
 		RecPlayInitMelodySnd();
 		RecPlayInitPsound();
@@ -1353,7 +1356,9 @@ now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
 		}
 		ScreenFlip();
 	}
+
 	INIT_PIC();
+
 	if (AutoFlag == 1) { return SCENE_SERECT; }
 	else {
 		/* TODO: result 関数の整理 */
@@ -1397,6 +1402,10 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	return RecPlayMain(packNo, musicNo, difNo, shift, AutoFlag);
 }
+
+#if 1 /* under proto group */
+
+/* proto */
 
 int GetHighScore(wchar_t pas[255], int dif) {
 	FILE *fp;
@@ -1540,3 +1549,5 @@ void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {
 		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, GetColor(lins(HighScore, 255, 100000, 0, PosScore), 255, lins(HighScore, 0, 100000, 255, PosScore)), TRUE);
 	}
 }
+
+#endif /* under proto group */
