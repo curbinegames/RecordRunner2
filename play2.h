@@ -7,6 +7,7 @@
 /* include */
 
 #include "general/sancur.h"
+#include "general/strcur.h"
 #include "system.h"
 #include "RecScoreFile.h"
 #include "RecordLoad2.h"
@@ -335,6 +336,47 @@ void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_s
 	return;
 }
 
+static void RecPlayGetMapFileNames(TCHAR *mapPath, TCHAR *songPath, TCHAR *songName,
+	int packNo, int musicNo, int LvNo)
+{
+	int fd = -1;
+	TCHAR packName[255];
+	TCHAR buf[255];
+
+	/* パックの名前を取得する */
+	fd = FileRead_open(L"RecordPack.txt");
+	for (int i = 0; i <= packNo; i++) { FileRead_gets(packName, 256, fd); }
+	FileRead_close(fd);
+
+	strcopy_2(L"record/", songPath, 255); /* songPath = record/ */
+	strcats_2(songPath, 255, packName);   /* songPath = record/<パック名> */
+	stradds_2(songPath, 255, L'/');       /* songPath = record/<パック名>/ */
+
+	strcopy_2(songPath, buf, 255);    /* buf = record/<パック名>/ */
+	strcats_2(buf, 255, L"list.txt"); /* buf = record/<パック名>/list.txt */
+
+	/* 曲名を取得する */
+	fd = FileRead_open(buf);
+	for (int i = 0; i <= musicNo; i++) FileRead_gets(songName, 256, fd);
+	FileRead_close(fd);
+
+	strcats_2(songPath, 255, songName);                 /* songPath = record/<パック名>/<曲名> */
+
+	strcopy_2(songPath, mapPath, 255);                  /* mapPath = record/<パック名>/<曲名> */
+	stradds_2(mapPath, 255, L'/');                      /* mapPath = record/<パック名>/<曲名>/ */
+	stradds_2(mapPath, 255, (TCHAR)((int)L'0' + LvNo)); /* mapPath = record/<パック名>/<曲名>/<難易度ナンバー> */
+	strcats_2(mapPath, 255, L".rrs");                   /* mapPath = record/<パック名>/<曲名>/<難易度ナンバー>.rrs */
+
+	return;
+}
+
+static void RecGetMapPath(TCHAR *mapPath, int packNo, int musicNo, int LvNo) {
+	TCHAR songPath[255];
+	TCHAR songName[255];
+	RecPlayGetMapFileNames(mapPath, songPath, songName, packNo, musicNo, LvNo);
+	return;
+}
+
 #endif /* sub action */
 
 #if 1 /* Notes Picture */
@@ -613,7 +655,7 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime,
 #endif /* Guide Line */
 
 /* main action */
-now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
+now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
 #if 1 /* filter3 */
 	/*---用語定義-----
 	ユーザー用譜面データ: ユーザーが作った譜面データ。ユーザーに分かりやすい。
@@ -632,7 +674,7 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	short int cameraN = 0;
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
-	int G[20], songT;
+	int G[20];
 	uint UG[5];
 	int holdG = 0;
 	int key2 = 1;
@@ -673,14 +715,11 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 	double DifRate; //譜面定数
 	/* wchar_t */
 	wchar_t fileN[255];
-	wchar_t dataE[255] = L"record/";
+	wchar_t dataE[255];
 	wchar_t DataFN[255] = L"score/";
 	wchar_t GT1[255];
 	wchar_t GT2[255];
-	wchar_t ST1[] = L"record/";
-	wchar_t ST2[] = L"/list.txt";
 	wchar_t ST3[] = L".dat";
-	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	int item[99]; //アイテムのfd、DrawGraphで呼べる。
 	short int itemN = 0; //↑の番号
 	int Sitem[99]; //サウンドアイテムのfd
@@ -762,41 +801,23 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		RecPlayInitMelodySnd();
 		RecPlayInitPsound();
 	}
-	songT = FileRead_open(L"RecordPack.txt");
-	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
-	FileRead_close(songT);
-	strcats(dataE, GT1);
-	stradds(dataE, L'/');
-	strcopy(ST1, GT2, 1);
-	strcats(GT2, GT1);
-	strcats(GT2, ST2);
-	songT = FileRead_open(GT2);
-	for (i[0] = 0; i[0] <= n; i[0]++) FileRead_gets(GT1, 256, songT);
-	FileRead_close(songT);
-	strcopy(GT1, fileN, 1);
-	strcats(dataE, GT1);
-	strcopy(dataE, GT1, 1);
-	strcats(GT1, GT26[o]);
-	G[2] = -1;
-	if (shift == 0) {
-		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを開く
-	}
-	if (G[2] != 0) {
-		RecordLoad2(p, n, o);//rrsデータが無い、または作成の指示があれば作る
-		cal_ddif_3(GT1);//ddif計算
-		G[2] = _wfopen_s(&fp, GT1, L"rb");//rrsデータを開く
-	}
+
+	RecPlayGetMapFileNames(GT1, dataE, fileN, p, n, o);
+
 	/* rrsデータの内容を読み込む */
+	/* TODO: ファイルのオープンクローズも rec_score_fread() の中でやる */
+	_wfopen_s(&fp, GT1, L"rb");
 	if (rec_score_fread(&recfp, fp) != 0) {
 		/* 読み込み失敗 */
+		fclose(fp);
 		return SCENE_EXIT;
 	}
+	fclose(fp);
 
 	musicmp3 = LoadSoundMem(recfp.nameset.mp3FN);
 	backpic.sky = LoadGraph(recfp.nameset.sky);
 	backpic.ground = LoadGraph(recfp.nameset.ground);
 	backpic.water = LoadGraph(recfp.nameset.water);
-	fclose(fp);
 	strcats(DataFN, fileN);
 	strcats(DataFN, ST3);
 	HighSrore = GetHighScore(DataFN, o);
@@ -1347,6 +1368,34 @@ now_scene_t play3(int p, int n, int o, int shift, int AutoFlag) {
 		return result(o, recfp.mapdata.Lv, drop, recfp.mapdata.mdif, recfp.nameset.songN, recfp.nameset.DifFN,
 			fileN, userpal.judgeCount, userpal.score.sum, userpal.Mcombo, recfp.mapdata.notes, ret_gap, userpal.Dscore.point);
 	}
+}
+
+/**
+ * @param[in] packNo パックナンバー
+ * @param[in] musicNo 曲ナンバー
+ * @param[in] difNo 難易度ナンバー
+ * @param[in] shift マップ生成フラフ
+ * @param[in] AutoFlag オートプレイフラグ
+ * @return now_scene_t 次のシーン
+ */
+now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
+	TCHAR mapPath[255];
+	FILE *fp = NULL;
+
+	/* rrsデータが無い、または作成の指示があれば作る */
+	if (shift == 0) {
+		RecGetMapPath(mapPath, packNo, musicNo, difNo);
+		_wfopen_s(&fp, mapPath, L"rb");
+	}
+	if (fp == NULL) {
+		RecordLoad2(packNo, musicNo, difNo);
+		cal_ddif_3(mapPath);
+	}
+	else {
+		fclose(fp);
+	}
+
+	return RecPlayMain(packNo, musicNo, difNo, shift, AutoFlag);
 }
 
 int GetHighScore(wchar_t pas[255], int dif) {
