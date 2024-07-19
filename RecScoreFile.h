@@ -106,4 +106,4 @@ typedef struct rec_score_file_s {
 	int outpoint[2] = { -1,0 };
 } rec_score_file_t;
 
-extern int rec_score_fread(rec_score_file_t *recfp, FILE *fp);
+extern int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path);

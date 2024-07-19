@@ -808,14 +808,10 @@ now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
 	RecPlayGetMapFileNames(GT1, dataE, fileN, p, n, o);
 
 	/* rrsデータの内容を読み込む */
-	/* TODO: ファイルのオープンクローズも rec_score_fread() の中でやる */
-	_wfopen_s(&fp, GT1, L"rb");
 	if (rec_score_fread(&recfp, fp) != 0) {
 		/* 読み込み失敗 */
-		fclose(fp);
 		return SCENE_EXIT;
 	}
-	fclose(fp);
 
 	musicmp3 = LoadSoundMem(recfp.nameset.mp3FN);
 	backpic.sky = LoadGraph(recfp.nameset.sky);

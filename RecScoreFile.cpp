@@ -3,7 +3,11 @@
 #include "RecScoreFile.h"
 
 /* 0: OK, -1: error */
-int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
+int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
+	FILE *fp;
+
+	_wfopen_s(&fp, path, L"rb");
+
 	if (recfp == NULL || fp == NULL) { return -1; }
 
 	fread(&recfp->allnum, sizeof(playnum_box), 1, fp);//各データの個数
@@ -150,6 +154,8 @@ int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
 	fread(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 	fread(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
 	fread(&recfp->outpoint, sizeof(int), 2, fp);//エラーデータ
+
+	fclose(fp);
 
 	return 0;
 }
