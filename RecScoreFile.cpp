@@ -6,29 +6,29 @@
 int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
 	if (recfp == NULL || fp == NULL) { return -1; }
 
-	fread(&recfp->allnum, sizeof(playnum_box), 1, fp);//å„ãƒ‡ãƒ¼ã‚¿ã®å€‹æ•°
-	fread(&recfp->nameset.mp3FN, 255, 1, fp);//éŸ³æ¥½ãƒ•ã‚¡ã‚¤ãƒ«å
+	fread(&recfp->allnum, sizeof(playnum_box), 1, fp);//Šeƒf[ƒ^‚ÌŒÂ”
+	fread(&recfp->nameset.mp3FN, 255, 1, fp);//‰¹Šyƒtƒ@ƒCƒ‹–¼
 	fread(&recfp->mapdata.bpm, sizeof(double), 1, fp);//BPM
 	fread(&recfp->time.offset, sizeof(int), 1, fp);//offset
-	fread(&recfp->nameset.sky, 255, 1, fp);//ç©ºèƒŒæ™¯å
-	fread(&recfp->nameset.ground, 255, 1, fp);//åœ°é¢ç”»åƒå
-	fread(&recfp->nameset.water, 255, 1, fp);//æ°´ä¸­ç”»åƒå
-	fread(&recfp->nameset.songN, 255, 1, fp);//æ›²å
-	fread(&recfp->nameset.songNE, 255, 1, fp);//æ›²å(è‹±èª)
-	fread(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//ãƒ¬ãƒ™ãƒ«
-	//fread(&item, sizeof(int), 99, fp);//ã‚¢ã‚¤ãƒ†ãƒ ç”»åƒãƒ‡ãƒ¼ã‚¿(å‹•ä½œæœªç¢ºèª)
+	fread(&recfp->nameset.sky, 255, 1, fp);//‹ó”wŒi–¼
+	fread(&recfp->nameset.ground, 255, 1, fp);//’n–Ê‰æ‘œ–¼
+	fread(&recfp->nameset.water, 255, 1, fp);//…’†‰æ‘œ–¼
+	fread(&recfp->nameset.songN, 255, 1, fp);//‹È–¼
+	fread(&recfp->nameset.songNE, 255, 1, fp);//‹È–¼(‰pŒê)
+	fread(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//ƒŒƒxƒ‹
+	//fread(&item, sizeof(int), 99, fp);//ƒAƒCƒeƒ€‰æ‘œƒf[ƒ^(“®ì–¢Šm”F)
 	{
 		int buf[99][2];
-		fread(buf, sizeof(int), 198, fp);//è½ã¡ç‰©èƒŒæ™¯åˆ‡ã‚Šæ›¿ãˆã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), 198, fp);//—‚¿•¨”wŒiØ‚è‘Ö‚¦ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < 99; i++) {
 			recfp->mapeff.fall.d[i].time = buf[i][0];
 			recfp->mapeff.fall.d[i].No   = buf[i][1];
 		}
 	}
-	fread(&recfp->mapeff.speedt, sizeof(double), 990, fp);//ãƒ¬ãƒ¼ãƒ³é€Ÿåº¦
+	fread(&recfp->mapeff.speedt, sizeof(double), 990, fp);//ƒŒ[ƒ“‘¬“x
 	{
 		int buf[3][99][2];
-		fread(buf, sizeof(int), 594, fp);//ã‚­ãƒ£ãƒ©ã‚°ãƒ©å¤‰æ›ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), 594, fp);//ƒLƒƒƒ‰ƒOƒ‰•ÏŠ·ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < 99; i++) {
 			recfp->mapeff.chamo[0].gra[i]  = buf[0][i][0];
 			recfp->mapeff.chamo[0].time[i] = buf[0][i][1];
@@ -41,56 +41,56 @@ int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
 	{
 #if 0
 		int buf[999][4];
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[0] * 4, fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), recfp->allnum.Ymovenum[0] * 4, fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < recfp->allnum.Ymovenum[0]; i++) {
 			recfp->mapeff.move.y[0].d[i].Stime = buf[i][0];
 			recfp->mapeff.move.y[0].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[0].d[i].Etime = buf[i][2];
 			recfp->mapeff.move.y[0].d[i].mode = buf[i][3];
 		}
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[1] * 4, fp);//ä¸­ãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), recfp->allnum.Ymovenum[1] * 4, fp);//’†ƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < recfp->allnum.Ymovenum[1]; i++) {
 			recfp->mapeff.move.y[1].d[i].Stime = buf[i][0];
 			recfp->mapeff.move.y[1].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[1].d[i].Etime = buf[i][2];
 			recfp->mapeff.move.y[1].d[i].mode = buf[i][3];
 		}
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[2] * 4, fp);//ä¸‹ãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), recfp->allnum.Ymovenum[2] * 4, fp);//‰ºƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < recfp->allnum.Ymovenum[2]; i++) {
 			recfp->mapeff.move.y[2].d[i].Stime = buf[i][0];
 			recfp->mapeff.move.y[2].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[2].d[i].Etime = buf[i][2];
 			recfp->mapeff.move.y[2].d[i].mode = buf[i][3];
 		}
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[3] * 4, fp);//åœ°é¢ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), recfp->allnum.Ymovenum[3] * 4, fp);//’n–ÊcˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < recfp->allnum.Ymovenum[3]; i++) {
 			recfp->mapeff.move.y[3].d[i].Stime = buf[i][0];
 			recfp->mapeff.move.y[3].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[3].d[i].Etime = buf[i][2];
 			recfp->mapeff.move.y[3].d[i].mode = buf[i][3];
 		}
-		fread(buf, sizeof(int), recfp->allnum.Ymovenum[4] * 4, fp);//æ°´é¢ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), recfp->allnum.Ymovenum[4] * 4, fp);//…–ÊcˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < recfp->allnum.Ymovenum[4]; i++) {
 			recfp->mapeff.move.y[4].d[i].Stime = buf[i][0];
 			recfp->mapeff.move.y[4].d[i].pos = buf[i][1];
 			recfp->mapeff.move.y[4].d[i].Etime = buf[i][2];
 			recfp->mapeff.move.y[4].d[i].mode = buf[i][3];
 		}
-		fread(buf, sizeof(int), recfp->allnum.Xmovenum[0] * 4, fp);//ä¸Šãƒ¬ãƒ¼ãƒ³æ¨ªä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), recfp->allnum.Xmovenum[0] * 4, fp);//ãƒŒ[ƒ“‰¡ˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < recfp->allnum.Xmovenum[0]; i++) {
 			recfp->mapeff.move.x[0].d[i].Stime = buf[i][0];
 			recfp->mapeff.move.x[0].d[i].pos = buf[i][1];
 			recfp->mapeff.move.x[0].d[i].Etime = buf[i][2];
 			recfp->mapeff.move.x[0].d[i].mode = buf[i][3];
 		}
-		fread(buf, sizeof(int), recfp->allnum.Xmovenum[1] * 4, fp);//ä¸­ãƒ¬ãƒ¼ãƒ³æ¨ªä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), recfp->allnum.Xmovenum[1] * 4, fp);//’†ƒŒ[ƒ“‰¡ˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < recfp->allnum.Xmovenum[1]; i++) {
 			recfp->mapeff.move.x[1].d[i].Stime = buf[i][0];
 			recfp->mapeff.move.x[1].d[i].pos = buf[i][1];
 			recfp->mapeff.move.x[1].d[i].Etime = buf[i][2];
 			recfp->mapeff.move.x[1].d[i].mode = buf[i][3];
 		}
-		fread(buf, sizeof(int), recfp->allnum.Xmovenum[2] * 4, fp);//ä¸‹ãƒ¬ãƒ¼ãƒ³æ¨ªä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), recfp->allnum.Xmovenum[2] * 4, fp);//‰ºƒŒ[ƒ“‰¡ˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < recfp->allnum.Xmovenum[2]; i++) {
 			recfp->mapeff.move.x[2].d[i].Stime = buf[i][0];
 			recfp->mapeff.move.x[2].d[i].pos = buf[i][1];
@@ -98,14 +98,14 @@ int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
 			recfp->mapeff.move.x[2].d[i].mode = buf[i][3];
 		}
 #else
-		fread(&recfp->mapeff.move.y[0].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[0], fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
-		fread(&recfp->mapeff.move.y[1].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[1], fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
-		fread(&recfp->mapeff.move.y[2].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[2], fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
-		fread(&recfp->mapeff.move.y[3].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[3], fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
-		fread(&recfp->mapeff.move.y[4].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[4], fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
-		fread(&recfp->mapeff.move.x[0].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[0], fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
-		fread(&recfp->mapeff.move.x[1].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[1], fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
-		fread(&recfp->mapeff.move.x[2].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[2], fp);//ä¸Šãƒ¬ãƒ¼ãƒ³ç¸¦ä½ç½®ç§»å‹•ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(&recfp->mapeff.move.y[0].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[0], fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
+		fread(&recfp->mapeff.move.y[1].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[1], fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
+		fread(&recfp->mapeff.move.y[2].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[2], fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
+		fread(&recfp->mapeff.move.y[3].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[3], fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
+		fread(&recfp->mapeff.move.y[4].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[4], fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
+		fread(&recfp->mapeff.move.x[0].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[0], fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
+		fread(&recfp->mapeff.move.x[1].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[1], fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
+		fread(&recfp->mapeff.move.x[2].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[2], fp);//ãƒŒ[ƒ“cˆÊ’uˆÚ“®ƒ^ƒCƒ~ƒ“ƒO
 		recfp->mapeff.move.y[0].num = 0;
 		recfp->mapeff.move.y[1].num = 0;
 		recfp->mapeff.move.y[2].num = 0;
@@ -116,40 +116,40 @@ int rec_score_fread(rec_score_file_t *recfp, FILE *fp) {
 		recfp->mapeff.move.x[2].num = 0;
 #endif
 	}
-	fread(&recfp->mapeff.lock, sizeof(int), 396, fp);//ãƒãƒ¼ãƒ„å›ºå®šåˆ‡ã‚Šæ›¿ãˆã‚¿ã‚¤ãƒŸãƒ³ã‚°
+	fread(&recfp->mapeff.lock, sizeof(int), 396, fp);//ƒm[ƒcŒÅ’èØ‚è‘Ö‚¦ƒ^ƒCƒ~ƒ“ƒO
 	{
 		int buf[2][99];
-		fread(buf, sizeof(int), 198, fp);//ã‚­ãƒ£ãƒ©å‘ãåˆ‡ã‚Šæ›¿ãˆã‚¿ã‚¤ãƒŸãƒ³ã‚°
+		fread(buf, sizeof(int), 198, fp);//ƒLƒƒƒ‰Œü‚«Ø‚è‘Ö‚¦ƒ^ƒCƒ~ƒ“ƒO
 		for (int i = 0; i < 99; i++) {
 			recfp->mapeff.carrow.d[i].data = buf[0][i];
 			recfp->mapeff.carrow.d[i].time = buf[1][i];
 		}
 	}
-	fread(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ãƒãƒ¼ãƒ„è¡¨ç¤ºæ™‚é–“å¤‰æ›ã‚¿ã‚¤ãƒŸãƒ³ã‚°
+	fread(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ƒm[ƒc•\¦ŠÔ•ÏŠ·ƒ^ƒCƒ~ƒ“ƒO
 #if SWITCH_NOTE_BOX_2 == 1
 	fread(&recfp->mapdata.note, sizeof(note_box_2_t),
-		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ãƒãƒ¼ãƒ„ãƒ‡ãƒ¼ã‚¿ */
+		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ƒm[ƒcƒf[ƒ^ */
 #else
-	fread(&recfp->mapdata.note2.up[0], sizeof(struct note_box), recfp->allnum.notenum[0], fp); /* ä¸Šãƒ¬ãƒ¼ãƒ³ãƒãƒ¼ãƒ„ãƒ‡ãƒ¼ã‚¿ */
-	fread(&recfp->mapdata.note2.mid[0], sizeof(struct note_box), recfp->allnum.notenum[1], fp); /* ä¸­ãƒ¬ãƒ¼ãƒ³ãƒãƒ¼ãƒ„ãƒ‡ãƒ¼ã‚¿ */
-	fread(&recfp->mapdata.note2.low[0], sizeof(struct note_box), recfp->allnum.notenum[2], fp); /* ä¸‹ãƒ¬ãƒ¼ãƒ³ãƒãƒ¼ãƒ„ãƒ‡ãƒ¼ã‚¿ */
+	fread(&recfp->mapdata.note2.up[0], sizeof(struct note_box), recfp->allnum.notenum[0], fp); /* ãƒŒ[ƒ“ƒm[ƒcƒf[ƒ^ */
+	fread(&recfp->mapdata.note2.mid[0], sizeof(struct note_box), recfp->allnum.notenum[1], fp); /* ’†ƒŒ[ƒ“ƒm[ƒcƒf[ƒ^ */
+	fread(&recfp->mapdata.note2.low[0], sizeof(struct note_box), recfp->allnum.notenum[2], fp); /* ‰ºƒŒ[ƒ“ƒm[ƒcƒf[ƒ^ */
 #endif
-	fread(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ãƒãƒ¼ãƒ„æ•°
-	fread(&recfp->time.end, sizeof(int), 1, fp);//æ›²çµ‚äº†æ™‚é–“
+	fread(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ƒm[ƒc”
+	fread(&recfp->time.end, sizeof(int), 1, fp);//‹ÈI—¹ŠÔ
 	{
 		int buf[2];
 		fread(buf, sizeof(int), 2, fp);
-		recfp->mapdata.mdif = buf[0];//æœ€é«˜é›£æ˜“åº¦
-		recfp->mapdata.ldif = buf[1];//æœ€çµ‚é›£æ˜“åº¦
+		recfp->mapdata.mdif = buf[0];//Å‚“ïˆÕ“x
+		recfp->mapdata.ldif = buf[1];//ÅI“ïˆÕ“x
 	}
-	fread(&recfp->mapdata.ddif, sizeof(int), 25, fp);//å„åŒºé–“é›£æ˜“åº¦ãƒ‡ãƒ¼ã‚¿
-	fread(&recfp->mapdata.ddifG, sizeof(int), 2, fp);//å„åŒºé–“é›£æ˜“åº¦ãƒ‡ãƒ¼ã‚¿
-	fread(&recfp->nameset.DifFN, 255, 1, fp);//é›£æ˜“åº¦ãƒãƒ¼å
-	fread(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//ã‚¢ã‚¤ãƒ†ãƒ ãƒ‡ãƒ¼ã‚¿
-	fread(&recfp->mapeff.camera, sizeof(struct camera_box), 255, fp);//ã‚«ãƒ¡ãƒ©ãƒ‡ãƒ¼ã‚¿
-	fread(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ãƒ‡ãƒ¼ã‚¿
-	fread(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//è¦‹ãŸç›®ã®BPMãƒ‡ãƒ¼ã‚¿
-	fread(&recfp->outpoint, sizeof(int), 2, fp);//ã‚¨ãƒ©ãƒ¼ãƒ‡ãƒ¼ã‚¿
+	fread(&recfp->mapdata.ddif, sizeof(int), 25, fp);//Še‹æŠÔ“ïˆÕ“xƒf[ƒ^
+	fread(&recfp->mapdata.ddifG, sizeof(int), 2, fp);//Še‹æŠÔ“ïˆÕ“xƒf[ƒ^
+	fread(&recfp->nameset.DifFN, 255, 1, fp);//“ïˆÕ“xƒo[–¼
+	fread(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//ƒAƒCƒeƒ€ƒf[ƒ^
+	fread(&recfp->mapeff.camera, sizeof(struct camera_box), 255, fp);//ƒJƒƒ‰ƒf[ƒ^
+	fread(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//ƒXƒNƒ[ƒ‹ƒf[ƒ^
+	fread(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//Œ©‚½–Ú‚ÌBPMƒf[ƒ^
+	fread(&recfp->outpoint, sizeof(int), 2, fp);//ƒGƒ‰[ƒf[ƒ^
 
 	return 0;
 }
