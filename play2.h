@@ -8,6 +8,7 @@
 
 #include "general/sancur.h"
 #include "general/strcur.h"
+#include "general/dxdraw.h"
 #include "system.h"
 #include "RecScoreFile.h"
 #include "RecordLoad2.h"
@@ -808,7 +809,7 @@ now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
 	RecPlayGetMapFileNames(GT1, dataE, fileN, p, n, o);
 
 	/* rrsデータの内容を読み込む */
-	if (rec_score_fread(&recfp, fp) != 0) {
+	if (rec_score_fread(&recfp, GT1) != 0) {
 		/* 読み込み失敗 */
 		return SCENE_EXIT;
 	}

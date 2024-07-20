@@ -16,3 +16,7 @@ typedef enum dxdraw_anchor_e {
 
 extern void DrawGraphAnchor(int x, int y, int pic, dxdraw_anchor_t anchor);
 extern void DrawZoomGraphAnchor(int x, int y, intx100 size, int pic, dxdraw_anchor_t anchor);
+extern void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle);
+extern void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle);
+extern void _DrawDeformationPic3(int x, int y, double size, int rot, int handle);
+extern void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle);
