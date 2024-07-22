@@ -658,6 +658,10 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime,
 /* main action */
 
 /**
+ * @param[out] ret_map_det map_detail の受け皿
+ * @param[out] ret_userpal userpal の受け皿
+ * @param[out] ret_nameset nameset の受け皿
+ * @param[out] ret_fileN ファイル名の受け皿
  * @param[in] p パックナンバー
  * @param[in] n 曲ナンバー
  * @param[in] o 難易度ナンバー
@@ -665,7 +669,9 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime,
  * @param[in] AutoFlag オートプレイフラグ
  * @return now_scene_t 次のシーン
  */
-now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
+now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
+	rec_play_nameset_t *ret_nameset, TCHAR *ret_fileN, int p, int n, int o, int shift, int AutoFlag)
+{
 #if 1 /* filter3 */
 	/* char */
 	char key[256];
@@ -1356,20 +1362,12 @@ now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
 
 	INIT_PIC();
 
-	if (AutoFlag == 1) { return SCENE_SERECT; }
-	else {
-		/* TODO: result 関数の整理 */
-		int ret_gap[3] = { 0,0,0 };
-		short int drop = 0;
+	*ret_map_det = recfp.mapdata;
+	*ret_userpal = userpal;
+	*ret_nameset = recfp.nameset;
+	strcopy_2(fileN, ret_fileN, 255);
 
-		ret_gap[0] = userpal.gap.sum;
-		ret_gap[1] = userpal.gap.count;
-		ret_gap[2] = userpal.gap.ssum;
-		if (userpal.status == REC_PLAY_STATUS_DROPED) { drop = 1; }
-		else { drop = 0; }
-		return result(o, recfp.mapdata.Lv, drop, recfp.mapdata.mdif, recfp.nameset.songN, recfp.nameset.DifFN,
-			fileN, userpal.judgeCount, userpal.score.sum, userpal.Mcombo, recfp.mapdata.notes, ret_gap, userpal.Dscore.point);
-	}
+	return SCENE_SERECT;
 }
 
 /**
@@ -1378,10 +1376,15 @@ now_scene_t RecPlayMain(int p, int n, int o, int shift, int AutoFlag) {
  * @param[in] difNo 難易度ナンバー
  * @param[in] shift マップ生成フラフ
  * @param[in] AutoFlag オートプレイフラグ
- * @return now_scene_t 次のシーン
+ * @return 次のシーン
  */
 now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	TCHAR mapPath[255];
+	TCHAR fileName[255];
+	rec_map_detail_t map_detail;
+	rec_play_userpal_t userpal;
+	rec_play_nameset_t nameset;
+	now_scene_t ret = SCENE_EXIT;
 	FILE *fp = NULL;
 
 	/* rrsデータが無い、または作成の指示があれば作る */
@@ -1397,7 +1400,14 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 		fclose(fp);
 	}
 
-	return RecPlayMain(packNo, musicNo, difNo, shift, AutoFlag);
+	/* TODO: RecPlayMain の返り値を int に変える */
+	ret = RecPlayMain(&map_detail, &userpal, &nameset,
+		fileName, packNo, musicNo, difNo, shift, AutoFlag);
+
+	if (ret == SCENE_EXIT) { return SCENE_EXIT; }
+	if (AutoFlag == 1) { return SCENE_SERECT; }
+
+	return result(&map_detail, &userpal, &nameset, difNo, fileName);
 }
 
 #if 1 /* under proto group */

@@ -1,6 +1,10 @@
+#include "general/sancur.h"
+#include "general/strcur.h"
+#include "general/dxcur.h"
 #include "fontcur/fontcur.h"
 #include "system.h"
 #include "recr_cutin.h"
+#include "RecScoreFile.h"
 #include "RecPlay/playbox.h"
 
 #define VER_1_6 0
@@ -24,6 +28,34 @@ typedef enum rec_play_rank_e {
 	REC_PLAY_RANK_F,
 } rec_play_rank_t;
 
+typedef struct rec_result_mat_s {
+	DxPic_t clearRate;
+	DxPic_t difBer;
+	DxPic_t rank;
+	DxPic_t chara;
+	cur_font_cr_t fontNo = CUR_FONT_COLOR_MONO;
+#if VER_1_6 == 1
+	cur_font_cr_t floatfontNo = CUR_FONT_COLOR_MONO;
+#endif
+} rec_result_mat_t;
+
+typedef struct rec_result_pal_s {
+	TCHAR songN[64];
+	struct judge_box judge;
+	int Mcombo = 0;
+	int noteCount = 0;
+	int score = 0;
+	double acc = 0;
+#if VER_1_6 == 1
+	double floatRank = 0;
+#endif
+	intx100_t newRate = 0;
+	intx100_t subRate = 0;
+	int gap = 0;
+	int width = 0;
+	rec_result_mat_t mat;
+} rec_result_pal_t;
+
 char GetCharNo();
 rec_play_rank_t CalScoreRank(int score);
 int CalPlayRate(judge_box judge, double DifRate);
@@ -46,133 +78,16 @@ char GetCharNo() {
 	return (char)data[0];
 }
 
-now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
-	struct judge_box const* const judge, int Mcombo, short int notes,
-	int NewRate, int RateSub, char rank, double floatrank, int score,
-	double acc, int gap, int gap_width, short int Clear, char charNo)
-{
+static now_scene_t ViewResult(rec_result_pal_t *val) {
 	/* num */
 	char closeFg = 0;
 	int G[10] = { 0,0,0,0,0,0,0,0,0,0 };
 	int CutTime = 0;
 	/* typedef */
-	cur_font_cr_t fontNo;
-	cur_font_cr_t floatfontNo;
-	switch (rank) {
-	case 0:
-		fontNo = CUR_FONT_COLOR_RAINBOW;
-		floatfontNo = CUR_FONT_COLOR_BLUE;
-		break;
-	case 1:
-		fontNo = CUR_FONT_COLOR_BLUE;
-		floatfontNo = CUR_FONT_COLOR_YELLOW;
-		break;
-	case 2:
-		fontNo = CUR_FONT_COLOR_YELLOW;
-		floatfontNo = CUR_FONT_COLOR_MONO; /* TODO: result floatfontNo(2) must be GRAY */
-		break;
-	case 3:
-		fontNo = CUR_FONT_COLOR_GREEN;
-		floatfontNo = CUR_FONT_COLOR_GREEN;
-		break;
-	case 4:
-		fontNo = CUR_FONT_COLOR_PURPLE;
-		floatfontNo = CUR_FONT_COLOR_PURPLE;
-		break;
-	case 5:
-		fontNo = CUR_FONT_COLOR_RED;
-		floatfontNo = CUR_FONT_COLOR_RED;
-		break;
-	default:
-		fontNo = CUR_FONT_COLOR_MONO;
-		floatfontNo = CUR_FONT_COLOR_MONO;
-		break;
-	}
-	/* image */
-	int coleimg;
-	switch (Clear) {
-	case 0:
-		coleimg = LoadGraph(L"picture/DROPED.png");
-		break;
-	case 1:
-		coleimg = LoadGraph(L"picture/CLEARED.png");
-		break;
-	case 2:
-		coleimg = LoadGraph(L"picture/NOMISS.png");
-		break;
-	case 3:
-		coleimg = LoadGraph(L"picture/FULLCOMBO.png");
-		break;
-	case 4:
-		coleimg = LoadGraph(L"picture/PERFECT.png");
-		break;
-	default:
-		coleimg = LoadGraph(L"picture/DROPED.png");
-		break;
-	}
-	int	difberimg;
-	switch (dif) {
-	case 0:
-		difberimg = LoadGraph(L"picture/difauto.png");
-		break;
-	case 1:
-		difberimg = LoadGraph(L"picture/difeasy.png");
-		break;
-	case 2:
-		difberimg = LoadGraph(L"picture/difnormal.png");
-		break;
-	case 3:
-		difberimg = LoadGraph(L"picture/difhard.png");
-		break;
-	case 4:
-	case 5:
-		difberimg = LoadGraph(DifFN);
-		break;
-	default:
-		difberimg = LoadGraph(L"picture/difeasy.png");
-		break;
-	}
-	int rankimg;
-	switch (rank) {
-	case 0:
-		rankimg = LoadGraph(L"picture/rankEX.png");
-		break;
-	case 1:
-		rankimg = LoadGraph(L"picture/rankS.png");
-		break;
-	case 2:
-		rankimg = LoadGraph(L"picture/rankA.png");
-		break;
-	case 3:
-		rankimg = LoadGraph(L"picture/rankB.png");
-		break;
-	case 4:
-		rankimg = LoadGraph(L"picture/rankC.png");
-		break;
-	case 5:
-	default:
-		rankimg = LoadGraph(L"picture/rankD.png");
-		break;
-	}
-	int Rchaimg;
-	switch (charNo) {
-	case 0:
-		Rchaimg = LoadGraph(L"picture/RePicker.png");
-		break;
-	case 1:
-		Rchaimg = LoadGraph(L"picture/ReGator.png");
-		break;
-	case 2:
-		Rchaimg = LoadGraph(L"picture/ReTaylor.png");
-		break;
-	default:
-		Rchaimg = LoadGraph(L"picture/RePicker.png");
-		break;
-	}
-	int resultimg = LoadGraph(L"picture/result.png");
+	DxPic_t resultimg = LoadGraph(L"picture/result.png");
+	DxSnd_t musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
+
 	InitCurFont();
-	/* audio */
-	int musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_LOOP);
 	WaitTimer(10);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
@@ -180,35 +95,38 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 	while (1) {
 		ClearDrawScreen();
 		RecRescaleDrawGraph(0, 0, resultimg, TRUE); /* back */
-		RecRescaleDrawGraph(460, 20, difberimg, TRUE); /* dif ber */
-		RecRescaleDrawString(100, 13, songN, COLOR_WHITE); /* song name */
-		DrawCurFont(judge->just, 140, 52, 30, CUR_FONT_COLOR_BLUE); /* just count */
-		DrawCurFont(judge->good, 140, 93, 30, CUR_FONT_COLOR_YELLOW); /* good count */
-		DrawCurFont(judge->safe, 140, 134, 30, CUR_FONT_COLOR_GREEN); /* safe count */
-		DrawCurFont(judge->miss, 140, 175, 30, CUR_FONT_COLOR_RED); /* miss count */
-		DrawCurFont(Mcombo, 155, 215, 30, CUR_FONT_COLOR_BLUE); /* max combo */
-		DrawCurFont(notes, 265, 215, 30, CUR_FONT_COLOR_PURPLE); /* note count */
+		RecRescaleDrawGraph(460, 20, val->mat.difBer, TRUE); /* dif ber */
+		RecRescaleDrawString(100, 13, val->songN, COLOR_WHITE); /* song name */
+		DrawCurFont(val->judge.just, 140, 52, 30, CUR_FONT_COLOR_BLUE); /* just count */
+		DrawCurFont(val->judge.good, 140, 93, 30, CUR_FONT_COLOR_YELLOW); /* good count */
+		DrawCurFont(val->judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN); /* safe count */
+		DrawCurFont(val->judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED); /* miss count */
+		DrawCurFont(val->Mcombo, 155, 215, 30, CUR_FONT_COLOR_BLUE); /* max combo */
+		DrawCurFont(val->noteCount, 265, 215, 30, CUR_FONT_COLOR_PURPLE); /* note count */
 		RecRescaleDrawFormatString(10, 320, COLOR_WHITE, L"%d.%02d",
-			NewRate / 100, NewRate % 100); /* now runner rate */
+			val->newRate / 100, val->newRate % 100); /* now runner rate */
 		/* runner rate rase */
-		if (0 < RateSub) {
+		if (0 < val->subRate) {
 			RecRescaleDrawFormatString(10, 340, COLOR_WHITE, L"+%d.%02d",
-				RateSub / 100, RateSub % 100);
+				val->subRate / 100, val->subRate % 100);
 		}
 		else { RecRescaleDrawString(10, 340, L"not rise", COLOR_WHITE); }
-		DrawCurFont(score, 310, 75, 55, fontNo); /* score */
-		DrawCurFont(acc, 430, 150, 30, fontNo, 2); /* acc */
-		DrawCurFont(gap, 510, 205, 20, CUR_FONT_COLOR_MONO); /* gap */
-		DrawCurFont(gap_width, 500, 230, 20, CUR_FONT_COLOR_MONO); /* width */
-		RecRescaleDrawGraph(140, 260, rankimg, TRUE); /* rank */
+		DrawCurFont(val->score, 310, 75, 55, val->mat.fontNo); /* score */
+		DrawCurFont(val->acc, 430, 150, 30, val->mat.fontNo, 2); /* acc */
+		DrawCurFont(val->gap, 510, 205, 20, CUR_FONT_COLOR_MONO); /* gap */
+		DrawCurFont(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO); /* width */
+		RecRescaleDrawGraph(140, 260, val->mat.rank, TRUE); /* rank */
 #if VER_1_6 == 1
-		DrawCurFont(floatrank, 280, 390, 30, floatfontNo, 3, 0); /* floatrank */
+		DrawCurFont(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, 0); /* floatrank */
 #endif
-		RecRescaleDrawGraph(5, 420, coleimg, TRUE); /* clear rate */
-		RecRescaleDrawGraph(336, 252, Rchaimg, TRUE); /* chara */
+		RecRescaleDrawGraph(5, 420, val->mat.clearRate, TRUE); /* clear rate */
+		RecRescaleDrawGraph(336, 252, val->mat.chara, TRUE); /* chara */
+
 		if (closeFg == 0) { ViewCutOut(CutTime); }
 		if (closeFg == 1) { ViewCutIn(CutTime); }
+
 		ScreenFlip();
+
 		//エンターが押された
 		if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
 			SetCutTipFg(CUTIN_TIPS_ON);
@@ -221,9 +139,11 @@ now_scene_t ViewResult(int dif, wchar_t DifFN[255], wchar_t songN[255],
 			DeleteSoundMem(musicmp3);
 			break;
 		}
-		if (GetWindowUserCloseFlag(TRUE)) return SCENE_EXIT;
+		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 	}
+
 	INIT_PIC();
+
 	return SCENE_SERECT;
 }
 
@@ -255,35 +175,154 @@ double GetFloatRank(int score, int miss, int notes, char rank) {
 	return 0;
 }
 
-now_scene_t result(int dif, short Lv, char drop, int difkey,
-	wchar_t songN[], wchar_t DifFN[], wchar_t fileN[],
-	struct judge_box judge, int score, int Mcombo, short notes,
-	int gapa[], int Dscore) {
-	/* arg fix */
-	if (gapa[1] == 0) { gapa[1] = 1; }
+now_scene_t result(rec_map_detail_t *map_detail, rec_play_userpal_t *userpal,
+	rec_play_nameset_t *nameset, int dif, wchar_t fileN[])
+{
 	/* int */
-	char Clear = JudgeClearRank(drop, judge);
+	char drop = 0;
+	char Clear = 0;
+	char rank = CalScoreRank(userpal->score.sum);
 	char CharNo = GetCharNo();
-	char rank = CalScoreRank(score);
 	int OldRate = GetFullRate();
-	int NewRate = 0;
-	int RateSub = 0;
-	int gap = CAL_GAP(gapa[0], gapa[1]);
-	int gap_width = CAL_GAP_WIDTH(gapa[0], gapa[1], gapa[2]);
-	double floatrank = GetFloatRank(score, judge.miss, notes, rank) / 1000;
-	double acc = CAL_ACC(judge, notes);
-	double DifRate = CAL_DIF_RATE(difkey, Lv) / 100; //譜面定数
-	double rate = (double)CalPlayRate(judge, DifRate) / 100.0;
-	/* action */
-	SaveScore(fileN, (char)dif, score, acc, Dscore, (short)rank, Clear); // スコア保存
-	SavePlayCount(drop, &judge); // プレイ回数保存
+	double DifRate = CAL_DIF_RATE(map_detail->mdif, map_detail->Lv) / 100; //譜面定数
+	double rate = (double)CalPlayRate(userpal->judgeCount, DifRate) / 100.0;
+	rec_result_pal_t result_pal;
+
+	/* calculate */
+	if (userpal->status == REC_PLAY_STATUS_DROPED) { drop = 1; }
+	else { drop = 0; }
+
+	Clear = JudgeClearRank(drop, userpal->judgeCount);
+
+	result_pal.acc = CAL_ACC(userpal->judgeCount, map_detail->notes);
+#if VER_1_6 == 1
+	result_pal.floatRank = GetFloatRank(userpal->score.sum, userpal->judgeCount.miss, map_detail->notes, rank) / 1000;
+#endif
+
+	if (userpal->gap.count == 0) { userpal->gap.count = 1; }
+	result_pal.gap = CAL_GAP(userpal->gap.sum, userpal->gap.count);
+	result_pal.width = CAL_GAP_WIDTH(userpal->gap.sum, userpal->gap.count, userpal->gap.ssum);
+
+	SaveScore(fileN, (char)dif, userpal->score.sum, result_pal.acc, userpal->Dscore.point, (short)rank, Clear); // スコア保存
+	SavePlayCount(drop, &userpal->judgeCount); // プレイ回数保存
 	SaveCharPlayCount(CharNo); // キャラプレイ数保存
 	SaveRate(fileN, rate); // レート保存
-	NewRate = GetFullRate(); // 保存後のレート
-	RateSub = NewRate - OldRate; // レートの差
-	return ViewResult(dif, DifFN, songN, &judge, Mcombo, notes, NewRate,
-		RateSub, (short)rank, floatrank, score, acc, gap, gap_width, Clear - 1,
-		CharNo); // リザルト画面
+
+	result_pal.newRate = GetFullRate(); // 保存後のレート
+	result_pal.subRate = result_pal.newRate - OldRate; // レートの差
+
+	strcopy_2(nameset->songN, result_pal.songN, 64);
+	result_pal.judge = userpal->judgeCount;
+	result_pal.Mcombo = userpal->Mcombo;
+	result_pal.noteCount = map_detail->notes;
+	result_pal.score = userpal->score.sum;
+
+	/* picture */
+	switch (Clear - 1) {
+	case 0:
+		result_pal.mat.clearRate = LoadGraph(L"picture/DROPED.png");
+		break;
+	case 1:
+		result_pal.mat.clearRate = LoadGraph(L"picture/CLEARED.png");
+		break;
+	case 2:
+		result_pal.mat.clearRate = LoadGraph(L"picture/NOMISS.png");
+		break;
+	case 3:
+		result_pal.mat.clearRate = LoadGraph(L"picture/FULLCOMBO.png");
+		break;
+	case 4:
+		result_pal.mat.clearRate = LoadGraph(L"picture/PERFECT.png");
+		break;
+	default:
+		result_pal.mat.clearRate = LoadGraph(L"picture/DROPED.png");
+		break;
+	}
+
+	switch (dif) {
+	case 0:
+		result_pal.mat.difBer = LoadGraph(L"picture/difauto.png");
+		break;
+	case 1:
+		result_pal.mat.difBer = LoadGraph(L"picture/difeasy.png");
+		break;
+	case 2:
+		result_pal.mat.difBer = LoadGraph(L"picture/difnormal.png");
+		break;
+	case 3:
+		result_pal.mat.difBer = LoadGraph(L"picture/difhard.png");
+		break;
+	case 4:
+	case 5:
+		result_pal.mat.difBer = LoadGraph(nameset->DifFN);
+		break;
+	default:
+		result_pal.mat.difBer = LoadGraph(L"picture/difeasy.png");
+		break;
+	}
+
+	switch (rank) {
+	case 0:
+		result_pal.mat.rank = LoadGraph(L"picture/rankEX.png");
+		result_pal.mat.fontNo = CUR_FONT_COLOR_RAINBOW;
+#if VER_1_6 == 1
+		result_pal.mat.floatfontNo = CUR_FONT_COLOR_BLUE;
+#endif
+		break;
+	case 1:
+		result_pal.mat.rank = LoadGraph(L"picture/rankS.png");
+		result_pal.mat.fontNo = CUR_FONT_COLOR_BLUE;
+#if VER_1_6 == 1
+		result_pal.mat.floatfontNo = CUR_FONT_COLOR_YELLOW;
+#endif
+		break;
+	case 2:
+		result_pal.mat.rank = LoadGraph(L"picture/rankA.png");
+		result_pal.mat.fontNo = CUR_FONT_COLOR_YELLOW;
+#if VER_1_6 == 1
+		result_pal.mat.floatfontNo = CUR_FONT_COLOR_MONO; /* TODO: result floatfontNo(2) must be GRAY */
+#endif
+		break;
+	case 3:
+		result_pal.mat.rank = LoadGraph(L"picture/rankB.png");
+		result_pal.mat.fontNo = CUR_FONT_COLOR_GREEN;
+#if VER_1_6 == 1
+		result_pal.mat.floatfontNo = CUR_FONT_COLOR_GREEN;
+#endif
+		break;
+	case 4:
+		result_pal.mat.rank = LoadGraph(L"picture/rankC.png");
+		result_pal.mat.fontNo = CUR_FONT_COLOR_PURPLE;
+#if VER_1_6 == 1
+		result_pal.mat.floatfontNo = CUR_FONT_COLOR_PURPLE;
+#endif
+		break;
+	case 5:
+	default:
+		result_pal.mat.rank = LoadGraph(L"picture/rankD.png");
+		result_pal.mat.fontNo = CUR_FONT_COLOR_RED;
+#if VER_1_6 == 1
+		result_pal.mat.floatfontNo = CUR_FONT_COLOR_RED;
+#endif
+		break;
+	}
+
+	switch (CharNo) {
+	case 0:
+		result_pal.mat.chara = LoadGraph(L"picture/RePicker.png");
+		break;
+	case 1:
+		result_pal.mat.chara = LoadGraph(L"picture/ReGator.png");
+		break;
+	case 2:
+		result_pal.mat.chara = LoadGraph(L"picture/ReTaylor.png");
+		break;
+	default:
+		result_pal.mat.chara = -1;
+		break;
+	}
+
+	return ViewResult(&result_pal);
 }
 
 int CalPlayRate(judge_box judge, double DifRate) {
