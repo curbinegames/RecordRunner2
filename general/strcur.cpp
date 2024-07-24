@@ -12,35 +12,18 @@
 #include "strcur.h"
 #include "sancur.h"
 
-int strands(const wchar_t *p1, const wchar_t *p2);
-void strcopy(const wchar_t*, wchar_t*, int);
-void strmods(wchar_t*, int);
-void strcats(wchar_t*, const wchar_t*);
-int strlens(const wchar_t* s);
-int strwlens(const wchar_t* s);
-int strrans(wchar_t*);
-void strnex(wchar_t*);
-void strnex_EX(wchar_t*, wchar_t);
-void stradds(wchar_t*, wchar_t);
-int strsans(wchar_t*);
-double strsans2(wchar_t*);
-void get_rec_file(wchar_t *s, int pack, int music, int dif, TXT_OR_RRS torr);
-
 /**
- * p1の先頭にp2があるかどうかを調べる
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrands_2を使ってください
  * @param[in] p1 探す場所
  * @param[in] p2 探す文字列
  * @return int あったら1、なかったら0
  * @sa strands_2
+ * @details p1の先頭にp2があるかどうかを調べる
  */
-int strands(const wchar_t *p1, const wchar_t *p2) {
+int strands(const TCHAR *p1, const TCHAR *p2) {
 	for (int i = 0; i < 50; i++) {
-		if (p2[i] == L'\0') {
-			break;
-		}
-		if (p1[i] != p2[i]) {
-			return 0;
-		}
+		if (p2[i] == _T('\0')) { break; }
+		if (p1[i] != p2[i]) { return 0; }
 	}
 	return 1;
 }
@@ -53,15 +36,8 @@ int strands(const wchar_t *p1, const wchar_t *p2) {
  * @sa strcopy_2
  * @details p1をp2にコピーする。cに1を入れると255桁まで初期化する(初期化推奨)
  */
-void strcopy(const wchar_t *p1, wchar_t *p2, int c) {
-	int a = 0;
-	for (int i = 0; i < 250; i++) {
-		p2[i] = L'\0';
-	}
-	for (int i = 0; i < 250 && p1[i] != L'\0'; i++) {
-		p2[i] = p1[i];
-		p2[i + 1] = L'\0';
-	}
+void strcopy(const TCHAR *p1, TCHAR *p2, int c) {
+	_STRCPY_S(p2, 255, p1);
 	return;
 }
 
@@ -71,15 +47,8 @@ void strcopy(const wchar_t *p1, wchar_t *p2, int c) {
  * @param[in] p2 コピー先
  * @param[in] size p2の長さ、配列数で指定
  */
-void strcopy_2(const wchar_t *p1, wchar_t *p2, size_t size) {
-	int a = 0;
-	for (int i = 0; i < size; i++) {
-		p2[i] = L'\0';
-	}
-	for (int i = 0; i < size - 1 && p1[i] != L'\0'; i++) {
-		p2[i] = p1[i];
-		p2[i + 1] = L'\0';
-	}
+void strcopy_2(const TCHAR *p1, TCHAR *p2, size_t size) {
+	_STRCPY_S(p2, size, p1);
 	return;
 }
 
@@ -90,19 +59,19 @@ void strcopy_2(const wchar_t *p1, wchar_t *p2, size_t size) {
  * @sa strmods_2
  * @details p1から先頭a文字を消す
  */
-void strmods(wchar_t *p1, int a) {
+void strmods(TCHAR *p1, int a) {
 	int i;
-	wchar_t *p2 = p1;
+	TCHAR *p2 = p1;
 	for (i = 0; i < a; i++) {
-		if (p1[i] == L'\0') {
-			p1[0] = L'\0';
+		if (p1[i] == _T('\0')) {
+			p1[0] = _T('\0');
 			return;
 		}
 	}
-	for (i = 0; p2[i + a] != L'\0'; i++) {
+	for (i = 0; p2[i + a] != _T('\0'); i++) {
 		p1[i] = p2[i + a];
 	}
-	p1[i] = L'\0';
+	p1[i] = _T('\0');
 	return;
 }
 
@@ -113,13 +82,13 @@ void strmods(wchar_t *p1, int a) {
  * @sa strcats_2
  * @details p1の最後にp2を付ける
  */
-void strcats(wchar_t *p1, const wchar_t *p2) {
-	while (*p1 != L'\0') p1++;
-	for (int i = 0; i < 64 && p2[i] != L'\0'; i++) {
+void strcats(TCHAR *p1, const TCHAR *p2) {
+	while (*p1 != _T('\0')) p1++;
+	for (int i = 0; i < 64 && p2[i] != _T('\0'); i++) {
 		*p1 = p2[i];
 		p1++;
 	}
-	*p1 = L'\0';
+	*p1 = _T('\0');
 	return;
 }
 
@@ -135,19 +104,17 @@ void strcats_2(TCHAR p1[], size_t size, const TCHAR *p2) {
 	int offset = -1;
 
 	for (int i = 0; i < size; i++) {
-		if (p1[i] == L'\0') {
+		if (p1[i] == _T('\0')) {
 			offset = i;
 			break;
 		}
 	}
 
-	if (offset == -1) {
-		return;
-	}
+	if (offset == -1) { return; }
 
 	strcopy_2(p2, &p1[offset], size - offset);
 
-	p1[size - 1] = L'\0';
+	p1[size - 1] = _T('\0');
 	return;
 }
 
@@ -158,10 +125,10 @@ void strcats_2(TCHAR p1[], size_t size, const TCHAR *p2) {
  * @sa strlens_2
  * @details 文字列sの長さを取得する
  */
-int strlens(const wchar_t* s) {
+int strlens(const TCHAR* s) {
 	int ret = 0;
 	for (ret = 0; ret < 255; ret++) {
-		if (s[ret] == L'\0') {
+		if (s[ret] == _T('\0')) {
 			break;
 		}
 	}
@@ -174,29 +141,19 @@ int strlens(const wchar_t* s) {
  * @return int sの長さ
  * @note この関数いる?
  */
-int strwlens(const wchar_t* s) {
-	int ret = 0;
-	for (int p = 0; p < 255; p++) {
-		if (s[p] == L'\0') {
-			break;
-		}
-		else if (L' ' <= s[p] && s[p] <= L'~') {
-			ret++;
-		}
-		else {
-			ret += 2;
-		}
-	}
-	return ret;
+int strwlens(const TCHAR* s) {
+	return 0;
 }
 
 /* TODO: これも多分recにあるべき */
-int strrans(wchar_t *p1) {
+int strrans(const TCHAR *p1) {
 	int a, b;
-	strmods(p1, 2);
-	a = strsans(p1);
-	strnex_EX(p1, L',');
-	b = mins(strsans(p1), a);
+	TCHAR buf[16];
+	strcopy_2(p1, buf, 16);
+	strmods(buf, 2);
+	a = strsans(buf);
+	strnex_EX(buf, _T(','));
+	b = mins(strsans(buf), a);
 	return GetRand(b - a) + a;
 }
 
@@ -206,7 +163,7 @@ int strrans(wchar_t *p1) {
  * @sa strnex_2
  * @details 次の'/'か':'があるところまで消す
  */
-void strnex(wchar_t *p1) {
+void strnex(TCHAR *p1) {
 #if 1
 	int i = 1;
 	for (i = 0; p1[i] >= L' ' && p1[i] <= L'}' && p1[i] != L'/' && p1[i] != L':' && p1[i] != L'\0'; i++) {
@@ -236,10 +193,10 @@ void strnex(wchar_t *p1) {
  * @sa strnex_EX2
  * @details 指定の文字p3があるところまで消す
  */
-void strnex_EX(wchar_t *p1,wchar_t p3) {
-	wchar_t *p2 = p1;
+void strnex_EX(TCHAR *p1, TCHAR p3) {
+	TCHAR *p2 = p1;
 	short int a = 1;
-	while (*p1 >= L' ' && *p1 <= L'}' && *p1 != p3 && *p1 != L'\0') {
+	while (*p1 >= _T(' ') && *p1 <= _T('}') && *p1 != p3 && *p1 != _T('\0')) {
 		a++;
 		p1++;
 	}
@@ -255,9 +212,9 @@ void strnex_EX(wchar_t *p1,wchar_t p3) {
  * @details p1の最後にaの文字を追加する
  */
 void stradds(TCHAR *p1, TCHAR a) {
-	while (*p1 != L'\0') p1++;
+	while (*p1 != _T('\0')) p1++;
 	*p1++ = a;
-	*p1 = L'\0';
+	*p1 = _T('\0');
 	return;
 }
 
@@ -273,19 +230,17 @@ void stradds_2(TCHAR p1[], size_t size, TCHAR a) {
 	int offset = -1;
 
 	for (int i = 0; i < size; i++) {
-		if (p1[i] == L'\0') {
+		if (p1[i] == _T('\0')) {
 			offset = i;
 			break;
 		}
 	}
 
-	if (offset == -1) {
-		return;
-	}
+	if (offset == -1) { return; }
 
 	p1[offset] = a;
-	p1[offset + 1] = L'\0';
-	p1[size - 1] = L'\0';
+	p1[offset + 1] = _T('\0');
+	p1[size - 1] = _T('\0');
 	return;
 }
 
@@ -297,7 +252,7 @@ void stradds_2(TCHAR p1[], size_t size, TCHAR a) {
  * @sa strsans_3
  * @details 文字列を数字に変換にする。途中に数字,マイナス以外の文字があったら終わり
  */
-int strsans(wchar_t *p1) {
+int strsans(const TCHAR *p1) {
 	int a = 0, b = 1;
 	if (*p1 == L'R') {
 
@@ -350,6 +305,7 @@ int strsans(wchar_t *p1) {
 			p1++;
 		}
 	}
+
 	return a * b;
 }
 
@@ -359,26 +315,26 @@ int strsans(wchar_t *p1) {
  * @return double 変換結果
  * @details strsans()の小数を可にしたもの
  */
-double strsans2(wchar_t *p1) {
+double strsans2(const TCHAR *p1) {
 	short int b = 1, c = 0, d = 99, i;
 	double a = 0;
-	if (*p1 == L'R') { return strrans(p1); }
-	else {
-		while (1) {
-			if (*p1 >= L'0' && *p1 <= L'9') {
-				c++;
-				a *= 10;
-				a += *p1 - 48;
-			}
-			else if (*p1 == L'-') b *= -1;
-			else if (*p1 == L'.') d = c;
-			else {
-				for (i = c; i > d; i--) a /= 10.0;
-				return b * a;
-			}
-			p1++;
+	if (*p1 == _T('R')) { return strrans(p1); }
+
+	for (int ip = 0; ip < 50; ip++) {
+		if (_T('0') <= *p1 && *p1 <= _T('9')) {
+			c++;
+			a = a * 10 + (*p1 - _T('0'));
 		}
+		else if (*p1 == _T('-')) { b *= -1; }
+		else if (*p1 == _T('.')) { d = c; }
+		else {
+			for (i = c; i > d; i--) { a /= 10.0; }
+			break;
+		}
+		p1++;
 	}
+
+	return b * a;
 }
 
 /**
@@ -394,36 +350,30 @@ void strnums(TCHAR ret[], int val, size_t size) {
 	int buf = val;
 	int minFG = 0;
 
-	if (size < 2) {
-		return;
-	}
+	if (size < 2) { return; }
 
 	while (buf != 0) {
 		buf /= 10;
-		if (buf != 0) {
-			keta++;
-		}
+		if (buf != 0) { keta++; }
 	}
 
 	if (val < 0) {
-		ret[0] = L'-';
+		ret[0] = _T('-');
 		minFG = 1;
 	}
 
 	keta = mins_2(size - minFG - 1, keta);
 
 	buf = val;
-	if (val < 0) {
-		buf *= -1;
-	}
+	if (val < 0) { buf *= -1; }
 
 	for (int i = 0; i < keta; i++) {
-		ret[minFG + keta - i - 1] = (TCHAR)(L'0' + buf % 10);
+		ret[minFG + keta - i - 1] = (TCHAR)(_T('0') + buf % 10);
 		buf /= 10;
 	}
 
-	ret[minFG + keta] = L'\0';
-	ret[size - 1] = L'\0';
+	ret[minFG + keta] = _T('\0');
+	ret[size - 1] = _T('\0');
 
 	return;
 }
@@ -445,60 +395,58 @@ void strnumsD(TCHAR ret[], double val, size_t size, int under) {
 
 	strnums(ret, (int)val, size);
 
-	if (under <= 0) {
-		return;
-	}
+	if (under <= 0) { return; }
 
-	stradds_2(ret, size, L'.');
+	stradds_2(ret, size, _T('.'));
 
 	for (int i = 0; i < under; i++) {
 		bufD *= 10;
 		buf = ((int)bufD) % 10;
-		stradds_2(ret, size, (TCHAR)(L'0' + (int)buf));
+		stradds_2(ret, size, (TCHAR)(_T('0') + (int)buf));
 	}
 
-	ret[size - 1] = L'\0';
+	ret[size - 1] = _T('\0');
 
 	return;
 }
 
 /* TODO: get_rec_file()はrecにあるべき */
-void get_rec_file(wchar_t *s, int pack, int music, int dif, TXT_OR_RRS torr) {
-	wchar_t ret[255] = L"record/";
-	wchar_t GT1[255];
+void get_rec_file(TCHAR *s, int pack, int music, int dif, TXT_OR_RRS torr) {
+	TCHAR ret[255] = _T("record/");
+	TCHAR GT1[255];
 	int file;
-	file = FileRead_open(L"RecordPack.txt");
+	file = FileRead_open(_T("RecordPack.txt"));
 	for (int i = 0; i <= pack; i++) {
 		if (FileRead_eof(file) != 0) {
-			s[0] = L'\0';
+			s[0] = _T('\0');
 			return;
 		}
 		FileRead_gets(GT1, 256, file); /* GT1 = "pask" */
 	}
 	FileRead_close(file);
 	strcats(ret, GT1); /* ret = "record/pask" */
-	strcats(ret, L"/");  /* ret = "record/pask/" */
+	strcats(ret, _T("/"));  /* ret = "record/pask/" */
 	strcopy(ret, GT1, 1); /* GT1 = "record/pask/" */
-	strcats(GT1, L"list.txt"); /* GT1 = "record/pask/list.txt" */
+	strcats(GT1, _T("list.txt")); /* GT1 = "record/pask/list.txt" */
 	file = FileRead_open(GT1);
 	for (int i = 0; i <= music; i++) {
 		if (FileRead_eof(file) != 0) {
-			s[0] = L'\0';
+			s[0] = _T('\0');
 			return;
 		}
 		FileRead_gets(GT1, 256, file); /* GT1 = "music" */
 	}
 	FileRead_close(file);
 	strcats(ret, GT1); /* ret = "record/pask/music" */
-	strcats(ret, L"/");  /* ret = "record/pask/music/" */
-	GT1[0] = L'0' + dif;
-	GT1[1] = L'\0';
+	strcats(ret, _T("/"));  /* ret = "record/pask/music/" */
+	GT1[0] = _T('0') + dif;
+	GT1[1] = _T('\0');
 	strcats(ret, GT1); /* ret = "record/pask/music/3" */
 	if (torr == FILETYPE_RRS) {
-		strcats(ret, L".rrs"); /* ret = "record/pask/music/3.rrs" */
+		strcats(ret, _T(".rrs")); /* ret = "record/pask/music/3.rrs" */
 	}
 	else {
-		strcats(ret, L".txt"); /* ret = "record/pask/music/3.txt" */
+		strcats(ret, _T(".txt")); /* ret = "record/pask/music/3.txt" */
 	}
 	strcopy(ret, s, 1);
 	return;
@@ -593,7 +541,7 @@ void vScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], va_list as) {
 void ScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], ...) {
 	va_list as;
 	va_start(as, s);
-	vScanPrintfStr(ret, size, s, as);
+	_VSPRINTF_S(ret, size, s, as);
 	va_end(as);
 	return;
 }
