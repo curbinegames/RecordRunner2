@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "general/sancur.h"
 #include "general/strcur.h"
+#include "fontcur/fontcur.h"
 #include "system.h"
 #include "RecWindowRescale.h"
 
@@ -368,5 +369,14 @@ void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const T
 	}
 
 	va_end(as);
+	return;
+}
+
+void RecRescaleDrawCurFont(double dn, short int x, short int y, int sizeY,
+	cur_font_cr_t Cr, short int a, int zero)
+{
+	int drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+	int drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+	DrawCurFont(dn, drawX, drawY, sizeY * RESCALE_SIZE_Y, Cr, a, zero);
 	return;
 }

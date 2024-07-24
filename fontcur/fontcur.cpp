@@ -3,7 +3,6 @@
 #include "DxLib.h"
 #include "../general/strcur.h"
 #include "../general/dxcur.h"
-#include "../RecWindowRescale.h"
 
 typedef DxPic_t cur_font_pic_t[12];
 
@@ -21,16 +20,19 @@ void InitCurFont() {
 }
 
 /**
- * dn = draw number
- * x = draw X pos
- * y = draw Y pos
- * sizeY = font Y size
- * Cr = font color
- * a = under point count (if dn = 157.423 and a = 2, draw "157.42")
- * zero = draw "0." (if dn = 0.524 and zero = 0, draw ".524")
+ * —á‚ÌƒtƒHƒ“ƒg‚Å”Žš‚ð‘‚«‚Ü‚·
+ * @param[in] dn draw number
+ * @param[in] x draw X pos
+ * @param[in] y draw Y pos
+ * @param[in] sizeY font Y size
+ * @param[in] Cr font color
+ * @param[in] a under point count (if dn = 157.423 and a = 2, draw "157.42")
+ * @param[in] zero draw "0." (if dn = 0.524 and zero = 0, draw ".524")
+ * @return ‚È‚µ
  */
 void DrawCurFont(double dn, short int x, short int y, int sizeY,
-	cur_font_cr_t Cr, short int a, int zero) {
+	cur_font_cr_t Cr, short int a, int zero)
+{
 	/* int */
 	int k = 0;
 	int n;
@@ -53,18 +55,18 @@ void DrawCurFont(double dn, short int x, short int y, int sizeY,
 	for (int i = k; i >= 0; i--) {
 		m = n % 10;
 		if (a != 1 || zero == 1 || m != 0) {
-			RecRescaleDrawExtendGraph(x + i * width + (a > 0) * pointX + ZeroP * width, y,
+			DrawExtendGraph(x + i * width + (a > 0) * pointX + ZeroP * width, y,
 				x + sizeX + i * width + (a > 0) * pointX + ZeroP * width,
 				y + sizeY, cur_font_pic[Cr][m], TRUE);
 		}
 		n /= 10;
 		if (a == 1) {
-			RecRescaleDrawExtendGraph(x + i * width + ZeroP * width, y,
+			DrawExtendGraph(x + i * width + ZeroP * width, y,
 				x + sizeX + i * width + ZeroP * width, y + sizeY, cur_font_pic[Cr][CUR_FONT_ID_DOT],
 				TRUE);
 		}
 		a--;
 	}
-	if (ZeroP) { RecRescaleDrawExtendGraph(x, y, x + sizeX, y + sizeY, cur_font_pic[Cr][CUR_FONT_ID_MINUS], TRUE); }
+	if (ZeroP) { DrawExtendGraph(x, y, x + sizeX, y + sizeY, cur_font_pic[Cr][CUR_FONT_ID_MINUS], TRUE); }
 	return;
 }

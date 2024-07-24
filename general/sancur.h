@@ -2,6 +2,8 @@
 
 #include "DxLib.h"
 
+typedef int intx100_t;
+
 extern int mins(int a, int b);
 extern int mins_2(int a, int b);
 extern int maxs(int a, int b);

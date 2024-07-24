@@ -97,12 +97,12 @@ static now_scene_t ViewResult(rec_result_pal_t *val) {
 		RecRescaleDrawGraph(0, 0, resultimg, TRUE); /* back */
 		RecRescaleDrawGraph(460, 20, val->mat.difBer, TRUE); /* dif ber */
 		RecRescaleDrawString(100, 13, val->songN, COLOR_WHITE); /* song name */
-		DrawCurFont(val->judge.just, 140, 52, 30, CUR_FONT_COLOR_BLUE); /* just count */
-		DrawCurFont(val->judge.good, 140, 93, 30, CUR_FONT_COLOR_YELLOW); /* good count */
-		DrawCurFont(val->judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN); /* safe count */
-		DrawCurFont(val->judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED); /* miss count */
-		DrawCurFont(val->Mcombo, 155, 215, 30, CUR_FONT_COLOR_BLUE); /* max combo */
-		DrawCurFont(val->noteCount, 265, 215, 30, CUR_FONT_COLOR_PURPLE); /* note count */
+		RecRescaleDrawCurFont(val->judge.just, 140, 52, 30, CUR_FONT_COLOR_BLUE); /* just count */
+		RecRescaleDrawCurFont(val->judge.good, 140, 93, 30, CUR_FONT_COLOR_YELLOW); /* good count */
+		RecRescaleDrawCurFont(val->judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN); /* safe count */
+		RecRescaleDrawCurFont(val->judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED); /* miss count */
+		RecRescaleDrawCurFont(val->Mcombo, 155, 215, 30, CUR_FONT_COLOR_BLUE); /* max combo */
+		RecRescaleDrawCurFont(val->noteCount, 265, 215, 30, CUR_FONT_COLOR_PURPLE); /* note count */
 		RecRescaleDrawFormatString(10, 320, COLOR_WHITE, L"%d.%02d",
 			val->newRate / 100, val->newRate % 100); /* now runner rate */
 		/* runner rate rase */
@@ -111,13 +111,13 @@ static now_scene_t ViewResult(rec_result_pal_t *val) {
 				val->subRate / 100, val->subRate % 100);
 		}
 		else { RecRescaleDrawString(10, 340, L"not rise", COLOR_WHITE); }
-		DrawCurFont(val->score, 310, 75, 55, val->mat.fontNo); /* score */
-		DrawCurFont(val->acc, 430, 150, 30, val->mat.fontNo, 2); /* acc */
-		DrawCurFont(val->gap, 510, 205, 20, CUR_FONT_COLOR_MONO); /* gap */
-		DrawCurFont(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO); /* width */
+		RecRescaleDrawCurFont(val->score, 310, 75, 55, val->mat.fontNo); /* score */
+		RecRescaleDrawCurFont(val->acc, 430, 150, 30, val->mat.fontNo, 2); /* acc */
+		RecRescaleDrawCurFont(val->gap, 510, 205, 20, CUR_FONT_COLOR_MONO); /* gap */
+		RecRescaleDrawCurFont(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO); /* width */
 		RecRescaleDrawGraph(140, 260, val->mat.rank, TRUE); /* rank */
 #if VER_1_6 == 1
-		DrawCurFont(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, 0); /* floatrank */
+		RecRescaleDrawCurFont(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, 0); /* floatrank */
 #endif
 		RecRescaleDrawGraph(5, 420, val->mat.clearRate, TRUE); /* clear rate */
 		RecRescaleDrawGraph(336, 252, val->mat.chara, TRUE); /* chara */
