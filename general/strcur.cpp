@@ -164,26 +164,11 @@ int strrans(const TCHAR *p1) {
  * @details ŽŸ‚Ì'/'‚©':'‚ª‚ ‚é‚Æ‚±‚ë‚Ü‚ÅÁ‚·
  */
 void strnex(TCHAR *p1) {
-#if 1
 	int i = 1;
-	for (i = 0; p1[i] >= L' ' && p1[i] <= L'}' && p1[i] != L'/' && p1[i] != L':' && p1[i] != L'\0'; i++) {
-		;
-	}
-	if (p1[i] == L'/' || p1[i] == L':') {
-		i++;
-	}
+	for (i = 0; p1[i] >= _T(' ') && p1[i] <= _T('}') && p1[i] != _T('/') && p1[i] != _T(':') && p1[i] != _T('\0'); i++) { ; }
+	if (p1[i] == _T('/') || p1[i] == _T(':')) { i++; }
 	strmods(p1, i);
 	return;
-#else
-	wchar_t *p2 = p1;
-	short int a = 1;
-	while (*p1 >= L' ' && *p1 <= L'}' && *p1 != L'/' && *p1 != L':' && *p1 != L'\0') {
-		a++;
-		p1++;
-	}
-	strmods(p2, a);
-	return;
-#endif
 }
 
 /**
@@ -254,56 +239,13 @@ void stradds_2(TCHAR p1[], size_t size, TCHAR a) {
  */
 int strsans(const TCHAR *p1) {
 	int a = 0, b = 1;
-	if (*p1 == L'R') {
+	if (*p1 == _T('R')) { return strrans(p1); }
 
-	}
-	else {
-		while (*p1 == L'0' ||
-			*p1 == L'1' ||
-			*p1 == L'2' ||
-			*p1 == L'3' ||
-			*p1 == L'4' ||
-			*p1 == L'5' ||
-			*p1 == L'6' ||
-			*p1 == L'7' ||
-			*p1 == L'8' ||
-			*p1 == L'9' ||
-			*p1 == L'-') {
-			a *= 10;
-			switch (*p1) {
-			case L'1':
-				a += 1;
-				break;
-			case L'2':
-				a += 2;
-				break;
-			case L'3':
-				a += 3;
-				break;
-			case L'4':
-				a += 4;
-				break;
-			case L'5':
-				a += 5;
-				break;
-			case L'6':
-				a += 6;
-				break;
-			case L'7':
-				a += 7;
-				break;
-			case L'8':
-				a += 8;
-				break;
-			case L'9':
-				a += 9;
-				break;
-			case L'-':
-				b *= -1;
-				break;
-			}
-			p1++;
-		}
+	for (int i = 0; i < 50; i++) {
+		if (_T('0') <= *p1 && *p1 <= _T('9')) { a = a * 10 + (*p1 - _T('0')); }
+		else if (*p1 == _T('-')) { b *= -1; }
+		else { break; }
+		p1++;
 	}
 
 	return a * b;
@@ -460,75 +402,7 @@ void get_rec_file(TCHAR *s, int pack, int music, int dif, TXT_OR_RRS torr) {
  * @param[in] as valist‚ÌŽÀ‘Ì
  */
 void vScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], va_list as) {
-	enum {
-		NON,
-		PAR,
-		ESC,
-	} mode = NON;
-	int count;
-	TCHAR buf[32];
-	int unsignval = 0;
-
-	ret[0] = L'\0';
-
-	for (int i = 0; s[i] != L'\0'; i++) {
-		switch (mode) {
-		case NON:
-			if (s[i] == L'%') {
-				mode = PAR;
-			}
-			else if (s[i] == L'\\') {
-				mode = ESC;
-				stradds_2(ret, size, L'\\');
-			}
-			else {
-				stradds_2(ret, size, s[i]);
-			}
-			break;
-		case PAR:
-			switch (s[i]) {
-			case L'+':
-				stradds_2(ret, size, L'+');
-				break;
-			case L'd':
-			case L'o':
-			case L'x':
-			case L'e':
-			case L'g':
-			case L'p':
-				strnums(buf, va_arg(as, int), 32);
-				strcats_2(ret, size, buf);
-				break;
-			case L'u':
-				if (unsignval)
-				strnums(buf, (unsigned int)va_arg(as, int), 32);
-				strcats_2(ret, size, buf);
-				break;
-			case L'f':
-				strnumsD(buf, va_arg(as, double), 32, 6);
-				strcats_2(ret, size, buf);
-				break;
-			case L's':
-				strcats_2(ret, size, va_arg(as, TCHAR *));
-				break;
-			case L'c':
-				stradds_2(ret, size, va_arg(as, TCHAR));
-				break;
-			}
-			if ((s[i] != L'l') && (s[i] != L'h') && (s[i] != L'+') && (s[i] != L'-') && (s[i] != L'.') &&
-				((s[i] < L'0') || (s[i] > L'9')))
-			{
-				mode = NON;
-			}
-			break;
-		case ESC:
-			stradds_2(ret, size, s[i]);
-			mode = NON;
-			break;
-		}
-	}
-
-	ret[size - 1] = L'\0';
+	_VSPRINTF_S(ret, size, s, as);
 	return;
 }
 
