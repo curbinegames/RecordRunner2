@@ -199,119 +199,6 @@ int strwlens(const TCHAR* s) {
 	return 0;
 }
 
-/* TODO: これも多分recにあるべき */
-int strrans(const TCHAR *p1) {
-	int a, b;
-	TCHAR buf[16];
-	strcopy_2(p1, buf, 16);
-	strmods(buf, 2);
-	a = strsans(buf);
-	strnex_EX(buf, _T(','));
-	b = mins(strsans(buf), a);
-	return GetRand(b - a) + a;
-}
-
-/**
- * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrnex_2を使ってください
- * @param[out] p1 対象となる文字列
- * @sa strnex_2
- * @details 次の'/'か':'があるところまで消す
- */
-void strnex(TCHAR *p1) {
-	int i = 1;
-	for (i = 0; p1[i] >= _T(' ') && p1[i] <= _T('}') && p1[i] != _T('/') && p1[i] != _T(':') && p1[i] != _T('\0'); i++) { ; }
-	if (p1[i] == _T('/') || p1[i] == _T(':')) { i++; }
-	strmods(p1, i);
-	return;
-}
-
-/**
- * 次の'/'か':'があるところまで消す
- * @param[out] p1 対象となる文字列
- * @param[in] size p1のサイズ、配列数で指定
- */
-void strnex_2(TCHAR *p1, size_t size) {
-	int i = 1;
-	for (i = 0; i < size && p1[i] >= _T(' ') && p1[i] <= _T('}') && p1[i] != _T('/') && p1[i] != _T(':') && p1[i] != _T('\0'); i++) { ; }
-	if (p1[i] == _T('/') || p1[i] == _T(':')) { i++; }
-	strmods(p1, i);
-	return;
-}
-
-/**
- * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrnex_EX2を使ってください
- * @param[out] p1 対象となる文字列
- * @param[in] p3 指定の文字
- * @sa strnex_EX2
- * @details 指定の文字p3があるところまで消す
- */
-void strnex_EX(TCHAR *p1, TCHAR p3) {
-	TCHAR *p2 = p1;
-	short int a = 1;
-	while (*p1 >= _T(' ') && *p1 <= _T('}') && *p1 != p3 && *p1 != _T('\0')) {
-		a++;
-		p1++;
-	}
-	strmods(p2, a);
-	return;
-}
-
-/**
- * 指定の文字p3があるところまで消す
- * @param[out] p1 対象となる文字列
- * @param[in] p3 指定の文字
- */
-void strnex_EX2(TCHAR *p1, TCHAR p3) {
-	TCHAR *p2 = p1;
-	short int a = 1;
-	while (*p1 >= _T(' ') && *p1 <= _T('}') && *p1 != p3 && *p1 != _T('\0')) {
-		a++;
-		p1++;
-	}
-	strmods(p2, a);
-	return;
-}
-
-/**
- * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstradds_2を使ってください
- * @param[out] p1 足される文字列
- * @param[in] a 足す文字
- * @sa stradds_2
- * @details p1の最後にaの文字を追加する
- */
-void stradds(TCHAR *p1, TCHAR a) {
-	while (*p1 != _T('\0')) p1++;
-	*p1++ = a;
-	*p1 = _T('\0');
-	return;
-}
-
-/**
- * p1の最後にaの文字を追加する
- * @param[out] p1 足される文字列
- * @param[in] size p1のサイズ、配列数で指定
- * @param[in] a 足す文字
- * @note 文字列を追加したいときはstrcats_2を使ってください
- * @sa strcats_2
- */
-void stradds_2(TCHAR p1[], size_t size, TCHAR a) {
-	int offset = -1;
-
-	for (int i = 0; i < size; i++) {
-		if (p1[i] == _T('\0')) {
-			offset = i;
-			break;
-		}
-	}
-
-	if (offset == -1) { return; }
-
-	p1[offset] = a;
-	p1[offset + 1] = _T('\0');
-	p1[size - 1] = _T('\0');
-	return;
-}
-
 /**
  * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrsans_3を使ってください
  * 文字列を数字に変換にする。
@@ -416,6 +303,107 @@ double strsansD(const TCHAR *p1, size_t size) {
 }
 
 /**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrnex_2を使ってください
+ * @param[out] p1 対象となる文字列
+ * @sa strnex_2
+ * @details 次の'/'か':'があるところまで消す
+ */
+void strnex(TCHAR *p1) {
+	int i = 1;
+	for (i = 0; p1[i] >= _T(' ') && p1[i] <= _T('}') && p1[i] != _T('/') && p1[i] != _T(':') && p1[i] != _T('\0'); i++) { ; }
+	if (p1[i] == _T('/') || p1[i] == _T(':')) { i++; }
+	strmods(p1, i);
+	return;
+}
+
+/**
+ * 次の'/'か':'があるところまで消す
+ * @param[out] p1 対象となる文字列
+ * @param[in] size p1のサイズ、配列数で指定
+ */
+void strnex_2(TCHAR *p1, size_t size) {
+	int i = 1;
+	for (i = 0; i < size && p1[i] >= _T(' ') && p1[i] <= _T('}') && p1[i] != _T('/') && p1[i] != _T(':') && p1[i] != _T('\0'); i++) { ; }
+	if (p1[i] == _T('/') || p1[i] == _T(':')) { i++; }
+	strmods(p1, i);
+	return;
+}
+
+/**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrnex_EX2を使ってください
+ * @param[out] p1 対象となる文字列
+ * @param[in] p3 指定の文字
+ * @sa strnex_EX2
+ * @details 指定の文字p3があるところまで消す
+ */
+void strnex_EX(TCHAR *p1, TCHAR p3) {
+	TCHAR *p2 = p1;
+	short int a = 1;
+	while (*p1 >= _T(' ') && *p1 <= _T('}') && *p1 != p3 && *p1 != _T('\0')) {
+		a++;
+		p1++;
+	}
+	strmods(p2, a);
+	return;
+}
+
+/**
+ * 指定の文字p3があるところまで消す
+ * @param[out] p1 対象となる文字列
+ * @param[in] p3 指定の文字
+ */
+void strnex_EX2(TCHAR *p1, TCHAR p3) {
+	TCHAR *p2 = p1;
+	short int a = 1;
+	while (*p1 >= _T(' ') && *p1 <= _T('}') && *p1 != p3 && *p1 != _T('\0')) {
+		a++;
+		p1++;
+	}
+	strmods(p2, a);
+	return;
+}
+
+/**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstradds_2を使ってください
+ * @param[out] p1 足される文字列
+ * @param[in] a 足す文字
+ * @sa stradds_2
+ * @details p1の最後にaの文字を追加する
+ */
+void stradds(TCHAR *p1, TCHAR a) {
+	while (*p1 != _T('\0')) p1++;
+	*p1++ = a;
+	*p1 = _T('\0');
+	return;
+}
+
+/**
+ * p1の最後にaの文字を追加する
+ * @param[out] p1 足される文字列
+ * @param[in] size p1のサイズ、配列数で指定
+ * @param[in] a 足す文字
+ * @note 文字列を追加したいときはstrcats_2を使ってください
+ * @sa strcats_2
+ */
+void stradds_2(TCHAR p1[], size_t size, TCHAR a) {
+	int offset = -1;
+
+	for (int i = 0; i < size; i++) {
+		if (p1[i] == _T('\0')) {
+			offset = i;
+			break;
+		}
+	}
+
+	if (offset == -1) { return; }
+
+	p1[offset] = a;
+	p1[offset + 1] = _T('\0');
+	p1[size - 1] = _T('\0');
+	return;
+}
+
+/**
  * 数値を文字列にする。小数点以下は無視される
  * @param[out] ret 変換された文字列の格納場所
  * @param[in] val 変換する数値
@@ -488,6 +476,44 @@ void strnumsD(TCHAR ret[], double val, size_t size, int under) {
 	return;
 }
 
+/**
+ * やってることはvsprintf_sと一緒の為、わざわざこの関数を使う必要なし。vsprintf_sを使ってください。
+ * @param[out] ret 変換した文字列を格納する場所
+ * @param[in] size retの大きさ。配列数で指定
+ * @param[in] s 変換する文字列
+ * @param[in] as valistの実体
+ */
+void vScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], va_list as) {
+	_VSPRINTF_S(ret, size, s, as);
+	return;
+}
+
+/**
+ * やってることはsprintf_sと一緒の為、わざわざこの関数を使う必要なし。sprintf_sを使ってください。
+ * @param[out] ret 変換した文字列を格納する場所
+ * @param[in] size retの大きさ。配列数で指定
+ * @param[in] s 変換する文字列
+ */
+void ScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], ...) {
+	va_list as;
+	va_start(as, s);
+	_VSPRINTF_S(ret, size, s, as);
+	va_end(as);
+	return;
+}
+
+/* TODO: これも多分recにあるべき */
+int strrans(const TCHAR *p1) {
+	int a, b;
+	TCHAR buf[16];
+	strcopy_2(p1, buf, 16);
+	strmods(buf, 2);
+	a = strsans(buf);
+	strnex_EX(buf, _T(','));
+	b = mins(strsans(buf), a);
+	return GetRand(b - a) + a;
+}
+
 /* TODO: get_rec_file()はrecにあるべき */
 void get_rec_file(TCHAR *s, int pack, int music, int dif, TXT_OR_RRS torr) {
 	TCHAR ret[255] = _T("record/");
@@ -527,31 +553,5 @@ void get_rec_file(TCHAR *s, int pack, int music, int dif, TXT_OR_RRS torr) {
 		strcats(ret, _T(".txt")); /* ret = "record/pask/music/3.txt" */
 	}
 	strcopy(ret, s, 1);
-	return;
-}
-
-/**
- * やってることはvsprintf_sと一緒の為、わざわざこの関数を使う必要なし。vsprintf_sを使ってください。
- * @param[out] ret 変換した文字列を格納する場所
- * @param[in] size retの大きさ。配列数で指定
- * @param[in] s 変換する文字列
- * @param[in] as valistの実体
- */
-void vScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], va_list as) {
-	_VSPRINTF_S(ret, size, s, as);
-	return;
-}
-
-/**
- * やってることはsprintf_sと一緒の為、わざわざこの関数を使う必要なし。sprintf_sを使ってください。
- * @param[out] ret 変換した文字列を格納する場所
- * @param[in] size retの大きさ。配列数で指定
- * @param[in] s 変換する文字列
- */
-void ScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], ...) {
-	va_list as;
-	va_start(as, s);
-	_VSPRINTF_S(ret, size, s, as);
-	va_end(as);
 	return;
 }
