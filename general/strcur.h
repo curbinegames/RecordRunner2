@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tchar.h>
+
 typedef enum {
 	FILETYPE_TXT,
 	FILETYPE_RRS,

@@ -1,11 +1,16 @@
+/**
+ * @file strcur.cpp
+ * @brief 文字列操作で便利なものを集めたコード
+ * @author curbine
+ * @date 2024/7/19
+ * @note 個人が趣味で製作したものなので、品質は保証しません。このコードを使用したことによるトラブルの責任は負いかねます。
+ */
+
 #pragma once
 
+#include <string.h>
+#include "strcur.h"
 #include "sancur.h"
-
-typedef enum {
-	FILETYPE_TXT,
-	FILETYPE_RRS,
-} TXT_OR_RRS;
 
 int strands(const wchar_t *p1, const wchar_t *p2);
 void strcopy(const wchar_t*, wchar_t*, int);
@@ -21,7 +26,13 @@ int strsans(wchar_t*);
 double strsans2(wchar_t*);
 void get_rec_file(wchar_t *s, int pack, int music, int dif, TXT_OR_RRS torr);
 
-//p1の先頭にp2があるかどうかを調べる
+/**
+ * p1の先頭にp2があるかどうかを調べる
+ * @param[in] p1 探す場所
+ * @param[in] p2 探す文字列
+ * @return int あったら1、なかったら0
+ * @sa strands_2
+ */
 int strands(const wchar_t *p1, const wchar_t *p2) {
 	for (int i = 0; i < 50; i++) {
 		if (p2[i] == L'\0') {
@@ -35,10 +46,11 @@ int strands(const wchar_t *p1, const wchar_t *p2) {
 }
 
 /**
- * この関数はもう使っちゃダメ、代わりにstrcopy_2を使ってください
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrcopy_2を使ってください
  * @param[in] p1 コピーするもの
  * @param[in] p2 コピー先
  * @param[in] c 初期化フラグ
+ * @sa strcopy_2
  * @details p1をp2にコピーする。cに1を入れると255桁まで初期化する(初期化推奨)
  */
 void strcopy(const wchar_t *p1, wchar_t *p2, int c) {
@@ -71,7 +83,13 @@ void strcopy_2(const wchar_t *p1, wchar_t *p2, size_t size) {
 	return;
 }
 
-//p1から先頭a文字を消す
+/**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrmods_2を使ってください
+ * @param[out] p1 対象の文字列
+ * @param[in] a 消す文字数
+ * @sa strmods_2
+ * @details p1から先頭a文字を消す
+ */
 void strmods(wchar_t *p1, int a) {
 	int i;
 	wchar_t *p2 = p1;
@@ -89,10 +107,10 @@ void strmods(wchar_t *p1, int a) {
 }
 
 /**
- * この関数はもう使っちゃダメ、代わりにstrcats_2を使ってください
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrcats_2を使ってください
  * @param[out] p1 足される文字列
  * @param[in] p2 足す文字列
- * @return なし
+ * @sa strcats_2
  * @details p1の最後にp2を付ける
  */
 void strcats(wchar_t *p1, const wchar_t *p2) {
@@ -110,8 +128,8 @@ void strcats(wchar_t *p1, const wchar_t *p2) {
  * @param[out] p1 足される文字列
  * @param[in] size p1のサイズ、配列数で指定
  * @param[in] p2 足す文字列
- * @return なし
  * @note 1文字だけ追加したいときはstradds_2を使ってください
+ * @sa stradds_2
  */
 void strcats_2(TCHAR p1[], size_t size, const TCHAR *p2) {
 	int offset = -1;
@@ -133,6 +151,13 @@ void strcats_2(TCHAR p1[], size_t size, const TCHAR *p2) {
 	return;
 }
 
+/**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrlens_2を使ってください
+ * @param[in] s 対象となる文字列
+ * @return int sの長さ
+ * @sa strlens_2
+ * @details 文字列sの長さを取得する
+ */
 int strlens(const wchar_t* s) {
 	int ret = 0;
 	for (ret = 0; ret < 255; ret++) {
@@ -143,6 +168,12 @@ int strlens(const wchar_t* s) {
 	return ret;
 }
 
+/**
+ * 文字列sの長さを取得する
+ * @param[in] s 対象となる文字列
+ * @return int sの長さ
+ * @note この関数いる?
+ */
 int strwlens(const wchar_t* s) {
 	int ret = 0;
 	for (int p = 0; p < 255; p++) {
@@ -159,6 +190,7 @@ int strwlens(const wchar_t* s) {
 	return ret;
 }
 
+/* TODO: これも多分recにあるべき */
 int strrans(wchar_t *p1) {
 	int a, b;
 	strmods(p1, 2);
@@ -168,7 +200,12 @@ int strrans(wchar_t *p1) {
 	return GetRand(b - a) + a;
 }
 
-//次の'/'か':'があるところまで消す
+/**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrnex_2を使ってください
+ * @param[out] p1 対象となる文字列
+ * @sa strnex_2
+ * @details 次の'/'か':'があるところまで消す
+ */
 void strnex(wchar_t *p1) {
 #if 1
 	int i = 1;
@@ -192,7 +229,13 @@ void strnex(wchar_t *p1) {
 #endif
 }
 
-//指定の文字p3があるところまで消す
+/**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrnex_EX2を使ってください
+ * @param[out] p1 対象となる文字列
+ * @param[in] p3 指定の文字
+ * @sa strnex_EX2
+ * @details 指定の文字p3があるところまで消す
+ */
 void strnex_EX(wchar_t *p1,wchar_t p3) {
 	wchar_t *p2 = p1;
 	short int a = 1;
@@ -205,10 +248,10 @@ void strnex_EX(wchar_t *p1,wchar_t p3) {
 }
 
 /**
- * この関数はもう使っちゃダメ、代わりにstradds_2を使ってください
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstradds_2を使ってください
  * @param[out] p1 足される文字列
  * @param[in] a 足す文字
- * @return なし
+ * @sa stradds_2
  * @details p1の最後にaの文字を追加する
  */
 void stradds(TCHAR *p1, TCHAR a) {
@@ -223,8 +266,8 @@ void stradds(TCHAR *p1, TCHAR a) {
  * @param[out] p1 足される文字列
  * @param[in] size p1のサイズ、配列数で指定
  * @param[in] a 足す文字
- * @return なし
  * @note 文字列を追加したいときはstrcats_2を使ってください
+ * @sa strcats_2
  */
 void stradds_2(TCHAR p1[], size_t size, TCHAR a) {
 	int offset = -1;
@@ -246,8 +289,14 @@ void stradds_2(TCHAR p1[], size_t size, TCHAR a) {
 	return;
 }
 
-//文字列を数字に変換にする
-//途中に数字,マイナス以外の文字があったら終わり
+/**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrsans_3を使ってください
+ * 文字列を数字に変換にする。
+ * @param[in] p1 変換する文字列
+ * @return int 変換結果
+ * @sa strsans_3
+ * @details 文字列を数字に変換にする。途中に数字,マイナス以外の文字があったら終わり
+ */
 int strsans(wchar_t *p1) {
 	int a = 0, b = 1;
 	if (*p1 == L'R') {
@@ -303,7 +352,13 @@ int strsans(wchar_t *p1) {
 	}
 	return a * b;
 }
-//小数を可にしたもの
+
+/**
+ * バッファオーバーランを起こす可能性がある為、この関数はもう使っちゃダメ、代わりにstrsansDを使ってください
+ * @param[in] p1 変換する文字列
+ * @return double 変換結果
+ * @details strsans()の小数を可にしたもの
+ */
 double strsans2(wchar_t *p1) {
 	short int b = 1, c = 0, d = 99, i;
 	double a = 0;
@@ -332,6 +387,7 @@ double strsans2(wchar_t *p1) {
  * @param[in] val 変換する数値
  * @param[in] size retの長さ。配列数で指定
  * @note 小数点以下も文字列にしたい場合はstrnumsDを使ってください
+ * @sa strnumsD
  */
 void strnums(TCHAR ret[], int val, size_t size) {
 	int keta = 1;
@@ -379,6 +435,7 @@ void strnums(TCHAR ret[], int val, size_t size) {
  * @param[in] size retの長さ。配列数で指定
  * @param[in] under 小数点以下の桁数
  * @note 小数点以下を無視する場合はstrnumsを使ってください
+ * @sa strnums
  */
 void strnumsD(TCHAR ret[], double val, size_t size, int under) {
 	int keta = 1;
@@ -405,6 +462,7 @@ void strnumsD(TCHAR ret[], double val, size_t size, int under) {
 	return;
 }
 
+/* TODO: get_rec_file()はrecにあるべき */
 void get_rec_file(wchar_t *s, int pack, int music, int dif, TXT_OR_RRS torr) {
 	wchar_t ret[255] = L"record/";
 	wchar_t GT1[255];
@@ -447,14 +505,11 @@ void get_rec_file(wchar_t *s, int pack, int music, int dif, TXT_OR_RRS torr) {
 }
 
 /**
- * ScanPrintfStrの引数がva_listバージョン
+ * やってることはvsprintf_sと一緒の為、わざわざこの関数を使う必要なし。vsprintf_sを使ってください。
  * @param[out] ret 変換した文字列を格納する場所
- * @param[out] size retの大きさ。配列数で指定
- * @param[out] s 変換する文字列
- * @param[out] as valistの実体
- * @return なし
- * @note %o, %x, %e, %g, %pは%dとして変換されます。
- *   0埋め、桁指定、左寄せには対応していません
+ * @param[in] size retの大きさ。配列数で指定
+ * @param[in] s 変換する文字列
+ * @param[in] as valistの実体
  */
 void vScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], va_list as) {
 	enum {
@@ -530,13 +585,10 @@ void vScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], va_list as) {
 }
 
 /**
- * 書式指定子のついた文字列をただの文字列に変換します
+ * やってることはsprintf_sと一緒の為、わざわざこの関数を使う必要なし。sprintf_sを使ってください。
  * @param[out] ret 変換した文字列を格納する場所
- * @param[out] size retの大きさ。配列数で指定
- * @param[out] s 変換する文字列
- * @return なし
- * @note %o, %x, %e, %g, %pは%dとして変換されます。
- *   0埋め、桁指定、左寄せには対応していません
+ * @param[in] size retの大きさ。配列数で指定
+ * @param[in] s 変換する文字列
  */
 void ScanPrintfStr(TCHAR *ret, size_t size, const TCHAR s[], ...) {
 	va_list as;
