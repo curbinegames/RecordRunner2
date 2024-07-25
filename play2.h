@@ -67,15 +67,11 @@ typedef struct rec_play_back_pic_s {
 
 /* proto */
 int GetHighScore(wchar_t pas[255], int dif);
-int GetRemainNotes2(struct judge_box judge, int Notes);
 struct score_box GetScore3(struct score_box score, struct judge_box judge,
 	const int notes, const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
 void Getxxxwav(wchar_t *str, int num);
-int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo);
 void ShowCombo(int combo, int *pic);
-void ShowScore2(struct score_box score, int Hscore, int time);
-void RunningStats2(struct judge_box judge, int PosScore, int HighScore);
 
 #endif /* proto */
 
@@ -378,6 +374,10 @@ static void RecGetMapPath(TCHAR *mapPath, int packNo, int musicNo, int LvNo) {
 	return;
 }
 
+static int GetRemainNotes2(struct judge_box judge, int Notes) {
+	return Notes - judge.just - judge.good - judge.safe - judge.miss;
+}
+
 #endif /* sub action */
 
 #if 1 /* Notes Picture */
@@ -654,6 +654,56 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime,
 }
 
 #endif /* Guide Line */
+
+int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
+	int PosCombo = mins(combo + RemainNotes, MaxCombo);
+	return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
+}
+
+void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {
+	const int x1 = 6;
+	const int y1 = 6;
+	const int x2 = 188;
+	const int y2 = 6;
+	const int x3 = 150;
+	const int y3 = 69;
+	const int x4 = 6;
+	const int y4 = 69;
+	unsigned int CrG = GetColor(63, 63, 63);
+	unsigned int CrD = GetColor(255, 63, 127);
+	unsigned int CrY = GetColor(255, 255, 0);
+	unsigned int CrC = GetColor(0, 255, 255);
+	if (judge.miss > 0) {
+		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrG, TRUE);
+	}
+	else if (judge.safe > 0) {
+		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrD, TRUE);
+	}
+	else if (judge.good > 0) {
+		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrY, TRUE);
+	}
+	else {
+		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrC, TRUE);
+	}
+	if (PosScore < HighScore) {
+		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, CrG, TRUE);
+	}
+	else {
+		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, GetColor(lins(HighScore, 255, 100000, 0, PosScore), 255, lins(HighScore, 0, 100000, 255, PosScore)), TRUE);
+	}
+}
+
+void ShowScore2(struct score_box score, int Hscore, int time) {
+	unsigned int Cr = GetColor(255, 255, 255);
+	int s_score = score.sum;
+	if (time - score.time < 500) {
+		s_score = pals(500, score.sum, 0, score.before, time - score.time);
+	}
+	if (Hscore <= s_score) {
+		Cr = GetColor(255, 255, 0);
+	}
+	RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
+}
 
 /* main action */
 
@@ -1425,10 +1475,6 @@ int GetHighScore(wchar_t pas[255], int dif) {
 	return a[dif];
 }
 
-int GetRemainNotes2(struct judge_box judge, int Notes) {
-	return Notes - judge.just - judge.good - judge.safe - judge.miss;
-}
-
 struct score_box GetScore3(struct score_box score, struct judge_box judge, const int notes,
 	const int MaxCombo) {
 	score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
@@ -1481,11 +1527,6 @@ void Getxxxwav(wchar_t *str, int num) {
 	return;
 }
 
-int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
-	int PosCombo = mins(combo + RemainNotes, MaxCombo);
-	return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
-}
-
 void ShowCombo(int combo, int *pic) {
 #define ROCATION_X 320
 #define ROCATION_Y 150
@@ -1509,51 +1550,6 @@ void ShowCombo(int combo, int *pic) {
 		}
 		s %= 10;
 		RecRescaleDrawGraph(t * CHARA_WIDTH / 2 - CHARA_WIDTH / 2 - i * CHARA_WIDTH - xx / 2 + ROCATION_X, ROCATION_Y, pic[s], TRUE);
-	}
-}
-
-void ShowScore2(struct score_box score, int Hscore, int time) {
-	unsigned int Cr = GetColor(255, 255, 255);
-	int s_score = score.sum;
-	if (time - score.time < 500) {
-		s_score = pals(500, score.sum, 0, score.before, time - score.time);
-	}
-	if (Hscore <= s_score) {
-		Cr = GetColor(255, 255, 0);
-	}
-	RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
-}
-
-void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {
-#define x1 6
-#define y1 6
-#define x2 188
-#define y2 6
-#define x3 150
-#define y3 69
-#define x4 6
-#define y4 69
-	unsigned int CrG = GetColor(63, 63, 63);
-	unsigned int CrD = GetColor(255, 63, 127);
-	unsigned int CrY = GetColor(255, 255, 0);
-	unsigned int CrC = GetColor(0, 255, 255);
-	if (judge.miss > 0) {
-		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrG, TRUE);
-	}
-	else if (judge.safe > 0) {
-		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrD, TRUE);
-	}
-	else if (judge.good > 0) {
-		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrY, TRUE);
-	}
-	else {
-		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrC, TRUE);
-	}
-	if (PosScore < HighScore) {
-		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, CrG, TRUE);
-	}
-	else {
-		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, GetColor(lins(HighScore, 255, 100000, 0, PosScore), 255, lins(HighScore, 0, 100000, 255, PosScore)), TRUE);
 	}
 }
 
