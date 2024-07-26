@@ -1,7 +1,9 @@
 #pragma once
 
 #define COLOR_WHITE 0xffffffff
+#define COLOR_BLACK 0xff000000
 
+typedef int DxColor_t; /* DXライブラリの色であることを示す型。int型 */
 typedef int DxPic_t; /* DXライブラリのグラフィックのハンドルであることを示す型。int型 */
 typedef int DxSnd_t; /* DXライブラリのサウンドのハンドルであることを示す型。int型 */
 

@@ -1,6 +1,7 @@
 
 /* TODO: ノーツ横位置固定バグが起こってる!!! */
 /* TODO: アイテム表示バグが起こってる!!! */
+/* TODO: L"str"を_T("str")に変える" */
 
 #if 1 /* define group */
 
@@ -9,6 +10,7 @@
 #include "general/sancur.h"
 #include "general/strcur.h"
 #include "general/dxdraw.h"
+#include "general/dxcur.h"
 #include "system.h"
 #include "RecScoreFile.h"
 #include "RecordLoad2.h"
@@ -374,7 +376,7 @@ static void RecGetMapPath(TCHAR *mapPath, int packNo, int musicNo, int LvNo) {
 	return;
 }
 
-static int GetRemainNotes2(struct judge_box judge, int Notes) {
+static int GetRemainNotes(struct judge_box judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
 
@@ -655,55 +657,165 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime,
 
 #endif /* Guide Line */
 
-int CalPosScore2(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
-	int PosCombo = mins(combo + RemainNotes, MaxCombo);
-	return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
-}
+#if 1 /* class */
 
-void RunningStats2(struct judge_box judge, int PosScore, int HighScore) {
-	const int x1 = 6;
-	const int y1 = 6;
-	const int x2 = 188;
-	const int y2 = 6;
-	const int x3 = 150;
-	const int y3 = 69;
-	const int x4 = 6;
-	const int y4 = 69;
-	unsigned int CrG = GetColor(63, 63, 63);
-	unsigned int CrD = GetColor(255, 63, 127);
-	unsigned int CrY = GetColor(255, 255, 0);
-	unsigned int CrC = GetColor(0, 255, 255);
-	if (judge.miss > 0) {
-		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrG, TRUE);
-	}
-	else if (judge.safe > 0) {
-		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrD, TRUE);
-	}
-	else if (judge.good > 0) {
-		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrY, TRUE);
-	}
-	else {
-		RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrC, TRUE);
-	}
-	if (PosScore < HighScore) {
-		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, CrG, TRUE);
-	}
-	else {
-		RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, GetColor(lins(HighScore, 255, 100000, 0, PosScore), 255, lins(HighScore, 0, 100000, 255, PosScore)), TRUE);
-	}
-}
+static class rec_play_sbar_c {
+private:
+	DxPic_t baseImg;
+	struct {
+		DxPic_t Green;
+		DxPic_t Yellow;
+		DxPic_t Red;
+	} Lbarimg;
+	DxPic_t Tbarimg[2];
+	DxPic_t sbbarimg;
 
-void ShowScore2(struct score_box score, int Hscore, int time) {
-	unsigned int Cr = GetColor(255, 255, 255);
-	int s_score = score.sum;
-	if (time - score.time < 500) {
-		s_score = pals(500, score.sum, 0, score.before, time - score.time);
+	int CalPosScore(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
+		int PosCombo = maxs_2(combo + RemainNotes, MaxCombo);
+		return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
 	}
-	if (Hscore <= s_score) {
-		Cr = GetColor(255, 255, 0);
+
+	void RunningStats(struct judge_box judge, int PosScore, int HighScore) {
+		int x1 = 6;
+		int y1 = 6;
+		int x2 = 188;
+		int y2 = 6;
+		int x3 = 150;
+		int y3 = 69;
+		int x4 = 6;
+		int y4 = 69;
+		DxColor_t CrG = GetColor(63, 63, 63);
+		DxColor_t CrD = GetColor(255, 63, 127);
+		DxColor_t CrY = GetColor(255, 255, 0);
+		DxColor_t CrC = GetColor(0, 255, 255);
+
+		if (judge.miss > 0) {
+			RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrG, TRUE);
+		}
+		else if (judge.safe > 0) {
+			RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrD, TRUE);
+		}
+		else if (judge.good > 0) {
+			RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrY, TRUE);
+		}
+		else {
+			RecRescaleDrawTriangle(x1, y1, x2, y2, x3, y3, CrC, TRUE);
+		}
+		if (PosScore < HighScore) {
+			RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, CrG, TRUE);
+		}
+		else {
+			DxColor_t Cr = GetColor(lins(HighScore, 255, 100000, 0, PosScore), 255, lins(HighScore, 0, 100000, 255, PosScore));
+			RecRescaleDrawTriangle(x1, y1, x3, y3, x4, y4, Cr, TRUE);
+		}
 	}
-	RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
-}
+
+	void ViewScore(score_box score, int Hscore, int time) {
+		DxColor_t Cr = GetColor(255, 255, 255);
+		int s_score = score.sum;
+
+		if (time - score.time < 500) {
+			s_score = pals(500, score.sum, 0, score.before, time - score.time);
+		}
+		if (Hscore <= s_score) {
+			Cr = GetColor(255, 255, 0);
+		}
+		RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
+	}
+
+	void ViewLife(int life) {
+		int DrawX = lins(0, -114, 500, 177, life);
+
+		if (100 < life) {
+			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Green, TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 255, 500, 0, life));
+			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Yellow, TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		}
+		else {
+			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red, TRUE);
+		}
+		RecRescaleDrawFormatString(440, 10, COLOR_WHITE, L"%3d", life);
+	}
+
+	void ViewDist(rec_play_status_t status, const distance_score_t *Dscore, const rec_play_time_set_t *time) {
+		int DrawX = 0;
+		int DrawNo = 0;
+		DxColor_t cr = COLOR_WHITE;
+
+		if (status == REC_PLAY_STATUS_CLEARED) {
+			DrawNo = 1;
+			cr = COLOR_BLACK;
+		}
+		DrawX = (291 * Dscore->now_dis - 136 * time->end + 136 * time->offset) / (time->end - time->offset);
+		RecRescaleDrawGraph(DrawX, 38, this->Tbarimg[DrawNo], TRUE);
+		RecRescaleDrawFormatString(180, 45, cr, L"%.3fkm", Dscore->point / 1000.0);
+	}
+
+	void ViewRunStatus(const rec_play_userpal_t *userpal, int notes, int HighScore) {
+		int RemainNotes = GetRemainNotes(userpal->judgeCount, notes);
+		int PosScore = this->CalPosScore(userpal->score, RemainNotes, notes, userpal->Ncombo, userpal->Mcombo);
+		this->RunningStats(userpal->judgeCount, PosScore, HighScore);
+	}
+
+	void ViewDdif(const int ddif[], int ddifG1) {
+		int DrawX1 = 0;
+		int DrawY1 = 0;
+		int DrawX2 = 0;
+		int DrawY2 = 0;
+		int leftLimit = 0;
+		int rightLimit = 0;
+		DxColor_t Cr = COLOR_WHITE;
+
+		leftLimit = lins(0, 155, ddifG1, 175, ddif[0]);
+		rightLimit = lins(0, 447, ddifG1, 467, ddif[24]);
+
+		for (int iBlock = 0; iBlock <= 23; iBlock++) {
+			DrawX1 = lins(0, leftLimit, 24, rightLimit, iBlock);
+			DrawX2 = lins(0, leftLimit, 24, rightLimit, iBlock + 1);
+			DrawY1 = lins(0, 72, ddifG1, 38, iBlock);
+			DrawY2 = lins(0, 72, ddifG1, 38, iBlock + 1);
+			RecRescaleDrawLine(DrawX1, DrawY1, DrawX2, DrawY2, Cr);
+		}
+	}
+
+public:
+	rec_play_sbar_c() {
+		this->baseImg = LoadGraph(_T("picture/scoreber.png"));
+		this->Lbarimg.Green = LoadGraph(_T("picture/LIFEbar.png"));
+		this->Lbarimg.Yellow = LoadGraph(_T("picture/LIFEbar2.png"));
+		this->Lbarimg.Red = LoadGraph(_T("picture/LIFEbar3.png"));
+		this->Tbarimg[0] = LoadGraph(_T("picture/TIMEbar.png"));
+		this->Tbarimg[1] = LoadGraph(_T("picture/TIMEbar2.png"));
+		this->sbbarimg = LoadGraph(_T("picture/scoreber2.png"));
+	}
+
+	~rec_play_sbar_c() {
+		DeleteGraph(this->baseImg);
+		DeleteGraph(this->Lbarimg.Green);
+		DeleteGraph(this->Lbarimg.Yellow);
+		DeleteGraph(this->Lbarimg.Red);
+		DeleteGraph(this->Tbarimg[0]);
+		DeleteGraph(this->Tbarimg[1]);
+		DeleteGraph(this->sbbarimg);
+	}
+
+	void ViewScoreBar(const rec_play_userpal_t *userpal, const rec_play_time_set_t *time,
+		const rec_map_detail_t *mapdata, int Hscore, int holdG)
+	{
+		RecRescaleDrawGraph(0, 0, this->baseImg, TRUE);
+		this->ViewScore(userpal->score, Hscore, time->now);
+		this->ViewLife(userpal->life);
+		this->ViewDist(userpal->status, &userpal->Dscore, time);
+		RecRescaleDrawGraph(0, 0, this->sbbarimg, TRUE);
+		this->ViewRunStatus(userpal, mapdata->notes, Hscore);
+		if (holdG >= 1) {
+			this->ViewDdif(mapdata->ddif, mapdata->ddifG[1]);
+		}
+	}
+};
+
+#endif /* class */
 
 /* main action */
 
@@ -779,6 +891,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	wchar_t GT1[255];
 	wchar_t GT2[255];
 	wchar_t ST3[] = L".dat";
+	/* class */
+	rec_play_sbar_c sbarClass;
 	int item[99]; //アイテムのfd、DrawGraphで呼べる。
 	short int itemN = 0; //↑の番号
 	int Sitem[99]; //サウンドアイテムのfd
@@ -789,21 +903,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_back_pic_t backpic;
 	int dangerimg = LoadGraph(L"picture/danger.png");
 	int dropimg = LoadGraph(L"picture/drop.png");
-	int sbarimg = LoadGraph(L"picture/scoreber.png");
-	int sbbarimg = LoadGraph(L"picture/scoreber2.png");
 	int filterimg = LoadGraph(L"picture/Black.png");
 	int charaguideimg = LoadGraph(L"picture/Cguide.png");
 	int gapbarimg = LoadGraph(L"picture/GapBer.png");
 	int gaplineimg = LoadGraph(L"picture/GapBerLine.png");
-	int Lbarimg[3] = {
-		LoadGraph(L"picture/LIFEbar.png"),
-		LoadGraph(L"picture/LIFEbar2.png"),
-		LoadGraph(L"picture/LIFEbar3.png")
-	};
-	int Tbarimg[2] = {
-		LoadGraph(L"picture/TIMEbar.png"),
-		LoadGraph(L"picture/TIMEbar2.png")
-	};
 	int KeyViewimg[2];
 	int Rchaimg;
 	int ComboFontimg[10];
@@ -1109,46 +1212,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowHitEffect(Xline, Yline);
 		PlayCheckHitEffect();
 		//スコアバー表示
-		RecRescaleDrawGraph(0, 0, sbarimg, TRUE);
-		//スコア表示
-		ShowScore2(userpal.score, HighSrore, recfp.time.now);
-		//ライフ表示
-		G[0] = lins(0, -114, 500, 177, userpal.life);
-		if (userpal.life > 100) {
-			RecRescaleDrawGraph(G[0], 3, Lbarimg[0], TRUE);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 255, 500, 0, userpal.life));
-			RecRescaleDrawGraph(G[0], 3, Lbarimg[1], TRUE);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		}
-		else {
-			RecRescaleDrawGraph(G[0], 3, Lbarimg[2], TRUE);
-		}
-		RecRescaleDrawFormatString(440, 10, 0xffffffff, L"%3d", userpal.life);
-		//距離表示
-		UG[0] = 0xffffffff;
-		G[1] = 0;
-		if (userpal.status == REC_PLAY_STATUS_CLEARED) {
-			G[1] = 1;
-			UG[0] = 0xff000000;
-		}
-		G[0] = (291 * userpal.Dscore.now_dis - 136 * recfp.time.end + 136 * recfp.time.offset) / (recfp.time.end - recfp.time.offset);
-		RecRescaleDrawGraph(G[0], 38, Tbarimg[G[1]], TRUE);
-		RecRescaleDrawFormatString(180, 45, UG[0], L"%.3fkm", userpal.Dscore.point / 1000.0);
-		//スコアバー隠し表示
-		RecRescaleDrawGraph(0, 0, sbbarimg, TRUE);
-		//ランニングステータス表示
-		G[0] = GetRemainNotes2(userpal.judgeCount, recfp.mapdata.notes);
-		G[1] = CalPosScore2(userpal.score, G[0], recfp.mapdata.notes, userpal.Ncombo, userpal.Mcombo);
-		RunningStats2(userpal.judgeCount, G[1], HighSrore);
-		//部分難易度表示 (only auto mode)
-		if (holdG >= 1 && AutoFlag == 1) {
-			G[0] = recfp.mapdata.ddif[0] * 20 / notzero(recfp.mapdata.ddifG[1]) + 155;
-			G[1] = recfp.mapdata.ddif[24] * 20 / notzero(recfp.mapdata.ddifG[1]) + 447;
-			for (i[0] = 0; i[0] <= 23; i[0]++)
-				RecRescaleDrawLine((G[0] * (24 - i[0]) + G[1] * i[0]) / 24,
-					-recfp.mapdata.ddif[i[0]] * 34 / notzero(recfp.mapdata.ddifG[1]) + 72,
-					(G[0] * (23 - i[0]) + G[1] * (1 + i[0])) / 24,
-					-recfp.mapdata.ddif[i[0] + 1] * 34 / notzero(recfp.mapdata.ddifG[1]) + 72, Cr);
+		sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighSrore, holdG);
+		//デバッグ表示
+		if (holdG >= 1) {
 			RecRescaleDrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mdif / 100.0);
 			RecRescaleDrawFormatString(490, 100, Cr, L"ldif:%.2f", recfp.mapdata.ldif / 100.0);
 			RecRescaleDrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
@@ -1237,7 +1303,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, dropimg, TRUE); }
 		else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, dangerimg, TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
-		if (GetRemainNotes2(userpal.judgeCount, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
+		if (GetRemainNotes(userpal.judgeCount, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
 			AllNotesHitTime = GetNowCount();
 		}
 		//オートでなく、ノーミス以上を出したら演出
