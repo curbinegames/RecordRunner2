@@ -73,7 +73,6 @@ struct score_box GetScore3(struct score_box score, struct judge_box judge,
 	const int notes, const int MaxCombo);
 void Getxxxpng(wchar_t *str, int num);
 void Getxxxwav(wchar_t *str, int num);
-void ShowCombo(int combo, int *pic);
 
 #endif /* proto */
 
@@ -258,40 +257,6 @@ void PlayDrawItem(rec_map_eff_data_t *mapeff,
 				item[pMovie->ID]);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
-	}
-}
-
-void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[], int Yline[],
-	short int charaput, int Ntime, rec_map_eff_data_t *mapeff, int pic[])
-{
-	static int hitpose = 0;
-	int drawX = 0;
-	int drawY = 0;
-	int hitoffset = 0;
-	int picID = 0;
-
-	if (key->z == 1) { hitpose = (hitpose + 1) % 2; }
-	if (key->x == 1) { hitpose = (hitpose + 1) % 2; }
-	if (key->c == 1) { hitpose = (hitpose + 1) % 2; }
-	if (GetNowCount() - charahit > 250) { hitoffset = 0; }
-	else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
-	drawY = Yline[charaput] - 75;
-	if (charahit > 0) {
-		drawX = Xline[charaput] + hitoffset;
-		picID = betweens(24 + hitpose * 6,
-			(GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
-	}
-	else {
-		drawX = Xline[charaput];
-
-		picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
-			20000 % 6 + mapeff->chamo[charaput].gra[mapeff->chamo[charaput].num] * 6;
-	}
-	if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
-		DrawGraphRecField(drawX - 160, drawY, pic[picID]);
-	}
-	else {
-		DrawTurnGraphRecField(drawX + 30, drawY, pic[picID]);
 	}
 }
 
@@ -659,6 +624,141 @@ void PlayShowAllGuideLine(short LineMoveN[], int Ntime,
 
 #if 1 /* class */
 
+static class rec_play_combo_c {
+private:
+	DxPic_t ComboFontimg[10];
+
+public:
+	rec_play_combo_c() {
+		LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, this->ComboFontimg);
+	}
+
+	~rec_play_combo_c() {
+		for (int i = 0; i < 10; i++) {
+			DeleteGraph(this->ComboFontimg[i]);
+		}
+	}
+
+	void ViewCombo(int combo) {
+		const int CHARA_WIDTH = 50;
+		int keta = 0;
+		int buf = 0;
+		int DrawX = 0;
+
+		if (combo < 10) { return; }
+
+		for (int i = combo; i > 0; i /= 10) { keta++; }
+
+		for (int i = keta - 1; i >= 0; i--) {
+			buf = combo;
+			for (int j = 0; j < i; j++) { buf /= 10; }
+			buf %= 10;
+
+			DrawX = ((keta - 1) * CHARA_WIDTH / 2 - i * CHARA_WIDTH) + 280;
+			RecRescaleDrawGraph(DrawX, 150, this->ComboFontimg[buf], TRUE);
+		}
+	}
+};
+
+static class rec_play_runner_c {
+#define DIV_X 6
+#define DIV_Y 6
+#define PIC_NUM (DIV_X * DIV_Y)
+#define PIC_SIZE_X 160
+#define PIC_SIZE_Y 160
+
+private:
+	DxPic_t	charaimg[PIC_NUM];
+	DxPic_t charaguideimg;
+	DxPic_t judghimg;
+
+	void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[], int Yline[],
+		short int charaput, int Ntime, rec_map_eff_data_t *mapeff)
+	{
+		static int hitpose = 0;
+		int drawX = 0;
+		int drawY = 0;
+		int hitoffset = 0;
+		int picID = 0;
+
+		if (key->z == 1) { hitpose = (hitpose + 1) % 2; }
+		if (key->x == 1) { hitpose = (hitpose + 1) % 2; }
+		if (key->c == 1) { hitpose = (hitpose + 1) % 2; }
+		if (GetNowCount() - charahit > 250) { hitoffset = 0; }
+		else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
+		drawY = Yline[charaput] - 75;
+		if (charahit > 0) {
+			drawX = Xline[charaput] + hitoffset;
+			picID = betweens(24 + hitpose * 6,
+				(GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
+		}
+		else {
+			drawX = Xline[charaput];
+
+			picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
+				20000 % 6 + mapeff->chamo[charaput].gra[mapeff->chamo[charaput].num] * 6;
+		}
+		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
+			DrawGraphRecField(drawX - 160, drawY, this->charaimg[picID]);
+		}
+		else {
+			DrawTurnGraphRecField(drawX + 30, drawY, this->charaimg[picID]);
+		}
+	}
+
+public:
+	rec_play_runner_c(int num) {
+		switch (num) {
+		case 0:
+			LoadDivGraph(L"picture/Picker.png",
+				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			break;
+		case 1:
+			LoadDivGraph(L"picture/Gator.png",
+				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			break;
+		case 2:
+			LoadDivGraph(L"picture/Taylor.png",
+				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			break;
+		}
+		this->charaguideimg = LoadGraph(L"picture/Cguide.png");
+		this->judghimg = LoadGraph(L"picture/Marker.png");
+	}
+
+	~rec_play_runner_c() {
+		for (int i = 0; i < PIC_NUM; i++) {
+			DeleteGraph(this->charaimg[i]);
+		}
+		DeleteGraph(this->charaguideimg);
+		DeleteGraph(this->judghimg);
+	}
+
+	void ViewRunner(rec_map_eff_data_t *mapeff, rec_play_key_hold_t *keyhold,
+		int charaput, int charahit, int Xline[], int Yline[], int Ntime)
+	{
+		// view chara pos guide
+		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
+			DrawGraphRecField(Xline[charaput] - 4, Yline[charaput] - 4, this->charaguideimg);
+		}
+		else {
+			DrawTurnGraphRecField(Xline[charaput] - 56, Yline[charaput] - 4, this->charaguideimg);
+		}
+		//判定マーカーの表示
+		for (int i = 0; i < 3; i++) {
+			DrawGraphRecField(Xline[i], Yline[i], this->judghimg);
+		}
+		/* キャラ表示 */
+		this->PlayDrawChara(keyhold, charahit, Xline, Yline, charaput, Ntime, mapeff);
+	}
+
+#undef DIV_X
+#undef DIV_Y
+#undef PIC_NUM
+#undef PIC_SIZE_X
+#undef PIC_SIZE_Y
+};
+
 static class rec_play_sbar_c {
 private:
 	DxPic_t baseImg;
@@ -815,6 +915,93 @@ public:
 	}
 };
 
+class rec_play_gapbar_c {
+private:
+	int gapbarimg;
+	int gaplineimg;
+
+public:
+	rec_play_gapbar_c() {
+		this->gapbarimg = LoadGraph(L"picture/GapBer.png");
+		this->gaplineimg = LoadGraph(L"picture/GapBerLine.png");
+	}
+
+	~rec_play_gapbar_c() {
+		DeleteGraph(this->gapbarimg);
+		DeleteGraph(this->gaplineimg);
+	}
+
+	void ViewGapBar(gap_box *gap) {
+		int No = gap->count % 30;
+
+		RecRescaleDrawGraph(219, 460, this->gapbarimg, TRUE);
+
+		for (int i = 0; i < 30; i++) {
+			No--;
+			if (No < 0) { No += 30; }
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (510 - No * 17) / 2);
+			RecRescaleDrawGraph(318 - gap->view[i], 460, this->gaplineimg, TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
+		}
+	}
+};
+
+class rec_play_keyview_c {
+private:
+	int enable = 0;
+	int count[7] = { 0,0,0,0,0,0,0 };
+	DxPic_t KeyViewimg[2];
+
+public:
+	rec_play_keyview_c(int s) {
+		this->enable = s;
+		if (this->enable) {
+			this->KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
+			this->KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
+		}
+	}
+
+	~rec_play_keyview_c() {
+		if (this->enable) {
+			DeleteGraph(this->KeyViewimg[0]);
+			DeleteGraph(this->KeyViewimg[1]);
+		}
+	}
+
+	void ViewKeyview(rec_play_key_hold_t *keyhold) {
+		if (this->enable) {
+			if (keyhold->z == 1) { this->count[0]++; }
+			if (keyhold->x == 1) { this->count[1]++; }
+			if (keyhold->c == 1) { this->count[2]++; }
+			if (keyhold->up == 1) { this->count[3]++; }
+			if (keyhold->down == 1) { this->count[4]++; }
+			if (keyhold->left == 1) { this->count[5]++; }
+			if (keyhold->right == 1) { this->count[6]++; }
+			RecRescaleDrawGraph(5, 445, this->KeyViewimg[maxs(keyhold->z, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(40, 445, this->KeyViewimg[maxs(keyhold->x, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(75, 445, this->KeyViewimg[maxs(keyhold->c, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(570, 410, this->KeyViewimg[maxs(keyhold->up, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(570, 445, this->KeyViewimg[maxs(keyhold->down, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(535, 445, this->KeyViewimg[maxs(keyhold->left, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(605, 445, this->KeyViewimg[maxs(keyhold->right, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			if (this->count[0] == 0) { RecRescaleAnchorDrawString(10, 450, L"Z", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
+			else { RecRescaleAnchorDrawFormatString(10, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[0] % 100); }
+			if (this->count[1] == 0) { RecRescaleAnchorDrawString(45, 450, L"X", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
+			else { RecRescaleAnchorDrawFormatString(45, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[1] % 100); }
+			if (this->count[2] == 0) { RecRescaleAnchorDrawString(80, 450, L"C", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
+			else { RecRescaleAnchorDrawFormatString(80, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[2] % 100); }
+			if (this->count[3] == 0) { RecRescaleAnchorDrawString(575, 415, L"↑", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
+			else { RecRescaleAnchorDrawFormatString(575, 415, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[3] % 100); }
+			if (this->count[4] == 0) { RecRescaleAnchorDrawString(575, 450, L"↓", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
+			else { RecRescaleAnchorDrawFormatString(575, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[4] % 100); }
+			if (this->count[5] == 0) { RecRescaleAnchorDrawString(540, 450, L"←", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
+			else { RecRescaleAnchorDrawFormatString(540, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[5] % 100); }
+			if (this->count[6] == 0) { RecRescaleAnchorDrawString(610, 450, L"→", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
+			else { RecRescaleAnchorDrawFormatString(610, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[6] % 100); }
+		}
+	}
+};
+
 #endif /* class */
 
 /* main action */
@@ -841,7 +1028,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	/* short */
 	short int i[3];
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
-	short int KeyPushCount[7] = { 0,0,0,0,0,0,0 };
 	short int cameraN = 0;
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
@@ -893,32 +1079,27 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	wchar_t ST3[] = L".dat";
 	/* class */
 	rec_play_sbar_c sbarClass;
+	rec_play_combo_c comboPicClass;
+	rec_play_gapbar_c gapbarClass;
+	/* extern rec_play_runner_c runnerClass(); */
+	/* extern rec_play_keyview_c keyviewClass(); */
+	/* グラフィックと効果音 */
 	int item[99]; //アイテムのfd、DrawGraphで呼べる。
 	short int itemN = 0; //↑の番号
 	int Sitem[99]; //サウンドアイテムのfd
 	short int SitemN = 0; //↑の番号
 #endif /* filter3 */
-	/* グラフィックと効果音 */
-	int judghimg = LoadGraph(L"picture/Marker.png");
 	rec_play_back_pic_t backpic;
 	int dangerimg = LoadGraph(L"picture/danger.png");
 	int dropimg = LoadGraph(L"picture/drop.png");
 	int filterimg = LoadGraph(L"picture/Black.png");
-	int charaguideimg = LoadGraph(L"picture/Cguide.png");
-	int gapbarimg = LoadGraph(L"picture/GapBer.png");
-	int gaplineimg = LoadGraph(L"picture/GapBerLine.png");
-	int KeyViewimg[2];
-	int Rchaimg;
-	int ComboFontimg[10];
-	LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, ComboFontimg);
 	struct note_img noteimg;
 	int musicmp3;
-#define DIV_X 6
-#define DIV_Y 6
-#define PIC_NUM (DIV_X * DIV_Y)
-#define PIC_SIZE_X 160
-#define PIC_SIZE_Y 160
-	int	charaimg[PIC_NUM];
+	//システムロード
+	recSystenLoad(&system);
+	rec_play_runner_c runnerClass(system.chara);
+	rec_play_keyview_c keyviewClass(system.keyViewEn);
+
 	/* ピクチャの用意 */
 	ReadyBonusPsmat();
 	ReadyEffPicture();
@@ -931,34 +1112,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	for (i[0] = 0; i[0] <= 59; i[0]++) { fps[i[0]] = 17; }
 	fps[60] = 0;
 	fps[61] = 0;
-	//システムロード
-	recSystenLoad(&system);
-	if (system.keyViewEn) {
-		KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
-		KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
-	}
-	switch (system.chara) {
-	case 0:
-		LoadDivGraph(L"picture/Picker.png",
-			PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
-		Rchaimg = LoadGraph(L"picture/RePicker.png");
-		break;
-	case 1:
-		LoadDivGraph(L"picture/Gator.png",
-			PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
-		Rchaimg = LoadGraph(L"picture/ReGator.png");
-		break;
-	case 2:
-		LoadDivGraph(L"picture/Taylor.png",
-			PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, charaimg);
-		Rchaimg = LoadGraph(L"picture/ReTaylor.png");
-		break;
-	}
-#undef DIV_X
-#undef DIV_Y
-#undef PIC_NUM
-#undef PIC_SIZE_X
-#undef PIC_SIZE_Y
 
 	if (system.soundEn == 0) {
 		RecPlayInitMelodySnd();
@@ -1187,22 +1340,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (AutoFlag == 1) {
 			PlayShowAllGuideLine(LineMoveN, recfp.time.now, recfp.mapeff.move.y, Xline, Yline);
 		}
-		// view chara pos guide
-		if (recfp.mapeff.carrow.d[recfp.mapeff.carrow.num].data == 1) {
-			DrawGraphRecField(Xline[charaput] - 4, Yline[charaput] - 4, charaguideimg);
-		}
-		else {
-			DrawTurnGraphRecField(Xline[charaput] - 56, Yline[charaput] - 4, charaguideimg);
-		}
-		//判定マーカーの表示
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			DrawGraphRecField(Xline[i[0]], Yline[i[0]], judghimg);
-		}
-		/* キャラ表示 */
-		PlayDrawChara(&keyhold, charahit, Xline, Yline,
-			charaput, recfp.time.now, &recfp.mapeff, charaimg);
+		/* キャラ周り表示 */
+		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, charaput, charahit, Xline, Yline, recfp.time.now);
 		//コンボ表示
-		ShowCombo(userpal.Ncombo, ComboFontimg);
+		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
 		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput]);
 		/* 音符表示 */
@@ -1213,6 +1354,11 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayCheckHitEffect();
 		//スコアバー表示
 		sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighSrore, holdG);
+		//判定ずれバー表示
+		gapbarClass.ViewGapBar(&userpal.gap);
+		//キー押し状況表示(オプション)
+		keyviewClass.ViewKeyview(&keyhold);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバッグ表示
 		if (holdG >= 1) {
 			RecRescaleDrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mdif / 100.0);
@@ -1233,61 +1379,19 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			}
 #endif
 		}
-		//判定ずれバー表示
-		RecRescaleDrawGraph(219, 460, gapbarimg, TRUE);
-		G[0] = userpal.gap.count % 30;
-		for (i[0] = 0; i[0] < 30; i[0]++) {
-			G[0]--;
-			if (G[0] < 0) G[0] += 30;
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (510 - G[0] * 17) / 2);
-			RecRescaleDrawGraph(318 - userpal.gap.view[i[0]], 460, gaplineimg, TRUE);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
-		}
-		//キー押し状況表示(オプション)
-		if (system.keyViewEn) {
-			if (keyhold.z == 1) { KeyPushCount[0]++; }
-			if (keyhold.x == 1) { KeyPushCount[1]++; }
-			if (keyhold.c == 1) { KeyPushCount[2]++; }
-			if (keyhold.up == 1) { KeyPushCount[3]++; }
-			if (keyhold.down == 1) { KeyPushCount[4]++; }
-			if (keyhold.left == 1) { KeyPushCount[5]++; }
-			if (keyhold.right == 1) { KeyPushCount[6]++; }
-			RecRescaleDrawGraph(5, 445, KeyViewimg[maxs(keyhold.z, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(40, 445, KeyViewimg[maxs(keyhold.x, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(75, 445, KeyViewimg[maxs(keyhold.c, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(570, 410, KeyViewimg[maxs(keyhold.up, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(570, 445, KeyViewimg[maxs(keyhold.down, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(535, 445, KeyViewimg[maxs(keyhold.left, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(605, 445, KeyViewimg[maxs(keyhold.right, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			if (KeyPushCount[0] == 0) { RecRescaleAnchorDrawString(10, 450, L"Z", Cr, REC_RESCALE_BOTTOM_LEFT); }
-			else { RecRescaleAnchorDrawFormatString(10, 450, Cr, REC_RESCALE_BOTTOM_LEFT, L"%2d", KeyPushCount[0] % 100); }
-			if (KeyPushCount[1] == 0) { RecRescaleAnchorDrawString(45, 450, L"X", Cr, REC_RESCALE_BOTTOM_LEFT); }
-			else { RecRescaleAnchorDrawFormatString(45, 450, Cr, REC_RESCALE_BOTTOM_LEFT, L"%2d", KeyPushCount[1] % 100); }
-			if (KeyPushCount[2] == 0) { RecRescaleAnchorDrawString(80, 450, L"C", Cr, REC_RESCALE_BOTTOM_LEFT); }
-			else { RecRescaleAnchorDrawFormatString(80, 450, Cr, REC_RESCALE_BOTTOM_LEFT, L"%2d", KeyPushCount[2] % 100); }
-			if (KeyPushCount[3] == 0) { RecRescaleAnchorDrawString(575, 415, L"↑", Cr, REC_RESCALE_BOTTOM_RIGHT); }
-			else { RecRescaleAnchorDrawFormatString(575, 415, Cr, REC_RESCALE_BOTTOM_RIGHT, L"%2d", KeyPushCount[3] % 100); }
-			if (KeyPushCount[4] == 0) { RecRescaleAnchorDrawString(575, 450, L"↓", Cr, REC_RESCALE_BOTTOM_RIGHT); }
-			else { RecRescaleAnchorDrawFormatString(575, 450, Cr, REC_RESCALE_BOTTOM_RIGHT, L"%2d", KeyPushCount[4] % 100); }
-			if (KeyPushCount[5] == 0) { RecRescaleAnchorDrawString(540, 450, L"←", Cr, REC_RESCALE_BOTTOM_RIGHT); }
-			else { RecRescaleAnchorDrawFormatString(540, 450, Cr, REC_RESCALE_BOTTOM_RIGHT, L"%2d", KeyPushCount[5] % 100); }
-			if (KeyPushCount[6] == 0) { RecRescaleAnchorDrawString(610, 450, L"→", Cr, REC_RESCALE_BOTTOM_RIGHT); }
-			else { RecRescaleAnchorDrawFormatString(610, 450, Cr, REC_RESCALE_BOTTOM_RIGHT, L"%2d", KeyPushCount[6] % 100); }
-		}
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		//デバック
-		fps[fps[60]++] = recfp.time.now - fps[61];
-		if (fps[60] > 59)fps[60] -= 60;
-		fps[61] = recfp.time.now;
-		G[0] = 0;
-		for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 		if (AutoFlag == 1) {
+			fps[fps[60]++] = recfp.time.now - fps[61];
+			if (fps[60] > 59)fps[60] -= 60;
+			fps[61] = recfp.time.now;
+			G[0] = 0;
+			for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
 			RecRescaleDrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
 			RecRescaleDrawFormatString(20, 100, Cr, L"Autoplay");
 		}
 		//RECR_DEBUG(0, speedN[0]);
 		//RECR_DEBUG(1, speedN[1]);
 		//RECR_DEBUG(2, speedN[2]);
+
 		//データオーバーフローで警告文表示
 #if 0
 		if (0 <= recfp.mapdata.note2.up[1999].hittime) {
@@ -1591,32 +1695,6 @@ void Getxxxwav(wchar_t *str, int num) {
 	str++;
 	*str = '\0';
 	return;
-}
-
-void ShowCombo(int combo, int *pic) {
-#define ROCATION_X 320
-#define ROCATION_Y 150
-#define CHARA_WIDTH 50
-
-	if (combo < 10) {
-		return;
-	}
-	int t;
-	int xx;
-	GetGraphSize(pic[0], &xx, &t);
-	t = 0;
-	int s;
-	for (int i = combo; i > 0; i /= 10) {
-		t++;
-	}
-	for (int i = t - 1; i >= 0; i--) {
-		s = combo;
-		for (int j = 0; j < i; j++) {
-			s /= 10;
-		}
-		s %= 10;
-		RecRescaleDrawGraph(t * CHARA_WIDTH / 2 - CHARA_WIDTH / 2 - i * CHARA_WIDTH - xx / 2 + ROCATION_X, ROCATION_Y, pic[s], TRUE);
-	}
 }
 
 #endif /* under proto group */
