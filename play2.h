@@ -385,15 +385,21 @@ static int GetRemainNotes(struct judge_box judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
 
-static int GetHighScore(wchar_t pas[255], int dif) {
+static int GetHighScore(const TCHAR *songName, int dif) {
 	FILE *fp;
-	int a[7] = { 0,0,0,0,0,0,0 };
-	int G = _wfopen_s(&fp, pas, L"rb");
-	if (G == 0) {
-		fread(&a, sizeof(int), 6, fp);
+	int buf[7] = { 0,0,0,0,0,0,0 };
+	TCHAR DataFN[255] = _T("score/");
+
+	strcats(DataFN, songName);
+	strcats(DataFN, _T(".dat"));
+
+	_wfopen_s(&fp, DataFN, _T("rb"));
+	if (fp != NULL) {
+		fread(&buf, sizeof(int), 6, fp);
 		fclose(fp);
 	}
-	return a[dif];
+
+	return buf[dif];
 }
 
 #endif /* sub action */
@@ -1129,12 +1135,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	double DifRate; //譜面定数
 
 	/* string */
-	wchar_t fileN[255];
+	wchar_t songName[255];
 	wchar_t dataE[255];
-	wchar_t DataFN[255] = L"score/";
 	wchar_t GT1[255];
 	wchar_t GT2[255];
-	wchar_t ST3[] = L".dat";
 
 	/* class */
 	rec_play_sbar_c sbarClass;
@@ -1180,7 +1184,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		RecPlayInitPsound();
 	}
 
-	RecPlayGetMapFileNames(GT1, dataE, fileN, p, n, o);
+	RecPlayGetMapFileNames(GT1, dataE, songName, p, n, o);
 
 	/* rrsデータの内容を読み込む */
 	if (rec_score_fread(&recfp, GT1) != 0) {
@@ -1192,9 +1196,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	backpic.sky = LoadGraph(recfp.nameset.sky);
 	backpic.ground = LoadGraph(recfp.nameset.ground);
 	backpic.water = LoadGraph(recfp.nameset.water);
-	strcats(DataFN, fileN);
-	strcats(DataFN, ST3);
-	HighScore = GetHighScore(DataFN, o);
+
+	HighScore = GetHighScore(songName, o);
+
 	for (i[0] = 0; i[0] < 100; i[0]++) {
 		strcopy(dataE, GT1, 1);
 		stradds(GT1, L'/');
@@ -1211,6 +1215,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		Sitem[i[0] - 1] = LoadSoundMem(GT1);
 		if (Sitem[i[0] - 1] == -1) { break; }
 	}
+
 	//ゲーム開始前の下準備
 	recfp.mapdata.notes = notzero(recfp.mapdata.notes);
 	GD[0] = recfp.mapdata.mdif / 100.0 - recfp.mapdata.Lv;//mdifと難易度表記の差
@@ -1647,7 +1652,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	*ret_map_det = recfp.mapdata;
 	*ret_userpal = userpal;
 	*ret_nameset = recfp.nameset;
-	strcopy_2(fileN, ret_fileN, 255);
+	strcopy_2(songName, ret_fileN, 255);
 
 	return SCENE_SERECT;
 }
