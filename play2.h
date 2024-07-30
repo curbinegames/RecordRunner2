@@ -54,8 +54,6 @@
 
 #if 1 /* typedef group */
 
-/* enum */
-
 /* struct */
 typedef struct rec_play_back_pic_s {
 	int sky = 0;
@@ -65,18 +63,60 @@ typedef struct rec_play_back_pic_s {
 
 #endif /* typedef group */
 
-#if 1 /* proto */
-
-/* proto */
-int GetHighScore(wchar_t pas[255], int dif);
-struct score_box GetScore3(struct score_box score, struct judge_box judge,
-	const int notes, const int MaxCombo);
-void Getxxxpng(wchar_t *str, int num);
-void Getxxxwav(wchar_t *str, int num);
-
-#endif /* proto */
-
 #if 1 /* sub action */
+
+static struct score_box GetScore3(struct score_box score,
+	struct judge_box judge, const int notes, const int MaxCombo)
+{
+	score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
+	score.combo = MaxCombo * 10000 / notes;
+	if (score.normal + score.combo - score.loss == 100000) {
+		score.pjust = maxs_2(maxs_2(100 - (notes - judge.pjust), (judge.pjust * 100 / (double)notes) - 65), 0);
+	}
+	else {
+		score.pjust = 0;
+	}
+	score.sum = score.normal + score.combo - score.loss + score.pjust;
+	return score;
+}
+
+void Getxxxpng(wchar_t *str, int num) {
+	*str = num / 100 + '0';
+	str++;
+	*str = num / 10 % 10 + '0';
+	str++;
+	*str = num % 10 + '0';
+	str++;
+	*str = '.';
+	str++;
+	*str = 'p';
+	str++;
+	*str = 'n';
+	str++;
+	*str = 'g';
+	str++;
+	*str = '\0';
+	return;
+}
+
+void Getxxxwav(wchar_t *str, int num) {
+	*str = num / 100 + '0';
+	str++;
+	*str = num / 10 % 10 + '0';
+	str++;
+	*str = num % 10 + '0';
+	str++;
+	*str = '.';
+	str++;
+	*str = 'w';
+	str++;
+	*str = 'a';
+	str++;
+	*str = 'v';
+	str++;
+	*str = '\0';
+	return;
+}
 
 /* (ret / 100) */
 void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int scroolN, int cam) {
@@ -343,6 +383,17 @@ static void RecGetMapPath(TCHAR *mapPath, int packNo, int musicNo, int LvNo) {
 
 static int GetRemainNotes(struct judge_box judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
+}
+
+static int GetHighScore(wchar_t pas[255], int dif) {
+	FILE *fp;
+	int a[7] = { 0,0,0,0,0,0,0 };
+	int G = _wfopen_s(&fp, pas, L"rb");
+	if (G == 0) {
+		fread(&a, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+	return a[dif];
 }
 
 #endif /* sub action */
@@ -1021,14 +1072,18 @@ public:
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
 	rec_play_nameset_t *ret_nameset, TCHAR *ret_fileN, int p, int n, int o, int shift, int AutoFlag)
 {
-#if 1 /* filter3 */
+
+#if 1 /* num define */
+
 	/* char */
 	char key[256];
 	char closeFg = 0;
+
 	/* short */
 	short int i[3];
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
 	short int cameraN = 0;
+
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20];
@@ -1040,7 +1095,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int LaneTrack[3] = { -150,-150,-150 };
 	int StopFrag = -1;
 	int scroolN = 0;
-	int HighSrore; //ハイスコア
+	int HighScore; //ハイスコア
 	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
@@ -1055,6 +1110,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int Stime = 0;
 	int adif = 0;
 	int max_adif = 0;
+
 	/* struct */
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
@@ -1065,36 +1121,42 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	short int objectNG[3] = { 0,0,0 }; //note number without ghost note
 	rec_score_file_t recfp;
 	rec_play_userpal_t userpal;
+
 	/* double */
 	double GD[5];
 	double SumRate[2] = { 0,0 };
 	short int speedN[5] = { 0,0,0,0,0 }; //↑の番号
 	double DifRate; //譜面定数
-	/* wchar_t */
+
+	/* string */
 	wchar_t fileN[255];
 	wchar_t dataE[255];
 	wchar_t DataFN[255] = L"score/";
 	wchar_t GT1[255];
 	wchar_t GT2[255];
 	wchar_t ST3[] = L".dat";
+
 	/* class */
 	rec_play_sbar_c sbarClass;
 	rec_play_combo_c comboPicClass;
 	rec_play_gapbar_c gapbarClass;
 	/* extern rec_play_runner_c runnerClass(); */
 	/* extern rec_play_keyview_c keyviewClass(); */
-	/* グラフィックと効果音 */
+
+	/* mat */
 	int item[99]; //アイテムのfd、DrawGraphで呼べる。
 	short int itemN = 0; //↑の番号
 	int Sitem[99]; //サウンドアイテムのfd
 	short int SitemN = 0; //↑の番号
-#endif /* filter3 */
 	rec_play_back_pic_t backpic;
 	int dangerimg = LoadGraph(L"picture/danger.png");
 	int dropimg = LoadGraph(L"picture/drop.png");
 	int filterimg = LoadGraph(L"picture/Black.png");
 	struct note_img noteimg;
 	int musicmp3;
+
+#endif /* num define */
+
 	//システムロード
 	recSystenLoad(&system);
 	rec_play_runner_c runnerClass(system.chara);
@@ -1132,7 +1194,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	backpic.water = LoadGraph(recfp.nameset.water);
 	strcats(DataFN, fileN);
 	strcats(DataFN, ST3);
-	HighSrore = GetHighScore(DataFN, o);
+	HighScore = GetHighScore(DataFN, o);
 	for (i[0] = 0; i[0] < 100; i[0]++) {
 		strcopy(dataE, GT1, 1);
 		stradds(GT1, L'/');
@@ -1353,7 +1415,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowHitEffect(Xline, Yline);
 		PlayCheckHitEffect();
 		//スコアバー表示
-		sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighSrore, holdG);
+		sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighScore, holdG);
 		//判定ずれバー表示
 		gapbarClass.ViewGapBar(&userpal.gap);
 		//キー押し状況表示(オプション)
@@ -1629,72 +1691,3 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	return result(&map_detail, &userpal, &nameset, difNo, fileName);
 }
-
-#if 1 /* under proto group */
-
-/* proto */
-
-int GetHighScore(wchar_t pas[255], int dif) {
-	FILE *fp;
-	int a[7] = { 0,0,0,0,0,0,0 };
-	int G = _wfopen_s(&fp, pas, L"rb");
-	if (G == 0) {
-		fread(&a, sizeof(int), 6, fp);
-		fclose(fp);
-	}
-	return a[dif];
-}
-
-struct score_box GetScore3(struct score_box score, struct judge_box judge, const int notes,
-	const int MaxCombo) {
-	score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
-	score.combo = MaxCombo * 10000 / notes;
-	if (score.normal + score.combo - score.loss == 100000) {
-		score.pjust = mins(100 - notes + judge.pjust, 0);
-	}
-	else {
-		score.pjust = 0;
-	}
-	score.sum = score.normal + score.combo - score.loss + score.pjust;
-	return score;
-}
-
-void Getxxxpng(wchar_t *str, int num) {
-	*str = num / 100 + '0';
-	str++;
-	*str = num / 10 % 10 + '0';
-	str++;
-	*str = num % 10 + '0';
-	str++;
-	*str = '.';
-	str++;
-	*str = 'p';
-	str++;
-	*str = 'n';
-	str++;
-	*str = 'g';
-	str++;
-	*str = '\0';
-	return;
-}
-
-void Getxxxwav(wchar_t *str, int num) {
-	*str = num / 100 + '0';
-	str++;
-	*str = num / 10 % 10 + '0';
-	str++;
-	*str = num % 10 + '0';
-	str++;
-	*str = '.';
-	str++;
-	*str = 'w';
-	str++;
-	*str = 'a';
-	str++;
-	*str = 'v';
-	str++;
-	*str = '\0';
-	return;
-}
-
-#endif /* under proto group */
