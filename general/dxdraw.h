@@ -1,3 +1,4 @@
+#pragma once
 
 typedef int intx100; /** 100”{‚µ‚Ä‚¢‚é‚±‚Æ‚ğ¦‚·intŒ^ */
 

@@ -1,9 +1,207 @@
+#include <DxLib.h>
 #include "serectbase.h"
 #include "recr_cutin.h"
 #include "general/dxcur.h"
+#include "general/sancur.h"
+#include "general/strcur.h"
+#include "general/dxdraw.h"
+#include "system.h"
 
 #define MUSE_FADTM 250
 #define MUSE_KEYTM 500
+
+typedef TCHAR rec_pack_name_set_t[256];
+
+static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *songdata, int dif, int lang)
+{
+	DxFile_t fd;
+	TCHAR buf[256];
+
+	fd = FileRead_open(path);
+
+	if (fd == 0) { return; }
+
+	while (FileRead_eof(fd) == 0) {
+		FileRead_gets(buf, 256, fd);
+		//曲名を読み込む
+		if (strands(buf, L"#TITLE:") &&
+			(lang == 0 || strands(songdata->SongName[dif], L"NULL"))) {
+			strmods(buf, 7);
+			strcopy(buf, songdata->SongName[dif], 1);
+		}
+		if (strands(buf, L"#E.TITLE:") &&
+			(lang == 1 || strands(songdata->SongName[dif], L"NULL"))) {
+			strmods(buf, 9);
+			strcopy(buf, songdata->SongName[dif], 1);
+		}
+		//作曲者を読み込む
+		if (strands(buf, L"#ARTIST:") &&
+			(lang == 0 || strands(songdata->artist[dif], L"NULL"))) {
+			strmods(buf, 8);
+			strcopy(buf, songdata->artist[dif], 1);
+		}
+		if (strands(buf, L"#E.ARTIST:") &&
+			(lang == 1 || strands(songdata->artist[dif], L"NULL"))) {
+			strmods(buf, 10);
+			strcopy(buf, songdata->artist[dif], 1);
+		}
+		//曲ファイル名を読み込む
+		if (strands(buf, L"#MUSIC:")) {
+			strmods(buf, 7);
+			strcopy(subpath, songdata->SongFileName[dif], 1);
+			strcats(songdata->SongFileName[dif], buf);
+		}
+		//難易度を読み込む
+		if (strands(buf, L"#LEVEL:")) {
+			strmods(buf, 7);
+			songdata->level[dif] = strsans(buf);
+		}
+		//プレビュー時間を読み込む
+		if (strands(buf, L"#PREVIEW:")) {
+			strmods(buf, 9);
+			songdata->preview[dif][0] = (int)((double)strsans(buf) / 1000.0 * 44100.0);
+			strnex(buf);
+			if (L'0' <= buf[1] && buf[1] <= L'9') {
+				songdata->preview[dif][1] = (int)((double)strsans(buf) / 1000.0 * 44100.0);
+			}
+		}
+		//ジャケット写真を読み込む
+		if (strands(buf, L"#JACKET:")) {
+			strmods(buf, 8);
+			strcopy(subpath, songdata->jacketP[dif], 1);
+			strcats(songdata->jacketP[dif], buf);
+		}
+		//差し替えAnotherバーを読み込む
+		if (strands(buf, L"#DIFBAR:")) {
+			strmods(buf, 8);
+			strcopy(subpath, songdata->difP, 1);
+			strcats(songdata->difP, buf);
+		}
+		//マップに入ったら抜ける
+		if (strands(buf, L"#MAP:")) { break; }
+	}
+	FileRead_close(fd);
+
+	return;
+}
+
+static void RecSerectReadHighscore(MUSIC_BOX *songdata, TCHAR *songName) {
+	TCHAR path[256];
+	FILE *fp;
+
+	for (int j = 0; j < 6; j++) {
+		songdata->Hscore[j] = 0;
+		songdata->Hacc[j] = 0;
+		songdata->Hdis[j] = 0;
+		songdata->ClearRank[j] = 6;
+		songdata->ClearRate[j] = 0;
+	}
+
+	strcopy(L"score/", path, 1);
+	strcats(path, songName);
+	strcats(path, L".dat");
+
+	_wfopen_s(&fp, path, L"rb");
+	if (fp != NULL) {
+		fread(&songdata->Hscore, sizeof(int), 6, fp);
+		fread(&songdata->Hacc, sizeof(double), 6, fp);
+		fread(&songdata->Hdis, sizeof(int), 6, fp);
+		fread(&songdata->ClearRank, sizeof(int), 6, fp);
+		fread(&songdata->ClearRate, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+
+	return;
+}
+
+static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TCHAR *songName, int lang) {
+	TCHAR path[256];
+	TCHAR subPath[256];
+
+	songdata->limit = 3;
+	strcopy(L"NULL", songdata->difP, 1);
+
+	for (int iDif = 0; iDif < 6; iDif++) {
+		strcopy(L"record/", path, 1); //"record/"
+		strcats(path, packName); //"record/<パック名>"
+		stradds(path, L'/'); //"record/<パック名>/"
+		strcats(path, songName); //"record/<パック名>/<曲名>"
+		stradds(path, L'/'); //"record/<パック名>/<曲名>/"
+		strcopy(path, subPath, 1); //subPathにコピー
+		stradds(path, (TCHAR)((int)_T('0') + iDif)); //"record/<パック名>/<曲名>/<難易度番号>"
+		strcats(path, _T(".txt")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
+		//初期値定義(ファイルがなくても代入する)
+		strcopy(L"NULL", songdata->SongName[iDif], 1);
+		strcopy(L"NULL", songdata->artist[iDif], 1);
+		strcopy(L"NULL", songdata->SongFileName[iDif], 1);
+		strcopy(L"picture/NULL jucket.png", songdata->jacketP[iDif], 1);
+		strcopy(packName, songdata->packName, 1);
+		songdata->level[iDif] = -1;
+		songdata->preview[iDif][0] = 441000;
+		songdata->preview[iDif][1] = 2646000;
+		RecSerectReadMapDataOneDif(path, subPath, songdata, iDif, lang);
+	}
+
+	RecSerectReadHighscore(songdata, songName);
+
+	//難易度リミットの処理
+	if (strands(songdata->SongName[4], L"NULL") == 0 &&
+		(strands(songdata->SongName[5], L"NULL") ||
+		songdata->Hscore[5] >= 1))
+	{
+		songdata->limit = 4;
+	}
+	if (songdata->limit == 3) {
+		strcopy(L"NULL", songdata->SongName[4], 1);
+		strcopy(L"NULL", songdata->artist[4], 1);
+	}
+
+	return;
+}
+
+/**
+ * ソングデータを読み込む
+ * @param[out] songdata ret
+ * @param[out] PackName ret
+ * @param[out] PackFirstNum ret
+ * @param[out] Mapping ret
+ * @param[in] lang 言語
+ * @return int 読み込んだ曲数
+ */
+static int RecSerectReadMapData(MUSIC_BOX songdata[], rec_pack_name_set_t PackName[],
+	int PackFirstNum[], int Mapping[], int lang)
+{
+	int packNum = 0;
+	int songCount = 0;
+	DxFile_t fd;
+	TCHAR songName[256];
+
+	fd = FileRead_open(L"RecordPack.txt");
+	while (FileRead_eof(fd) == 0) {
+		FileRead_gets(songName, 256, fd);
+		strcopy(songName, PackName[packNum], 1);
+		packNum++;
+	}
+	FileRead_close(fd);
+
+	songCount = 0;
+	for (int i = 0; i < packNum; i++) {
+		strcopy(L"record/", songName, 1); //"record/"
+		strcats(songName, PackName[i]); //"record/<パック名>"
+		strcats(songName, L"/list.txt"); //"record/<パック名>/list.txt"
+		fd = FileRead_open(songName);
+		PackFirstNum[i] = songCount;
+		while (FileRead_eof(fd) == 0) {
+			FileRead_gets(songName, 256, fd);
+			RecSerectReadMapDataOneSong(&songdata[songCount], PackName[i], songName, lang);
+			//後処理
+			Mapping[songCount] = songCount;
+			songCount++;
+		}
+		FileRead_close(fd);
+	}
+	return songCount;
+}
 
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
@@ -41,14 +239,10 @@ now_scene_t musicserect2(int *p1) {
 	};
 	double diskr = 0;
 	//wchar_t変数定義
-	wchar_t PackName[PackNumLim][256];
+	rec_pack_name_set_t PackName[PackNumLim];
 	wchar_t viewingjacket[255] = { L"picture/NULL jucket.png" };
 	wchar_t viewingDifBar[255] = { L"NULL" };
 	wchar_t playingsong[255] = { L"NULL" };
-	wchar_t GT1[256];
-	wchar_t GT2[256];
-	wchar_t GT3[256];
-	wchar_t ST4[6][7] = { L"0.txt" ,L"1.txt" ,L"2.txt" ,L"3.txt" ,L"4.txt" ,L"5.txt" };
 	now_scene_t next = SCENE_EXIT;
 	MUSIC_BOX songdata[SongNumLim];
 	int back = LoadGraph(L"picture/MSback.png");
@@ -109,150 +303,15 @@ now_scene_t musicserect2(int *p1) {
 		fread(&SortMode, sizeof(int), 1, fp);
 		fclose(fp);
 	}
-	G[0] = FileRead_open(L"RecordPack.txt");
-	G[1] = 0;
-	while (FileRead_eof(G[0]) == 0) {
-		FileRead_gets(GT1, 256, G[0]);
-		strcopy(GT1, PackName[G[1]], 1);
-		G[1]++;
-	}
-	G[4] = 0;
-	G[2] = 0;
-	for (int i = 0; i < G[1]; i++) {
-		//"record/<パック名>/list.txt"を探す
-		strcopy(L"record/", GT1, 1); //"record/"
-		strcats(GT1, PackName[i]); //"record/<パック名>"
-		strcats(GT1, L"/list.txt"); //"record/<パック名>/list.txt"
-		G[0] = FileRead_open(GT1);
-		PackFirstNum[i] = G[2];
-		while (FileRead_eof(G[0]) == 0) {
-			FileRead_gets(GT1, 256, G[0]); //GT1に曲名が入る
-			songdata[G[2]].limit = 3;
-			strcopy(L"NULL", songdata[G[2]].difP, 1);
-			for (int j = 0; j < 6; j++) {
-				strcopy(L"record/", GT2, 1); //"record/"
-				strcats(GT2, PackName[i]); //"record/<パック名>"
-				stradds(GT2, L'/'); //"record/<パック名>/"
-				strcats(GT2, GT1); //"record/<パック名>/<曲名>"
-				stradds(GT2, L'/'); //"record/<パック名>/<曲名>/"
-				strcopy(GT2, GT3, 1); //GT3にコピー
-				strcats(GT2, ST4[j]); //"record/<パック名>/<曲名>/<難易度番号>.txt"
-				//初期値定義(ファイルがなくても代入する)
-				strcopy(L"NULL", songdata[G[2]].SongName[j], 1);
-				strcopy(L"NULL", songdata[G[2]].artist[j], 1);
-				strcopy(L"NULL", songdata[G[2]].SongFileName[j], 1);
-				strcopy(L"picture/NULL jucket.png", songdata[G[2]].jacketP[j], 1);
-				strcopy(PackName[i], songdata[G[2]].packName, 1);
-				songdata[G[2]].level[j] = -1;
-				songdata[G[2]].preview[j][0] = 441000;
-				songdata[G[2]].preview[j][1] = 2646000;
-				G[3] = FileRead_open(GT2);
-				if (G[3] == 0) {
-					continue;
-				}
-				while (FileRead_eof(G[3]) == 0) {
-					FileRead_gets(GT2, 256, G[3]);
-					//曲名を読み込む
-					if (strands(GT2, L"#TITLE:") &&
-						(lan[4] == 0 || strands(songdata[G[2]].SongName[j], L"NULL"))) {
-						strmods(GT2, 7);
-						strcopy(GT2, songdata[G[2]].SongName[j], 1);
-					}
-					if (strands(GT2, L"#E.TITLE:") &&
-						(lan[4] == 1 || strands(songdata[G[2]].SongName[j], L"NULL"))) {
-						strmods(GT2, 9);
-						strcopy(GT2, songdata[G[2]].SongName[j], 1);
-					}
-					//作曲者を読み込む
-					if (strands(GT2, L"#ARTIST:") &&
-						(lan[4] == 0 || strands(songdata[G[2]].artist[j], L"NULL"))) {
-						strmods(GT2, 8);
-						strcopy(GT2, songdata[G[2]].artist[j], 1);
-					}
-					if (strands(GT2, L"#E.ARTIST:") &&
-						(lan[4] == 1 || strands(songdata[G[2]].artist[j], L"NULL"))) {
-						strmods(GT2, 10);
-						strcopy(GT2, songdata[G[2]].artist[j], 1);
-					}
-					//曲ファイル名を読み込む
-					if (strands(GT2, L"#MUSIC:")) {
-						strmods(GT2, 7);
-						strcopy(GT3, songdata[G[2]].SongFileName[j], 1);
-						strcats(songdata[G[2]].SongFileName[j], GT2);
-					}
-					//難易度を読み込む
-					if (strands(GT2, L"#LEVEL:")) {
-						strmods(GT2, 7);
-						songdata[G[2]].level[j] = strsans(GT2);
-					}
-					//プレビュー時間を読み込む
-					if (strands(GT2, L"#PREVIEW:")) {
-						strmods(GT2, 9);
-						songdata[G[2]].preview[j][0] = (int)((double)strsans(GT2) / 1000.0 * 44100.0);
-						strnex(GT2);
-						if (L'0' <= GT2[1] && GT2[1] <= L'9') {
-							songdata[G[2]].preview[j][1] = (int)((double)strsans(GT2) / 1000.0 * 44100.0);
-						}
-					}
-					//ジャケット写真を読み込む
-					if (strands(GT2, L"#JACKET:")) {
-						strmods(GT2, 8);
-						strcopy(GT3, songdata[G[2]].jacketP[j], 1);
-						strcats(songdata[G[2]].jacketP[j], GT2);
-					}
-					//差し替えAnotherバーを読み込む
-					if (strands(GT2, L"#DIFBAR:")) {
-						strmods(GT2, 8);
-						strcopy(GT3, songdata[G[2]].difP, 1);
-						strcats(songdata[G[2]].difP, GT2);
-					}
-					//マップに入ったら抜ける
-					if (strands(GT2, L"#MAP:")) { break; }
-				}
-				FileRead_close(G[3]);
-			}
-			//ハイスコアを読み込む
-			for (int j = 0; j < 6; j++) {
-				songdata[G[2]].Hscore[j] = 0;
-				songdata[G[2]].Hacc[j] = 0;
-				songdata[G[2]].Hdis[j] = 0;
-				songdata[G[2]].ClearRank[j] = 6;
-				songdata[G[2]].ClearRate[j] = 0;
-			}
-			strcopy(L"score/", GT2, 1);
-			strcats(GT2, GT1);
-			strcats(GT2, L".dat");
-			e = _wfopen_s(&fp, GT2, L"rb");
-			if (e == 0) {
-				fread(&songdata[G[2]].Hscore, sizeof(int), 6, fp);
-				fread(&songdata[G[2]].Hacc, sizeof(double), 6, fp);
-				fread(&songdata[G[2]].Hdis, sizeof(int), 6, fp);
-				fread(&songdata[G[2]].ClearRank, sizeof(int), 6, fp);
-				fread(&songdata[G[2]].ClearRate, sizeof(int), 6, fp);
-				fclose(fp);
-			}
-			if (strands(songdata[G[2]].SongName[4], L"NULL") == 0 &&
-				(strands(songdata[G[2]].SongName[5], L"NULL") ||
-				songdata[G[2]].Hscore[5] >= 1)) {
-				songdata[G[2]].limit = 4;
-			}
-			if (songdata[G[2]].limit == 3) {
-				strcopy(L"NULL", songdata[G[2]].SongName[4], 1);
-				strcopy(L"NULL", songdata[G[2]].artist[4], 1);
-			}
-			Mapping[G[4]] = G[2];
-			SongNumCount++;
-			G[2]++;
-			G[4]++;
-		}
-	}
+
+	SongNumCount = RecSerectReadMapData(songdata, PackName, PackFirstNum, Mapping, lan[4]);
+
 	switch (lan[0]) {
 		case 0: charaimg = LoadGraph(L"picture/Mpicker.png"); break;
 		case 1: charaimg = LoadGraph(L"picture/Mgator.png"); break;
 		case 2: charaimg = LoadGraph(L"picture/Mtaylor.png"); break;
 		default: charaimg = 0; break;
 	}
-	//ここまで、曲情報の読み込み
 	//曲のソート
 	AvoidKeyBug();
 	G[0] = Mapping[command[0]];
