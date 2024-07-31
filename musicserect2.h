@@ -1,3 +1,4 @@
+
 #include <DxLib.h>
 #include "serectbase.h"
 #include "recr_cutin.h"
@@ -203,6 +204,128 @@ static int RecSerectReadMapData(MUSIC_BOX songdata[], rec_pack_name_set_t PackNa
 	return songCount;
 }
 
+static class rec_serect_disk_c {
+private:
+	int Lv = 1;
+	int rate = 0;
+	int UD = 1;
+	int startC = -MUSE_FADTM;
+	double Nrot = 0.0;
+	DxPic_t disk;
+	DxPic_t runner;
+	DxPic_t rateBar;
+
+	void DrawNamePlate() {
+		DrawGraphAnchor(-175, 5, this->rateBar, DXDRAW_ANCHOR_TOP_RIGHT);
+		DrawGraphAnchor(-145, 5, this->runner, DXDRAW_ANCHOR_TOP_RIGHT);
+		DrawFormatStringToHandleAnchor(-365, 17, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"Lv:%2d", this->Lv);
+		DrawFormatStringToHandleAnchor(-360, 42, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"RATE:%d.%02d", this->rate / 100, this->rate % 100);
+	}
+
+	void DrawDisk() {
+		int moveC = 0;
+
+		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
+		if (this->UD == 1) { this->Nrot += pals(0, 2, MUSE_FADTM, -75, moveC) / 100.0; }
+		else { this->Nrot += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
+		if (this->Nrot > 6.28) { this->Nrot -= 6.28; }
+		else if (this->Nrot < 0) { this->Nrot += 6.28; }
+		DrawRotaGraphAnchor(-30, 25, 1, this->Nrot, this->disk, DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
+	}
+
+	void DrawSort(int mode, int lan) {
+		if (lan == 1) {
+			switch (mode) {
+			case SORT_DEFAULT:
+				DrawStringToHandleAnchor(-90, 110, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				break;
+			case SORT_LEVEL:
+				DrawStringToHandleAnchor(-90, 110, L"level", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				break;
+			case SORT_SCORE:
+				DrawStringToHandleAnchor(-90, 110, L"score", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				break;
+			}
+		}
+		else {
+			switch (mode) {
+			case SORT_DEFAULT:
+				DrawStringToHandleAnchor(-90, 110, L"デフォルト", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				break;
+			case SORT_LEVEL:
+				DrawStringToHandleAnchor(-90, 110, L"レベル順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				break;
+			case SORT_SCORE:
+				DrawStringToHandleAnchor(-90, 110, L"スコア順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				break;
+			}
+		}
+	}
+
+public:
+	rec_serect_disk_c(int CharNo) {
+		FILE *fp = NULL;
+
+		_wfopen_s(&fp, L"save/chap.dat", L"rb");
+		if (fp != NULL) {
+			int buf[3];
+			fread(buf, sizeof(int), 3, fp);
+			this->Lv = buf[CharNo] + 1;
+			fclose(fp);
+		}
+
+		this->rate = GetRate();
+
+		switch (CharNo) {
+		case 0:
+			this->runner = LoadGraph(L"picture/Mpicker.png");
+			break;
+		case 1:
+			this->runner = LoadGraph(L"picture/Mgator.png");
+			break;
+		case 2:
+			this->runner = LoadGraph(L"picture/Mtaylor.png");
+			break;
+		default:
+			this->runner = -1;
+			break;
+		}
+		if (this->rate < 2500) {
+			this->rateBar = LoadGraph(L"picture/MSrate1.png");
+		}
+		else if (2500 <= this->rate && this->rate < 5500) {
+			this->rateBar = LoadGraph(L"picture/MSrate2.png");
+		}
+		else if (5500 <= this->rate && this->rate < 9000) {
+			this->rateBar = LoadGraph(L"picture/MSrate3.png");
+		}
+		else if (9000 <= this->rate && this->rate < 12000) {
+			this->rateBar = LoadGraph(L"picture/MSrate4.png");
+		}
+		else {
+			this->rateBar = LoadGraph(L"picture/MSrate5.png");
+		}
+		this->disk = LoadGraph(L"picture/disk.png");
+	}
+
+	~rec_serect_disk_c() {
+		DeleteGraph(this->disk);
+		DeleteGraph(this->rateBar);
+		DeleteGraph(this->runner);
+	}
+
+	void SlideDisk(int vect) {
+		this->UD = vect;
+		this->startC = GetNowCount();
+	}
+
+	void DrawDiskSet(int mode, int lang) {
+		this->DrawNamePlate();
+		this->DrawDisk();
+		this->DrawSort(mode, lang);
+	}
+};
+
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
 	char closeFg = 0;
@@ -229,15 +352,12 @@ now_scene_t musicserect2(int *p1) {
 	int PackFirstNum[PackNumLim];
 	int Mapping[SongNumLim];
 	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[0:キャラ, 4:言語]だけ
-	int chap[3] = { 0,0,0 };
 	int backpos = 0;
-	int rate = GetRate();
 	int CutTime = 0;
 	const int keyCB[7] = {
 		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_UP,
 		KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_Z
 	};
-	double diskr = 0;
 	//wchar_t変数定義
 	rec_pack_name_set_t PackName[PackNumLim];
 	wchar_t viewingjacket[255] = { L"picture/NULL jucket.png" };
@@ -248,7 +368,6 @@ now_scene_t musicserect2(int *p1) {
 	int back = LoadGraph(L"picture/MSback.png");
 	int jacketpic = LoadGraph(L"picture/NULL jucket.png");
 	int detail = LoadGraph(L"picture/detail.png");
-	int disk = LoadGraph(L"picture/disk.png");
 	int help = LoadGraph(L"picture/help.png");
 	int bar[2];
 	bar[0] = LoadGraph(L"picture/songbarB.png");
@@ -283,20 +402,16 @@ now_scene_t musicserect2(int *p1) {
 	difbar[2] = LoadGraph(L"picture/difnormal.png");
 	difbar[3] = LoadGraph(L"picture/difhard.png");
 	difbar[4] = difbar[5] = LoadGraph(L"picture/difanother.png");
-	int charaimg = 0;
-	int ratebarimg = GetRateBarPic(rate);
 	int previewM = LoadSoundMem(L"null.mp3");
 	int select = LoadSoundMem(L"sound/arrow.wav");
+	/* extern rec_serect_disk_c dickClass(); */
+	/* TODO: システム情報を取得する関数を別ファイルに作る */
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&lan, sizeof(int), 6, fp);
 		fclose(fp);
 	}
-	G[0] = _wfopen_s(&fp, L"save/chap.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&chap, sizeof(chap), 3, fp);
-		fclose(fp);
-	}
+	rec_serect_disk_c diskClass(lan[0]);
 	G[0] = _wfopen_s(&fp, L"save/SongSelect2.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&command, sizeof(int), 2, fp);
@@ -306,12 +421,6 @@ now_scene_t musicserect2(int *p1) {
 
 	SongNumCount = RecSerectReadMapData(songdata, PackName, PackFirstNum, Mapping, lan[4]);
 
-	switch (lan[0]) {
-		case 0: charaimg = LoadGraph(L"picture/Mpicker.png"); break;
-		case 1: charaimg = LoadGraph(L"picture/Mgator.png"); break;
-		case 2: charaimg = LoadGraph(L"picture/Mtaylor.png"); break;
-		default: charaimg = 0; break;
-	}
 	//曲のソート
 	AvoidKeyBug();
 	G[0] = Mapping[command[0]];
@@ -348,6 +457,8 @@ now_scene_t musicserect2(int *p1) {
 		//時間設定
 		moveC = mins(-1 * (NTime - startC) + MUSE_FADTM, 0);
 		XmoveC = mins(-1 * (NTime - XstartC) + MUSE_FADTM, 0);
+		//ディスク周りを表示する
+		diskClass.DrawDiskSet(SortMode, lan[4]);
 		//曲一覧を作成する
 		DrawSongBar(command[0], command[1], SongNumCount, UD, moveC, bar,
 			songdata, Mapping, CRatepic, CRankpic);
@@ -433,20 +544,12 @@ now_scene_t musicserect2(int *p1) {
 			WaitTimer(30);
 			SongPreSTime = NTime;
 		}
-		//レートを表示する
-		DrawRate(rate, ratebarimg, chap[lan[0]], charaimg);
-		//ディスクを表示する(ソート表示場所)
-		if (UD == 1) { diskr += pals(0, 2, MUSE_FADTM, -75, moveC) / 100.0; }
-		else { diskr += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
-		if (diskr > 6.28) { diskr -= 6.28; }
-		else if (diskr < 0) { diskr += 6.28; }
-		RecRescaleDrawRotaGraph(610, 25, 1, diskr, disk, TRUE);
-		//今のソート内容を表示する
-		ViewSortMode(SortMode, lan[4]);
+		//TODO: 別に関数がある
 		//操作説明を表示する
 		ShowHelpBar(Cr[0], help, lan[4]);
 		//デバッグ(320,410スタート)
 		//RecRescaleDrawFormatString(320, 410, Cr[0], L"%d", SortMode);
+		//TODO: カットインをclassにする
 		if (closeFg == 0) {
 			ViewCutOut(CutTime);
 		}
@@ -585,6 +688,7 @@ now_scene_t musicserect2(int *p1) {
 					XstartC -= MUSE_FADTM;
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
+				diskClass.SlideDisk(-1);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				UD = -1;
 				startC = NTime;
@@ -611,6 +715,7 @@ now_scene_t musicserect2(int *p1) {
 					XstartC -= MUSE_FADTM;
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
+				diskClass.SlideDisk(1);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				UD = 1;
 				startC = NTime;

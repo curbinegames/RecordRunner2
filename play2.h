@@ -1135,10 +1135,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	double DifRate; //ïàñ íËêî
 
 	/* string */
-	wchar_t songName[255];
-	wchar_t dataE[255];
-	wchar_t GT1[255];
-	wchar_t GT2[255];
+	TCHAR songName[255];
+	TCHAR dataE[255];
+	TCHAR GT1[255];
+	TCHAR GT2[255];
 
 	/* class */
 	rec_play_sbar_c sbarClass;
