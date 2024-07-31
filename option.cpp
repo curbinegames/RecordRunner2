@@ -47,7 +47,7 @@ int RecOpenOptionFile(int *data) {
 	if (fp == NULL) {
 		return 1;
 	}
-	fread(&data, sizeof(int), 7, fp);
+	fread(data, sizeof(int), 7, fp);
 	fclose(fp);
 	return 0;
 }
@@ -58,7 +58,7 @@ int RecOpenOptionFile2(rec_option_t *data) {
 	if (fp == NULL) {
 		return 1;
 	}
-	fread(&data, sizeof(rec_option_t), 1, fp);
+	fread(data, sizeof(rec_option_t), 1, fp);
 	fclose(fp);
 	return 0;
 }
@@ -69,7 +69,7 @@ int RecWriteOptineFile(int *data) {
 	if (fp == NULL) {
 		return 1;
 	}
-	fwrite(&data, sizeof(int), 7, fp);
+	fwrite(data, sizeof(int), 7, fp);
 	fclose(fp);
 	return 0;
 }
@@ -80,17 +80,17 @@ int RecWriteOptineFile2(rec_option_t *data) {
 	if (fp == NULL) {
 		return 1;
 	}
-	fwrite(&data, sizeof(int), 7, fp);
+	fwrite(data, sizeof(rec_option_t), 1, fp);
 	fclose(fp);
 	return 0;
 }
 
 static void RecOptionChar(TCHAR *ret, int pal, int lang) {
-	const wchar_t jp[3][20] = {
+	const TCHAR jp[3][20] = {
 		L"ピッカー", L"マップゲーター", L"テイラー"
 	};
 
-	const wchar_t en[3][10] = {
+	const TCHAR en[3][10] = {
 		L"Picker", L"MapGator", L"Taylor"
 	};
 
@@ -234,6 +234,15 @@ now_scene_t option(void) {
 	optionstr[5].val_p = &optiondata.keydetail;
 	optionstr[6].val_p = &optiondata.combopos;
 
+	for (int i = 0; i < 7; i++) {
+		if (*optionstr[i].val_p < optionstr[i].min) {
+			*optionstr[i].val_p = 0;
+		}
+		if (optionstr[i].max < *optionstr[i].val_p) {
+			*optionstr[i].val_p = 0;
+		}
+	}
+
 	pic.back   = LoadGraph(L"picture/OPTION back.png");
 	pic.cursor = LoadGraph(L"picture/OC.png");
 	sel        = LoadSoundMem(L"sound/select.wav");
@@ -278,6 +287,18 @@ now_scene_t option(void) {
 			break;
 		case KEY_INPUT_BACK:
 			RecWriteOptineFile2(&optiondata);
+			{
+				int buf[7] = {
+					optiondata.chara,
+					optiondata.offset,
+					optiondata.SEenable,
+					optiondata.backbright,
+					optiondata.lang,
+					optiondata.keydetail,
+					optiondata.combopos
+				};
+				RecWriteOptineFile(buf);
+			}
 			exitFg = 1;
 			break;
 #if 0 /* デバッグ用コード */
