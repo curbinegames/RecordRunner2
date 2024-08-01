@@ -28,17 +28,12 @@ typedef struct music_box {
 
 void ChangeSortMode(int *mode);
 void DrawBackPicture(int img);
-void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
-	const int *difC);
 void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
 	int *bar, MUSIC_BOX *songdata, int *Mapping, int *CRatepic, int *CRankpic);
-void DrawRate(int rate, int bar, int chap, int charaimg);
 int GetRate();
-int GetRateBarPic(int rate);
 void ShowHelpBar(unsigned int Cr, int bar, int lan);
 void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
 	const int dif, const int SongNumCount);
-void ViewSortMode(int mode, int lan);
 
 /* +++++ */
 
@@ -54,22 +49,6 @@ void DrawBackPicture(int img) {
 	RecRescaleDrawGraph(posx, 0, img, TRUE);
 	RecRescaleDrawGraph(posx + 640, 0, img, TRUE);
 	return;
-}
-
-void DrawDifMaker(MUSIC_BOX songdata, int comdif, int comnum,
-	const int *difC) {
-	int posX = 0;
-	int posY = 0;
-	for (int i = 0; i < 5; i++) {
-		posY = 0;
-		if (comdif == i) posY = 1;
-		if (comdif < i) posX = 1;
-		if (strands(songdata.SongFileName[i], L"NULL") == 0
-			&& i <= songdata.limit) {
-			RecRescaleDrawGraph(550 + 11 * posX + 16 * i, 290 - 11 * posY,
-				difC[i * 2 + posY], TRUE);
-		}
-	}
 }
 
 void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
@@ -134,15 +113,6 @@ void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
 	return;
 }
 
-/* レートだけじゃなくなってるw */
-void DrawRate(int rate, int bar, int chap, int charaimg) {
-	RecRescaleDrawGraph(250, 0, bar, TRUE);
-	RecRescaleDrawGraph(370, 0, charaimg, TRUE);
-	RecRescaleDrawFormatString(265, 12, GetColor(0, 0, 0), L"Lv:%2d", chap + 1);
-	RecRescaleDrawFormatString(270, 37, GetColor(0, 0, 0), L"RATE:%d.%02d", rate / 100, rate % 100);
-	return;
-}
-
 int GetRate() {
 	int e;
 	int ans = 0;
@@ -160,26 +130,6 @@ int GetRate() {
 		}
 	}
 	return ans / 2;
-}
-
-int GetRateBarPic(int rate) {
-	int pic = NULL;
-	if (rate < 2500) {
-		pic = LoadGraph(L"picture/MSrate1.png");
-	}
-	else if (2500 <= rate && rate < 5500) {
-		pic = LoadGraph(L"picture/MSrate2.png");
-	}
-	else if (5500 <= rate && rate < 9000) {
-		pic = LoadGraph(L"picture/MSrate3.png");
-	}
-	else if (9000 <= rate && rate < 12000) {
-		pic = LoadGraph(L"picture/MSrate4.png");
-	}
-	else {
-		pic = LoadGraph(L"picture/MSrate5.png");
-	}
-	return pic;
 }
 
 void ShowHelpBar(unsigned int Cr, int bar, int lan) {
@@ -264,37 +214,6 @@ void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
 		break;
 	}
 	return;
-}
-
-void ViewSortMode(int mode, int lan) {
-#define POS_X 550
-#define POS_Y 110
-	if (lan == 1) {
-		switch (mode) {
-		case SORT_DEFAULT:
-			RecRescaleDrawString(POS_X, POS_Y, L"default", GetColor(255, 255, 255));
-			break;
-		case SORT_LEVEL:
-			RecRescaleDrawString(POS_X, POS_Y, L"level", GetColor(255, 255, 255));
-			break;
-		case SORT_SCORE:
-			RecRescaleDrawString(POS_X, POS_Y, L"score", GetColor(255, 255, 255));
-			break;
-		}
-	}
-	else {
-		switch (mode) {
-		case SORT_DEFAULT:
-			RecRescaleDrawString(POS_X, POS_Y, L"デフォルト", GetColor(255, 255, 255));
-			break;
-		case SORT_LEVEL:
-			RecRescaleDrawString(POS_X, POS_Y, L"レベル順", GetColor(255, 255, 255));
-			break;
-		case SORT_SCORE:
-			RecRescaleDrawString(POS_X, POS_Y, L"スコア順", GetColor(255, 255, 255));
-			break;
-		}
-	}
 }
 
 #endif

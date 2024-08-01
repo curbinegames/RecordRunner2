@@ -326,6 +326,126 @@ public:
 	}
 };
 
+static class rec_serect_detail_c {
+private:
+	int LR = 1;
+	int XstartC = -MUSE_FADTM;
+	TCHAR viewingDifBar[255] = { L"NULL" };
+	DxPic_t difbar[6];
+	DxPic_t detail;
+	DxPic_t difC[10];
+
+	void DrawDifMark(MUSIC_BOX *songdata, int comdif) {
+		int posX = 0;
+		int posY = 0;
+		for (int i = 0; i < 5; i++) {
+			posY = 0;
+			if (comdif == i) { posY = 1; }
+			if (comdif <= i) { posX = 1; }
+			if (strands(songdata->SongFileName[i], L"NULL") == 0 && i <= songdata->limit) {
+				DrawGraphAnchor(11 * posX + 16 * i - 80, -165, this->difC[i * 2 + posY], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			}
+		}
+	}
+
+	void DrawDifBar(int dif) {
+		int XmoveC = mins(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
+
+		if (this->LR == 1) {
+			XmoveC = pals(0, 640, MUSE_FADTM, 460, XmoveC);
+			DrawGraphAnchor(5, -120, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			DrawGraphAnchor(XmoveC - 640 + 184, -120, this->difbar[dif + 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		}
+		else if (this->LR == -1) {
+			XmoveC = pals(0, 460, MUSE_FADTM, 640, XmoveC);
+			DrawGraphAnchor(5, -120, this->difbar[dif - 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			DrawGraphAnchor(XmoveC - 640 + 184, -120, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		}
+	}
+
+	void DrawDetail(MUSIC_BOX *songdata, int dif) {
+		DrawGraphAnchor(20, 70, this->detail, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		DrawFormatStringToHandleAnchor(-310, -100, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"%s", songdata->packName);
+		DrawFormatStringToHandleAnchor(-305, -75, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"Lv.%2d", songdata->level[dif]);
+		for (int i = 0; i < 15; i++) {
+			if (10 <= i && songdata->level[dif] <= i) {
+				break;
+			}
+			if (i < songdata->level[dif]) {
+				DrawStringToHandleAnchor(16 * i - 250, -75, L"★", COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			}
+			else {
+				DrawStringToHandleAnchor(16 * i - 250, -75, L"☆", COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			}
+		}
+		DrawFormatStringToHandleAnchor(-300, -50, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
+			songdata->Hscore[dif], songdata->Hacc[dif], songdata->Hdis[dif] / 1000.0);
+	}
+
+public:
+	rec_serect_detail_c() {
+		this->difbar[0] = LoadGraph(L"picture/difauto.png");
+		this->difbar[1] = LoadGraph(L"picture/difeasy.png");
+		this->difbar[2] = LoadGraph(L"picture/difnormal.png");
+		this->difbar[3] = LoadGraph(L"picture/difhard.png");
+		this->difbar[4] = LoadGraph(L"picture/difanother.png");
+		this->difbar[5] = this->difbar[4];
+		this->detail = LoadGraph(L"picture/detail.png");
+		this->difC[0] = LoadGraph(L"picture/Dif0S.png");
+		this->difC[1] = LoadGraph(L"picture/Dif0B.png");
+		this->difC[2] = LoadGraph(L"picture/Dif1S.png");
+		this->difC[3] = LoadGraph(L"picture/Dif1B.png");
+		this->difC[4] = LoadGraph(L"picture/Dif2S.png");
+		this->difC[5] = LoadGraph(L"picture/Dif2B.png");
+		this->difC[6] = LoadGraph(L"picture/Dif3S.png");
+		this->difC[7] = LoadGraph(L"picture/Dif3B.png");
+		this->difC[8] = LoadGraph(L"picture/Dif4S.png");
+		this->difC[9] = LoadGraph(L"picture/Dif4B.png");
+	}
+
+	~rec_serect_detail_c() {
+		DeleteGraph(this->detail);
+		DeleteGraph(this->difbar[0]);
+		DeleteGraph(this->difbar[1]);
+		DeleteGraph(this->difbar[2]);
+		DeleteGraph(this->difbar[3]);
+		DeleteGraph(this->difbar[4]);
+		for (int i = 0; i < 10; i++) {
+			DeleteGraph(this->difC[i]);
+		}
+	}
+
+	void SlideDif(int vect) {
+		this->LR = vect;
+		this->XstartC = GetNowCount();
+	}
+
+	void FetchDifPic(TCHAR *difpath) {
+		if (strands(this->viewingDifBar, difpath) == 1) { return; }
+
+		DeleteGraph(this->difbar[4]);
+		DeleteGraph(this->difbar[5]);
+
+		this->difbar[4] = LoadGraph(difpath);
+		if (this->difbar[4] == -1) {
+			DeleteGraph(this->difbar[4]);
+			this->difbar[4] = LoadGraph(L"picture/difanother.png");
+			this->difbar[5] = this->difbar[4];
+			strcopy(L"NULL", this->viewingDifBar, 1);
+		}
+		else {
+			this->difbar[5] = this->difbar[4];
+			strcopy(difpath, this->viewingDifBar, 1);
+		}
+	}
+
+	void DrawDetailAll(MUSIC_BOX *songdata, int dif) {
+		this->DrawDifMark(songdata, dif);
+		this->DrawDifBar(dif);
+		this->DrawDetail(songdata, dif);
+	}
+};
+
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
 	char closeFg = 0;
@@ -339,11 +459,8 @@ now_scene_t musicserect2(int *p1) {
 	int SongNumCount = 0;
 	int moveC = MUSE_FADTM;
 	int startC = -MUSE_FADTM;
-	int XmoveC = MUSE_FADTM;
-	int XstartC = -MUSE_FADTM;
 	int preSC = 0;
 	int UD = 1;
-	int LR = 1;
 	int ShiftKey = 0;
 	int AutoFlag = 0;
 	int SongPreSTime = 0;
@@ -361,13 +478,11 @@ now_scene_t musicserect2(int *p1) {
 	//wchar_t変数定義
 	rec_pack_name_set_t PackName[PackNumLim];
 	wchar_t viewingjacket[255] = { L"picture/NULL jucket.png" };
-	wchar_t viewingDifBar[255] = { L"NULL" };
 	wchar_t playingsong[255] = { L"NULL" };
 	now_scene_t next = SCENE_EXIT;
 	MUSIC_BOX songdata[SongNumLim];
 	int back = LoadGraph(L"picture/MSback.png");
 	int jacketpic = LoadGraph(L"picture/NULL jucket.png");
-	int detail = LoadGraph(L"picture/detail.png");
 	int help = LoadGraph(L"picture/help.png");
 	int bar[2];
 	bar[0] = LoadGraph(L"picture/songbarB.png");
@@ -385,26 +500,10 @@ now_scene_t musicserect2(int *p1) {
 	CRankpic[3] = LoadGraph(L"picture/MiniB.png");
 	CRankpic[4] = LoadGraph(L"picture/MiniC.png");
 	CRankpic[5] = LoadGraph(L"picture/MiniD.png");
-	int difC[10];
-	difC[0] = LoadGraph(L"picture/Dif0S.png");
-	difC[1] = LoadGraph(L"picture/Dif0B.png");
-	difC[2] = LoadGraph(L"picture/Dif1S.png");
-	difC[3] = LoadGraph(L"picture/Dif1B.png");
-	difC[4] = LoadGraph(L"picture/Dif2S.png");
-	difC[5] = LoadGraph(L"picture/Dif2B.png");
-	difC[6] = LoadGraph(L"picture/Dif3S.png");
-	difC[7] = LoadGraph(L"picture/Dif3B.png");
-	difC[8] = LoadGraph(L"picture/Dif4S.png");
-	difC[9] = LoadGraph(L"picture/Dif4B.png");
-	int difbar[6];
-	difbar[0] = LoadGraph(L"picture/difauto.png");
-	difbar[1] = LoadGraph(L"picture/difeasy.png");
-	difbar[2] = LoadGraph(L"picture/difnormal.png");
-	difbar[3] = LoadGraph(L"picture/difhard.png");
-	difbar[4] = difbar[5] = LoadGraph(L"picture/difanother.png");
 	int previewM = LoadSoundMem(L"null.mp3");
 	int select = LoadSoundMem(L"sound/arrow.wav");
 	/* extern rec_serect_disk_c dickClass(); */
+	rec_serect_detail_c detailClass;
 	/* TODO: システム情報を取得する関数を別ファイルに作る */
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
@@ -446,6 +545,7 @@ now_scene_t musicserect2(int *p1) {
 		WaitTimer(10); // ウェイト
 		SongPreSTime = GetNowCount(); // 再生開始時間を保存
 	}
+	detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
 	CutTime = GetNowCount();
 	while (1) {
 		NTime = GetNowCount();
@@ -456,7 +556,6 @@ now_scene_t musicserect2(int *p1) {
 		backpos = (backpos - 2) % 640;
 		//時間設定
 		moveC = mins(-1 * (NTime - startC) + MUSE_FADTM, 0);
-		XmoveC = mins(-1 * (NTime - XstartC) + MUSE_FADTM, 0);
 		//ディスク周りを表示する
 		diskClass.DrawDiskSet(SortMode, lan[4]);
 		//曲一覧を作成する
@@ -469,47 +568,8 @@ now_scene_t musicserect2(int *p1) {
 			jacketpic = LoadGraph(viewingjacket);
 		}
 		RecRescaleDrawExtendGraph(305, 75, 545, 315, jacketpic, TRUE);
-		//難易度マーカーを表示する
-		DrawDifMaker(songdata[Mapping[command[0]]], command[1], command[0], difC);
-		//難易度バーを表示する
-		if (strands(viewingDifBar, songdata[Mapping[command[0]]].difP) == 0) {
-			DeleteGraph(difbar[4]);
-			DeleteGraph(difbar[5]);
-			strcopy(songdata[Mapping[command[0]]].difP, viewingDifBar, 1);
-			difbar[4] = difbar[5] = LoadGraph(viewingDifBar);
-			if (difbar[4] == -1) {
-				DeleteGraph(difbar[4]);
-				DeleteGraph(difbar[5]);
-				difbar[4] = difbar[5] = LoadGraph(L"picture/difanother.png");
-			}
-		}
-		if (LR == 1) {
-			RecRescaleDrawGraph(460, 320, difbar[command[1]], TRUE);
-			RecRescaleDrawGraph(pals(0, 640, MUSE_FADTM, 460, XmoveC), 320, difbar[command[1] + 1], TRUE);
-		}
-		else if (LR == -1) {
-			RecRescaleDrawGraph(460, 320, difbar[command[1] - 1], TRUE);
-			RecRescaleDrawGraph(pals(0, 460, MUSE_FADTM, 640, XmoveC), 320, difbar[command[1]], TRUE);
-		}
-		//詳細を表示する
-		RecRescaleDrawGraph(316, 370, detail, TRUE);
-		RecRescaleDrawFormatString(330, 380, Cr[3], L"%s", songdata[Mapping[command[0]]].packName);
-		RecRescaleDrawFormatString(335, 405, Cr[3], L"Lv.%2d", songdata[Mapping[command[0]]].level[command[1]]);
-		for (int i = 0; i < 15; i++) {
-			if (10 <= i && songdata[Mapping[command[0]]].level[command[1]] <= i) {
-				break;
-			}
-			if (i < songdata[Mapping[command[0]]].level[command[1]]) {
-				RecRescaleDrawString(16 * i + 390, 405, L"★", Cr[3]);
-			}
-			else {
-				RecRescaleDrawString(16 * i + 390, 405, L"☆", Cr[3]);
-			}
-		}
-		RecRescaleDrawFormatString(340, 430, Cr[3], L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
-			songdata[Mapping[command[0]]].Hscore[command[1]],
-			songdata[Mapping[command[0]]].Hacc[command[1]],
-			songdata[Mapping[command[0]]].Hdis[command[1]] / 1000.0);
+		//詳細表示
+		detailClass.DrawDetailAll(&songdata[Mapping[command[0]]], command[1]);
 		//プレビューを流す
 		if (preSC + MUSE_KEYTM < NTime
 			&& strands(songdata[Mapping[command[0]]].SongFileName[command[1]], L"NULL") == 0
@@ -685,9 +745,10 @@ now_scene_t musicserect2(int *p1) {
 				if (command[0] < 0) { command[0] = SongNumCount - 1; }
 				if (command[1] > songdata[Mapping[command[0]]].limit) {
 					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= MUSE_FADTM;
+					detailClass.SlideDif(1);
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
+				detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
 				diskClass.SlideDisk(-1);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				UD = -1;
@@ -712,9 +773,10 @@ now_scene_t musicserect2(int *p1) {
 				if (command[0] >= SongNumCount) command[0] = 0;
 				if (command[1] > songdata[Mapping[command[0]]].limit) {
 					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= MUSE_FADTM;
+					detailClass.SlideDif(1);
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
+				detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
 				diskClass.SlideDisk(1);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				UD = 1;
@@ -734,14 +796,14 @@ now_scene_t musicserect2(int *p1) {
 				break;
 			case 5: /* 難易度下降 */
 				command[1]--;
-				XstartC = NTime;
-				preSC = XstartC;
 				if (command[1] < 0) {
 					command[1] = 0;
-					XstartC -= MUSE_FADTM;
 				}
+				else {
+					detailClass.SlideDif(1);
+				}
+				preSC = NTime;
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				LR = 1;
 				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
 					G[0] = Mapping[command[0]];
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
@@ -754,14 +816,14 @@ now_scene_t musicserect2(int *p1) {
 				break;
 			case 6: /* 難易度上昇 */
 				command[1]++;
-				XstartC = NTime;
-				preSC = XstartC;
 				if (command[1] > songdata[Mapping[command[0]]].limit) {
 					command[1] = songdata[Mapping[command[0]]].limit;
-					XstartC -= MUSE_FADTM;
 				}
+				else {
+					detailClass.SlideDif(-1);
+				}
+				preSC = NTime;
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				LR = -1;
 				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
 					G[0] = Mapping[command[0]];
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
