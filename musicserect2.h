@@ -204,6 +204,119 @@ static int RecSerectReadMapData(MUSIC_BOX songdata[], rec_pack_name_set_t PackNa
 	return songCount;
 }
 
+static class rec_serect_musicbar_c {
+private:
+	int UD = 1;
+	int startC = -MUSE_FADTM;
+	DxPic_t bar[2];
+	DxPic_t CRate[5];
+	DxPic_t rankP[6];
+
+	void DrawClear(int x, int y, int clearNo) {
+		if (0 <= clearNo && clearNo <= 4) {
+			RecRescaleDrawGraph(x, y, this->CRate[clearNo], TRUE);
+		}
+	}
+
+	void DrawRack(int x, int y, int rankNo) {
+		if (0 <= rankNo && rankNo <= 5) {
+			RecRescaleDrawGraph(x, y, this->rankP[rankNo], TRUE);
+		}
+	}
+
+	void DrawMainOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX *songdata) {
+		RecRescaleDrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1], TRUE);
+		RecRescaleDrawString(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_BLACK);
+		RecRescaleDrawString(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_BLACK);
+		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata->ClearRate[dif] - 1);
+		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata->ClearRank[dif]);
+		for (int idif = 0; idif < 3; idif++) {
+			RecRescaleDrawFormatString(BasePosX - 25 + idif * 70, BasePosY - 97,
+				COLOR_BLACK, L"%2d", songdata->level[1 + idif]);
+		}
+	}
+
+	void DrawSubOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX *songdata) {
+		RecRescaleDrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0], TRUE);
+		RecRescaleDrawString(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_WHITE);
+		RecRescaleDrawString(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_WHITE);
+		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata->ClearRate[dif] - 1);
+		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata->ClearRank[dif]);
+	}
+
+public:
+	rec_serect_musicbar_c() {
+		this->bar[0] = LoadGraph(L"picture/songbarB.png");
+		this->bar[1] = LoadGraph(L"picture/songbarY.png");
+		this->CRate[0] = LoadGraph(L"picture/MarkD.png");
+		this->CRate[1] = LoadGraph(L"picture/MarkC.png");
+		this->CRate[2] = LoadGraph(L"picture/MarkNM.png");
+		this->CRate[3] = LoadGraph(L"picture/MarkFC.png");
+		this->CRate[4] = LoadGraph(L"picture/MarkP.png");
+		this->rankP[0] = LoadGraph(L"picture/MiniEX.png");
+		this->rankP[1] = LoadGraph(L"picture/MiniS.png");
+		this->rankP[2] = LoadGraph(L"picture/MiniA.png");
+		this->rankP[3] = LoadGraph(L"picture/MiniB.png");
+		this->rankP[4] = LoadGraph(L"picture/MiniC.png");
+		this->rankP[5] = LoadGraph(L"picture/MiniD.png");
+	}
+
+	~rec_serect_musicbar_c() {
+		DeleteGraph(this->bar[0]);
+		DeleteGraph(this->bar[1]);
+		DeleteGraph(this->CRate[0]);
+		DeleteGraph(this->CRate[1]);
+		DeleteGraph(this->CRate[2]);
+		DeleteGraph(this->CRate[3]);
+		DeleteGraph(this->CRate[4]);
+		DeleteGraph(this->rankP[0]);
+		DeleteGraph(this->rankP[1]);
+		DeleteGraph(this->rankP[2]);
+		DeleteGraph(this->rankP[3]);
+		DeleteGraph(this->rankP[4]);
+		DeleteGraph(this->rankP[5]);
+	}
+
+	void SlideBar(int vect) {
+		this->UD = vect;
+		this->startC = GetNowCount();
+	}
+
+	void DrawAll(int cmd1, int dif, int SongNumCount, MUSIC_BOX *songdata, int *Mapping) {
+		int BasePosX = 0;
+		int BasePosY = 0;
+		int slide = 0;
+		int picsong = 0;
+		int moveC = 0;
+
+		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
+		picsong = (cmd1 + SongNumCount - 3) % SongNumCount;
+
+		for (int count = 0; count < 7; count++) {
+			slide = pals(0, 0, 250, this->UD * 80, moveC);
+			if (count < 3) {
+				BasePosY = slide + count * 80 + 120;
+			}
+			else if (count == 3) {
+				BasePosY = slide + count * 120;
+			}
+			else {
+				BasePosY = slide + count * 80 + 160;
+			}
+			BasePosX = lins(480, 80, 240, 40, BasePosY);
+
+			if (count == 3) {
+				this->DrawMainOne(dif, BasePosX, BasePosY, &songdata[Mapping[picsong]]);
+			}
+			else {
+				this->DrawSubOne(dif, BasePosX, BasePosY, &songdata[Mapping[picsong]]);
+			}
+
+			picsong = (picsong + 1) % SongNumCount;
+		}
+	}
+};
+
 static class rec_serect_disk_c {
 private:
 	int Lv = 1;
@@ -449,18 +562,12 @@ public:
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
 	char closeFg = 0;
-	unsigned int Cr[7];
-	Cr[0] = Cr[1] = Cr[2] = Cr[4] = Cr[5] = Cr[6] = GetColor(255, 255, 255);
-	Cr[3] = GetColor(0, 0, 0);
 	int NTime = 0;
 	int e;
 	int G[10];
 	int command[2] = { 0,1 };
 	int SongNumCount = 0;
-	int moveC = MUSE_FADTM;
-	int startC = -MUSE_FADTM;
 	int preSC = 0;
-	int UD = 1;
 	int ShiftKey = 0;
 	int AutoFlag = 0;
 	int SongPreSTime = 0;
@@ -484,24 +591,9 @@ now_scene_t musicserect2(int *p1) {
 	int back = LoadGraph(L"picture/MSback.png");
 	int jacketpic = LoadGraph(L"picture/NULL jucket.png");
 	int help = LoadGraph(L"picture/help.png");
-	int bar[2];
-	bar[0] = LoadGraph(L"picture/songbarB.png");
-	bar[1] = LoadGraph(L"picture/songbarY.png");
-	int CRatepic[5];
-	CRatepic[0] = LoadGraph(L"picture/MarkD.png");
-	CRatepic[1] = LoadGraph(L"picture/MarkC.png");
-	CRatepic[2] = LoadGraph(L"picture/MarkNM.png");
-	CRatepic[3] = LoadGraph(L"picture/MarkFC.png");
-	CRatepic[4] = LoadGraph(L"picture/MarkP.png");
-	int CRankpic[6];
-	CRankpic[0] = LoadGraph(L"picture/MiniEX.png");
-	CRankpic[1] = LoadGraph(L"picture/MiniS.png");
-	CRankpic[2] = LoadGraph(L"picture/MiniA.png");
-	CRankpic[3] = LoadGraph(L"picture/MiniB.png");
-	CRankpic[4] = LoadGraph(L"picture/MiniC.png");
-	CRankpic[5] = LoadGraph(L"picture/MiniD.png");
 	int previewM = LoadSoundMem(L"null.mp3");
 	int select = LoadSoundMem(L"sound/arrow.wav");
+	rec_serect_musicbar_c musicbarClass;
 	/* extern rec_serect_disk_c dickClass(); */
 	rec_serect_detail_c detailClass;
 	/* TODO: システム情報を取得する関数を別ファイルに作る */
@@ -554,13 +646,9 @@ now_scene_t musicserect2(int *p1) {
 		RecRescaleDrawGraph(backpos, 0, back, TRUE);
 		RecRescaleDrawGraph(backpos + 640, 0, back, TRUE);
 		backpos = (backpos - 2) % 640;
-		//時間設定
-		moveC = mins(-1 * (NTime - startC) + MUSE_FADTM, 0);
-		//ディスク周りを表示する
+		//曲一覧、ディスク表示
+		musicbarClass.DrawAll(command[0], command[1], SongNumCount, songdata, Mapping);
 		diskClass.DrawDiskSet(SortMode, lan[4]);
-		//曲一覧を作成する
-		DrawSongBar(command[0], command[1], SongNumCount, UD, moveC, bar,
-			songdata, Mapping, CRatepic, CRankpic);
 		//ジャケット表示
 		if (strands(viewingjacket, songdata[Mapping[command[0]]].jacketP[command[1]]) == 0) {
 			DeleteGraph(jacketpic);
@@ -606,9 +694,9 @@ now_scene_t musicserect2(int *p1) {
 		}
 		//TODO: 別に関数がある
 		//操作説明を表示する
-		ShowHelpBar(Cr[0], help, lan[4]);
+		ShowHelpBar(COLOR_WHITE, help, lan[4]);
 		//デバッグ(320,410スタート)
-		//RecRescaleDrawFormatString(320, 410, Cr[0], L"%d", SortMode);
+		//RecRescaleDrawFormatString(320, 410, COLOR_WHITE, L"%d", SortMode);
 		//TODO: カットインをclassにする
 		if (closeFg == 0) {
 			ViewCutOut(CutTime);
@@ -749,11 +837,10 @@ now_scene_t musicserect2(int *p1) {
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
 				detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
+				musicbarClass.SlideBar(-1);
 				diskClass.SlideDisk(-1);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				UD = -1;
-				startC = NTime;
-				preSC = startC;
+				preSC = NTime;
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
 				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
 					if (strands(songdata[Mapping[command[0]]].SongName[0], L"NULL") != 1) {
@@ -777,11 +864,10 @@ now_scene_t musicserect2(int *p1) {
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
 				detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
+				musicbarClass.SlideBar(1);
 				diskClass.SlideDisk(1);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				UD = 1;
-				startC = NTime;
-				preSC = startC;
+				preSC = NTime;
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
 				if (SortMode == SORT_DEFAULT &&
 					strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
