@@ -1,6 +1,10 @@
 #ifndef SECERT_BASE
 #define SECERT_BASE
 
+#include <DxLib.h>
+#include "general/dxcur.h"
+#include "general/sancur.h"
+#include "general/strcur.h"
 #include "RecWindowRescale.h"
 
 #define PackNumLim 8
@@ -25,6 +29,8 @@ typedef struct music_box {
 	wchar_t SongFileName[6][256];
 	wchar_t jacketP[6][256];
 }MUSIC_BOX;
+
+typedef MUSIC_BOX rec_music_detail_t;
 
 void ChangeSortMode(int *mode);
 void DrawBackPicture(int img);

@@ -204,6 +204,183 @@ static int RecSerectReadMapData(MUSIC_BOX songdata[], rec_pack_name_set_t PackNa
 	return songCount;
 }
 
+static int RecSerectKeyCheck() {
+	int ret = 0;
+	int mouseBtn = 0;
+	int mouseX = 0;
+	int mouseY = 0;
+	int mouseAct = 0;
+	int mouseHoil = 0;
+
+	/* マウス入力 */
+	mouseAct = 0;
+	while (GetMouseInputLog2(&mouseBtn, &mouseX, &mouseY, &mouseAct, true) == 0) {}
+	if (mouseBtn == MOUSE_INPUT_LEFT && mouseAct == MOUSE_INPUT_LOG_UP) {
+		if (5 <= mouseX && mouseX <= 280 && 195 <= mouseY && mouseY <= 290) {
+			ret = 1;
+		}
+		if (5 <= mouseX && mouseX <= 245 && 5 <= mouseY && mouseY <= 175) {
+			ret = 3;
+		}
+		if (5 <= mouseX && mouseX <= 305 && 310 <= mouseY && mouseY <= 475) {
+			ret = 4;
+		}
+		if (505 <= mouseX && mouseX <= 635 && 5 <= mouseY && mouseY <= 130) {
+			ret = 7;
+		}
+	}
+
+	/* ホイール入力 */
+	mouseHoil = GetMouseWheelRotVol();
+	if (1 <= mouseHoil) { /* 奥回し */
+		ret = 3;
+	}
+	if (mouseHoil <= -1) { /* 手前回し */
+		ret = 4;
+	}
+
+	/* キー入力 */
+	InputAllKeyHold();
+	switch (GetKeyPushOnce()) {
+	case KEY_INPUT_RETURN:
+		ret = 1;
+		break;
+	case KEY_INPUT_BACK:
+		ret = 2;
+		break;
+	case KEY_INPUT_UP:
+		ret = 3;
+		break;
+	case KEY_INPUT_DOWN:
+		ret = 4;
+		break;
+	case KEY_INPUT_LEFT:
+		ret = 5;
+		break;
+	case KEY_INPUT_RIGHT:
+		ret = 6;
+		break;
+	case KEY_INPUT_Z:
+		ret = 7;
+		break;
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+static int RecSerectTrySecret(int Hscore) {
+	int ret = 0;
+	int rate = 0;
+	if (Hscore >= 90000 && Hscore < 92500) {
+		rate = pals(90000, 0, 92500, 25, Hscore);
+	}
+	else if (Hscore >= 92500 && Hscore < 95000) {
+		rate = pals(95000, 50, 92500, 25, Hscore);
+	}
+	else if (Hscore >= 95000 && Hscore < 98000) {
+		rate = pals(95000, 50, 98000, 750, Hscore);
+	}
+	else if (Hscore >= 98000 && Hscore < 99000) {
+		rate = pals(99000, 1000, 98000, 750, Hscore);
+	}
+	else if (Hscore >= 99000) { rate = 1000; }
+	if (GetRand(1000) <= rate) { ret = 1; }
+	return ret;
+}
+
+static class rec_serect_backpic_c {
+private:
+	DxPic_t back;
+	int backpos = 0;
+
+public:
+	rec_serect_backpic_c() {
+		this->back = LoadGraph(L"picture/MSback.png");
+	}
+
+	~rec_serect_backpic_c() {
+		DeleteGraph(this->back);
+	}
+
+	void DrawBackPic() {
+		this->backpos = (this->backpos - 2) % 640;
+		RecRescaleDrawGraph(this->backpos, 0, this->back, TRUE);
+		RecRescaleDrawGraph(this->backpos + 640, 0, this->back, TRUE);
+	}
+};
+
+static class rec_serect_preview_sound_c {
+private:
+	int preSC = 0;
+	int SongPrePat = 0;
+	int SongPreSTime = 0;
+	int preTime[2] = { 441000,2646000 };
+	TCHAR playingsong[256] = { L"NULL" };
+	DxSnd_t previewM = LoadSoundMem(L"null.mp3");
+
+public:
+	void StartSnd() {
+		SetCurrentPositionSoundMem(this->preTime[this->SongPrePat], this->previewM);
+		ChangeVolumeSoundMem(0, this->previewM);
+		PlaySoundMem(this->previewM, DX_PLAYTYPE_BACK, FALSE);
+		WaitTimer(30);
+		this->SongPreSTime = GetNowCount();
+	}
+
+	int UpdateSnd(MUSIC_BOX *songdata, int dif) {
+		if (strands(songdata->SongFileName[dif], L"NULL") == 0 &&
+			strands(this->playingsong, songdata->SongFileName[dif]) == 0)
+		{
+			if (this->previewM != -1) {
+				StopSoundMem(this->previewM);
+				DeleteSoundMem(this->previewM);
+			}
+			strcopy(songdata->SongFileName[dif], this->playingsong, 1);
+			this->previewM = LoadSoundMem(this->playingsong);
+			this->SongPrePat = 0;
+			this->preTime[0] = songdata->preview[dif][0];
+			this->preTime[1] = songdata->preview[dif][1];
+			return 1;
+		}
+		return 0;
+	}
+
+	void CheckTime(MUSIC_BOX *songdata, int dif, int Ntime) {
+		if (Ntime - this->SongPreSTime < 500) {
+			ChangeVolumeSoundMem(lins(0, 0, 500, 255, Ntime - this->SongPreSTime), this->previewM);
+		}
+		else if (500 <= Ntime - this->SongPreSTime && Ntime - this->SongPreSTime < 14500) {
+			ChangeVolumeSoundMem(255, this->previewM);
+		}
+		else if (14500 <= Ntime - this->SongPreSTime && Ntime - this->SongPreSTime < 15000) {
+			ChangeVolumeSoundMem(lins(14500, 255, 15000, 0, Ntime - this->SongPreSTime), this->previewM);
+		}
+		else if (15000 <= Ntime - this->SongPreSTime) {
+			StopSoundMem(this->previewM);
+			this->SongPrePat = (this->SongPrePat + 1) % 2;
+			this->StartSnd();
+		}
+	}
+
+	void CheckSnd(MUSIC_BOX *songdata, int dif, int Ntime) {
+		if (this->preSC + MUSE_KEYTM < Ntime) {
+			if (this->UpdateSnd(songdata, dif) == 1) {
+				this->StartSnd();
+			}
+		}
+	}
+
+	void SetPresc(int Ntime) {
+		this->preSC = Ntime;
+	}
+
+	void StopSnd() {
+		StopSoundMem(this->previewM);
+	}
+};
+
 static class rec_serect_musicbar_c {
 private:
 	int UD = 1;
@@ -539,7 +716,7 @@ public:
 		DeleteGraph(this->difbar[4]);
 		DeleteGraph(this->difbar[5]);
 
-		this->difbar[4] = LoadGraph(difpath);
+		this->difbar[4] = LoadGraph(this->viewingDifBar);
 		if (this->difbar[4] == -1) {
 			DeleteGraph(this->difbar[4]);
 			this->difbar[4] = LoadGraph(L"picture/difanother.png");
@@ -559,6 +736,33 @@ public:
 	}
 };
 
+static class rec_serect_jacket_c {
+private:
+	DxPic_t jacketpic;
+	TCHAR viewingjacket[255] = { L"picture/NULL jucket.png" };
+
+public:
+	rec_serect_jacket_c() {
+		this->jacketpic = LoadGraph(L"picture/NULL jucket.png");
+	}
+
+	~rec_serect_jacket_c() {
+		DeleteGraph(this->jacketpic);
+	}
+
+	void UpdateJacket(TCHAR *jacketName) {
+		if (strands(this->viewingjacket, jacketName) == 0) {
+			DeleteGraph(this->jacketpic);
+			strcopy(jacketName, this->viewingjacket, 1);
+			this->jacketpic = LoadGraph(this->viewingjacket);
+		}
+	}
+
+	void DrawJacket() {
+		RecRescaleDrawExtendGraph(305, 75, 545, 315, this->jacketpic, TRUE);
+	}
+};
+
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
 	char closeFg = 0;
@@ -567,16 +771,12 @@ now_scene_t musicserect2(int *p1) {
 	int G[10];
 	int command[2] = { 0,1 };
 	int SongNumCount = 0;
-	int preSC = 0;
 	int ShiftKey = 0;
 	int AutoFlag = 0;
-	int SongPreSTime = 0;
-	int SongPrePat = 0;
 	int SortMode = SORT_DEFAULT;
 	int PackFirstNum[PackNumLim];
 	int Mapping[SongNumLim];
 	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[0:キャラ, 4:言語]だけ
-	int backpos = 0;
 	int CutTime = 0;
 	const int keyCB[7] = {
 		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_UP,
@@ -584,18 +784,18 @@ now_scene_t musicserect2(int *p1) {
 	};
 	//wchar_t変数定義
 	rec_pack_name_set_t PackName[PackNumLim];
-	wchar_t viewingjacket[255] = { L"picture/NULL jucket.png" };
-	wchar_t playingsong[255] = { L"NULL" };
 	now_scene_t next = SCENE_EXIT;
 	MUSIC_BOX songdata[SongNumLim];
-	int back = LoadGraph(L"picture/MSback.png");
-	int jacketpic = LoadGraph(L"picture/NULL jucket.png");
 	int help = LoadGraph(L"picture/help.png");
-	int previewM = LoadSoundMem(L"null.mp3");
 	int select = LoadSoundMem(L"sound/arrow.wav");
+
+	rec_serect_backpic_c backpicClass;
 	rec_serect_musicbar_c musicbarClass;
 	/* extern rec_serect_disk_c dickClass(); */
 	rec_serect_detail_c detailClass;
+	rec_serect_preview_sound_c previewSndClass;
+	rec_serect_jacket_c jacketClass;
+
 	/* TODO: システム情報を取得する関数を別ファイルに作る */
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (G[0] == 0) {
@@ -624,79 +824,33 @@ now_scene_t musicserect2(int *p1) {
 	G[0] += 0;
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
-	G[0] = Mapping[command[0]];
-	G[1] = songdata[G[0]].preview[command[1]][0];
-	// 開始位置に曲ファイルがあれば再生
-	if (strands(songdata[G[0]].SongFileName[command[1]], L"NULL") == 0) {
-		SongPrePat = 0; // 再生位置パターンを0に設定
-		strcopy(songdata[G[0]].SongFileName[command[1]], playingsong, 1); // 曲名取得
-		previewM = LoadSoundMem(playingsong); // 曲をfdに読み込み
-		SetCurrentPositionSoundMem(G[1], previewM); // 再生位置
-		ChangeVolumeSoundMem(0, previewM); // 音量
-		PlaySoundMem(previewM, DX_PLAYTYPE_BACK, FALSE); // 再生
-		WaitTimer(10); // ウェイト
-		SongPreSTime = GetNowCount(); // 再生開始時間を保存
-	}
+
+	previewSndClass.UpdateSnd(&songdata[Mapping[command[0]]], command[1]);
+	previewSndClass.StartSnd();
 	detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
 	CutTime = GetNowCount();
+	jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
 	while (1) {
 		NTime = GetNowCount();
+
 		ClearDrawScreen();
-		//背景の表示
-		RecRescaleDrawGraph(backpos, 0, back, TRUE);
-		RecRescaleDrawGraph(backpos + 640, 0, back, TRUE);
-		backpos = (backpos - 2) % 640;
-		//曲一覧、ディスク表示
+		//背景、ジャケット、曲一覧、ディスク、詳細表示
+		backpicClass.DrawBackPic();
+		jacketClass.DrawJacket();
 		musicbarClass.DrawAll(command[0], command[1], SongNumCount, songdata, Mapping);
 		diskClass.DrawDiskSet(SortMode, lan[4]);
-		//ジャケット表示
-		if (strands(viewingjacket, songdata[Mapping[command[0]]].jacketP[command[1]]) == 0) {
-			DeleteGraph(jacketpic);
-			strcopy(songdata[Mapping[command[0]]].jacketP[command[1]], viewingjacket, 1);
-			jacketpic = LoadGraph(viewingjacket);
-		}
-		RecRescaleDrawExtendGraph(305, 75, 545, 315, jacketpic, TRUE);
-		//詳細表示
 		detailClass.DrawDetailAll(&songdata[Mapping[command[0]]], command[1]);
-		//プレビューを流す
-		if (preSC + MUSE_KEYTM < NTime
-			&& strands(songdata[Mapping[command[0]]].SongFileName[command[1]], L"NULL") == 0
-			&& strands(playingsong, songdata[Mapping[command[0]]].SongFileName[command[1]]) == 0) {
-			StopSoundMem(previewM);
-			DeleteSoundMem(previewM);
-			SongPrePat = 0;
-			strcopy(songdata[Mapping[command[0]]].SongFileName[command[1]], playingsong, 1);
-			previewM = LoadSoundMem(playingsong);
-			SetCurrentPositionSoundMem(songdata[Mapping[command[0]]].preview[command[1]][0], previewM);
-			ChangeVolumeSoundMem(0, previewM);
-			PlaySoundMem(previewM, DX_PLAYTYPE_BACK, FALSE);
-			WaitTimer(30);
-			NTime = GetNowCount();
-			SongPreSTime = NTime;
-		}
-		if (NTime - SongPreSTime < 500) {
-			ChangeVolumeSoundMem(lins(0, 0, 500, 255, NTime - SongPreSTime), previewM);
-		}
-		else if (500 <= NTime - SongPreSTime && NTime - SongPreSTime < 14500) {
-			ChangeVolumeSoundMem(255, previewM);
-		}
-		else if (14500 <= NTime - SongPreSTime && NTime - SongPreSTime < 15000) {
-			ChangeVolumeSoundMem(lins(14500, 255, 15000, 0, NTime - SongPreSTime), previewM);
-		}
-		else if (15000 <= NTime - SongPreSTime) {
-			StopSoundMem(previewM);
-			SongPrePat++;
-			SetCurrentPositionSoundMem(songdata[Mapping[command[0]]].preview[command[1]][SongPrePat % 2], previewM);
-			ChangeVolumeSoundMem(0, previewM);
-			PlaySoundMem(previewM, DX_PLAYTYPE_BACK, FALSE);
-			WaitTimer(30);
-			SongPreSTime = NTime;
-		}
+		previewSndClass.CheckTime(&songdata[Mapping[command[0]]], command[1], NTime);
+		previewSndClass.CheckSnd(&songdata[Mapping[command[0]]], command[1], NTime);
+		NTime = GetNowCount();
+
 		//TODO: 別に関数がある
 		//操作説明を表示する
 		ShowHelpBar(COLOR_WHITE, help, lan[4]);
+
 		//デバッグ(320,410スタート)
 		//RecRescaleDrawFormatString(320, 410, COLOR_WHITE, L"%d", SortMode);
+
 		//TODO: カットインをclassにする
 		if (closeFg == 0) {
 			ViewCutOut(CutTime);
@@ -705,97 +859,28 @@ now_scene_t musicserect2(int *p1) {
 			ViewCutIn(CutTime);
 		}
 		ScreenFlip();
-		if (CheckHitKey(KEY_INPUT_LSHIFT) == 1 || CheckHitKey(KEY_INPUT_RSHIFT) == 1) { ShiftKey = 1; }
-		else { ShiftKey = 0; }
-		if (CheckHitKey(KEY_INPUT_P) == 1) { AutoFlag = 1; }
-		else { AutoFlag = 0; }
-		G[0] = 0;
-		/* マウス入力 */
-		G[1] = 0;
-		G[2] = 0;
-		G[3] = 0;
-		G[4] = 0;
-		while (GetMouseInputLog2(&G[1], &G[2], &G[3], &G[4], true) == 0) {}
-		if (G[1] == MOUSE_INPUT_LEFT && G[4] == MOUSE_INPUT_LOG_UP) {
-			if (5 <= G[2] && G[2] <= 280 && 195 <= G[3] && G[3] <= 290) {
-				G[0] = 1;
-			}
-			if (5 <= G[2] && G[2] <= 245 && 5 <= G[3] && G[3] <= 175) {
-				G[0] = 3;
-			}
-			if (5 <= G[2] && G[2] <= 305 && 310 <= G[3] && G[3] <= 475) {
-				G[0] = 4;
-			}
-			if (505 <= G[2] && G[2] <= 635 && 5 <= G[3] && G[3] <= 130) {
-				G[0] = 7;
-			}
-		}
-		/* ホイール入力 */
-		G[1] = GetMouseWheelRotVol();
-		if (1 <= G[1]) { /* 奥回し */
-			G[0] = 3;
-		}
-		if (G[1] <= -1) { /* 手前回し */
-			G[0] = 4;
-		}
-		/* キー入力 */
-		G[1] = keycur(keyCB, sizeof(keyCB) / sizeof(keyCB[0]));
-		switch (G[1]) {
-		case KEY_INPUT_RETURN:
-			G[0] = 1;
-			break;
-		case KEY_INPUT_BACK:
-			G[0] = 2;
-			break;
-		case KEY_INPUT_UP:
-			G[0] = 3;
-			break;
-		case KEY_INPUT_DOWN:
-			G[0] = 4;
-			break;
-		case KEY_INPUT_LEFT:
-			G[0] = 5;
-			break;
-		case KEY_INPUT_RIGHT:
-			G[0] = 6;
-			break;
-		case KEY_INPUT_Z:
-			G[0] = 7;
-			break;
-		default:
-			break;
-		}
-		/* 操作の結果反映 */
+
+		/* 操作検出*/
+		if (closeFg != 1) { G[0] = RecSerectKeyCheck(); }
+		else { G[0] = 0; }
+
 		if (G[0] == 1) { /* 曲決定 */
 			//Lvが0以上であるか
 			if (0 <= songdata[Mapping[command[0]]].level[command[1]]) {
+				if (CheckHitKey(KEY_INPUT_LSHIFT) == 1 || CheckHitKey(KEY_INPUT_RSHIFT) == 1) { ShiftKey = 1; }
+				else { ShiftKey = 0; }
+				if (CheckHitKey(KEY_INPUT_P) == 1) { AutoFlag = 1; }
+				else { AutoFlag = 0; }
 				//隠し曲用
-				if (command[1] == 3 && songdata[Mapping[command[0]]].Hscore[3] >= 90000
-					&& strands(songdata[Mapping[command[0]]].SongFileName[5], L"NULL") == 0
-					&& songdata[Mapping[command[0]]].Hscore[5] <= 0) {
-					G[0] = 0;
-					if (songdata[Mapping[command[0]]].Hscore[3] >= 90000
-						&& songdata[Mapping[command[0]]].Hscore[3] < 92500) {
-						G[0] = pals(90000, 0, 92500, 25, songdata[Mapping[command[0]]].Hscore[3]);
+				if (AutoFlag == 0 && command[1] == 3 &&
+					songdata[Mapping[command[0]]].Hscore[3] >= 90000 &&
+					strands(songdata[Mapping[command[0]]].SongFileName[5], L"NULL") == 0 &&
+					songdata[Mapping[command[0]]].Hscore[5] <= 0)
+				{
+					if (RecSerectTrySecret(songdata[Mapping[command[0]]].Hscore[3]) == 1) {
+						command[1] = 5;
 					}
-					else if (songdata[Mapping[command[0]]].Hscore[3] >= 92500
-						&& songdata[Mapping[command[0]]].Hscore[3] < 95000) {
-						G[0] = pals(95000, 50, 92500, 25, songdata[Mapping[command[0]]].Hscore[3]);
-					}
-					else if (songdata[Mapping[command[0]]].Hscore[3] >= 95000
-						&& songdata[Mapping[command[0]]].Hscore[3] < 98000) {
-						G[0] = pals(95000, 50, 98000, 750, songdata[Mapping[command[0]]].Hscore[3]);
-					}
-					else if (songdata[Mapping[command[0]]].Hscore[3] >= 98000
-						&& songdata[Mapping[command[0]]].Hscore[3] < 99000) {
-						G[0] = pals(99000, 1000, 98000, 750, songdata[Mapping[command[0]]].Hscore[3]);
-					}
-					else if (songdata[Mapping[command[0]]].Hscore[3] >= 99000) {
-						G[0] = 1000;
-					}
-					if (GetRand(1000) <= G[0]) { command[1] = 5; }
 				}
-				G[0] = 0;
 				for (G[0] = PackNumLim; G[0] >= 0; G[0]--) {
 					if (PackFirstNum[G[0]] >= 0 && PackFirstNum[G[0]] <= Mapping[command[0]]) {
 						*p1 = G[0];
@@ -836,11 +921,12 @@ now_scene_t musicserect2(int *p1) {
 					detailClass.SlideDif(1);
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
+				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
 				detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
 				musicbarClass.SlideBar(-1);
 				diskClass.SlideDisk(-1);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				preSC = NTime;
+				previewSndClass.SetPresc(NTime);
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
 				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
 					if (strands(songdata[Mapping[command[0]]].SongName[0], L"NULL") != 1) {
@@ -857,17 +943,18 @@ now_scene_t musicserect2(int *p1) {
 			case 4: /* 曲選択下 */
 				command[0]++;
 				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-				if (command[0] >= SongNumCount) command[0] = 0;
+				if (command[0] >= SongNumCount) { command[0] = 0; }
 				if (command[1] > songdata[Mapping[command[0]]].limit) {
 					command[1] = songdata[Mapping[command[0]]].limit;
 					detailClass.SlideDif(1);
 					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
 				}
+				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
 				detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
 				musicbarClass.SlideBar(1);
 				diskClass.SlideDisk(1);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				preSC = NTime;
+				previewSndClass.SetPresc(NTime);
 				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
 				if (SortMode == SORT_DEFAULT &&
 					strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
@@ -888,7 +975,8 @@ now_scene_t musicserect2(int *p1) {
 				else {
 					detailClass.SlideDif(1);
 				}
-				preSC = NTime;
+				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
+				previewSndClass.SetPresc(NTime);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
 					G[0] = Mapping[command[0]];
@@ -907,8 +995,10 @@ now_scene_t musicserect2(int *p1) {
 				}
 				else {
 					detailClass.SlideDif(-1);
+					detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
 				}
-				preSC = NTime;
+				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
+				previewSndClass.SetPresc(NTime);
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
 					G[0] = Mapping[command[0]];
@@ -929,13 +1019,14 @@ now_scene_t musicserect2(int *p1) {
 						command[0] = i;
 					}
 				}
+				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
 				break;
 			default:
 				break;
 			}
 		}
 		if (closeFg == 1 && CutTime + 2000 <= NTime) {
-			StopSoundMem(previewM);
+			previewSndClass.StopSnd();
 			ClearDrawScreen();
 			INIT_MAT();
 			break;
