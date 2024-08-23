@@ -296,6 +296,103 @@ static int RecSerectTrySecret(int Hscore) {
 	return ret;
 }
 
+static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
+	if (AutoFlag == 0 && dif == 3 &&
+		songdata->Hscore[3] >= 90000 &&
+		strands(songdata->SongFileName[5], L"NULL") == 0 &&
+		songdata->Hscore[5] <= 0)
+	{
+		if (RecSerectTrySecret(songdata->Hscore[3]) == 1) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/**
+ * SortSongで並び替えをした後、cmdを前と同じ曲に合わせます
+ * @param[in] songdata 曲データ
+ * @param[out] mapping 並び替え情報の格納場所
+ * @param[in] mode 並び替えの方法
+ * @param[in] dif 難易度
+ * @param[in] SongNumCount 曲の個数
+ * @param[out] cmd commandの格納場所
+ */
+static void SortSongWithSave(MUSIC_BOX *songdata, int *mapping,
+	int mode, int dif, const int SongNumCount, int *cmd)
+{
+	int save = 0;
+
+	save = mapping[*cmd];
+	SortSong(songdata, mapping, mode, dif, SongNumCount);
+	for (int i = 0; i < SongNumCount; i++) {
+		if (mapping[i] == save) {
+			*cmd = i;
+		}
+	}
+	return;
+}
+
+/**
+ * 今選んでいる難易度に譜面がなかったら、ほかの難易度を探しに行く
+ * @param[in] songdata 今選んでいる曲データ
+ * @param[in] dif 今選んでいる難易度
+ * @param[in] SortMode 今の並び順
+ * @return int 見つかった難易度
+ */
+static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
+	int ret = dif;
+
+	if (SortMode != SORT_DEFAULT) { return ret; }
+	if (strands(songdata->SongName[dif], L"NULL") == 0) { return ret; }
+
+	if (strands(songdata->SongName[0], L"NULL") != 1) { ret = 0; }
+	switch (dif) {
+	case 1:
+		if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
+		else if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
+		break;
+	case 2:
+		if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
+		else if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
+		break;
+	case 3:
+		if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
+		else if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
+		break;
+	case 4:
+		if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
+		else if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
+		else if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
+		break;
+	}
+
+	return ret;
+}
+
+static void RecSerectLoadBefCmd(int *cmd, int *sortMode) {
+	FILE *fp;
+	_wfopen_s(&fp, L"save/SongSelect2.dat", L"rb");
+	if (fp == NULL) {
+		fread(cmd, sizeof(int), 2, fp);
+		fread(sortMode, sizeof(int), 1, fp);
+		fclose(fp);
+	}
+	return;
+}
+
+static void RecSerectSaveBefCmd(int cmd[], int sortMode, int mapping[]) {
+	FILE *fp;
+	_wfopen_s(&fp, L"save/SongSelect2.dat", L"wb");
+	if (fp != NULL) {
+		fwrite(&mapping[cmd[0]], sizeof(int), 1, fp);
+		fwrite(&cmd[1], sizeof(int), 1, fp);
+		fwrite(&sortMode, sizeof(int), 1, fp);
+		fclose(fp);
+	}
+	return;
+}
+
 #endif /* sub action */
 
 #if 1 /* class */
@@ -384,10 +481,6 @@ public:
 
 	void SetPresc(int Ntime) {
 		this->preSC = Ntime;
-	}
-
-	void StopSnd() {
-		StopSoundMem(this->previewM);
 	}
 };
 
@@ -773,16 +866,163 @@ public:
 	}
 };
 
+static class rec_serect_snd_c {
+private:
+	DxSnd_t select;
+
+public:
+	rec_serect_snd_c() {
+		this->select = LoadSoundMem(L"sound/arrow.wav");
+	}
+
+	~rec_serect_snd_c() {
+		StopSoundMem(this->select);
+		DeleteSoundMem(this->select);
+	}
+
+	void PlaySnd() {
+		PlaySoundMem(this->select, DX_PLAYTYPE_BACK);
+	}
+};
+
+static class rec_serect_ui_c {
+private:
+	rec_serect_backpic_c backpicClass;
+	rec_serect_jacket_c jacketClass;
+	rec_serect_musicbar_c musicbarClass;
+	rec_serect_disk_c diskClass;
+	rec_serect_detail_c detailClass;
+	rec_serect_preview_sound_c previewSndClass;
+	rec_serect_snd_c sndClass;
+
+public:
+	rec_serect_ui_c() {
+	}
+
+	~rec_serect_ui_c() {
+	}
+
+	void InitUi(MUSIC_BOX *songdata, int dif) {
+		this->jacketClass.UpdateJacket(songdata->jacketP[dif]);
+		this->detailClass.FetchDifPic(songdata->difP);
+		this->previewSndClass.UpdateSnd(songdata, dif);
+		this->previewSndClass.StartSnd();
+	}
+
+	void Update4th(TCHAR *jacketName) {
+		jacketClass.UpdateJacket(jacketName);
+		previewSndClass.SetPresc(GetNowCount());
+		sndClass.PlaySnd();
+	}
+
+	void UpdateUD(MUSIC_BOX *songdata, int dif, int vect) {
+		this->detailClass.FetchDifPic(songdata->difP);
+		this->musicbarClass.SlideBar(vect);
+		this->diskClass.SlideDisk(vect);
+		this->Update4th(songdata->jacketP[dif]);
+	}
+
+	void UpdateLR(MUSIC_BOX *songdata, int dif, int vect) {
+		this->detailClass.SlideDif(1);
+		this->Update4th(songdata->jacketP[dif]);
+	}
+
+	void DrawUi(int command[], int SongNumCount,
+		MUSIC_BOX songdata[], int *Mapping, int SortMode)
+	{
+		this->backpicClass.DrawBackPic();
+		this->jacketClass.DrawJacket();
+		this->musicbarClass.DrawAll(command[0], command[1], SongNumCount, songdata, Mapping);
+		this->diskClass.DrawDiskSet(SortMode);
+		this->detailClass.DrawDetailAll(&songdata[Mapping[command[0]]], command[1]);
+		this->previewSndClass.CheckTime(&songdata[Mapping[command[0]]], command[1], GetNowCount());
+		this->previewSndClass.CheckSnd(&songdata[Mapping[command[0]]], command[1], GetNowCount());
+	}
+};
+
 #endif /* class */
+
+#if 1 /* after class action */
+
+static void RecSerectDrawAllUi(rec_serect_ui_c *uiClass, int *command, int SongNumCount,
+	MUSIC_BOX *songdata, int *Mapping, int SortMode, char closeFg, int CutTime, DxPic_t help)
+{
+	ClearDrawScreen();
+	//背景、ジャケット、曲一覧、ディスク、詳細表示
+	uiClass->DrawUi(command, SongNumCount, songdata, Mapping, SortMode);
+
+	//TODO: 別に関数があるのでそっちに移行する
+	//操作説明を表示する
+	ShowHelpBar(COLOR_WHITE, help, optiondata.lang);
+
+	//デバッグ(320,410スタート)
+	//RecRescaleDrawFormatString(320, 410, COLOR_WHITE, L"%d", SortMode);
+
+	//TODO: カットインをclassにする
+	if (closeFg == 0) { ViewCutOut(CutTime); }
+	if (closeFg == 1) { ViewCutIn(CutTime); }
+	ScreenFlip();
+
+	return;
+}
+
+static void RecSerectKeyActLR(int command[], int vect, rec_serect_ui_c *uiClass,
+	MUSIC_BOX songdata[], int Mapping[], int SortMode, int SongNumCount)
+{
+	if (vect == 1) {
+		command[1]--;
+		if (command[1] < 0) {
+			command[1] = 0;
+			return;
+		}
+	}
+	else {
+		command[1]++;
+		if (command[1] > songdata[Mapping[command[0]]].limit) {
+			command[1] = songdata[Mapping[command[0]]].limit;
+			return;
+		}
+	}
+
+	uiClass->UpdateLR(&songdata[Mapping[command[0]]], command[1], vect);
+	if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
+		SortSongWithSave(songdata, Mapping, SortMode, command[1], SongNumCount, &command[0]);
+	}
+
+	return;
+}
+
+static void RecSerectKeyActUD(int command[], int vect, rec_serect_ui_c *uiClass,
+	MUSIC_BOX songdata[], int Mapping[], int SortMode, int SongNumCount)
+{
+	if (vect == -1) {
+		command[0]--;
+		//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
+		if (command[0] < 0) { command[0] = SongNumCount - 1; }
+	}
+	else {
+		command[0]++;
+		//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
+		if (command[0] >= SongNumCount) { command[0] = 0; }
+	}
+
+	if (command[1] > songdata[Mapping[command[0]]].limit) {
+		RecSerectKeyActLR(command, 1, uiClass, songdata, Mapping, SortMode, SongNumCount);
+	}
+	uiClass->UpdateUD(&songdata[Mapping[command[0]]], command[1], vect);
+	RecSerectFetchDif(&songdata[Mapping[command[0]]], command[1], SortMode);
+
+	return;
+}
+
+#endif /* after class action */
 
 now_scene_t musicserect2(int *p1) {
 	/* char */
 	char closeFg = 0;
 
 	/* int */
-	int NTime = 0;
-	int e;
-	int G[10];
+	int buf = 0;
 	int command[2] = { 0,1 };
 	int SongNumCount = 0;
 	int ShiftKey = 0;
@@ -790,12 +1030,7 @@ now_scene_t musicserect2(int *p1) {
 	int SortMode = SORT_DEFAULT;
 	int PackFirstNum[PackNumLim];
 	int Mapping[SongNumLim];
-	int	lan[6] = { 0,0,0,2,0,0 }; //使うのは[0:キャラ, 4:言語]だけ
 	int CutTime = 0;
-	const int keyCB[7] = {
-		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_UP,
-		KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_Z
-	};
 
 	/* typedef */
 	now_scene_t next = SCENE_EXIT;
@@ -803,248 +1038,94 @@ now_scene_t musicserect2(int *p1) {
 
 	/* mat */
 	int help = LoadGraph(L"picture/help.png");
-	int select = LoadSoundMem(L"sound/arrow.wav");
 
 	/* class */
-	rec_serect_backpic_c backpicClass;
-	rec_serect_musicbar_c musicbarClass;
-	/* extern rec_serect_disk_c dickClass(); */
-	rec_serect_detail_c detailClass;
-	rec_serect_preview_sound_c previewSndClass;
-	rec_serect_jacket_c jacketClass;
-	FILE *fp;
+	rec_serect_ui_c uiClass;
 
-	/* TODO: システム情報を取得する関数を別ファイルに作る */
-	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&lan, sizeof(int), 6, fp);
-		fclose(fp);
-	}
-	rec_serect_disk_c diskClass;
-	G[0] = _wfopen_s(&fp, L"save/SongSelect2.dat", L"rb");
-	if (G[0] == 0) {
-		fread(&command, sizeof(int), 2, fp);
-		fread(&SortMode, sizeof(int), 1, fp);
-		fclose(fp);
-	}
-
+	RecSerectLoadBefCmd(command, &SortMode);
 	SongNumCount = RecSerectReadMapData(songdata, PackFirstNum, Mapping);
-
-	//曲のソート
+	SortSongWithSave(songdata, Mapping, SortMode, command[1], SongNumCount, &command[0]);
 	AvoidKeyBug();
-	G[0] = Mapping[command[0]];
-	SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-	for (int i = 0; i < SongNumCount; i++) {
-		if (Mapping[i] == G[0]) {
-			command[0] = i;
-		}
-	}
-	G[0] += 0;
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
-
-	previewSndClass.UpdateSnd(&songdata[Mapping[command[0]]], command[1]);
-	previewSndClass.StartSnd();
-	detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
+	uiClass.InitUi(&songdata[Mapping[command[0]]], command[1]);
 	CutTime = GetNowCount();
-	jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
+
 	while (1) {
-		NTime = GetNowCount();
-
-		ClearDrawScreen();
-		//背景、ジャケット、曲一覧、ディスク、詳細表示
-		backpicClass.DrawBackPic();
-		jacketClass.DrawJacket();
-		musicbarClass.DrawAll(command[0], command[1], SongNumCount, songdata, Mapping);
-		diskClass.DrawDiskSet(SortMode);
-		detailClass.DrawDetailAll(&songdata[Mapping[command[0]]], command[1]);
-		previewSndClass.CheckTime(&songdata[Mapping[command[0]]], command[1], NTime);
-		previewSndClass.CheckSnd(&songdata[Mapping[command[0]]], command[1], NTime);
-		NTime = GetNowCount();
-
-		//TODO: 別に関数がある
-		//操作説明を表示する
-		ShowHelpBar(COLOR_WHITE, help, lan[4]);
-
-		//デバッグ(320,410スタート)
-		//RecRescaleDrawFormatString(320, 410, COLOR_WHITE, L"%d", SortMode);
-
-		//TODO: カットインをclassにする
-		if (closeFg == 0) {
-			ViewCutOut(CutTime);
-		}
-		if (closeFg == 1) {
-			ViewCutIn(CutTime);
-		}
-		ScreenFlip();
+		RecSerectDrawAllUi(&uiClass, command, SongNumCount,
+			songdata, Mapping, SortMode, closeFg, CutTime, help);
 
 		/* 操作検出*/
-		if (closeFg != 1) { G[0] = RecSerectKeyCheck(); }
-		else { G[0] = 0; }
+		if (closeFg != 1) { buf = RecSerectKeyCheck(); }
+		else { buf = 0; }
 
-		if (G[0] == 1) { /* 曲決定 */
+		if (buf == 1) { /* 曲決定 */
 			//Lvが0以上であるか
 			if (0 <= songdata[Mapping[command[0]]].level[command[1]]) {
 				if (CheckHitKey(KEY_INPUT_LSHIFT) == 1 || CheckHitKey(KEY_INPUT_RSHIFT) == 1) { ShiftKey = 1; }
 				else { ShiftKey = 0; }
 				if (CheckHitKey(KEY_INPUT_P) == 1) { AutoFlag = 1; }
 				else { AutoFlag = 0; }
+
 				//隠し曲用
-				if (AutoFlag == 0 && command[1] == 3 &&
-					songdata[Mapping[command[0]]].Hscore[3] >= 90000 &&
-					strands(songdata[Mapping[command[0]]].SongFileName[5], L"NULL") == 0 &&
-					songdata[Mapping[command[0]]].Hscore[5] <= 0)
-				{
-					if (RecSerectTrySecret(songdata[Mapping[command[0]]].Hscore[3]) == 1) {
-						command[1] = 5;
-					}
+				if (RecSerectTrySecret2(AutoFlag, command[1], &songdata[Mapping[command[0]]]) == 1) {
+					command[1] = 5;
 				}
-				for (G[0] = PackNumLim; G[0] >= 0; G[0]--) {
-					if (PackFirstNum[G[0]] >= 0 && PackFirstNum[G[0]] <= Mapping[command[0]]) {
-						*p1 = G[0];
+
+				// TODO: *p1になってるのどうにかしたい
+				for (buf = PackNumLim; buf >= 0; buf--) {
+					if (PackFirstNum[buf] >= 0 && PackFirstNum[buf] <= Mapping[command[0]]) {
+						*p1 = buf;
 						break;
 					}
 				}
 				p1++;
-				*p1 = Mapping[command[0]] - PackFirstNum[G[0]];
+				*p1 = Mapping[command[0]] - PackFirstNum[buf];
 				p1++;
 				*p1 = command[1];
 				p1++;
 				*p1 = ShiftKey;
 				p1++;
 				*p1 = AutoFlag;
+
 				next = SCENE_MUSIC;
 				SetCutTipFg(CUTIN_TIPS_SONG);
 				SetCutSong(songdata[Mapping[command[0]]].SongName[command[1]],
 					songdata[Mapping[command[0]]].jacketP[command[1]]);
 				closeFg = 1;
-				CutTime = NTime;
+				CutTime = GetNowCount();
 			}
 		}
-		else if (G[0] == 2) { /* 戻る */
+		else if (buf == 2) { /* 戻る */
 			next = SCENE_MENU;
 			SetTipNo();
 			SetCutTipFg(CUTIN_TIPS_ON);
 			closeFg = 1;
-			CutTime = NTime;
+			CutTime = GetNowCount();
 		}
 		else {
-			switch (G[0]) {
+			switch (buf) {
 			case 3: /* 曲選択上 */
-				command[0]--;
-				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-				if (command[0] < 0) { command[0] = SongNumCount - 1; }
-				if (command[1] > songdata[Mapping[command[0]]].limit) {
-					command[1] = songdata[Mapping[command[0]]].limit;
-					detailClass.SlideDif(1);
-					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-				}
-				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
-				detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
-				musicbarClass.SlideBar(-1);
-				diskClass.SlideDisk(-1);
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				previewSndClass.SetPresc(NTime);
-				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-				if (SortMode == SORT_DEFAULT && strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
-					if (strands(songdata[Mapping[command[0]]].SongName[0], L"NULL") != 1) {
-						command[1] = 0;
-					}
-					for (int i = 1; i <= 3; i++) {
-						if (strands(songdata[Mapping[command[0]]].SongName[i], L"NULL") != 1) {
-							command[1] = i;
-							break;
-						}
-					}
-				}
+				RecSerectKeyActUD(command, -1, &uiClass, songdata, Mapping, SortMode, SongNumCount);
 				break;
 			case 4: /* 曲選択下 */
-				command[0]++;
-				//縦コマンド(曲)の端を過ぎたとき、もう片方の端に移動する
-				if (command[0] >= SongNumCount) { command[0] = 0; }
-				if (command[1] > songdata[Mapping[command[0]]].limit) {
-					command[1] = songdata[Mapping[command[0]]].limit;
-					detailClass.SlideDif(1);
-					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-				}
-				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
-				detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
-				musicbarClass.SlideBar(1);
-				diskClass.SlideDisk(1);
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				previewSndClass.SetPresc(NTime);
-				//デフォルトソートで、今選んだ曲の難易度に譜面が無かったら、譜面がある難易度を探す。
-				if (SortMode == SORT_DEFAULT &&
-					strands(songdata[Mapping[command[0]]].SongName[command[1]], L"NULL")) {
-					if (strands(songdata[Mapping[command[0]]].SongName[0], L"NULL") != 1) command[1] = 0;
-					for (int i = 1; i <= 3; i++) {
-						if (strands(songdata[Mapping[command[0]]].SongName[i], L"NULL") != 1) {
-							command[1] = i;
-							break;
-						}
-					}
-				}
+				RecSerectKeyActUD(command, 1, &uiClass, songdata, Mapping, SortMode, SongNumCount);
 				break;
 			case 5: /* 難易度下降 */
-				command[1]--;
-				if (command[1] < 0) {
-					command[1] = 0;
-				}
-				else {
-					detailClass.SlideDif(1);
-				}
-				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
-				previewSndClass.SetPresc(NTime);
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
-					G[0] = Mapping[command[0]];
-					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-					for (int i = 0; i < SongNumCount; i++) {
-						if (Mapping[i] == G[0]) {
-							command[0] = i;
-						}
-					}
-				}
+				RecSerectKeyActLR(command, 1, &uiClass, songdata, Mapping, SortMode, SongNumCount);
 				break;
 			case 6: /* 難易度上昇 */
-				command[1]++;
-				if (command[1] > songdata[Mapping[command[0]]].limit) {
-					command[1] = songdata[Mapping[command[0]]].limit;
-				}
-				else {
-					detailClass.SlideDif(-1);
-					detailClass.FetchDifPic(songdata[Mapping[command[0]]].difP);
-				}
-				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
-				previewSndClass.SetPresc(NTime);
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-				if (SortMode == SORT_LEVEL || SortMode == SORT_SCORE) {
-					G[0] = Mapping[command[0]];
-					SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-					for (int i = 0; i < SongNumCount; i++) {
-						if (Mapping[i] == G[0]) {
-							command[0] = i;
-						}
-					}
-				}
+				RecSerectKeyActLR(command, -1, &uiClass, songdata, Mapping, SortMode, SongNumCount);
 				break;
 			case 7: /* 曲並び替え */
 				ChangeSortMode(&SortMode);
-				G[0] = Mapping[command[0]];
-				SortSong(songdata, Mapping, SortMode, command[1], SongNumCount);
-				for (int i = 0; i < SongNumCount; i++) {
-					if (Mapping[i] == G[0]) {
-						command[0] = i;
-					}
-				}
-				jacketClass.UpdateJacket(songdata[Mapping[command[0]]].jacketP[command[1]]);
+				SortSongWithSave(songdata, Mapping, SortMode, command[1], SongNumCount, &command[0]);
 				break;
 			default:
 				break;
 			}
 		}
-		if (closeFg == 1 && CutTime + 2000 <= NTime) {
-			previewSndClass.StopSnd();
+		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
 			ClearDrawScreen();
 			INIT_MAT();
 			break;
@@ -1055,13 +1136,7 @@ now_scene_t musicserect2(int *p1) {
 		}
 		WaitTimer(5);
 	}
-	//選択曲の保存
-	G[0] = _wfopen_s(&fp, L"save/SongSelect2.dat", L"wb");
-	if (fp != NULL) {
-		fwrite(&Mapping[command[0]], sizeof(int), 1, fp);
-		fwrite(&command[1], sizeof(int), 1, fp);
-		fwrite(&SortMode, sizeof(int), 1, fp);
-		fclose(fp);
-	}
+
+	RecSerectSaveBefCmd(command, SortMode, Mapping);
 	return next;
 }
