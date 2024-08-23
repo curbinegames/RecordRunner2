@@ -34,6 +34,8 @@ typedef struct rec_opt_text_s {
 	int *val_p;
 } rec_opt_text_t;
 
+rec_option_t optiondata;
+
 static const int title_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
 static const int title_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50);
 static const int title_txgapy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50);
@@ -206,7 +208,6 @@ static const int optionstr_count = sizeof(optionstr) / sizeof(rec_opt_text_t);
 
 now_scene_t option(void) {
 	int command = 0;
-	rec_option_t optiondata;
 	struct {
 		int back = -1;
 		int cursor = -1;
