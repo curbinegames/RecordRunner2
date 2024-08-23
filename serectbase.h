@@ -36,8 +36,7 @@ void ChangeSortMode(int *mode);
 void DrawBackPicture(int img);
 int GetRate();
 void ShowHelpBar(unsigned int Cr, int bar, int lan);
-void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
-	const int dif, const int SongNumCount);
+void SortSong(const MUSIC_BOX *songdata, int *mapping, int mode, int dif, int SongNumCount);
 
 /* +++++ */
 
@@ -99,8 +98,16 @@ void ShowHelpBar(unsigned int Cr, int bar, int lan) {
 	return;
 }
 
-void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
-	const int dif, const int SongNumCount) {
+/**
+ * 曲リストを並び替えします
+ * songdataはそのままで、mappingに並び替え情報を格納します
+ * @param[in] songdata 曲データ
+ * @param[out] mapping 並び替え情報の格納場所
+ * @param[in] mode 並び替えの方法
+ * @param[in] dif 難易度
+ * @param[in] SongNumCount 曲の個数
+ */
+void SortSong(const MUSIC_BOX *songdata, int *mapping, int mode, int dif, int SongNumCount) {
 	int n = 0;
 	int m = SongNumCount;
 	int o = 0;
