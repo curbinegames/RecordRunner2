@@ -17,7 +17,6 @@
 #include "result.h"
 #include "recr_cutin.h"
 #include "dxlibcur.h"
-#include "define.h"
 #include "RecSystem.h"
 
 #include "RecPlay/playbox.h"

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdio.h>
-#include "define.h"
 #include "RecPlay/playbox.h"
 
 typedef struct rec_play_nameset_s {

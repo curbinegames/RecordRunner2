@@ -1,6 +1,5 @@
 
 #include "general/sancur.h"
-#include "define.h"
 #include "RecPlay/playbox.h"
 #include "recp_cal_difkey.h"
 #include "recp_cal_ddif.h"
