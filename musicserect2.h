@@ -7,16 +7,17 @@
 #include "general/strcur.h"
 #include "general/dxdraw.h"
 #include "system.h"
+#include "option.h"
 
 #define MUSE_FADTM 250
 #define MUSE_KEYTM 500
 
 typedef TCHAR rec_pack_name_set_t[256];
 
-static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *songdata, int dif, int lang)
-{
+static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *songdata, int dif) {
 	DxFile_t fd;
 	TCHAR buf[256];
+	int lang = optiondata.lang;
 
 	fd = FileRead_open(path);
 
@@ -115,7 +116,7 @@ static void RecSerectReadHighscore(MUSIC_BOX *songdata, TCHAR *songName) {
 	return;
 }
 
-static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TCHAR *songName, int lang) {
+static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TCHAR *songName) {
 	TCHAR path[256];
 	TCHAR subPath[256];
 
@@ -140,7 +141,7 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
 		songdata->level[iDif] = -1;
 		songdata->preview[iDif][0] = 441000;
 		songdata->preview[iDif][1] = 2646000;
-		RecSerectReadMapDataOneDif(path, subPath, songdata, iDif, lang);
+		RecSerectReadMapDataOneDif(path, subPath, songdata, iDif);
 	}
 
 	RecSerectReadHighscore(songdata, songName);
@@ -170,7 +171,7 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
  * @return int ì«Ç›çûÇÒÇæã»êî
  */
 static int RecSerectReadMapData(MUSIC_BOX songdata[], rec_pack_name_set_t PackName[],
-	int PackFirstNum[], int Mapping[], int lang)
+	int PackFirstNum[], int Mapping[])
 {
 	int packNum = 0;
 	int songCount = 0;
@@ -194,7 +195,7 @@ static int RecSerectReadMapData(MUSIC_BOX songdata[], rec_pack_name_set_t PackNa
 		PackFirstNum[i] = songCount;
 		while (FileRead_eof(fd) == 0) {
 			FileRead_gets(songName, 256, fd);
-			RecSerectReadMapDataOneSong(&songdata[songCount], PackName[i], songName, lang);
+			RecSerectReadMapDataOneSong(&songdata[songCount], PackName[i], songName);
 			//å„èàóù
 			Mapping[songCount] = songCount;
 			songCount++;
@@ -523,8 +524,8 @@ private:
 		DrawRotaGraphAnchor(-30, 25, 1, this->Nrot, this->disk, DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
 	}
 
-	void DrawSort(int mode, int lan) {
-		if (lan == 1) {
+	void DrawSort(int mode) {
+		if (optiondata.lang == 1) {
 			switch (mode) {
 			case SORT_DEFAULT:
 				DrawStringToHandleAnchor(-90, 110, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
@@ -553,20 +554,20 @@ private:
 	}
 
 public:
-	rec_serect_disk_c(int CharNo) {
+	rec_serect_disk_c() {
 		FILE *fp = NULL;
 
 		_wfopen_s(&fp, L"save/chap.dat", L"rb");
 		if (fp != NULL) {
 			int buf[3];
 			fread(buf, sizeof(int), 3, fp);
-			this->Lv = buf[CharNo] + 1;
+			this->Lv = buf[optiondata.chara] + 1;
 			fclose(fp);
 		}
 
 		this->rate = GetRate();
 
-		switch (CharNo) {
+		switch (optiondata.chara) {
 		case 0:
 			this->runner = LoadGraph(L"picture/Mpicker.png");
 			break;
@@ -609,10 +610,10 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawDiskSet(int mode, int lang) {
+	void DrawDiskSet(int mode) {
 		this->DrawNamePlate();
 		this->DrawDisk();
-		this->DrawSort(mode, lang);
+		this->DrawSort(mode);
 	}
 };
 
@@ -802,7 +803,7 @@ now_scene_t musicserect2(int *p1) {
 		fread(&lan, sizeof(int), 6, fp);
 		fclose(fp);
 	}
-	rec_serect_disk_c diskClass(lan[0]);
+	rec_serect_disk_c diskClass;
 	G[0] = _wfopen_s(&fp, L"save/SongSelect2.dat", L"rb");
 	if (G[0] == 0) {
 		fread(&command, sizeof(int), 2, fp);
@@ -810,7 +811,7 @@ now_scene_t musicserect2(int *p1) {
 		fclose(fp);
 	}
 
-	SongNumCount = RecSerectReadMapData(songdata, PackName, PackFirstNum, Mapping, lan[4]);
+	SongNumCount = RecSerectReadMapData(songdata, PackName, PackFirstNum, Mapping);
 
 	//ã»ÇÃÉ\Å[Ég
 	AvoidKeyBug();
@@ -838,7 +839,7 @@ now_scene_t musicserect2(int *p1) {
 		backpicClass.DrawBackPic();
 		jacketClass.DrawJacket();
 		musicbarClass.DrawAll(command[0], command[1], SongNumCount, songdata, Mapping);
-		diskClass.DrawDiskSet(SortMode, lan[4]);
+		diskClass.DrawDiskSet(SortMode);
 		detailClass.DrawDetailAll(&songdata[Mapping[command[0]]], command[1]);
 		previewSndClass.CheckTime(&songdata[Mapping[command[0]]], command[1], NTime);
 		previewSndClass.CheckSnd(&songdata[Mapping[command[0]]], command[1], NTime);
