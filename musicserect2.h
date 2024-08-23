@@ -172,12 +172,11 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
  * @param[in] lang 言語
  * @return int 読み込んだ曲数
  */
-static int RecSerectReadMapData(MUSIC_BOX songdata[], rec_pack_name_set_t PackName[],
-	int PackFirstNum[], int Mapping[])
-{
+static int RecSerectReadMapData(MUSIC_BOX songdata[], int PackFirstNum[], int Mapping[]) {
 	int packNum = 0;
 	int songCount = 0;
 	DxFile_t fd;
+	rec_pack_name_set_t PackName[PackNumLim];
 	TCHAR songName[256];
 
 	fd = FileRead_open(L"RecordPack.txt");
@@ -777,8 +776,10 @@ public:
 #endif /* class */
 
 now_scene_t musicserect2(int *p1) {
-	FILE *fp;
+	/* char */
 	char closeFg = 0;
+
+	/* int */
 	int NTime = 0;
 	int e;
 	int G[10];
@@ -795,19 +796,23 @@ now_scene_t musicserect2(int *p1) {
 		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_UP,
 		KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_Z
 	};
-	//wchar_t変数定義
-	rec_pack_name_set_t PackName[PackNumLim];
+
+	/* typedef */
 	now_scene_t next = SCENE_EXIT;
 	MUSIC_BOX songdata[SongNumLim];
+
+	/* mat */
 	int help = LoadGraph(L"picture/help.png");
 	int select = LoadSoundMem(L"sound/arrow.wav");
 
+	/* class */
 	rec_serect_backpic_c backpicClass;
 	rec_serect_musicbar_c musicbarClass;
 	/* extern rec_serect_disk_c dickClass(); */
 	rec_serect_detail_c detailClass;
 	rec_serect_preview_sound_c previewSndClass;
 	rec_serect_jacket_c jacketClass;
+	FILE *fp;
 
 	/* TODO: システム情報を取得する関数を別ファイルに作る */
 	G[0] = _wfopen_s(&fp, L"save/system.dat", L"rb");
@@ -823,7 +828,7 @@ now_scene_t musicserect2(int *p1) {
 		fclose(fp);
 	}
 
-	SongNumCount = RecSerectReadMapData(songdata, PackName, PackFirstNum, Mapping);
+	SongNumCount = RecSerectReadMapData(songdata, PackFirstNum, Mapping);
 
 	//曲のソート
 	AvoidKeyBug();
