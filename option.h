@@ -13,6 +13,8 @@ typedef struct rec_option_s {
 	int combopos   = 0;
 } rec_option_t;
 
+extern rec_option_t optiondata;
+
 extern int RecOpenOptionFile(int *data);
 extern int RecOpenOptionFile2(rec_option_t *data);
 extern int RecWriteOptineFile(int *data);
