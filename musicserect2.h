@@ -14,6 +14,8 @@
 
 typedef TCHAR rec_pack_name_set_t[256];
 
+#if 1 /* read map data */
+
 static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *songdata, int dif) {
 	DxFile_t fd;
 	TCHAR buf[256];
@@ -205,6 +207,10 @@ static int RecSerectReadMapData(MUSIC_BOX songdata[], rec_pack_name_set_t PackNa
 	return songCount;
 }
 
+#endif /* read map data */
+
+#if 1 /* sub action */
+
 static int RecSerectKeyCheck() {
 	int ret = 0;
 	int mouseBtn = 0;
@@ -290,6 +296,10 @@ static int RecSerectTrySecret(int Hscore) {
 	if (GetRand(1000) <= rate) { ret = 1; }
 	return ret;
 }
+
+#endif /* sub action */
+
+#if 1 /* class */
 
 static class rec_serect_backpic_c {
 private:
@@ -763,6 +773,8 @@ public:
 		RecRescaleDrawExtendGraph(305, 75, 545, 315, this->jacketpic, TRUE);
 	}
 };
+
+#endif /* class */
 
 now_scene_t musicserect2(int *p1) {
 	FILE *fp;
