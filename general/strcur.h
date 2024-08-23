@@ -3,6 +3,16 @@
 #include <string.h>
 #include <tchar.h>
 
+#define CLASS_EASY_MAKE(name) \
+	static class name { \
+	private: \
+	public: \
+		name() { \
+		} \
+		~name() { \
+		} \
+	}
+
 #ifdef UNICODE
 #define _VSPRINTF_S vswprintf_s
 #define _STRCPY_S wcscpy_s
