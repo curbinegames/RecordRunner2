@@ -23,6 +23,8 @@
 #define INIT_SND() InitSoundMem(); CutinReadySnd()
 #define INIT_MAT() INIT_PIC(); INIT_SND()
 
+#define SWITCH_NOTE_BOX_2 1
+
 typedef unsigned int uint;
 
 typedef struct play_rate_s {

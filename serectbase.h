@@ -1,6 +1,10 @@
 #ifndef SECERT_BASE
 #define SECERT_BASE
 
+#include <DxLib.h>
+#include "general/dxcur.h"
+#include "general/sancur.h"
+#include "general/strcur.h"
 #include "RecWindowRescale.h"
 
 #define PackNumLim 8
@@ -26,14 +30,13 @@ typedef struct music_box {
 	wchar_t jacketP[6][256];
 }MUSIC_BOX;
 
+typedef MUSIC_BOX rec_music_detail_t;
+
 void ChangeSortMode(int *mode);
 void DrawBackPicture(int img);
-void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
-	int *bar, MUSIC_BOX *songdata, int *Mapping, int *CRatepic, int *CRankpic);
 int GetRate();
 void ShowHelpBar(unsigned int Cr, int bar, int lan);
-void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
-	const int dif, const int SongNumCount);
+void SortSong(const MUSIC_BOX *songdata, int *mapping, int mode, int dif, int SongNumCount);
 
 /* +++++ */
 
@@ -48,68 +51,6 @@ void DrawBackPicture(int img) {
 	const int posx = (-GetNowCount() / 10) % 640;
 	RecRescaleDrawGraph(posx, 0, img, TRUE);
 	RecRescaleDrawGraph(posx + 640, 0, img, TRUE);
-	return;
-}
-
-void DrawSongBar(int cmd1, int cmd2, int SongNumCount, int UD, int moveC,
-	int *bar, MUSIC_BOX *songdata, int *Mapping, int *CRatepic, int *CRankpic) {
-	int BasePosX = 0;
-	int BasePosY = 0;
-	int BarColor = 0;
-	int MarkPosX = 0;
-	int MarkPosY = 0;
-	unsigned int Cr[2] = {
-		GetColor(255, 255, 255),
-		GetColor(0, 0, 0)
-	};
-	int picsong = (cmd1 - 3) % SongNumCount;
-	if (picsong < 0) { picsong += SongNumCount; }
-	for (int i = 0; i < 7; i++) {
-		if (i < 3) {
-			BasePosY = pals(0, i * 80 + 120, 250, i * 80 + UD * 80 + 120,
-				moveC);
-			BarColor = 0;
-			MarkPosX = 152;
-			MarkPosY = 163;
-		}
-		else if (i == 3) {
-			BasePosY = pals(0, i * 120, 250, i * 120 + UD * 80, moveC);
-			BarColor = 1;
-			MarkPosX = 156;
-			MarkPosY = 132;
-		}
-		else {
-			BasePosY = pals(0, i * 80 + 160, 250, i * 80 + UD * 80 + 160,
-				moveC);
-			BarColor = 0;
-			MarkPosX = 152;
-			MarkPosY = 163;
-		}
-		BasePosX = lins(480, 80, 240, 40, BasePosY);
-		RecRescaleDrawGraph(BasePosX - 120, BasePosY - 170, bar[BarColor], TRUE);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 157,
-			songdata[Mapping[picsong]].SongName[cmd2], Cr[BarColor]);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 129,
-			songdata[Mapping[picsong]].artist[cmd2], Cr[BarColor]);
-		if (1 <= songdata[Mapping[picsong]].ClearRate[cmd2]) {
-			RecRescaleDrawGraph(BasePosX + MarkPosX, BasePosY - MarkPosY,
-				CRatepic[songdata[Mapping[picsong]].ClearRate[cmd2] - 1],
-				TRUE);
-		}
-		if (0 <= songdata[Mapping[picsong]].ClearRank[cmd2]
-			&& songdata[Mapping[picsong]].ClearRank[cmd2] <= 5) {
-			RecRescaleDrawGraph(BasePosX + MarkPosX, BasePosY - MarkPosY,
-				CRankpic[songdata[Mapping[picsong]].ClearRank[cmd2]],
-				TRUE);
-		}
-		if (i == 3) {
-			for (int j = 0; j < 3; j++) {
-				RecRescaleDrawFormatString(BasePosX - 25 + j * 70, BasePosY - 97, Cr[1],
-					L"%2d", songdata[Mapping[cmd1]].level[1 + j]);
-			}
-		}
-		picsong = (picsong + 1) % SongNumCount;
-	}
 	return;
 }
 
@@ -157,8 +98,16 @@ void ShowHelpBar(unsigned int Cr, int bar, int lan) {
 	return;
 }
 
-void SortSong(MUSIC_BOX *songdata, int *mapping, const int mode,
-	const int dif, const int SongNumCount) {
+/**
+ * ‹ÈƒŠƒXƒg‚ð•À‚Ñ‘Ö‚¦‚µ‚Ü‚·
+ * songdata‚Í‚»‚Ì‚Ü‚Ü‚ÅAmapping‚É•À‚Ñ‘Ö‚¦î•ñ‚ðŠi”[‚µ‚Ü‚·
+ * @param[in] songdata ‹Èƒf[ƒ^
+ * @param[out] mapping •À‚Ñ‘Ö‚¦î•ñ‚ÌŠi”[êŠ
+ * @param[in] mode •À‚Ñ‘Ö‚¦‚Ì•û–@
+ * @param[in] dif “ïˆÕ“x
+ * @param[in] SongNumCount ‹È‚ÌŒÂ”
+ */
+void SortSong(const MUSIC_BOX *songdata, int *mapping, int mode, int dif, int SongNumCount) {
 	int n = 0;
 	int m = SongNumCount;
 	int o = 0;

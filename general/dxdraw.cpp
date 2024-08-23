@@ -76,7 +76,7 @@ void DrawGraphAnchor(int x, int y, int pic, dxdraw_anchor_t anchor) {
  * @param[in] anchor Šî€“_
  * @details size‚É100‚ª“ü‚Á‚½ê‡ADrawGraphAnchor‚ğÀs‚·‚é
  */
-void DrawZoomGraphAnchor(int x, int y, intx100 size, int pic, dxdraw_anchor_t anchor) {
+void DrawZoomGraphAnchor(int x, int y, intx100_t size, int pic, dxdraw_anchor_t anchor) {
 	int drawLeft = 0;
 	int drawUp = 0;
 	int drawRight = 0;
