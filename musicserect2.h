@@ -309,6 +309,98 @@ static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
 	return 0;
 }
 
+void ShowHelpBar(unsigned int Cr, int bar, int lan) {
+	RecRescaleDrawGraph(0, 0, bar, TRUE);
+	switch (int(GetNowCount() / 10000 % 3) * 10 + lan) {
+	case 0:
+		RecRescaleDrawString(5, 460, L"Enterキー: 決定, BackSpaceキー: 戻る", Cr);
+		break;
+	case 1:
+		RecRescaleDrawString(5, 460, L"Enter key: start, BackSpace key: back to menu", Cr);
+		break;
+	case 10:
+		RecRescaleDrawString(5, 460, L"上下キー: 曲選択, 左右キー: 難易度選択", Cr);
+		break;
+	case 11:
+		RecRescaleDrawString(5, 460, L"↑↓key: music select, ←→key: dif select", Cr);
+		break;
+	case 20:
+		RecRescaleDrawString(5, 460, L"Zキー: 楽曲を並び替える, Pキー+Enterキー: オートプレイ", Cr);
+		break;
+	case 21:
+		RecRescaleDrawString(5, 460, L"Z key: Sort Songs, P and Enter key: Auto Play", Cr);
+		break;
+	}
+	return;
+}
+
+/**
+ * 曲リストを並び替えします
+ * songdataはそのままで、mappingに並び替え情報を格納します
+ * @param[in] songdata 曲データ
+ * @param[out] mapping 並び替え情報の格納場所
+ * @param[in] mode 並び替えの方法
+ * @param[in] dif 難易度
+ * @param[in] SongNumCount 曲の個数
+ */
+void SortSong(const MUSIC_BOX *songdata, int *mapping, int mode, int dif, int SongNumCount) {
+	int n = 0;
+	int m = SongNumCount;
+	int o = 0;
+	int p = 1;
+	switch (mode) {
+	case SORT_DEFAULT:
+		for (int i = 0; i < SongNumCount; i++) {
+			*mapping = i;
+			mapping++;
+		}
+		break;
+	case SORT_LEVEL:
+		while (p) {
+			p = 0;
+			for (int i = 0; i < SongNumCount - 1; i += 2) {
+				if (songdata[mapping[i]].level[dif] > songdata[mapping[i + 1]].level[dif]) {
+					o = mapping[i];
+					mapping[i] = mapping[i + 1];
+					mapping[i + 1] = o;
+					p = 1;
+				}
+			}
+			for (int i = 1; i < SongNumCount - 1; i += 2) {
+				if (songdata[mapping[i]].level[dif] > songdata[mapping[i + 1]].level[dif]) {
+					o = mapping[i];
+					mapping[i] = mapping[i + 1];
+					mapping[i + 1] = o;
+					p = 1;
+				}
+			}
+		}
+		break;
+	case SORT_SCORE:
+		while (p) {
+			p = 0;
+			for (int i = 0; i < SongNumCount - 1; i += 2) {
+				if (songdata[mapping[i]].Hscore[dif] > songdata[mapping[i + 1]].Hscore[dif]) {
+					o = mapping[i];
+					mapping[i] = mapping[i + 1];
+					mapping[i + 1] = o;
+					p = 1;
+				}
+			}
+			for (int i = 1; i < SongNumCount - 1; i += 2) {
+				if (songdata[mapping[i]].Hscore[dif] > songdata[mapping[i + 1]].Hscore[dif]) {
+					o = mapping[i];
+					mapping[i] = mapping[i + 1];
+					mapping[i + 1] = o;
+					p = 1;
+				}
+			}
+		}
+		break;
+	}
+	return;
+}
+
 /**
  * SortSongで並び替えをした後、cmdを前と同じ曲に合わせます
  * @param[in] songdata 曲データ
