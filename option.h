@@ -20,4 +20,6 @@ extern int RecOpenOptionFile2(rec_option_t *data);
 extern int RecWriteOptineFile(int *data);
 extern int RecWriteOptineFile2(rec_option_t *data);
 
+extern void RecOpenOptionFileSystem();
+
 extern now_scene_t option();

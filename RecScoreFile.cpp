@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include "system.h"
 #include "RecScoreFile.h"
 
 /* 0: OK, -1: error */
