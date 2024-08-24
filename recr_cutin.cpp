@@ -373,6 +373,12 @@ void rec_cutin_c::DrawCut() {
 void rec_cutin_c::SetIo(int val) {
 	s_cutIoFg = val;
 	s_cutStime = GetNowCount();
+	if (val == CUT_FRAG_IN) {
+		PlaySoundMem(snd_cutin[0], DX_PLAYTYPE_BACK);
+	}
+	else {
+		PlaySoundMem(snd_cutin[1], DX_PLAYTYPE_BACK);
+	}
 	return;
 }
 
