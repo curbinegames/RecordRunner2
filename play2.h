@@ -1653,7 +1653,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	*ret_nameset = recfp.nameset;
 	strcopy_2(songName, ret_fileN, 255);
 
-	return SCENE_SERECT;
+	return SCENE_RESULT;
 }
 
 /**
@@ -1690,7 +1690,7 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	ret = RecPlayMain(&map_detail, &userpal, &nameset,
 		fileName, packNo, musicNo, difNo, shift, AutoFlag);
 
-	if (ret == SCENE_EXIT) { return SCENE_EXIT; }
+	if (ret != SCENE_RESULT) { return ret; }
 	if (AutoFlag == 1) { return SCENE_SERECT; }
 
 	return result(&map_detail, &userpal, &nameset, difNo, fileName);

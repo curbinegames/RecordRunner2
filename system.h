@@ -40,6 +40,7 @@ typedef enum now_scene_e {
 	SCENE_OPTION,
 	SCENE_EXIT = 5,
 	SCENE_MUSIC,
+	SCENE_RESULT,
 } now_scene_t; /* = next */
 
 extern int SmallFontData;
