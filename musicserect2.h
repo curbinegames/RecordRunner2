@@ -2,7 +2,7 @@
 #include <DxLib.h>
 #include "serectbase.h"
 #include "helpBar.h"
-//#include "recr_cutin.h"
+#include "recr_cutin.h"
 #include "general/dxcur.h"
 #include "general/sancur.h"
 #include "general/strcur.h"
@@ -1001,6 +1001,8 @@ private:
 	rec_serect_snd_c sndClass;
 
 public:
+	rec_cutin_c cutinClass;
+
 	rec_serect_ui_c() {}
 
 	~rec_serect_ui_c() {}
@@ -1039,6 +1041,7 @@ public:
 		this->previewSndClass.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
 		this->previewSndClass.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
 		this->helpClass.DrawHelp(HELP_MAT_MUSIC_SELECT);
+		this->cutinClass.DrawCut();
 	}
 };
 
@@ -1050,17 +1053,8 @@ static void RecSerectDrawAllUi(rec_serect_ui_c *uiClass, int *cmd,
 	songdata_set_t *songdata, char closeFg, int CutTime)
 {
 	ClearDrawScreen();
-	//背景、ジャケット、曲一覧、ディスク、詳細、操作説明表示
 	uiClass->DrawUi(cmd, songdata);
-
-	//デバッグ(320,410スタート)
-	//RecRescaleDrawFormatString(320, 410, COLOR_WHITE, L"%d", SortMode);
-
-	//TODO: カットインをclassにする
-	if (closeFg == 0) { ViewCutOut(CutTime); }
-	if (closeFg == 1) { ViewCutIn(CutTime); }
 	ScreenFlip();
-
 	return;
 }
 
@@ -1118,7 +1112,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 	int key = 0;
 
 	/* 操作検出*/
-	if (*closeFg != 1) { key = RecSerectKeyCheck(); }
+	if (uiClass->cutinClass.IsClosing() == 0) { key = RecSerectKeyCheck(); }
 	else { key = 0; }
 
 	/* 動作 */
@@ -1128,18 +1122,16 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		if (SONGDATA_FROM_MAP(songdata, cmd[0]).level[cmd[1]] < 0) { break; }
 		RecSerectSetToPlay(toPlay, cmd, PackFirstNum, songdata);
 		*next = SCENE_MUSIC;
-		SetCutTipFg(CUTIN_TIPS_SONG);
-		SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName[cmd[1]],
+		uiClass->cutinClass.SetCutTipFg(CUTIN_TIPS_SONG);
+		uiClass->cutinClass.SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName[cmd[1]],
 			SONGDATA_FROM_MAP(songdata, cmd[0]).jacketP[cmd[1]]);
-		*closeFg = 1;
-		*CutTime = GetNowCount();
+		uiClass->cutinClass.SetIo(1);
 		break;
 	case 2: /* 戻る */
 		*next = SCENE_MENU;
-		SetTipNo();
-		SetCutTipFg(CUTIN_TIPS_ON);
-		*closeFg = 1;
-		*CutTime = GetNowCount();
+		uiClass->cutinClass.SetTipNo();
+		uiClass->cutinClass.SetCutTipFg(CUTIN_TIPS_ON);
+		uiClass->cutinClass.SetIo(1);
 		break;
 	case 3: /* 曲選択上 */
 		RecSerectKeyActUD(cmd, -1, uiClass, songdata);
@@ -1191,13 +1183,13 @@ now_scene_t musicserect3(rec_to_play_set_t *toPlay) {
 	AvoidKeyBug();
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
-	CutTime = GetNowCount();
+	uiClass.cutinClass.SetIo(0);
 
 	while (1) {
 		RecSerectDrawAllUi(&uiClass, cmd, &songdata, closeFg, CutTime);
 		RecSerectKeyActAll(&next, toPlay, &closeFg, cmd, &CutTime,
 			&uiClass, &songdata, PackFirstNum);
-		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) { break; }
+		if (uiClass.cutinClass.IsEndAnim()) { break; }
 		if (GetWindowUserCloseFlag(TRUE)) {
 			next = SCENE_EXIT;
 			break;
