@@ -1,3 +1,4 @@
+#include "system.h"
 #include "RecScoreFile.h"
 #include "RecPlay/playbox.h"
 #include "recp_cal_ddif.h"

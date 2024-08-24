@@ -87,6 +87,30 @@ int RecWriteOptineFile2(rec_option_t *data) {
 	return 0;
 }
 
+void RecOpenOptionFileSystem() {
+	if (RecOpenOptionFile2(&optiondata) != 0) {
+		int	data[7] = { 0,0,0,2,0,0,0 };
+		if (RecOpenOptionFile(data) == 0) {
+			optiondata.chara = data[0];
+			optiondata.offset = data[1];
+			optiondata.SEenable = data[2];
+			optiondata.backbright = data[3];
+			optiondata.lang = data[4];
+			optiondata.keydetail = data[5];
+			optiondata.combopos = data[6];
+		}
+		else {
+			optiondata.chara = 0;
+			optiondata.offset = 0;
+			optiondata.SEenable = 0;
+			optiondata.backbright = 2;
+			optiondata.lang = 0;
+			optiondata.keydetail = 0;
+			optiondata.combopos = 0;
+		}
+	}
+}
+
 static void RecOptionChar(TCHAR *ret, int pal, int lang) {
 	const TCHAR jp[3][20] = {
 		L"ピッカー", L"マップゲーター", L"テイラー"
