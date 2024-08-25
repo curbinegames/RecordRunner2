@@ -713,14 +713,14 @@ private:
 	DxPic_t runner;
 	DxPic_t rateBar;
 
-	void DrawNamePlate() {
-		DrawGraphAnchor(-175, 5, this->rateBar, DXDRAW_ANCHOR_TOP_RIGHT);
-		DrawGraphAnchor(-145, 5, this->runner, DXDRAW_ANCHOR_TOP_RIGHT);
-		DrawFormatStringToHandleAnchor(-365, 17, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"Lv:%2d", this->Lv);
-		DrawFormatStringToHandleAnchor(-360, 42, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"RATE:%d.%02d", this->rate / 100, this->rate % 100);
+	void DrawNamePlate(int baseX, int baseY) {
+		DrawGraphAnchor(baseX - 30, baseY, this->rateBar, DXDRAW_ANCHOR_TOP_RIGHT);
+		DrawGraphAnchor(baseX, baseY, this->runner, DXDRAW_ANCHOR_TOP_RIGHT);
+		DrawFormatStringToHandleAnchor(baseX - 220, baseY + 12, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"Lv:%2d", this->Lv);
+		DrawFormatStringToHandleAnchor(baseX - 215, baseY + 37, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"RATE:%d.%02d", this->rate / 100, this->rate % 100);
 	}
 
-	void DrawDisk() {
+	void DrawDisk(int baseX, int baseY) {
 		int moveC = 0;
 
 		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
@@ -728,33 +728,33 @@ private:
 		else { this->Nrot += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
 		if (this->Nrot > 6.28) { this->Nrot -= 6.28; }
 		else if (this->Nrot < 0) { this->Nrot += 6.28; }
-		DrawRotaGraphAnchor(-30, 25, 1, this->Nrot, this->disk, DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
+		DrawRotaGraphAnchor(baseX, baseY, 1, this->Nrot, this->disk, DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
 	}
 
-	void DrawSort(int mode) {
+	void DrawSort(int baseX, int baseY, int mode) {
 		if (optiondata.lang == 1) {
 			switch (mode) {
 			case SORT_DEFAULT:
-				DrawStringToHandleAnchor(-90, 110, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_LEVEL:
-				DrawStringToHandleAnchor(-90, 110, L"level", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"level", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_SCORE:
-				DrawStringToHandleAnchor(-90, 110, L"score", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"score", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			}
 		}
 		else {
 			switch (mode) {
 			case SORT_DEFAULT:
-				DrawStringToHandleAnchor(-90, 110, L"デフォルト", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"デフォルト", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_LEVEL:
-				DrawStringToHandleAnchor(-90, 110, L"レベル順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"レベル順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_SCORE:
-				DrawStringToHandleAnchor(-90, 110, L"スコア順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"スコア順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			}
 		}
@@ -817,10 +817,10 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawDiskSet(int mode) {
-		this->DrawNamePlate();
-		this->DrawDisk();
-		this->DrawSort(mode);
+	void DrawDiskSet(int baseX, int baseY, int mode) {
+		this->DrawNamePlate(baseX - 115, baseY - 20);
+		this->DrawDisk(baseX, baseY);
+		this->DrawSort(baseX - 60, baseY + 85, mode);
 	}
 };
 
@@ -1037,7 +1037,7 @@ public:
 		this->backpic.DrawBackPic();
 		this->jacket.DrawJacket();
 		this->musicbar.DrawAll(cmd, songdata);
-		this->disk.DrawDiskSet(songdata->sortMode);
+		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
 		this->detail.DrawDetailAll(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
 		this->previewSnd.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
 		this->previewSnd.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
