@@ -558,7 +558,8 @@ public:
 		return 0;
 	}
 
-	void CheckTime(MUSIC_BOX *songdata, int dif, int Ntime) {
+	void CheckTime(MUSIC_BOX *songdata, int dif) {
+		int Ntime = GetNowCount();
 		if (Ntime - this->SongPreSTime < 500) {
 			ChangeVolumeSoundMem(lins(0, 0, 500, 255, Ntime - this->SongPreSTime), this->previewM);
 		}
@@ -575,8 +576,8 @@ public:
 		}
 	}
 
-	void CheckSnd(MUSIC_BOX *songdata, int dif, int Ntime) {
-		if (this->preSC + MUSE_KEYTM < Ntime) {
+	void CheckSnd(MUSIC_BOX *songdata, int dif) {
+		if (this->preSC + MUSE_KEYTM < GetNowCount()) {
 			if (this->UpdateSnd(songdata, dif) == 1) {
 				this->StartSnd();
 			}
@@ -1038,8 +1039,8 @@ public:
 		this->musicbar.DrawAll(cmd, songdata);
 		this->disk.DrawDiskSet(songdata->sortMode);
 		this->detail.DrawDetailAll(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
-		this->previewSnd.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
-		this->previewSnd.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
+		this->previewSnd.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->previewSnd.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
 		this->help.DrawHelp(HELP_MAT_MUSIC_SELECT);
 		this->cutin.DrawCut();
 	}
