@@ -991,57 +991,57 @@ public:
 
 static class rec_serect_ui_c {
 private:
-	rec_serect_backpic_c backpicClass;
-	rec_serect_jacket_c jacketClass;
-	rec_serect_musicbar_c musicbarClass;
-	rec_serect_disk_c diskClass;
-	rec_serect_detail_c detailClass;
-	rec_helpbar_c helpClass;
-	rec_serect_preview_sound_c previewSndClass;
-	rec_serect_snd_c sndClass;
 
 public:
-	rec_cutin_c cutinClass;
+	rec_serect_backpic_c backpic;
+	rec_serect_jacket_c jacket;
+	rec_serect_musicbar_c musicbar;
+	rec_serect_disk_c disk;
+	rec_serect_detail_c detail;
+	rec_helpbar_c help;
+	rec_cutin_c cutin;
+	rec_serect_preview_sound_c previewSnd;
+	rec_serect_snd_c snd;
 
 	rec_serect_ui_c() {}
 
 	~rec_serect_ui_c() {}
 
 	void InitUi(MUSIC_BOX *songdata, int dif) {
-		this->jacketClass.UpdateJacket(songdata->jacketP[dif]);
-		this->detailClass.FetchDifPic(songdata->difP);
-		this->previewSndClass.UpdateSnd(songdata, dif);
-		this->previewSndClass.StartSnd();
+		this->jacket.UpdateJacket(songdata->jacketP[dif]);
+		this->detail.FetchDifPic(songdata->difP);
+		this->previewSnd.UpdateSnd(songdata, dif);
+		this->previewSnd.StartSnd();
 	}
 
 	void Update4th(TCHAR *jacketName) {
-		jacketClass.UpdateJacket(jacketName);
-		previewSndClass.SetPresc(GetNowCount());
-		sndClass.PlaySnd();
+		jacket.UpdateJacket(jacketName);
+		previewSnd.SetPresc(GetNowCount());
+		snd.PlaySnd();
 	}
 
 	void UpdateUD(MUSIC_BOX *songdata, int dif, int vect) {
-		this->detailClass.FetchDifPic(songdata->difP);
-		this->musicbarClass.SlideBar(vect);
-		this->diskClass.SlideDisk(vect);
+		this->detail.FetchDifPic(songdata->difP);
+		this->musicbar.SlideBar(vect);
+		this->disk.SlideDisk(vect);
 		this->Update4th(songdata->jacketP[dif]);
 	}
 
 	void UpdateLR(MUSIC_BOX *songdata, int dif, int vect) {
-		this->detailClass.SlideDif(1);
+		this->detail.SlideDif(1);
 		this->Update4th(songdata->jacketP[dif]);
 	}
 
 	void DrawUi(int cmd[], songdata_set_t *songdata) {
-		this->backpicClass.DrawBackPic();
-		this->jacketClass.DrawJacket();
-		this->musicbarClass.DrawAll(cmd, songdata);
-		this->diskClass.DrawDiskSet(songdata->sortMode);
-		this->detailClass.DrawDetailAll(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
-		this->previewSndClass.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
-		this->previewSndClass.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
-		this->helpClass.DrawHelp(HELP_MAT_MUSIC_SELECT);
-		this->cutinClass.DrawCut();
+		this->backpic.DrawBackPic();
+		this->jacket.DrawJacket();
+		this->musicbar.DrawAll(cmd, songdata);
+		this->disk.DrawDiskSet(songdata->sortMode);
+		this->detail.DrawDetailAll(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->previewSnd.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
+		this->previewSnd.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
+		this->help.DrawHelp(HELP_MAT_MUSIC_SELECT);
+		this->cutin.DrawCut();
 	}
 };
 
@@ -1112,7 +1112,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 	int key = 0;
 
 	/* ëÄçÏåüèo*/
-	if (uiClass->cutinClass.IsClosing() == 0) { key = RecSerectKeyCheck(); }
+	if (uiClass->cutin.IsClosing() == 0) { key = RecSerectKeyCheck(); }
 	else { key = 0; }
 
 	/* ìÆçÏ */
@@ -1122,16 +1122,16 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		if (SONGDATA_FROM_MAP(songdata, cmd[0]).level[cmd[1]] < 0) { break; }
 		RecSerectSetToPlay(toPlay, cmd, PackFirstNum, songdata);
 		*next = SCENE_MUSIC;
-		uiClass->cutinClass.SetCutTipFg(CUTIN_TIPS_SONG);
-		uiClass->cutinClass.SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName[cmd[1]],
+		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_SONG);
+		uiClass->cutin.SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName[cmd[1]],
 			SONGDATA_FROM_MAP(songdata, cmd[0]).jacketP[cmd[1]]);
-		uiClass->cutinClass.SetIo(1);
+		uiClass->cutin.SetIo(1);
 		break;
 	case 2: /* ñﬂÇÈ */
 		*next = SCENE_MENU;
-		uiClass->cutinClass.SetTipNo();
-		uiClass->cutinClass.SetCutTipFg(CUTIN_TIPS_ON);
-		uiClass->cutinClass.SetIo(1);
+		uiClass->cutin.SetTipNo();
+		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_ON);
+		uiClass->cutin.SetIo(1);
 		break;
 	case 3: /* ã»ëIëè„ */
 		RecSerectKeyActUD(cmd, -1, uiClass, songdata);
@@ -1183,13 +1183,13 @@ now_scene_t musicserect3(rec_to_play_set_t *toPlay) {
 	AvoidKeyBug();
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
-	uiClass.cutinClass.SetIo(0);
+	uiClass.cutin.SetIo(0);
 
 	while (1) {
 		RecSerectDrawAllUi(&uiClass, cmd, &songdata, closeFg, CutTime);
 		RecSerectKeyActAll(&next, toPlay, &closeFg, cmd, &CutTime,
 			&uiClass, &songdata, PackFirstNum);
-		if (uiClass.cutinClass.IsEndAnim()) { break; }
+		if (uiClass.cutin.IsEndAnim()) { break; }
 		if (GetWindowUserCloseFlag(TRUE)) {
 			next = SCENE_EXIT;
 			break;
