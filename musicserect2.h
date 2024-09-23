@@ -558,7 +558,8 @@ public:
 		return 0;
 	}
 
-	void CheckTime(MUSIC_BOX *songdata, int dif, int Ntime) {
+	void CheckTime(MUSIC_BOX *songdata, int dif) {
+		int Ntime = GetNowCount();
 		if (Ntime - this->SongPreSTime < 500) {
 			ChangeVolumeSoundMem(lins(0, 0, 500, 255, Ntime - this->SongPreSTime), this->previewM);
 		}
@@ -575,8 +576,8 @@ public:
 		}
 	}
 
-	void CheckSnd(MUSIC_BOX *songdata, int dif, int Ntime) {
-		if (this->preSC + MUSE_KEYTM < Ntime) {
+	void CheckSnd(MUSIC_BOX *songdata, int dif) {
+		if (this->preSC + MUSE_KEYTM < GetNowCount()) {
 			if (this->UpdateSnd(songdata, dif) == 1) {
 				this->StartSnd();
 			}
@@ -590,6 +591,8 @@ public:
 
 static class rec_serect_musicbar_c {
 private:
+#define VIEW_COUNT 9
+
 	int UD = 1;
 	int startC = -MUSE_FADTM;
 	DxPic_t bar[2];
@@ -598,32 +601,32 @@ private:
 
 	void DrawClear(int x, int y, int clearNo) {
 		if (0 <= clearNo && clearNo <= 4) {
-			RecRescaleDrawGraph(x, y, this->CRate[clearNo], TRUE);
+			DrawGraph(x, y, this->CRate[clearNo], TRUE);
 		}
 	}
 
 	void DrawRack(int x, int y, int rankNo) {
 		if (0 <= rankNo && rankNo <= 5) {
-			RecRescaleDrawGraph(x, y, this->rankP[rankNo], TRUE);
+			DrawGraph(x, y, this->rankP[rankNo], TRUE);
 		}
 	}
 
 	void DrawMainOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX *songdata) {
-		RecRescaleDrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1], TRUE);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_BLACK);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_BLACK);
+		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1], TRUE);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_BLACK, SmallFontData);
 		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata->ClearRate[dif] - 1);
 		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata->ClearRank[dif]);
 		for (int idif = 0; idif < 3; idif++) {
-			RecRescaleDrawFormatString(BasePosX - 25 + idif * 70, BasePosY - 97,
-				COLOR_BLACK, L"%2d", songdata->level[1 + idif]);
+			DrawFormatStringToHandle(BasePosX - 25 + idif * 70, BasePosY - 97,
+				COLOR_BLACK, SmallFontData, L"%2d", songdata->level[1 + idif]);
 		}
 	}
 
 	void DrawSubOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX *songdata) {
-		RecRescaleDrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0], TRUE);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_WHITE);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_WHITE);
+		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0], TRUE);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_WHITE, SmallFontData);
 		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata->ClearRate[dif] - 1);
 		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata->ClearRank[dif]);
 	}
@@ -666,7 +669,7 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawAll(int cmd[], songdata_set_t *songdata) {
+	void DrawAll(int Ypos, int cmd[], songdata_set_t *songdata) {
 		int BasePosX = 0;
 		int BasePosY = 0;
 		int slide = 0;
@@ -674,22 +677,20 @@ public:
 		int moveC = 0;
 
 		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
-		picsong = (cmd[0] + songdata->musicNum - 3) % songdata->musicNum;
+		picsong = (cmd[0] + songdata->musicNum - (VIEW_COUNT / 2)) % songdata->musicNum;
 
-		for (int count = 0; count < 7; count++) {
+		for (int count = 0; count < VIEW_COUNT; count++) {
 			slide = pals(0, 0, 250, this->UD * 80, moveC);
-			if (count < 3) {
-				BasePosY = slide + count * 80 + 120;
-			}
-			else if (count == 3) {
-				BasePosY = slide + count * 120;
+			BasePosY = slide + count * 80 + Ypos - 170;
+			if (count <= (VIEW_COUNT / 2)) {
+				BasePosY += lins(5, 180, 7, 100, VIEW_COUNT);
 			}
 			else {
-				BasePosY = slide + count * 80 + 160;
+				BasePosY += lins(5, 220, 7, 140, VIEW_COUNT);
 			}
 			BasePosX = lins(480, 80, 240, 40, BasePosY);
 
-			if (count == 3) {
+			if (count == (VIEW_COUNT / 2)) {
 				this->DrawMainOne(cmd[1], BasePosX, BasePosY, &SONGDATA_FROM_MAP(songdata, picsong));
 			}
 			else {
@@ -699,6 +700,8 @@ public:
 			picsong = (picsong + 1) % songdata->musicNum;
 		}
 	}
+
+#undef VIEW_COUNT
 };
 
 static class rec_serect_disk_c {
@@ -712,14 +715,14 @@ private:
 	DxPic_t runner;
 	DxPic_t rateBar;
 
-	void DrawNamePlate() {
-		DrawGraphAnchor(-175, 5, this->rateBar, DXDRAW_ANCHOR_TOP_RIGHT);
-		DrawGraphAnchor(-145, 5, this->runner, DXDRAW_ANCHOR_TOP_RIGHT);
-		DrawFormatStringToHandleAnchor(-365, 17, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"Lv:%2d", this->Lv);
-		DrawFormatStringToHandleAnchor(-360, 42, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"RATE:%d.%02d", this->rate / 100, this->rate % 100);
+	void DrawNamePlate(int baseX, int baseY) {
+		DrawGraphAnchor(baseX - 30, baseY, this->rateBar, DXDRAW_ANCHOR_TOP_RIGHT);
+		DrawGraphAnchor(baseX, baseY, this->runner, DXDRAW_ANCHOR_TOP_RIGHT);
+		DrawFormatStringToHandleAnchor(baseX - 220, baseY + 12, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"Lv:%2d", this->Lv);
+		DrawFormatStringToHandleAnchor(baseX - 215, baseY + 37, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"RATE:%d.%02d", this->rate / 100, this->rate % 100);
 	}
 
-	void DrawDisk() {
+	void DrawDisk(int baseX, int baseY) {
 		int moveC = 0;
 
 		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
@@ -727,33 +730,33 @@ private:
 		else { this->Nrot += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
 		if (this->Nrot > 6.28) { this->Nrot -= 6.28; }
 		else if (this->Nrot < 0) { this->Nrot += 6.28; }
-		DrawRotaGraphAnchor(-30, 25, 1, this->Nrot, this->disk, DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
+		DrawRotaGraphAnchor(baseX, baseY, 1, this->Nrot, this->disk, DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
 	}
 
-	void DrawSort(int mode) {
+	void DrawSort(int baseX, int baseY, int mode) {
 		if (optiondata.lang == 1) {
 			switch (mode) {
 			case SORT_DEFAULT:
-				DrawStringToHandleAnchor(-90, 110, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_LEVEL:
-				DrawStringToHandleAnchor(-90, 110, L"level", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"level", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_SCORE:
-				DrawStringToHandleAnchor(-90, 110, L"score", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"score", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			}
 		}
 		else {
 			switch (mode) {
 			case SORT_DEFAULT:
-				DrawStringToHandleAnchor(-90, 110, L"デフォルト", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"デフォルト", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_LEVEL:
-				DrawStringToHandleAnchor(-90, 110, L"レベル順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"レベル順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_SCORE:
-				DrawStringToHandleAnchor(-90, 110, L"スコア順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+				DrawStringToHandleAnchor(baseX, baseY, L"スコア順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			}
 		}
@@ -816,10 +819,10 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawDiskSet(int mode) {
-		this->DrawNamePlate();
-		this->DrawDisk();
-		this->DrawSort(mode);
+	void DrawDiskSet(int baseX, int baseY, int mode) {
+		this->DrawNamePlate(baseX - 115, baseY - 20);
+		this->DrawDisk(baseX, baseY);
+		this->DrawSort(baseX - 60, baseY + 85, mode);
 	}
 };
 
@@ -965,8 +968,8 @@ public:
 		}
 	}
 
-	void DrawJacket() {
-		RecRescaleDrawExtendGraph(305, 75, 545, 315, this->jacketpic, TRUE);
+	void DrawJacket(int baseX, int baseY, int size) {
+		DrawExtendGraph(baseX, baseY, baseX + size, baseY + size, this->jacketpic, TRUE);
 	}
 };
 
@@ -991,57 +994,57 @@ public:
 
 static class rec_serect_ui_c {
 private:
-	rec_serect_backpic_c backpicClass;
-	rec_serect_jacket_c jacketClass;
-	rec_serect_musicbar_c musicbarClass;
-	rec_serect_disk_c diskClass;
-	rec_serect_detail_c detailClass;
-	rec_helpbar_c helpClass;
-	rec_serect_preview_sound_c previewSndClass;
-	rec_serect_snd_c sndClass;
 
 public:
-	rec_cutin_c cutinClass;
+	rec_serect_backpic_c backpic;
+	rec_serect_jacket_c jacket;
+	rec_serect_musicbar_c musicbar;
+	rec_serect_disk_c disk;
+	rec_serect_detail_c detail;
+	rec_helpbar_c help;
+	rec_cutin_c cutin;
+	rec_serect_preview_sound_c previewSnd;
+	rec_serect_snd_c snd;
 
 	rec_serect_ui_c() {}
 
 	~rec_serect_ui_c() {}
 
 	void InitUi(MUSIC_BOX *songdata, int dif) {
-		this->jacketClass.UpdateJacket(songdata->jacketP[dif]);
-		this->detailClass.FetchDifPic(songdata->difP);
-		this->previewSndClass.UpdateSnd(songdata, dif);
-		this->previewSndClass.StartSnd();
+		this->jacket.UpdateJacket(songdata->jacketP[dif]);
+		this->detail.FetchDifPic(songdata->difP);
+		this->previewSnd.UpdateSnd(songdata, dif);
+		this->previewSnd.StartSnd();
 	}
 
 	void Update4th(TCHAR *jacketName) {
-		jacketClass.UpdateJacket(jacketName);
-		previewSndClass.SetPresc(GetNowCount());
-		sndClass.PlaySnd();
+		jacket.UpdateJacket(jacketName);
+		previewSnd.SetPresc(GetNowCount());
+		snd.PlaySnd();
 	}
 
 	void UpdateUD(MUSIC_BOX *songdata, int dif, int vect) {
-		this->detailClass.FetchDifPic(songdata->difP);
-		this->musicbarClass.SlideBar(vect);
-		this->diskClass.SlideDisk(vect);
+		this->detail.FetchDifPic(songdata->difP);
+		this->musicbar.SlideBar(vect);
+		this->disk.SlideDisk(vect);
 		this->Update4th(songdata->jacketP[dif]);
 	}
 
 	void UpdateLR(MUSIC_BOX *songdata, int dif, int vect) {
-		this->detailClass.SlideDif(1);
+		this->detail.SlideDif(1);
 		this->Update4th(songdata->jacketP[dif]);
 	}
 
 	void DrawUi(int cmd[], songdata_set_t *songdata) {
-		this->backpicClass.DrawBackPic();
-		this->jacketClass.DrawJacket();
-		this->musicbarClass.DrawAll(cmd, songdata);
-		this->diskClass.DrawDiskSet(songdata->sortMode);
-		this->detailClass.DrawDetailAll(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
-		this->previewSndClass.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
-		this->previewSndClass.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], GetNowCount());
-		this->helpClass.DrawHelp(HELP_MAT_MUSIC_SELECT);
-		this->cutinClass.DrawCut();
+		this->backpic.DrawBackPic();
+		this->jacket.DrawJacket(580, 85, 500);
+		this->musicbar.DrawAll(300, cmd, songdata);
+		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
+		this->detail.DrawDetailAll(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->previewSnd.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->previewSnd.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->help.DrawHelp(HELP_MAT_MUSIC_SELECT);
+		this->cutin.DrawCut();
 	}
 };
 
@@ -1112,7 +1115,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 	int key = 0;
 
 	/* 操作検出*/
-	if (uiClass->cutinClass.IsClosing() == 0) { key = RecSerectKeyCheck(); }
+	if (uiClass->cutin.IsClosing() == 0) { key = RecSerectKeyCheck(); }
 	else { key = 0; }
 
 	/* 動作 */
@@ -1122,16 +1125,16 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		if (SONGDATA_FROM_MAP(songdata, cmd[0]).level[cmd[1]] < 0) { break; }
 		RecSerectSetToPlay(toPlay, cmd, PackFirstNum, songdata);
 		*next = SCENE_MUSIC;
-		uiClass->cutinClass.SetCutTipFg(CUTIN_TIPS_SONG);
-		uiClass->cutinClass.SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName[cmd[1]],
+		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_SONG);
+		uiClass->cutin.SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName[cmd[1]],
 			SONGDATA_FROM_MAP(songdata, cmd[0]).jacketP[cmd[1]]);
-		uiClass->cutinClass.SetIo(1);
+		uiClass->cutin.SetIo(1);
 		break;
 	case 2: /* 戻る */
 		*next = SCENE_MENU;
-		uiClass->cutinClass.SetTipNo();
-		uiClass->cutinClass.SetCutTipFg(CUTIN_TIPS_ON);
-		uiClass->cutinClass.SetIo(1);
+		uiClass->cutin.SetTipNo();
+		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_ON);
+		uiClass->cutin.SetIo(1);
 		break;
 	case 3: /* 曲選択上 */
 		RecSerectKeyActUD(cmd, -1, uiClass, songdata);
@@ -1183,13 +1186,13 @@ now_scene_t musicserect3(rec_to_play_set_t *toPlay) {
 	AvoidKeyBug();
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
-	uiClass.cutinClass.SetIo(0);
+	uiClass.cutin.SetIo(0);
 
 	while (1) {
 		RecSerectDrawAllUi(&uiClass, cmd, &songdata, closeFg, CutTime);
 		RecSerectKeyActAll(&next, toPlay, &closeFg, cmd, &CutTime,
 			&uiClass, &songdata, PackFirstNum);
-		if (uiClass.cutinClass.IsEndAnim()) { break; }
+		if (uiClass.cutin.IsEndAnim()) { break; }
 		if (GetWindowUserCloseFlag(TRUE)) {
 			next = SCENE_EXIT;
 			break;
