@@ -6,7 +6,6 @@
  * @note 個人が趣味で製作したものなので、品質は保証しません。このコードを使用したことによるトラブルの責任は負いかねます。
  */
 
-#include <stdbool.h>
 #include "sancur.h"
 
 /**
@@ -112,15 +111,6 @@ int notzero(int a) {
 }
 
 /**
- * a / b を返す。ただしbが0だった場合はcを返す。
- * @param[in] a 割られる数
- * @param[in] b 割る数
- * @param[in] c 0割り時の返り値
- * @return int a / b, 0割り時はc
- */
-#define divzero(a, b, c) (((b) == 0) ? (c) : ((a) / (b)))
-
-/**
  * 点1(x1,y1)、点2(x2,y2)、を通る直線を考えて、xの時の値を返す。
  * @param[in] x1 点1のx座標
  * @param[in] y1 点1のy座標
@@ -222,15 +212,12 @@ int NumLoop(int a, int b) {
 }
 
 /**
- * sin(a)を出力する。単位はdeg
+ * sin"a"を出力する
  * @param[in] a 入力
  * @return double sin(a)
  */
 double sinC(int a) {
-	bool minFg = false;
-	double ret = 0;
-	double sin[91] = {
-		0.0000,0.0175,0.0349,0.0523,0.0698,
+	double sin[91] = { 0.0000,0.0175,0.0349,0.0523,0.0698,
 		0.0872,0.1045,0.1219,0.1392,0.1564,
 		0.1736,0.1908,0.2079,0.2250,0.2419,
 		0.2588,0.2756,0.2924,0.3090,0.3256,
@@ -247,42 +234,30 @@ double sinC(int a) {
 		0.9397,0.9455,0.9511,0.9563,0.9613,
 		0.9659,0.9703,0.9744,0.9781,0.9816,
 		0.9848,0.9877,0.9903,0.9925,0.9945,
-		0.9962,0.9976,0.9986,0.9994,0.9998,1.0000
-	};
-
-	/* a -> -359~359 */
-	a %= 360;
-	/* a -> 0~359 */
-	if (a < 0) {
-		a += 360;
-	}
-	/* a -> 0~179 */
-	if (180 <= a) {
-		a -= 180;
-		minFg = true;
-	}
-	/* a -> 0~90 */
-	if (90 < a) {
-		a = 180 - a;
-	}
-
-	return (minFg ? -1 : 1) * sin[a];
+		0.9962,0.9976,0.9986,0.9994,0.9998,1.0000 };
+	while (a < 0) { a += 360; }
+	while (a >= 360) { a -= 360; }
+	if (91 <= a && a <= 179) { return sin[-(a - 180)]; }
+	if (180 <= a && a <= 270) { return -sin[a - 180]; }
+	if (271 <= a && a <= 359) { return -sin[-(a - 360)]; }
+	return sin[a];
 }
 
 /**
- * cos(a)を出力する。単位はdeg
+ * cos"a"を出力する
  * @param[in] a 入力
  * @return double cos(a)
  */
 double cosC(int a) {
-	return sinC(a + 90);
+	a += 90;
+	return sinC(a);
 }
 
 /**
  * 点(x, y)を　原点(0, 0)を中心にrot度右回転させる
- * @param[in] rot 角度
  * @param[out] x x座標
  * @param[out] y y座標
+ * @param[in] rot 角度
  */
 void rot_xy_pos(int rot, int *x, int *y) {
 	int G = *x;

@@ -1,7 +1,9 @@
 
 #include "DxLib.h"
 #include "dxdraw.h"
+#include "dxcur.h"
 #include "sancur.h"
+#include "strcur.h"
 #include "../system.h"
 #include "../RecWindowRescale.h"
 
@@ -74,7 +76,7 @@ void DrawGraphAnchor(int x, int y, int pic, dxdraw_anchor_t anchor) {
  * @param[in] anchor äÓèÄì_
  * @details sizeÇ…100Ç™ì¸Ç¡ÇΩèÍçáÅADrawGraphAnchorÇé¿çsÇ∑ÇÈ
  */
-void DrawZoomGraphAnchor(int x, int y, intx100 size, int pic, dxdraw_anchor_t anchor) {
+void DrawZoomGraphAnchor(int x, int y, intx100_t size, int pic, dxdraw_anchor_t anchor) {
 	int drawLeft = 0;
 	int drawUp = 0;
 	int drawRight = 0;
@@ -129,6 +131,257 @@ void DrawZoomGraphAnchor(int x, int y, intx100 size, int pic, dxdraw_anchor_t an
 
 	DrawExtendGraph(drawLeft, drawUp, drawRight, drawDown, pic, TRUE);
 
+	return;
+}
+
+void DrawRotaGraphAnchor(int x, int y, double size, double rot, DxPic_t pic, dxdraw_anchor_t anchor, int TransFlag, int ReverseXFlag, int ReverseYFlag) {
+	int drawX = 0;
+	int drawY = 0;
+
+	if (anchor == DXDRAW_ANCHOR_TOP_LEFT) {
+		DrawRotaGraph(x, y, size, rot, pic, TRUE, ReverseXFlag, ReverseYFlag);
+		return;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+		drawX = x;
+		break;
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+		drawX = (WINDOW_SIZE_X + 2 * x) / 2;
+		break;
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawX = WINDOW_SIZE_X + x;
+		break;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+		drawY = y;
+		break;
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+		drawX = (WINDOW_SIZE_Y + 2 * y) / 2;
+		break;
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawY = WINDOW_SIZE_Y + y;
+		break;
+	}
+
+	DrawRotaGraph(drawX, drawY, size, rot, pic, TransFlag, ReverseXFlag, ReverseYFlag);
+	return;
+}
+
+void DrawStringAnchor(int x, int y, const TCHAR *s, DxColor_t cr, dxdraw_anchor_t anchor) {
+	int drawX = 0;
+	int drawY = 0;
+
+	if (anchor == DXDRAW_ANCHOR_TOP_LEFT) {
+		DrawString(x, y, s, cr);
+		return;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+		drawX = x;
+		break;
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+		drawX = (WINDOW_SIZE_X + 2 * x) / 2;
+		break;
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawX = WINDOW_SIZE_X + x;
+		break;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+		drawY = y;
+		break;
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+		drawX = (WINDOW_SIZE_Y + 2 * y) / 2;
+		break;
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawY = WINDOW_SIZE_Y + y;
+		break;
+	}
+
+	DrawString(drawX, drawY, s, cr);
+	return;
+}
+
+void DrawStringToHandleAnchor(int x, int y, const TCHAR *s, DxColor_t cr, int handle, dxdraw_anchor_t anchor) {
+	int drawX = 0;
+	int drawY = 0;
+
+	if (anchor == DXDRAW_ANCHOR_TOP_LEFT) {
+		DrawStringToHandle(x, y, s, cr, handle);
+		return;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+		drawX = x;
+		break;
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+		drawX = (WINDOW_SIZE_X + 2 * x) / 2;
+		break;
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawX = WINDOW_SIZE_X + x;
+		break;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+		drawY = y;
+		break;
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+		drawX = (WINDOW_SIZE_Y + 2 * y) / 2;
+		break;
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawY = WINDOW_SIZE_Y + y;
+		break;
+	}
+
+	DrawStringToHandle(drawX, drawY, s, cr, handle);
+	return;
+}
+
+void DrawFormatStringAnchor(int x, int y, DxColor_t cr, dxdraw_anchor_t anchor, const TCHAR *s, ...) {
+	va_list as;
+	va_start(as, s);
+
+	int drawX = 0;
+	int drawY = 0;
+	TCHAR buf[256];
+
+	_VSPRINTF_S(buf, s, as);
+
+	if (anchor == DXDRAW_ANCHOR_TOP_LEFT) {
+		DrawString(x, y, buf, cr);
+		return;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+		drawX = x;
+		break;
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+		drawX = (WINDOW_SIZE_X + 2 * x) / 2;
+		break;
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawX = WINDOW_SIZE_X + x;
+		break;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+		drawY = y;
+		break;
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+		drawX = (WINDOW_SIZE_Y + 2 * y) / 2;
+		break;
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawY = WINDOW_SIZE_Y + y;
+		break;
+	}
+
+	DrawString(drawX, drawY, buf, cr);
+
+	va_end(as);
+	return;
+}
+
+void DrawFormatStringToHandleAnchor(int x, int y, DxColor_t cr, int handle, dxdraw_anchor_t anchor, const TCHAR *s, ...) {
+	va_list as;
+	va_start(as, s);
+
+	int drawX = 0;
+	int drawY = 0;
+	TCHAR buf[256];
+
+	_VSPRINTF_S(buf, s, as);
+
+	if (anchor == DXDRAW_ANCHOR_TOP_LEFT) {
+		DrawStringToHandle(x, y, buf, cr, handle);
+		return;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+		drawX = x;
+		break;
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+		drawX = (WINDOW_SIZE_X + 2 * x) / 2;
+		break;
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawX = WINDOW_SIZE_X + x;
+		break;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+		drawY = y;
+		break;
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+		drawX = (WINDOW_SIZE_Y + 2 * y) / 2;
+		break;
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawY = WINDOW_SIZE_Y + y;
+		break;
+	}
+
+	DrawStringToHandle(drawX, drawY, buf, cr, handle);
+
+	va_end(as);
 	return;
 }
 
