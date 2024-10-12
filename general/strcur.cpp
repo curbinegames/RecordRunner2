@@ -6,9 +6,8 @@
  * @note 個人が趣味で製作したものなので、品質は保証しません。このコードを使用したことによるトラブルの責任は負いかねます。
  */
 
-#pragma once
-
 #include <string.h>
+#include <tchar.h>
 #include "strcur.h"
 #include "sancur.h"
 
