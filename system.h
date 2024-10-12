@@ -5,10 +5,10 @@
 #include "helpBar.h"
 
 #define WINDOW_SIZE_X 1280                     // ウィンドウの横のサイズ
-#define WINDOW_SIZE_Y (WINDOW_SIZE_X * 9 / 16) // ウィンドウの縦のサイズ
+#define WINDOW_SIZE_Y (WINDOW_SIZE_X * 9 / 16) // ウィンドウの縦のサイズ 720
 
 #define OLD_WINDOW_SIZE_X 640                         // 前バージョンのウィンドウの横のサイズ
-#define OLD_WINDOW_SIZE_Y (OLD_WINDOW_SIZE_X * 3 / 4) // 前バージョンのウィンドウの縦のサイズ
+#define OLD_WINDOW_SIZE_Y (OLD_WINDOW_SIZE_X * 3 / 4) // 前バージョンのウィンドウの縦のサイズ 480
 
 #define COLOR_WHITE (0xffffffff)
 

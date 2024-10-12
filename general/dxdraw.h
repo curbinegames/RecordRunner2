@@ -1,7 +1,5 @@
-#pragma once
 
-#include "dxcur.h"
-#include "sancur.h"
+typedef int intx100; /** 100î{ÇµÇƒÇ¢ÇÈÇ±Ç∆Çé¶Ç∑intå^ */
 
 /** dxdrawÇ≈égÇ§äÓèÄì_ÇÃóÒãìå^ */
 typedef enum dxdraw_anchor_e {
@@ -17,12 +15,7 @@ typedef enum dxdraw_anchor_e {
 } dxdraw_anchor_t;
 
 extern void DrawGraphAnchor(int x, int y, int pic, dxdraw_anchor_t anchor);
-extern void DrawZoomGraphAnchor(int x, int y, intx100_t size, int pic, dxdraw_anchor_t anchor);
-extern void DrawRotaGraphAnchor(int x, int y, double size, double rot, DxPic_t pic, dxdraw_anchor_t anchor, int TransFlag, int ReverseXFlag = 0, int ReverseYFlag = 0);
-extern void DrawStringAnchor(int x, int y, const TCHAR *s, DxColor_t cr, dxdraw_anchor_t anchor);
-extern void DrawStringToHandleAnchor(int x, int y, const TCHAR *s, DxColor_t cr, int handle, dxdraw_anchor_t anchor);
-extern void DrawFormatStringAnchor(int x, int y, DxColor_t cr, dxdraw_anchor_t anchor, const TCHAR *s, ...);
-extern void DrawFormatStringToHandleAnchor(int x, int y, DxColor_t cr, int handle, dxdraw_anchor_t anchor, const TCHAR *s, ...);
+extern void DrawZoomGraphAnchor(int x, int y, intx100 size, int pic, dxdraw_anchor_t anchor);
 extern void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle);
 extern void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle);
 extern void _DrawDeformationPic3(int x, int y, double size, int rot, int handle);

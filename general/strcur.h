@@ -1,26 +1,17 @@
 #pragma once
 
-#include <string.h>
 #include <tchar.h>
 
-#define CLASS_EASY_MAKE(name) \
-	static class name { \
-	private: \
-	public: \
-		name() { \
-		} \
-		~name() { \
-		} \
-	}
-
 #ifdef UNICODE
+#define _T(s) L##s
+#define _TEXT(s) L##s
 #define _VSPRINTF_S vswprintf_s
 #define _STRCPY_S wcscpy_s
-
 #else
+#define _T(s) s
+#define _TEXT(s) s
 #define _VSPRINTF_S vsprintf_s
 #define _STRCPY_S strcpy_s
-
 #endif
 
 /* TODO: ‚±‚ê‚àrec‚É‚ ‚é‚×‚« */
