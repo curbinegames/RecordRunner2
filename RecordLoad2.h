@@ -288,7 +288,7 @@ int RecMapLoadGetc(TCHAR c, int istr, note_box_2_t note[], int *objectN, int iLi
 	}
 	if (move->x[iLine].d[XmoveN2[iLine]].Stime >= 0 &&
 		move->x[iLine].d[XmoveN2[iLine]].Stime <= note[*objectN].hittime &&
-		move->x[iLine].d[XmoveN2[iLine]].Stime > note[*objectN].hittime) {
+		move->x[iLine].d[XmoveN2[iLine]].Etime > note[*objectN].hittime) {
 		note[*objectN].xpos = movecal(move->x[iLine].d[XmoveN2[iLine]].mode,
 			move->x[iLine].d[XmoveN2[iLine]].Stime, 
 			move->x[iLine].d[XmoveN2[iLine] - 1].pos,
