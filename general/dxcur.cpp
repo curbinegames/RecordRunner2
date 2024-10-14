@@ -1,31 +1,22 @@
-#include <DxLib.h>
+#pragma once
+
+#include "DxLib.h"
 #include "dxcur.h"
 #include "sancur.h"
 
-/* dxcur_fps_c */
-void dxcur_fps_c::SetTick() {
-	DxTime_t Ntime = GetNowCount();
+#undef PlaySound
 
-	this->tick[this->head] = Ntime;
-	this->head = (this->head + 1) % 120;
-	this->num++;
-	while (120 < this->num || 0 < this->num && this->tick[this->tail] + 1000 < Ntime) {
-		this->tail = (this->tail + 1) % 120;
-		this->num--;
-	}
-}
-
-uint dxcur_fps_c::GetFPS() {
-	return this->num;
-}
+static int keyhold[256];
 
 /* dxcur_snd_c */
-dxcur_snd_c::dxcur_snd_c(TCHAR *path) {
-	this->mat = LoadSoundMem(path);
-}
+dxcur_snd_c::dxcur_snd_c() {}
 
 dxcur_snd_c::~dxcur_snd_c() {
 	DeleteSoundMem(this->mat);
+}
+
+void dxcur_snd_c::SetSound(const TCHAR *path) {
+	this->mat = LoadSoundMem(path);
 }
 
 void dxcur_snd_c::PlaySound() {
@@ -35,10 +26,6 @@ void dxcur_snd_c::PlaySound() {
 		this->Btime = Ntime;
 	}
 }
-
-/*+++*/
-
-static int keyhold[256];
 
 /**
  * マウスのキー入力の情報を返す

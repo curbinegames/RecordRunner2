@@ -1,7 +1,8 @@
 #pragma once
 
-typedef unsigned int uint;
-typedef int intx100_t;
+#include "DxLib.h"
+
+typedef int intx100_t; /** 100”{‚µ‚Ä‚¢‚é‚±‚Æ‚ğ¦‚·intŒ^ */
 
 extern int mins(int a, int b);
 extern int mins_2(int a, int b);
