@@ -1083,7 +1083,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	/* char */
 	char key[256];
-	char closeFg = 0;
 
 	/* short */
 	short int i[3];
@@ -1112,7 +1111,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	unsigned int Cr = GetColor(255, 255, 255);
 	unsigned int Crb = GetColor(0, 0, 0);
 	unsigned int CrR = GetColor(255, 0, 0);
-	int CutTime = 0;
 	int Stime = 0;
 	int adif = 0;
 	int max_adif = 0;
@@ -1145,6 +1143,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_combo_c comboPicClass;
 	rec_play_gapbar_c gapbarClass;
 	rec_play_sound_c p_sound;
+	rec_cutin_c cutin;
 	/* extern rec_play_runner_c runnerClass(); */
 	/* extern rec_play_keyview_c keyviewClass(); */
 
@@ -1243,10 +1242,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 	}
 #endif
-	CutTime = GetNowCount();
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK);
 	WaitTimer(10);
 	Stime = GetNowCount();
+	cutin.SetIo(0);
 	//ゲーム開始
 	while (1) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
@@ -1482,22 +1481,16 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			ShowBonusEff(userpal.judgeCount, AllNotesHitTime);
 		}
 		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
-		if (closeFg == 0 &&
+		if (cutin.IsClosing() == 0 &&
 			recfp.time.end + 5000 <= recfp.time.now &&
 			(musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
 			SetCutTipFg(CUTIN_TIPS_NONE);
-			closeFg = 1;
-			CutTime = GetNowCount();
+			cutin.SetIo(1);
 		}
-		if (closeFg == 0) {
-			ViewCutOut(CutTime);
-		}
-		if (closeFg == 1) {
-			ViewCutIn(CutTime);
-		}
+		cutin.DrawCut();
 
 		//カットイン再生から2秒以上たったら抜ける。
-		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
+		if (cutin.IsEndAnim()) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
 			break;
