@@ -1,9 +1,31 @@
 #pragma once
 
 #include "DxLib.h"
+#include "dxcur.h"
 #include "sancur.h"
 
+#undef PlaySound
+
 static int keyhold[256];
+
+/* dxcur_snd_c */
+dxcur_snd_c::dxcur_snd_c() {}
+
+dxcur_snd_c::~dxcur_snd_c() {
+	DeleteSoundMem(this->mat);
+}
+
+void dxcur_snd_c::SetSound(const TCHAR *path) {
+	this->mat = LoadSoundMem(path);
+}
+
+void dxcur_snd_c::PlaySound() {
+	DxTime_t Ntime = GetNowCount();
+	if ((this->Btime + this->Gtime) < Ntime) {
+		PlaySoundMem(this->mat, DX_PLAYTYPE_BACK);
+		this->Btime = Ntime;
+	}
+}
 
 /**
  * マウスのキー入力の情報を返す
