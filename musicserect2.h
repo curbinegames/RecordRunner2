@@ -591,6 +591,8 @@ public:
 
 static class rec_serect_musicbar_c {
 private:
+#define VIEW_COUNT 9
+
 	int UD = 1;
 	int startC = -MUSE_FADTM;
 	DxPic_t bar[2];
@@ -599,32 +601,32 @@ private:
 
 	void DrawClear(int x, int y, int clearNo) {
 		if (0 <= clearNo && clearNo <= 4) {
-			RecRescaleDrawGraph(x, y, this->CRate[clearNo], TRUE);
+			DrawGraph(x, y, this->CRate[clearNo], TRUE);
 		}
 	}
 
 	void DrawRack(int x, int y, int rankNo) {
 		if (0 <= rankNo && rankNo <= 5) {
-			RecRescaleDrawGraph(x, y, this->rankP[rankNo], TRUE);
+			DrawGraph(x, y, this->rankP[rankNo], TRUE);
 		}
 	}
 
 	void DrawMainOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX *songdata) {
-		RecRescaleDrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1], TRUE);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_BLACK);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_BLACK);
+		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1], TRUE);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_BLACK, SmallFontData);
 		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata->ClearRate[dif] - 1);
 		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata->ClearRank[dif]);
 		for (int idif = 0; idif < 3; idif++) {
-			RecRescaleDrawFormatString(BasePosX - 25 + idif * 70, BasePosY - 97,
-				COLOR_BLACK, L"%2d", songdata->level[1 + idif]);
+			DrawFormatStringToHandle(BasePosX - 25 + idif * 70, BasePosY - 97,
+				COLOR_BLACK, SmallFontData, L"%2d", songdata->level[1 + idif]);
 		}
 	}
 
 	void DrawSubOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX *songdata) {
-		RecRescaleDrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0], TRUE);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_WHITE);
-		RecRescaleDrawString(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_WHITE);
+		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0], TRUE);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_WHITE, SmallFontData);
 		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata->ClearRate[dif] - 1);
 		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata->ClearRank[dif]);
 	}
@@ -667,7 +669,7 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawAll(int cmd[], songdata_set_t *songdata) {
+	void DrawAll(int Ypos, int cmd[], songdata_set_t *songdata) {
 		int BasePosX = 0;
 		int BasePosY = 0;
 		int slide = 0;
@@ -675,22 +677,20 @@ public:
 		int moveC = 0;
 
 		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
-		picsong = (cmd[0] + songdata->musicNum - 3) % songdata->musicNum;
+		picsong = (cmd[0] + songdata->musicNum - (VIEW_COUNT / 2)) % songdata->musicNum;
 
-		for (int count = 0; count < 7; count++) {
+		for (int count = 0; count < VIEW_COUNT; count++) {
 			slide = pals(0, 0, 250, this->UD * 80, moveC);
-			if (count < 3) {
-				BasePosY = slide + count * 80 + 120;
-			}
-			else if (count == 3) {
-				BasePosY = slide + count * 120;
+			BasePosY = slide + count * 80 + Ypos - 170;
+			if (count <= (VIEW_COUNT / 2)) {
+				BasePosY += lins(5, 180, 7, 100, VIEW_COUNT);
 			}
 			else {
-				BasePosY = slide + count * 80 + 160;
+				BasePosY += lins(5, 220, 7, 140, VIEW_COUNT);
 			}
 			BasePosX = lins(480, 80, 240, 40, BasePosY);
 
-			if (count == 3) {
+			if (count == (VIEW_COUNT / 2)) {
 				this->DrawMainOne(cmd[1], BasePosX, BasePosY, &SONGDATA_FROM_MAP(songdata, picsong));
 			}
 			else {
@@ -700,6 +700,8 @@ public:
 			picsong = (picsong + 1) % songdata->musicNum;
 		}
 	}
+
+#undef VIEW_COUNT
 };
 
 static class rec_serect_disk_c {
@@ -966,8 +968,8 @@ public:
 		}
 	}
 
-	void DrawJacket() {
-		RecRescaleDrawExtendGraph(305, 75, 545, 315, this->jacketpic, TRUE);
+	void DrawJacket(int baseX, int baseY, int size) {
+		DrawExtendGraph(baseX, baseY, baseX + size, baseY + size, this->jacketpic, TRUE);
 	}
 };
 
@@ -1035,8 +1037,8 @@ public:
 
 	void DrawUi(int cmd[], songdata_set_t *songdata) {
 		this->backpic.DrawBackPic();
-		this->jacket.DrawJacket();
-		this->musicbar.DrawAll(cmd, songdata);
+		this->jacket.DrawJacket(580, 85, 500);
+		this->musicbar.DrawAll(300, cmd, songdata);
 		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
 		this->detail.DrawDetailAll(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
 		this->previewSnd.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
