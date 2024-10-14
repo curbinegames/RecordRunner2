@@ -1181,7 +1181,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	if (system.soundEn == 0) {
 		RecPlayInitMelodySnd();
-		RecPlayInitPsound();
 	}
 
 	RecPlayGetMapFileNames(GT1, dataE, songName, p, n, o);

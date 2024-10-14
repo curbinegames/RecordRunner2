@@ -55,10 +55,6 @@ void RecPlayInitMelodySnd() {
 	return;
 }
 
-void RecPlayInitPsound() {
-	return;
-}
-
 static void PlayNoteHitSound(const note_box_2_t *note, int *Sitem, rec_play_sound_c *p_sound) {
 	if (note->melody != MELODYSOUND_NONE) {
 		PlaySoundMem(MelodySnd[note->melody], DX_PLAYTYPE_BACK);
@@ -183,7 +179,8 @@ static void SetHitPosByHit(rec_play_chara_hit_attack_t *hitatk, char const hitfl
 }
 
 static void note_judge_event(note_judge judge, note_box_2_t const *const noteinfo,
-	int* const Sitem, int Ntime, int Jtime, int lineNo, int soundEn, rec_play_userpal_t *userpal, rec_play_sound_c *p_sound)
+	int* const Sitem, int Ntime, int Jtime, int lineNo, int soundEn, rec_play_userpal_t *userpal,
+	rec_play_sound_c *p_sound)
 {
 	if (judge == NOTE_JUDGE_NONE) { return; }
 	note_material note = noteinfo->object;
@@ -296,7 +293,8 @@ static void note_judge_while_event(note_material mat, note_box_2_t note[], short
 			0 <= note[objectN[Line]].hittime &&
 			note[objectN[Line]].object == NOTE_CATCH)
 		{
-			note_judge_event(judge, &note[objectN[Line]], Sitem, Ntime, 0, Line, soundEn, userpal, p_sound);
+			note_judge_event(judge, &note[objectN[Line]], Sitem,
+				Ntime, 0, Line, soundEn, userpal, p_sound);
 			*charahit = 0;
 			hitatk->time = -1000;
 			objectN[Line] = note[objectN[Line]].next;
@@ -360,7 +358,8 @@ static void RecJudgeHit(note_box_2_t note[], short int noteNo[], int Ntime, int 
 }
 
 static void RecJudgeArrow(note_box_2_t note[], short int noteNo[], int Ntime,
-	int Sitem[], int soundEn, rec_play_userpal_t *userpal, rec_play_key_hold_t *keyhold, rec_play_sound_c *p_sound)
+	int Sitem[], int soundEn, rec_play_userpal_t *userpal, rec_play_key_hold_t *keyhold,
+	rec_play_sound_c *p_sound)
 {
 	int avoidFg[3] = { 0,0,0 };
 	note_box_2_t buf[3];
