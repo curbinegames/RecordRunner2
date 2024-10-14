@@ -296,8 +296,8 @@ public:
 		this->att.SetSound(_T("sound/attack.wav"));
 		this->cat.SetSound(_T("sound/catch.wav"));
 		this->arw.SetSound(_T("sound/arrow.wav"));
-		this->bom.SetSound(_T("sound/swing.wav"));
-		this->swi.SetSound(_T("sound/bomb.wav"));
+		this->bom.SetSound(_T("sound/bomb.wav"));
+		this->swi.SetSound(_T("sound/swing.wav"));
 	}
 
 	~rec_play_sound_c() {}
