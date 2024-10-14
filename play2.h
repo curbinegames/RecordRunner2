@@ -1,7 +1,9 @@
 
 /* TODO: ノーツ横位置固定バグが起こってる!!! */
 /* TODO: アイテム表示バグが起こってる!!! */
-/* TODO: L"str"を_T("str")に変える" */
+/* TODO: ddifがバグってる!!! */
+/* TODO: <全体>cutinを最新にする */
+/* TODO: <全体>L"str"を_T("str")に変える" */
 
 #if 1 /* define group */
 
