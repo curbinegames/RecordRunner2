@@ -1,6 +1,8 @@
 #pragma once
 
-#include "DxLib.h"
+#include <tchar.h>
+#include <DxLib.h>
+#include "../general/dxcur.h"
 
 #define SE_HIT (1 << 0)
 #define SE_CATCH (1 << 1)
@@ -147,14 +149,6 @@ typedef struct note_lane_s {
 	note_box_t low[2000];
 } note_lane_t;
 
-typedef struct play_sound_s {
-	int att;
-	int cat;
-	int arw;
-	int bom;
-	int swi;
-	char flag = 0;//reserved, reserved, reserved, reserved, bomb, arrow, catch, hit
-} play_sound_t;
 typedef struct play_key_stat_s {
 	char z = 0;
 	char x = 0;
@@ -248,17 +242,6 @@ struct scrool_box {
 	double speed = -1;
 };
 
-typedef struct judge_action_box_t {
-	int* combo;
-	int* soundEnFg;
-	gap_box* gap;
-	struct judge_box* judge;
-	int* life;
-	int* melody_snd;
-	play_sound_t* p_sound;
-	struct score_box* score;
-} judge_action_box;
-
 typedef struct rec_play_xy_set_s {
 	int x;
 	int y;
@@ -298,3 +281,59 @@ typedef struct rec_play_userpal_s {
 	int life = 500;
 	gap_box gap;
 } rec_play_userpal_t;
+
+class rec_play_sound_c {
+private:
+	dxcur_snd_c att;
+	dxcur_snd_c cat;
+	dxcur_snd_c arw;
+	dxcur_snd_c bom;
+	dxcur_snd_c swi;
+
+public:
+
+	rec_play_sound_c() {
+		this->att.SetSound(_T("sound/attack.wav"));
+		this->cat.SetSound(_T("sound/catch.wav"));
+		this->arw.SetSound(_T("sound/arrow.wav"));
+		this->bom.SetSound(_T("sound/swing.wav"));
+		this->swi.SetSound(_T("sound/bomb.wav"));
+	}
+
+	~rec_play_sound_c() {}
+
+	void PlayNoteSound(note_material mat) {
+		switch (mat) {
+		case NOTE_HIT:
+			this->att.PlaySound();
+			break;
+		case NOTE_CATCH:
+			this->cat.PlaySound();
+			break;
+		case NOTE_UP:
+		case NOTE_DOWN:
+		case NOTE_LEFT:
+		case NOTE_RIGHT:
+			this->arw.PlaySound();
+			break;
+		case NOTE_BOMB:
+			this->bom.PlaySound();
+			break;
+		}
+	}
+
+	void PlaySwing() {
+		this->swi.PlaySound();
+	}
+};
+
+typedef struct judge_action_box_t {
+	int *combo;
+	int *soundEnFg;
+	gap_box *gap;
+	struct judge_box *judge;
+	int *life;
+	int *melody_snd;
+	rec_play_sound_c *p_sound;
+	struct score_box *score;
+} judge_action_box;

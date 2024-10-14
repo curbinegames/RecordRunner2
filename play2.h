@@ -1143,6 +1143,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_sbar_c sbarClass;
 	rec_play_combo_c comboPicClass;
 	rec_play_gapbar_c gapbarClass;
+	rec_play_sound_c p_sound;
 	/* extern rec_play_runner_c runnerClass(); */
 	/* extern rec_play_keyview_c keyviewClass(); */
 
@@ -1377,7 +1378,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ƒm[ƒc”»’è */
 		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
-			system.soundEn, &keyhold, &hitatk, LaneTrack, &charahit, charaput, &userpal);
+			system.soundEn, &keyhold, &hitatk, LaneTrack, &charahit, charaput, &userpal, &p_sound);
 		RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time);
 
 		ClearDrawScreen(); /* •`‰æƒGƒŠƒA‚±‚±‚©‚ç */
@@ -1653,7 +1654,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	*ret_nameset = recfp.nameset;
 	strcopy_2(songName, ret_fileN, 255);
 
-	return SCENE_RESULT;
+	return SCENE_SERECT;
 }
 
 /**
@@ -1690,7 +1691,7 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	ret = RecPlayMain(&map_detail, &userpal, &nameset,
 		fileName, packNo, musicNo, difNo, shift, AutoFlag);
 
-	if (ret != SCENE_RESULT) { return ret; }
+	if (ret == SCENE_EXIT) { return SCENE_EXIT; }
 	if (AutoFlag == 1) { return SCENE_SERECT; }
 
 	return result(&map_detail, &userpal, &nameset, difNo, fileName);

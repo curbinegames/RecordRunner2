@@ -2,6 +2,7 @@
 #include "PlayNoteJudge.h"
 #include <DxLib.h>
 #include "../general/sancur.h"
+#include "../general/dxcur.h"
 #include "../system.h"
 #include "playbox.h"
 #include "PlayViewJudge.h"
@@ -25,7 +26,6 @@ typedef enum chara_pos_e {
 
 /* DOTO: 効果音系を別ファイルに移動する */
 static int MelodySnd[24];
-static play_sound_t p_sound;
 
 void RecPlayInitMelodySnd() {
 	MelodySnd[0] = LoadSoundMem(L"sound/melody/lowF.wav");
@@ -56,48 +56,18 @@ void RecPlayInitMelodySnd() {
 }
 
 void RecPlayInitPsound() {
-	p_sound.att = LoadSoundMem(L"sound/attack.wav");
-	p_sound.cat = LoadSoundMem(L"sound/catch.wav");
-	p_sound.arw = LoadSoundMem(L"sound/arrow.wav");
-	p_sound.swi = LoadSoundMem(L"sound/swing.wav");
-	p_sound.bom = LoadSoundMem(L"sound/bomb.wav");
 	return;
 }
 
-static void PlayNoteHitSound2() {
-	if ((p_sound.flag & SE_HIT) != 0) {
-		PlaySoundMem(p_sound.att, DX_PLAYTYPE_BACK);
+static void PlayNoteHitSound(const note_box_2_t *note, int *Sitem, rec_play_sound_c *p_sound) {
+	if (note->melody != MELODYSOUND_NONE) {
+		PlaySoundMem(MelodySnd[note->melody], DX_PLAYTYPE_BACK);
 	}
-	if ((p_sound.flag & SE_CATCH) != 0) {
-		PlaySoundMem(p_sound.cat, DX_PLAYTYPE_BACK);
-	}
-	if ((p_sound.flag & SE_ARROW) != 0) {
-		PlaySoundMem(p_sound.arw, DX_PLAYTYPE_BACK);
-	}
-	if ((p_sound.flag & SE_BOMB) != 0) {
-		PlaySoundMem(p_sound.bom, DX_PLAYTYPE_BACK);
-	}
-	if ((p_sound.flag & SE_SWING) != 0) {
-		PlaySoundMem(p_sound.swi, DX_PLAYTYPE_BACK);
-	}
-	p_sound.flag = 0;
-	return;
-}
-
-static void RecPlaySetBaseSE(int base) {
-	p_sound.flag |= base;
-	return;
-}
-
-static void PlayNoteHitSound(note_box_2_t note, int *Sitem, int notemat) {
-	if (note.melody != MELODYSOUND_NONE) {
-		PlaySoundMem(MelodySnd[note.melody], DX_PLAYTYPE_BACK);
-	}
-	else if (note.sound != 0) {
-		PlaySoundMem(Sitem[note.sound - 1], DX_PLAYTYPE_BACK);
+	else if (note->sound != 0) {
+		PlaySoundMem(Sitem[note->sound - 1], DX_PLAYTYPE_BACK);
 	}
 	else {
-		RecPlaySetBaseSE(notemat);
+		p_sound->PlayNoteSound(note->object);
 	}
 	return;
 }
@@ -213,7 +183,7 @@ static void SetHitPosByHit(rec_play_chara_hit_attack_t *hitatk, char const hitfl
 }
 
 static void note_judge_event(note_judge judge, note_box_2_t const *const noteinfo,
-	int* const Sitem, int Ntime, int Jtime, int lineNo, int soundEn, rec_play_userpal_t *userpal)
+	int* const Sitem, int Ntime, int Jtime, int lineNo, int soundEn, rec_play_userpal_t *userpal, rec_play_sound_c *p_sound)
 {
 	if (judge == NOTE_JUDGE_NONE) { return; }
 	note_material note = noteinfo->object;
@@ -267,14 +237,14 @@ static void note_judge_event(note_judge judge, note_box_2_t const *const noteinf
 			(userpal->judgeCount.pjust)++;
 		}
 		if (judge != NOTE_JUDGE_MISS && soundEn == 0) {
-			PlayNoteHitSound(*noteinfo, Sitem, SE_HIT);
+			PlayNoteHitSound(noteinfo, Sitem, p_sound);
 		}
 		break;
 	case NOTE_CATCH:
 		if (judge == NOTE_JUDGE_JUST) {
 			(userpal->judgeCount.pjust)++;
 			if (soundEn == 0) {
-				PlayNoteHitSound(*noteinfo, Sitem, SE_CATCH);
+				PlayNoteHitSound(noteinfo, Sitem, p_sound);
 			}
 		}
 		break;
@@ -287,7 +257,7 @@ static void note_judge_event(note_judge judge, note_box_2_t const *const noteinf
 			(userpal->judgeCount.pjust)++;
 		}
 		if (judge != NOTE_JUDGE_MISS && soundEn == 0) {
-			PlayNoteHitSound(*noteinfo, Sitem, SE_ARROW);
+			PlayNoteHitSound(noteinfo, Sitem, p_sound);
 		}
 		break;
 	case NOTE_BOMB:
@@ -297,7 +267,7 @@ static void note_judge_event(note_judge judge, note_box_2_t const *const noteinf
 			break;
 		case NOTE_JUDGE_MISS:
 			if (soundEn == 0) {
-				PlayNoteHitSound(*noteinfo, Sitem, SE_BOMB);
+				PlayNoteHitSound(noteinfo, Sitem, p_sound);
 			}
 			break;
 		default:
@@ -314,7 +284,7 @@ static void note_judge_event(note_judge judge, note_box_2_t const *const noteinf
 
 static void note_judge_while_event(note_material mat, note_box_2_t note[], short int objectN[],
 	int Ntime, note_judge judge, int Sitem[], int Line, int soundEn, int *charahit,
-	rec_play_chara_hit_attack_t *hitatk, rec_play_userpal_t *userpal)
+	rec_play_chara_hit_attack_t *hitatk, rec_play_userpal_t *userpal, rec_play_sound_c *p_sound)
 {
 	/* パラメータチェック */
 	if (mat == NOTE_CATCH && charahit == NULL) { return; }
@@ -326,7 +296,7 @@ static void note_judge_while_event(note_material mat, note_box_2_t note[], short
 			0 <= note[objectN[Line]].hittime &&
 			note[objectN[Line]].object == NOTE_CATCH)
 		{
-			note_judge_event(judge, &note[objectN[Line]], Sitem, Ntime, 0, Line, soundEn, userpal);
+			note_judge_event(judge, &note[objectN[Line]], Sitem, Ntime, 0, Line, soundEn, userpal, p_sound);
 			*charahit = 0;
 			hitatk->time = -1000;
 			objectN[Line] = note[objectN[Line]].next;
@@ -338,7 +308,7 @@ static void note_judge_while_event(note_material mat, note_box_2_t note[], short
 			note[objectN[Line]].object == NOTE_BOMB)
 		{
 			note_judge_event(judge, &note[objectN[Line]], Sitem,
-				Ntime, -JUST_TIME - 1, Line, soundEn, userpal);
+				Ntime, -JUST_TIME - 1, Line, soundEn, userpal, p_sound);
 			objectN[Line] = note[objectN[Line]].next;
 		}
 		break;
@@ -346,7 +316,7 @@ static void note_judge_while_event(note_material mat, note_box_2_t note[], short
 		while (note[objectN[Line]].hittime - Ntime < 0 &&
 			note[objectN[Line]].object == NOTE_GHOST)
 		{
-			PlayNoteHitSound(note[objectN[Line]], Sitem, SE_GHOST);
+			PlayNoteHitSound(&note[objectN[Line]], Sitem, p_sound);
 			objectN[Line] = note[objectN[Line]].next;
 		}
 		break;
@@ -356,7 +326,7 @@ static void note_judge_while_event(note_material mat, note_box_2_t note[], short
 
 static void RecJudgeHit(note_box_2_t note[], short int noteNo[], int Ntime, int Sitem[],
 	int soundEn, rec_play_userpal_t *userpal, rec_play_key_hold_t *keyhold,
-	rec_play_chara_hit_attack_t *hitatk)
+	rec_play_chara_hit_attack_t *hitatk, rec_play_sound_c *p_sound)
 {
 	int push_key_count = 0;
 	int near_lane = -1;
@@ -372,7 +342,7 @@ static void RecJudgeHit(note_box_2_t note[], short int noteNo[], int Ntime, int 
 		near_lane = RecPlayFindNearNote(note, noteNo, NOTE_HIT, Ntime);
 		if (near_lane == -1) {
 			if (iPush == 0) {
-				RecPlaySetBaseSE(SE_SWING);
+				p_sound->PlaySwing();
 			}
 			break;
 		}
@@ -380,17 +350,17 @@ static void RecJudgeHit(note_box_2_t note[], short int noteNo[], int Ntime, int 
 		hitatk2 |= (1 << near_lane);
 		NJ = CheckJudge(gap);
 		if (NJ == NOTE_JUDGE_MISS) {
-			RecPlaySetBaseSE(SE_SWING);
+			p_sound->PlaySwing();
 		}
 		note_judge_event(NJ, &note[noteNo[near_lane]],
-			Sitem, Ntime, gap, near_lane, soundEn, userpal);
+			Sitem, Ntime, gap, near_lane, soundEn, userpal, p_sound);
 		noteNo[near_lane] = note[noteNo[near_lane]].next;
 	}
 	SetHitPosByHit(hitatk, hitatk2, Ntime);
 }
 
 static void RecJudgeArrow(note_box_2_t note[], short int noteNo[], int Ntime,
-	int Sitem[], int soundEn, rec_play_userpal_t *userpal, rec_play_key_hold_t *keyhold)
+	int Sitem[], int soundEn, rec_play_userpal_t *userpal, rec_play_key_hold_t *keyhold, rec_play_sound_c *p_sound)
 {
 	int avoidFg[3] = { 0,0,0 };
 	note_box_2_t buf[3];
@@ -446,7 +416,7 @@ static void RecJudgeArrow(note_box_2_t note[], short int noteNo[], int Ntime,
 		case NOTE_RIGHT:
 			if (CheckArrowInJudge(note[noteNo[iLine]].object, GapTime, keyhold)) {
 				note_judge_event(CheckJudge(GapTime), &note[noteNo[iLine]],
-					Sitem, Ntime, GapTime, iLine, soundEn, userpal);
+					Sitem, Ntime, GapTime, iLine, soundEn, userpal, p_sound);
 				noteNo[iLine] = note[noteNo[iLine]].next;
 			}
 			break;
@@ -457,7 +427,7 @@ static void RecJudgeArrow(note_box_2_t note[], short int noteNo[], int Ntime,
 
 static void RecJudgeOthersNote(note_box_2_t note[], short int noteNo[], int Ntime, int Sitem[],
 	int soundEn, rec_play_userpal_t *userpal, rec_play_chara_hit_attack_t *hitatk, int LaneTrack[],
-	int *charahit, short int charaput)
+	int *charahit, short int charaput, rec_play_sound_c *p_sound)
 {
 	int GapTime = 0;
 
@@ -467,23 +437,23 @@ static void RecJudgeOthersNote(note_box_2_t note[], short int noteNo[], int Ntim
 		case NOTE_CATCH:
 			if (LaneTrack[iLine] + SAFE_TIME >= note[noteNo[iLine]].hittime) {
 				note_judge_while_event(NOTE_CATCH, note, noteNo, Ntime,
-					NOTE_JUDGE_JUST, Sitem, iLine, soundEn, charahit, hitatk, userpal);
+					NOTE_JUDGE_JUST, Sitem, iLine, soundEn, charahit, hitatk, userpal, p_sound);
 			}
 			break;
 		case NOTE_BOMB:
 			if (iLine == charaput && GapTime <= 0) {
 				note_judge_while_event(NOTE_BOMB, note, noteNo, Ntime,
-					NOTE_JUDGE_MISS, Sitem, iLine, soundEn, NULL, NULL, userpal);
+					NOTE_JUDGE_MISS, Sitem, iLine, soundEn, NULL, NULL, userpal, p_sound);
 			}
 			else {
 				note_judge_while_event(NOTE_BOMB, note, noteNo, Ntime,
-					NOTE_JUDGE_JUST, Sitem, iLine, soundEn, NULL, NULL, userpal);
+					NOTE_JUDGE_JUST, Sitem, iLine, soundEn, NULL, NULL, userpal, p_sound);
 			}
 			break;
 		case NOTE_GHOST:
 			if (GapTime < 0) {
 				note_judge_while_event(NOTE_GHOST, note, noteNo, Ntime,
-					NOTE_JUDGE_NONE, Sitem, iLine, NULL, NULL, NULL, userpal);
+					NOTE_JUDGE_NONE, Sitem, iLine, NULL, NULL, NULL, userpal, p_sound);
 			}
 			break;
 		}
@@ -494,7 +464,7 @@ static void RecJudgeOthersNote(note_box_2_t note[], short int noteNo[], int Ntim
 			note[noteNo[iLine]].object <= NOTE_RIGHT)
 		{
 			note_judge_event(NOTE_JUDGE_MISS, &note[noteNo[iLine]],
-				Sitem, Ntime, -SAFE_TIME, iLine, soundEn, userpal);
+				Sitem, Ntime, -SAFE_TIME, iLine, soundEn, userpal, p_sound);
 			noteNo[iLine] = note[noteNo[iLine]].next;
 			GapTime = note[noteNo[iLine]].hittime - Ntime;
 		}
@@ -504,12 +474,11 @@ static void RecJudgeOthersNote(note_box_2_t note[], short int noteNo[], int Ntim
 
 void RecJudgeAllNotes(note_box_2_t note[], short int noteNo[], int Ntime, int Sitem[], int soundEn,
 	rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk, int LaneTrack[],
-	int *charahit, short int charaput, rec_play_userpal_t *userpal)
+	int *charahit, short int charaput, rec_play_userpal_t *userpal, rec_play_sound_c *p_sound)
 {
-	RecJudgeHit(note, noteNo, Ntime, Sitem, soundEn, userpal, keyhold, hitatk);
-	RecJudgeArrow(note, noteNo, Ntime, Sitem, soundEn, userpal, keyhold);
+	RecJudgeHit(note, noteNo, Ntime, Sitem, soundEn, userpal, keyhold, hitatk, p_sound);
+	RecJudgeArrow(note, noteNo, Ntime, Sitem, soundEn, userpal, keyhold, p_sound);
 	RecJudgeOthersNote(note, noteNo, Ntime, Sitem, soundEn, userpal,
-		hitatk, LaneTrack, charahit, charaput);
-	PlayNoteHitSound2();
+		hitatk, LaneTrack, charahit, charaput, p_sound);
 	return;
 }
