@@ -293,7 +293,7 @@ void PlayDrawItem(rec_map_eff_data_t *mapeff,
 			}
 			//drawing
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-			DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR,
+			RecRescaleDrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR,
 				item[pMovie->ID]);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
