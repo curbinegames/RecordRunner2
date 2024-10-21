@@ -2,6 +2,7 @@
 #include "DxLib.h"
 #include "general/sancur.h"
 #include "general/strcur.h"
+#include "general/dxdraw.h"
 #include "fontcur/fontcur.h"
 #include "system.h"
 #include "RecWindowRescale.h"
@@ -201,6 +202,22 @@ void RecRescaleDrawRotaGraph(int x, int y, double ExRate, double Angle, int pic,
 	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
 
 	DrawRotaGraph(drawX, drawY, ExRate * 1.5, Angle, pic, TRUE);
+	return;
+}
+
+void RecRescaleDrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle) {
+	int drawX = 0;
+	int drawY = 0;
+	double drawSizeX = 0;
+	double drawSizeY = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+
+	drawSizeX = lins(OLD_WINDOW_SIZE_X, sizeX, WINDOW_SIZE_X, sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X, x);
+	drawSizeY = lins(OLD_WINDOW_SIZE_Y, sizeY, WINDOW_SIZE_Y, sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y, y);
+
+	DrawDeformationPic(drawX, drawY, drawSizeX, drawSizeY, rot, handle);
 	return;
 }
 

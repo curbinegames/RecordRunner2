@@ -5,7 +5,6 @@
 #include "sancur.h"
 #include "strcur.h"
 #include "../system.h"
-#include "../RecWindowRescale.h"
 
 /**
  * DrawGraphÇ…äÓèÄì_Çí«â¡ÇµÇΩÇ‡ÇÃ
@@ -385,33 +384,29 @@ void DrawFormatStringToHandleAnchor(int x, int y, DxColor_t cr, int handle, dxdr
 	return;
 }
 
-static void _DrawDeformationPic1(int x, int y, int handle) {
+#if 1 /* DrawDeformationPic */
+
+static void DrawDeformationPic_NoDef(int x, int y, int handle) {
 	int PSizeX = 1;
 	int PSizeY = 1;
 	GetGraphSize(handle, &PSizeX, &PSizeY);
 	x -= PSizeX / 2;
 	y -= PSizeY / 2;
-	RecRescaleDrawGraph(x, y, handle, TRUE);
+	DrawGraph(x, y, handle, TRUE);
 	return;
 }
 
-void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle) {
-	if (sizeX == 1 && sizeY == 1 && rot % 360 == 0) {
-		_DrawDeformationPic1(x, y, handle);
-	}
-	else if ((sizeX != 1 || sizeY != 1) && rot % 360 == 0) {
-		_DrawDeformationPic4(x, y, sizeX, sizeY, handle);
-	}
-	else if (sizeX == sizeY && rot % 360 != 0) {
-		_DrawDeformationPic3(x, y, sizeX, rot, handle);
-	}
-	else {
-		_DrawDeformationPic2(x, y, sizeX, sizeY, rot, handle);
-	}
+static void DrawDeformationPic_Turn(int x, int y, int handle) {
+	int PSizeX = 1;
+	int PSizeY = 1;
+	GetGraphSize(handle, &PSizeX, &PSizeY);
+	x -= PSizeX / 2;
+	y -= PSizeY / 2;
+	DrawTurnGraph(x, y, handle, TRUE);
 	return;
 }
 
-void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle) {
+static void DrawDeformationPic_Extend(int x, int y, double sizeX, double sizeY, int handle) {
 	int TSizeX = 1;
 	int TSizeY = 1;
 	GetGraphSize(handle, &TSizeX, &TSizeY);
@@ -422,11 +417,11 @@ void _DrawDeformationPic4(int x, int y, double sizeX, double sizeY, int handle) 
 	};
 	pos[2] = pos[0] + TSizeX + 1;
 	pos[3] = pos[1] + TSizeY + 1;
-	RecRescaleDrawExtendGraph(pos[0], pos[1], pos[2], pos[3], handle, TRUE);
+	DrawExtendGraph(pos[0], pos[1], pos[2], pos[3], handle, TRUE);
 	return;
 }
 
-void _DrawDeformationPic3(int x, int y, double size, int rot, int handle) {
+static void DrawDeformationPic_Rot(int x, int y, double size, int rot, int handle) {
 	int PSizeX = 1;
 	int PSizeY = 1;
 	GetGraphSize(handle, &PSizeX, &PSizeY);
@@ -436,24 +431,37 @@ void _DrawDeformationPic3(int x, int y, double size, int rot, int handle) {
 	return;
 }
 
-void _DrawDeformationPic2(int x, int y, double sizeX, double sizeY, int rot, int handle) {
-	int TSizeX = 1;
-	int TSizeY = 1;
-	GetGraphSize(handle, &TSizeX, &TSizeY);
-	int PSizeX = TSizeX / 2;
-	int PSizeY = TSizeY / 2;
-	int pos[8] = {
-		-PSizeX * sizeX, -PSizeY * sizeY,
-		PSizeX * sizeX, -PSizeY * sizeY,
-		PSizeX * sizeX, PSizeY * sizeY,
-		-PSizeX * sizeX, PSizeY * sizeY
-	};
-	int G = 0;
-	for (int i = 0; i < 8; i += 2) {
-		G = pos[i];
-		pos[i] = pos[i] * cosC(rot) - pos[i + 1] * sinC(rot) + x;
-		pos[i + 1] = G * sinC(rot) + pos[i + 1] * cosC(rot) + y;
-	}
-	DrawModiGraph(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5], pos[6], pos[7], handle, TRUE);
+static void DrawDeformationPic_FullDef(int x, int y, double sizeX, double sizeY, int rot, int handle) {
+	int PSizeX = 1;
+	int PSizeY = 1;
+	GetGraphSize(handle, &PSizeX, &PSizeY);
+	PSizeX /= 2;
+	PSizeY /= 2;
+	DrawRotaGraph3(x, y, PSizeX, PSizeY, sizeX, sizeY, 3.14 * rot / 180, handle, TRUE);
 	return;
 }
+
+void DrawDeformationPic(int x, int y, double sizeX, double sizeY, int rot, int handle) {
+	if (rot % 360 == 0) { /* âÒì]Ç™0 */
+		if (sizeX == 1 && sizeY == 1) { /* ägëÂó¶Ç™1 */
+			DrawDeformationPic_NoDef(x, y, handle);
+		}
+		else if (sizeX == -1 && sizeY == 1) { /* ç∂âEîΩì] */
+			DrawDeformationPic_Turn(x, y, handle);
+		}
+		else {
+			DrawDeformationPic_Extend(x, y, sizeX, sizeY, handle);
+		}
+	}
+	else {
+		if (sizeX == sizeY) { /* XYägëÂó¶Ç™àÍèè */
+			DrawDeformationPic_Rot(x, y, sizeX, rot, handle);
+		}
+		else {
+			DrawDeformationPic_FullDef(x, y, sizeX, sizeY, rot, handle);
+		}
+	}
+	return;
+}
+
+#endif /* DrawDeformationPic */
