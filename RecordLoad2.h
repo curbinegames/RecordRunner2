@@ -465,23 +465,10 @@ void RecordLoad2(int p, int n, int o) {
 	viewT[0][0] = 0;
 	viewT[1][0] = 3000;
 	short int viewTN = 1;
-	item_box Movie[999];//アイテム表示[アイテム番号,移動形態,開始時間,終了時間,開始x位置,終了x位置,開始y位置,終了y位置,開始サイズ,終了サイズ,開始角度,終了角度,開始透明度,終了透明度]
 	item_set_box item_set[99];
 	short int MovieN = 0;
-	struct camera_box camera[255];
-	camera[0].starttime = 0;
-	camera[0].endtime = 0;
-	camera[0].xpos = 0;
-	camera[0].ypos = 0;
-	camera[0].zoom = 1;
-	camera[0].rot = 0;
-	camera[0].mode = 0;
 	short int cameraN = 1; //↑の番号
 	struct custom_note_box customnote[9];
-	struct scrool_box scrool[99];
-	scrool[0].starttime = 0;
-	scrool[0].basetime = 0;
-	scrool[0].speed = 1;
 	short int scroolN = 1;
 	int objectN = 0; //↑の番号
 	int noteLaneNo[3] = { -1,-1,-1 };
@@ -494,7 +481,6 @@ void RecordLoad2(int p, int n, int o) {
 	difkey[4][3] = 0;
 	ddef_box ddif2;
 	int outpoint[2] = { 0, 0 }; /* 0=時間, 1=エラー番号 */
-	view_BPM_box v_bpm[100];
 	double bpmG = 120;
 	double timer[3] = { 0,0,0 }; //[上, 中, 下]レーンの時間
 	double speedt[5][99][2]; //[上, 中, 下, (地面), (水中)]レーンの[0:切り替え時間,1:速度]
@@ -523,6 +509,23 @@ void RecordLoad2(int p, int n, int o) {
 	playnum_box allnum;
 	rec_play_nameset_t nameset;
 	rec_map_detail_t mapdata;
+	rec_map_eff_data_t mapeff;
+	
+	struct camera_box camera[255];
+	struct scrool_box scrool[99];
+	item_box Movie[999];
+	rec_view_bpm_set_t v_BPM;
+
+	camera[0].starttime = 0;
+	camera[0].endtime = 0;
+	camera[0].xpos = 0;
+	camera[0].ypos = 0;
+	camera[0].zoom = 1;
+	camera[0].rot = 0;
+	camera[0].mode = 0;
+	scrool[0].starttime = 0;
+	scrool[0].basetime = 0;
+	scrool[0].speed = 1;
 
 	FILE *fp;
 	songT = FileRead_open(L"RecordPack.txt");
@@ -556,8 +559,8 @@ void RecordLoad2(int p, int n, int o) {
 		//BPMを読み込む
 		else if (strands(GT1, L"#BPM:")) {
 			bpmG = mapdata.bpm = SETbpm(GT1);
-			v_bpm[0].time = noteoff;
-			v_bpm[0].BPM = (unsigned short)mapdata.bpm;
+			v_BPM.data[0].time = noteoff;
+			v_BPM.data[0].BPM = (unsigned short)mapdata.bpm;
 		}
 		//ノートのオフセットを読み込む
 		else if (strands(GT1, L"#NOTEOFFSET:")) {
@@ -638,9 +641,9 @@ void RecordLoad2(int p, int n, int o) {
 					break;
 				case OBJ_CODE_VBPM: //見た目のBPM変化
 					strmods(GT1, 7);
-					v_bpm[allnum.v_BPMnum].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
+					v_BPM.data[allnum.v_BPMnum].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
 					strnex(GT1);
-					v_bpm[allnum.v_BPMnum].BPM = strsans(GT1);
+					v_BPM.data[allnum.v_BPMnum].BPM = strsans(GT1);
 					allnum.v_BPMnum++;
 					break;
 				case OBJ_CODE_CHARA: //キャラグラ変化
@@ -1381,7 +1384,7 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&Movie, sizeof(item_box), allnum.movienum, fp);//動画データ
 	fwrite(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 	fwrite(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-	fwrite(&v_bpm, sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
+	fwrite(&v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
 	fwrite(&outpoint, sizeof(int), 2, fp);//譜面エラー
 	fclose(fp);
 	return;
