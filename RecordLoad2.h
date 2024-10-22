@@ -533,17 +533,9 @@ void RecordLoad2(int p, int n, int o) {
 	speedt[4][0][0] = 0;
 	speedt[4][0][1] = 1;
 	short int speedN[5] = { 1,1,1,1,1 }; //↑の番号
-	wchar_t songN[255];
-	wchar_t songNE[255];
-	songN[0] = L'\0';
 	wchar_t fileN[255];
 	wchar_t dataE[255] = L"record/";//フォルダの名前
 	wchar_t RRS[255]; //PC用譜面データの保存場所
-	wchar_t mp3FN[255];
-	wchar_t skyFN[255] = L"picture/backskynoamal.png";
-	wchar_t groundFN[255] = L"picture/groundnaturenormal.png";
-	wchar_t waterFN[255] = L"picture/waternormal.png";
-	wchar_t DifFN[255] = L"picture/difanother.png";
 	wchar_t GT1[255];
 	wchar_t GT2[255];
 	wchar_t GT24[] = L"picture/";
@@ -551,7 +543,10 @@ void RecordLoad2(int p, int n, int o) {
 	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
 	wchar_t ST1[] = L"record/";
 	wchar_t ST2[] = L"list.txt";
+
 	playnum_box allnum;
+	rec_play_nameset_t nameset;
+
 	FILE *fp;
 	songT = FileRead_open(L"RecordPack.txt");
 	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
@@ -577,9 +572,9 @@ void RecordLoad2(int p, int n, int o) {
 		//音楽ファイルを読み込む
 		if (strands(GT1, L"#MUSIC:")) {
 			strmods(GT1, 7);
-			strcopy(dataE, mp3FN, 1);
-			strcats(mp3FN, L"/");
-			strcats(mp3FN, GT1);
+			strcopy(dataE, nameset.mp3FN, 1);
+			strcats(nameset.mp3FN, L"/");
+			strcats(nameset.mp3FN, GT1);
 		}
 		//BPMを読み込む
 		else if (strands(GT1, L"#BPM:")) {
@@ -593,38 +588,38 @@ void RecordLoad2(int p, int n, int o) {
 		}
 		//空の背景を読み込む
 		else if (strands(GT1, L"#SKY:")) {
-			strcopy(GT24, skyFN, 1);
+			strcopy(GT24, nameset.sky, 1);
 			strmods(GT1, 5);
-			strcats(skyFN, GT1);
+			strcats(nameset.sky, GT1);
 		}
 		//地面の画像を読み込む
 		else if (strands(GT1, L"#FIELD:")) {
-			strcopy(GT24, groundFN, 1);
+			strcopy(GT24, nameset.ground, 1);
 			strmods(GT1, 7);
-			strcats(groundFN, GT1);
+			strcats(nameset.ground, GT1);
 		}
 		//水中の画像を読み込む
 		else if (strands(GT1, L"#WATER:")) {
-			strcopy(GT24, waterFN, 1);
+			strcopy(GT24, nameset.water, 1);
 			strmods(GT1, 7);
-			strcats(waterFN, GT1);
+			strcats(nameset.water, GT1);
 		}
 		//難易度バー(another)を読み込む
 		else if (strands(GT1, L"#DIFBAR:")) {
-			strcopy(dataE, DifFN, 1);
+			strcopy(dataE, nameset.DifFN, 1);
 			strmods(GT1, 8);
-			stradds(DifFN, L'/');
-			strcats(DifFN, GT1);
+			stradds(nameset.DifFN, L'/');
+			strcats(nameset.DifFN, GT1);
 		}
 		//曲名を読み込む
 		else if (strands(GT1, L"#TITLE:")) {
 			strmods(GT1, 7);
-			strcopy(GT1, songN, 1);
+			strcopy(GT1, nameset.songN, 1);
 		}
 		//英語
 		else if (strands(GT1, L"#E.TITLE:")) {
 			strmods(GT1, 7);
-			strcopy(GT1, songNE, 1);
+			strcopy(GT1, nameset.songNE, 1);
 		}
 		//レベルを読み込む
 		else if (strands(GT1, L"#LEVEL:")) Lv = SETLv(GT1);
@@ -1366,14 +1361,14 @@ void RecordLoad2(int p, int n, int o) {
 	strcats(RRS, GT26[o]);
 	G[2] = _wfopen_s(&fp, RRS, L"wb");
 	fwrite(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
-	fwrite(&mp3FN, 255, 1, fp);//音楽ファイル名
+	fwrite(&nameset.mp3FN, 255, 1, fp);//音楽ファイル名
 	fwrite(&bpm, sizeof(double), 1, fp);//BPM
 	fwrite(&noteoff, sizeof(int), 1, fp);//offset
-	fwrite(&skyFN, 255, 1, fp);//空背景名
-	fwrite(&groundFN, 255, 1, fp);//地面画像名
-	fwrite(&waterFN, 255, 1, fp);//水中画像名
-	fwrite(&songN, 255, 1, fp);//曲名
-	fwrite(&songNE, 255, 1, fp);//曲名(英語)
+	fwrite(&nameset.sky, 255, 1, fp);//空背景名
+	fwrite(&nameset.ground, 255, 1, fp);//地面画像名
+	fwrite(&nameset.water, 255, 1, fp);//水中画像名
+	fwrite(&nameset.songN, 255, 1, fp);//曲名
+	fwrite(&nameset.songNE, 255, 1, fp);//曲名(英語)
 	fwrite(&Lv, sizeof(short int), 1, fp);//レベル
 	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 	fwrite(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
@@ -1405,7 +1400,7 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&ddif, sizeof(int), 25, fp);//各区間難易度データ
 	fwrite(&ddif2.nowdifsection, sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
-	fwrite(&DifFN, 255, 1, fp);//難易度バー名
+	fwrite(&nameset.DifFN, 255, 1, fp);//難易度バー名
 	fwrite(&Movie, sizeof(item_box), allnum.movienum, fp);//動画データ
 	fwrite(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
 	fwrite(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
