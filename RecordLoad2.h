@@ -396,66 +396,12 @@ void RecordLoad2(int p, int n, int o) {
 	double GD[5] = { 0,0,0,0,0 };
 	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
 	//short int itemN = 0; //↑の番号
-	int chamo[3][99][2]; //キャラの[0:上,1:中,2:下]の[0:グラフィック,1:切り替え時間]
-	chamo[0][0][0] = 0;
-	chamo[0][0][1] = 0;
-	chamo[1][0][0] = 1;
-	chamo[1][0][1] = 0;
-	chamo[2][0][0] = 1;
-	chamo[2][0][1] = 0;
-	short int chamoN[3] = { 1,1,1 }; //↑の番号
 	int fall[99][2]; //落ち物背景の[0:番号,1:時間]
 	fall[0][0] = 0;
 	fall[0][1] = -1;
 	short int fallN = 1; //↑の番号
-	rec_move_all_set_t move; // レーン移動セット
-	move.y[0].d[0].Stime = 0;
-	move.y[0].d[0].pos = 300;
-	move.y[0].d[0].Etime = 0;
-	move.y[0].d[0].mode = 1;
-	move.y[0].num = 1;
-	move.y[1].d[0].Stime = 0;
-	move.y[1].d[0].pos = 350;
-	move.y[1].d[0].Etime = 0;
-	move.y[1].d[0].mode = 1;
-	move.y[1].num = 1;
-	move.y[2].d[0].Stime = 0;
-	move.y[2].d[0].pos = 400;
-	move.y[2].d[0].Etime = 0;
-	move.y[2].d[0].mode = 1;
-	move.y[2].num = 1;
-	move.y[3].d[0].Stime = 0;
-	move.y[3].d[0].pos = 350;
-	move.y[3].d[0].Etime = 0;
-	move.y[3].d[0].mode = 1;
-	move.y[3].num = 1;
-	move.y[4].d[0].Stime = 0;
-	move.y[4].d[0].pos = 600;
-	move.y[4].d[0].Etime = 0;
-	move.y[4].d[0].mode = 1;
-	move.y[4].num = 1;
-	move.x[0].d[0].Stime = 0;
-	move.x[0].d[0].pos = 150;
-	move.x[0].d[0].Etime = 0;
-	move.x[0].d[0].mode = 1;
-	move.x[0].num = 1;
-	move.x[1].d[0].Stime = 0;
-	move.x[1].d[0].pos = 150;
-	move.x[1].d[0].Etime = 0;
-	move.x[1].d[0].mode = 1;
-	move.x[1].num = 1;
-	move.x[2].d[0].Stime = 0;
-	move.x[2].d[0].pos = 150;
-	move.x[2].d[0].Etime = 0;
-	move.x[2].d[0].mode = 1;
-	move.x[2].num = 1;
 	short int YmoveN2[3] = { 0,0,0 };
 	short int XmoveN2[3] = { 0,0,0 };
-	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
-	lock[0][0][0] = -1;
-	lock[0][1][0] = 0;
-	lock[1][0][0] = 1;
-	lock[1][1][0] = 0;
 	short int lockN[2] = { 1,1 }; //↑の番号
 	short int viewTN = 1;
 	item_set_box item_set[99];
@@ -510,6 +456,9 @@ void RecordLoad2(int p, int n, int o) {
 	rec_view_bpm_set_t v_BPM;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	rec_chara_arrow_t carrow;
+	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
+	rec_move_all_set_t move; // レーン移動セット
+	rec_chara_gra_data_t chamo;
 
 	camera[0].starttime = 0;
 	camera[0].endtime = 0;
@@ -526,6 +475,59 @@ void RecordLoad2(int p, int n, int o) {
 	carrow.d[0].data = 1;
 	carrow.d[0].time = 0;
 	carrow.num = 1;
+	lock[0][0][0] = -1;
+	lock[0][1][0] = 0;
+	lock[1][0][0] = 1;
+	lock[1][1][0] = 0;
+	move.y[0].d[0].Stime = 0;
+	move.y[0].d[0].pos = 300;
+	move.y[0].d[0].Etime = 0;
+	move.y[0].d[0].mode = 1;
+	move.y[0].num = 1;
+	move.y[1].d[0].Stime = 0;
+	move.y[1].d[0].pos = 350;
+	move.y[1].d[0].Etime = 0;
+	move.y[1].d[0].mode = 1;
+	move.y[1].num = 1;
+	move.y[2].d[0].Stime = 0;
+	move.y[2].d[0].pos = 400;
+	move.y[2].d[0].Etime = 0;
+	move.y[2].d[0].mode = 1;
+	move.y[2].num = 1;
+	move.y[3].d[0].Stime = 0;
+	move.y[3].d[0].pos = 350;
+	move.y[3].d[0].Etime = 0;
+	move.y[3].d[0].mode = 1;
+	move.y[3].num = 1;
+	move.y[4].d[0].Stime = 0;
+	move.y[4].d[0].pos = 600;
+	move.y[4].d[0].Etime = 0;
+	move.y[4].d[0].mode = 1;
+	move.y[4].num = 1;
+	move.x[0].d[0].Stime = 0;
+	move.x[0].d[0].pos = 150;
+	move.x[0].d[0].Etime = 0;
+	move.x[0].d[0].mode = 1;
+	move.x[0].num = 1;
+	move.x[1].d[0].Stime = 0;
+	move.x[1].d[0].pos = 150;
+	move.x[1].d[0].Etime = 0;
+	move.x[1].d[0].mode = 1;
+	move.x[1].num = 1;
+	move.x[2].d[0].Stime = 0;
+	move.x[2].d[0].pos = 150;
+	move.x[2].d[0].Etime = 0;
+	move.x[2].d[0].mode = 1;
+	move.x[2].num = 1;
+	chamo[0].gra[0] = 0;
+	chamo[0].time[0] = 0;
+	chamo[0].num = 1;
+	chamo[1].gra[0] = 1;
+	chamo[1].time[0] = 0;
+	chamo[1].num = 1;
+	chamo[2].gra[0] = 1;
+	chamo[2].time[0] = 0;
+	chamo[2].num = 1;
 
 	FILE *fp;
 	songT = FileRead_open(L"RecordPack.txt");
@@ -649,9 +651,9 @@ void RecordLoad2(int p, int n, int o) {
 				case OBJ_CODE_CHARA: //キャラグラ変化
 					G[0] = GT1[6] - 49;
 					strmods(GT1, 8);
-					chamo[G[0]][chamoN[G[0]]][0] = maxs(mins(strsans(GT1), 0), 2);
-					chamo[G[0]][chamoN[G[0]]][1] = (int)timer[G[0]];
-					chamoN[G[0]]++;
+					chamo[G[0]].gra[chamo[G[0]].num] = maxs(mins(strsans(GT1), 0), 2);
+					chamo[G[0]].time[chamo[G[0]].num] = (int)timer[G[0]];
+					chamo[G[0]].num++;
 					break;
 				case OBJ_CODE_MOVE: //縦移動
 					if (GT1[8] == L'A') {
@@ -1353,7 +1355,16 @@ void RecordLoad2(int p, int n, int o) {
 	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 	fwrite(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 	fwrite(&speedt, sizeof(double), 990, fp);//レーン速度
-	fwrite(&chamo, sizeof(int), 594, fp);//キャラグラ変換タイミング
+	{
+		int buf[3][99][2];
+		for (int ilane = 0; ilane < 3; ilane++) {
+			for (int inum = 0; inum < 99; inum++) {
+				buf[ilane][inum][0] = chamo[ilane].gra[inum];
+				buf[ilane][inum][1] = chamo[ilane].time[inum];
+			}
+		}
+		fwrite(&buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
+	}
 	fwrite(&move.y[0].d, sizeof(rec_move_data_t), allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
 	fwrite(&move.y[1].d, sizeof(rec_move_data_t), allnum.Ymovenum[1], fp);//中レーン縦位置移動タイミング
 	fwrite(&move.y[2].d, sizeof(rec_move_data_t), allnum.Ymovenum[2], fp);//下レーン縦位置移動タイミング
