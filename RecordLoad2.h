@@ -457,13 +457,6 @@ void RecordLoad2(int p, int n, int o) {
 	lock[1][0][0] = 1;
 	lock[1][1][0] = 0;
 	short int lockN[2] = { 1,1 }; //↑の番号
-	int carrow[2][99];
-	carrow[0][0] = 1;
-	carrow[1][0] = 0;
-	short int carrowN = 1;
-	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
-	viewT[0][0] = 0;
-	viewT[1][0] = 3000;
 	short int viewTN = 1;
 	item_set_box item_set[99];
 	short int MovieN = 0;
@@ -515,6 +508,8 @@ void RecordLoad2(int p, int n, int o) {
 	struct scrool_box scrool[99];
 	item_box Movie[999];
 	rec_view_bpm_set_t v_BPM;
+	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
+	rec_chara_arrow_t carrow;
 
 	camera[0].starttime = 0;
 	camera[0].endtime = 0;
@@ -526,6 +521,11 @@ void RecordLoad2(int p, int n, int o) {
 	scrool[0].starttime = 0;
 	scrool[0].basetime = 0;
 	scrool[0].speed = 1;
+	viewT[0][0] = 0;
+	viewT[1][0] = 3000;
+	carrow.d[0].data = 1;
+	carrow.d[0].time = 0;
+	carrow.num = 1;
 
 	FILE *fp;
 	songT = FileRead_open(L"RecordPack.txt");
@@ -853,9 +853,9 @@ void RecordLoad2(int p, int n, int o) {
 					break;
 				case OBJ_CODE_CARROW: //キャラ向き変化
 					strmods(GT1, 8);
-					carrow[0][carrowN] = carrow[0][carrowN - 1] * -1;
-					carrow[1][carrowN] = shifttime(strsans(GT1), bpmG, (int)timer[0]);
-					carrowN++;
+					carrow.d[carrow.num].data = carrow.d[carrow.num - 1].data * -1;
+					carrow.d[carrow.num].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
+					carrow.num++;
 					break;
 				case OBJ_CODE_FALL: //落ち物背景切り替え
 					strmods(GT1, 6);
@@ -1363,7 +1363,14 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&move.x[1].d, sizeof(rec_move_data_t), allnum.Xmovenum[1], fp);//中レーン横位置移動タイミング
 	fwrite(&move.x[2].d, sizeof(rec_move_data_t), allnum.Xmovenum[2], fp);//下レーン横位置移動タイミング
 	fwrite(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
-	fwrite(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
+	{
+		int buf[2][99];
+		for (int inum = 0; inum < 99; inum++) {
+			buf[0][inum] = carrow.d[inum].data;
+			buf[1][inum] = carrow.d[inum].time;
+		}
+		fwrite(&buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
+	}
 	fwrite(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
 #if SWITCH_NOTE_BOX_2
 	fwrite(&mapdata.note, sizeof(note_box_2_t), allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
