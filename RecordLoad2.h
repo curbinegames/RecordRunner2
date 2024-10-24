@@ -5,6 +5,8 @@
 #include "recp_cal_difkey.h"
 #include "recp_cal_ddif_2.h"
 
+#if 1 /* typedef */
+
 typedef enum rrs_obj_code_e {
 	OBJ_CODE_NONE = -1,
 	OBJ_CODE_MEMO = 0,
@@ -60,6 +62,10 @@ typedef struct rec_map_move_pal_s {
 	double MovePos = 0;
 } rec_map_move_pal_t;
 
+#endif /* typedef */
+
+#if 1 /* proto */
+
 int IsNoteCode(wchar_t c);
 int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
 int cal_nowdif_m(int *difkey, int num, int now, int voidtime);
@@ -70,7 +76,10 @@ void set_item_set(item_box* const Movie, short* const MovieN,
 item_eff_box set_pic_mat(wchar_t *s);
 int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
-/* proto */
+#endif /* proto */
+
+#if 1 /* sub action */
+
 double SETbpm(wchar_t* p1) {
 	strmods(p1, 5);
 	return strsans2(p1);
@@ -99,7 +108,6 @@ void SETMove(rec_move_data_t *Buff, double StartTime, double MovePoint,
 	Buff->mode = (int)MoveType;
 }
 
-/* sub action */
 static note_material GetNoteObjMat(TCHAR code) {
 	switch (code) {
 	case L'H':
@@ -378,6 +386,8 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 	return;
 }
 
+#endif /* sub action */
+
 /* main action */
 void RecordLoad2(int p, int n, int o) {
 	//n: 曲ナンバー
@@ -396,10 +406,6 @@ void RecordLoad2(int p, int n, int o) {
 	double GD[5] = { 0,0,0,0,0 };
 	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
 	//short int itemN = 0; //↑の番号
-	int fall[99][2]; //落ち物背景の[0:番号,1:時間]
-	fall[0][0] = 0;
-	fall[0][1] = -1;
-	short int fallN = 1; //↑の番号
 	short int YmoveN2[3] = { 0,0,0 };
 	short int XmoveN2[3] = { 0,0,0 };
 	short int lockN[2] = { 1,1 }; //↑の番号
@@ -459,6 +465,8 @@ void RecordLoad2(int p, int n, int o) {
 	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	rec_move_all_set_t move; // レーン移動セット
 	rec_chara_gra_data_t chamo;
+	rec_fall_data_t fall;
+	fall.num = 1;
 
 	camera[0].starttime = 0;
 	camera[0].endtime = 0;
@@ -608,8 +616,8 @@ void RecordLoad2(int p, int n, int o) {
 		//落ち物背景指定
 		else if (strands(GT1, L"#FALL:")) {
 			strmods(GT1, 6);
-			fall[0][0] = strsans(GT1);
-			fall[0][1] = 0;
+			fall.d[0].No = strsans(GT1);
+			fall.d[0].time = 0;
 		}
 		//譜面難易度フィルタのレベル
 		else if (strands(GT1, L"#WANING:")) {
@@ -861,10 +869,10 @@ void RecordLoad2(int p, int n, int o) {
 					break;
 				case OBJ_CODE_FALL: //落ち物背景切り替え
 					strmods(GT1, 6);
-					fall[fallN][0] = strsans(GT1);
+					fall.d[fall.num].No = strsans(GT1);
 					strnex(GT1);
-					fall[fallN][1] = strsans(GT1);
-					fallN++;
+					fall.d[fall.num].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
+					fall.num++;
 					break;
 				case OBJ_CODE_VIEW: //音符表示時間
 					strmods(GT1, 6);
@@ -1353,7 +1361,14 @@ void RecordLoad2(int p, int n, int o) {
 	fwrite(&nameset.songNE, 255, 1, fp);//曲名(英語)
 	fwrite(&mapdata.Lv, sizeof(short int), 1, fp);//レベル
 	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
-	fwrite(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
+	{
+		int buf[99][2];
+		for (int inum = 0; inum < 99; inum++) {
+			buf[inum][0] = fall.d[inum].No;
+			buf[inum][1] = fall.d[inum].time;
+		}
+		fwrite(&buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
+	}
 	fwrite(&speedt, sizeof(double), 990, fp);//レーン速度
 	{
 		int buf[3][99][2];
