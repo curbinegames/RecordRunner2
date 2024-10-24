@@ -45,3 +45,5 @@ typedef enum now_scene_e {
 
 extern int SmallFontData;
 extern int LargeFontData;
+
+extern void RecGetMusicPath(TCHAR *ret, size_t size, uint packNo, uint songNo);

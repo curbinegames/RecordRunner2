@@ -2,6 +2,7 @@
 
 #include "DxLib.h"
 
+typedef unsigned int uint;
 typedef int intx100_t; /** 100”{‚µ‚Ä‚¢‚é‚±‚Æ‚ğ¦‚·intŒ^ */
 
 extern int mins(int a, int b);
