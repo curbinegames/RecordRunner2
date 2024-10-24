@@ -340,7 +340,7 @@ void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_s
 	return;
 }
 
-static void RecPlayGetMapFileNames(TCHAR *mapPath, TCHAR *songPath, TCHAR *songName,
+static void RecPlayGetMapFileNames(TCHAR *songPath, TCHAR *songName,
 	int packNo, int musicNo, int LvNo)
 {
 	int fd = -1;
@@ -361,23 +361,12 @@ static void RecPlayGetMapFileNames(TCHAR *mapPath, TCHAR *songPath, TCHAR *songN
 
 	/* 曲名を取得する */
 	fd = FileRead_open(buf);
-	for (int i = 0; i <= musicNo; i++) FileRead_gets(songName, 256, fd);
+	for (int i = 0; i <= musicNo; i++) FileRead_gets(songName, 256, fd); /* songName = <曲名> */
 	FileRead_close(fd);
 
-	strcats_2(songPath, 255, songName);                 /* songPath = record/<パック名>/<曲名> */
+	strcats_2(songPath, 255, songName); /* songPath = record/<パック名>/<曲名> */
+	stradds_2(songPath, 255, L'/');     /* songPath = record/<パック名>/<曲名>/ */
 
-	strcopy_2(songPath, mapPath, 255);                  /* mapPath = record/<パック名>/<曲名> */
-	stradds_2(mapPath, 255, L'/');                      /* mapPath = record/<パック名>/<曲名>/ */
-	stradds_2(mapPath, 255, (TCHAR)((int)L'0' + LvNo)); /* mapPath = record/<パック名>/<曲名>/<難易度ナンバー> */
-	strcats_2(mapPath, 255, L".rrs");                   /* mapPath = record/<パック名>/<曲名>/<難易度ナンバー>.rrs */
-
-	return;
-}
-
-static void RecGetMapPath(TCHAR *mapPath, int packNo, int musicNo, int LvNo) {
-	TCHAR songPath[255];
-	TCHAR songName[255];
-	RecPlayGetMapFileNames(mapPath, songPath, songName, packNo, musicNo, LvNo);
 	return;
 }
 
@@ -1133,7 +1122,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	double DifRate; //譜面定数
 
 	/* string */
-	TCHAR songName[255];
 	TCHAR dataE[255];
 	TCHAR GT1[255];
 	TCHAR GT2[255];
@@ -1172,35 +1160,30 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	ReadyJudgePicture();
 	/* adifのリセット */
 	InitAdif();
-	/* FILE */
-	FILE *fp = NULL;
 	/* action */
 	for (i[0] = 0; i[0] <= 59; i[0]++) { fps[i[0]] = 17; }
 	fps[60] = 0;
 	fps[61] = 0;
 
-	if (system.soundEn == 0) {
-		RecPlayInitMelodySnd();
-	}
+	if (system.soundEn == 0) { RecPlayInitMelodySnd(); }
 
-	RecPlayGetMapFileNames(GT1, dataE, songName, p, n, o);
+	RecPlayGetMapFileNames(dataE, ret_fileN, p, n, o);
+	strcopy_2(dataE, GT1, 255);                  /* GT1 = record/<パック名>/<曲名>/ */
+	stradds_2(GT1, 255, (TCHAR)((int)L'0' + o)); /* GT1 = record/<パック名>/<曲名>/<難易度ナンバー> */
+	strcats_2(GT1, 255, L".rrs");                /* GT1 = record/<パック名>/<曲名>/<難易度ナンバー>.rrs */
 
 	/* rrsデータの内容を読み込む */
-	if (rec_score_fread(&recfp, GT1) != 0) {
-		/* 読み込み失敗 */
-		return SCENE_EXIT;
-	}
+	if (rec_score_fread(&recfp, GT1) != 0) { return SCENE_EXIT; }
 
 	musicmp3 = LoadSoundMem(recfp.nameset.mp3FN);
 	backpic.sky = LoadGraph(recfp.nameset.sky);
 	backpic.ground = LoadGraph(recfp.nameset.ground);
 	backpic.water = LoadGraph(recfp.nameset.water);
 
-	HighScore = GetHighScore(songName, o);
+	HighScore = GetHighScore(ret_fileN, o);
 
 	for (i[0] = 0; i[0] < 100; i[0]++) {
 		strcopy(dataE, GT1, 1);
-		stradds(GT1, L'/');
 		Getxxxpng(&GT2[0], i[0]);
 		strcats(GT1, GT2);
 		item[i[0]] = LoadGraph(GT1);
@@ -1208,7 +1191,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	}
 	for (i[0] = 1; i[0] < 100; i[0]++) {
 		strcopy(dataE, GT1, 1);
-		stradds(GT1, L'/');
 		Getxxxwav(&GT2[0], i[0]);
 		strcats(GT1, GT2);
 		Sitem[i[0] - 1] = LoadSoundMem(GT1);
@@ -1645,7 +1627,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	*ret_map_det = recfp.mapdata;
 	*ret_userpal = userpal;
 	*ret_nameset = recfp.nameset;
-	strcopy_2(songName, ret_fileN, 255);
 
 	return SCENE_SERECT;
 }
@@ -1669,7 +1650,9 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	/* rrsデータが無い、または作成の指示があれば作る */
 	if (shift == 0) {
-		RecGetMapPath(mapPath, packNo, musicNo, difNo);
+		RecGetMusicPath(mapPath, 255, packNo, musicNo);
+		stradds_2(mapPath, 255, (TCHAR)((int)L'0' + difNo));
+		strcats_2(mapPath, 255, L".rrs");
 		_wfopen_s(&fp, mapPath, L"rb");
 	}
 	if (fp == NULL) {
