@@ -398,7 +398,6 @@ void RecordLoad2(int p, int n, int o) {
 #else
 	int G[14] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 #endif
-	int songT;
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int songdata = 0;
@@ -429,16 +428,9 @@ void RecordLoad2(int p, int n, int o) {
 	double bpmG = 120;
 	double timer[3] = { 0,0,0 }; //[上, 中, 下]レーンの時間
 	short int speedN[5] = { 1,1,1,1,1 }; //↑の番号
-	wchar_t fileN[255];
-	wchar_t dataE[255] = L"record/";//フォルダの名前
+	wchar_t dataE[255]; //フォルダの名前
 	wchar_t RRS[255]; //PC用譜面データの保存場所
 	wchar_t GT1[255];
-	wchar_t GT2[255];
-	wchar_t GT24[] = L"picture/";
-	wchar_t GT25[6][7] = { L"/0.txt" ,L"/1.txt" ,L"/2.txt" ,L"/3.txt" ,L"/4.txt" ,L"/5.txt" };
-	wchar_t GT26[6][7] = { L"/0.rrs" ,L"/1.rrs" ,L"/2.rrs" ,L"/3.rrs" ,L"/4.rrs" ,L"/5.rrs" };
-	wchar_t ST1[] = L"record/";
-	wchar_t ST2[] = L"list.txt";
 
 	playnum_box allnum;
 	rec_play_nameset_t nameset;
@@ -526,20 +518,12 @@ void RecordLoad2(int p, int n, int o) {
 	mapeff.speedt[4][0][1] = 1;
 
 	FILE *fp;
-	songT = FileRead_open(L"RecordPack.txt");
-	for (i[0] = 0; i[0] <= p; i[0]++) FileRead_gets(GT1, 256, songT);
-	FileRead_close(songT);
-	strcats(dataE, GT1); //"record/<パック名>"
-	stradds(dataE, L'/'); //"record/<パック名>/"
-	strcopy(dataE, GT2, 1);
-	strcats(GT2, ST2); //"record/<パック名>/list.txt"
-	songT = FileRead_open(GT2);
-	for (i[0] = 0; i[0] <= n; i[0]++) FileRead_gets(GT1, 256, songT);
-	FileRead_close(songT);
-	strcopy(GT1, fileN, 1); //"<曲名>"
-	strcats(dataE, GT1); //"record/<パック名>/<曲名>"
-	strcopy(dataE, GT1, 1);
-	strcats(GT1, GT25[o]); //"record/<パック名>/<曲名>/<難易度>.txt"
+
+	RecGetMusicPath(dataE, 255, p, n);
+	strcopy_2(dataE, GT1, 255);
+	stradds_2(GT1, 255, (TCHAR)(_T('0') + o)); //"record/<パック名>/<曲名>/<難易度>"
+	strcats_2(GT1, 255, _T(".txt")); //"record/<パック名>/<曲名>/<難易度>.txt"
+
 	songdata = FileRead_open(GT1);
 	if (songdata == 0) {
 		return;
@@ -551,7 +535,6 @@ void RecordLoad2(int p, int n, int o) {
 		if (strands(GT1, L"#MUSIC:")) {
 			strmods(GT1, 7);
 			strcopy(dataE, nameset.mp3FN, 1);
-			strcats(nameset.mp3FN, L"/");
 			strcats(nameset.mp3FN, GT1);
 		}
 		//BPMを読み込む
@@ -566,19 +549,19 @@ void RecordLoad2(int p, int n, int o) {
 		}
 		//空の背景を読み込む
 		else if (strands(GT1, L"#SKY:")) {
-			strcopy(GT24, nameset.sky, 1);
+			strcopy(L"picture/", nameset.sky, 1);
 			strmods(GT1, 5);
 			strcats(nameset.sky, GT1);
 		}
 		//地面の画像を読み込む
 		else if (strands(GT1, L"#FIELD:")) {
-			strcopy(GT24, nameset.ground, 1);
+			strcopy(L"picture/", nameset.ground, 1);
 			strmods(GT1, 7);
 			strcats(nameset.ground, GT1);
 		}
 		//水中の画像を読み込む
 		else if (strands(GT1, L"#WATER:")) {
-			strcopy(GT24, nameset.water, 1);
+			strcopy(L"picture/", nameset.water, 1);
 			strmods(GT1, 7);
 			strcats(nameset.water, GT1);
 		}
@@ -586,7 +569,6 @@ void RecordLoad2(int p, int n, int o) {
 		else if (strands(GT1, L"#DIFBAR:")) {
 			strcopy(dataE, nameset.DifFN, 1);
 			strmods(GT1, 8);
-			stradds(nameset.DifFN, L'/');
 			strcats(nameset.DifFN, GT1);
 		}
 		//曲名を読み込む
@@ -1335,8 +1317,10 @@ void RecordLoad2(int p, int n, int o) {
 #endif
 
 	//ここからPC用譜面データのファイルの作成(セーブ作業)
-	strcopy(dataE, RRS, 1);
-	strcats(RRS, GT26[o]);
+	strcopy(dataE, RRS, 1); //"record/<パック名>/<曲名>/"
+	stradds_2(RRS, 255, (TCHAR)(_T('0') + o)); //"record/<パック名>/<曲名>/<難易度>"
+	strcats_2(RRS, 255, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度>.rrs"
+
 	G[2] = _wfopen_s(&fp, RRS, L"wb");
 	fwrite(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
 	fwrite(&nameset.mp3FN, 255, 1, fp);//音楽ファイル名
