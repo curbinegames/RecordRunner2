@@ -214,8 +214,8 @@ void RecRescaleDrawDeformationPic(int x, int y, double sizeX, double sizeY, int 
 	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
 	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
 
-	drawSizeX = lins(OLD_WINDOW_SIZE_X, sizeX, WINDOW_SIZE_X, sizeX * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X, x);
-	drawSizeY = lins(OLD_WINDOW_SIZE_Y, sizeY, WINDOW_SIZE_Y, sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y, y);
+	drawSizeX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, sizeX);
+	drawSizeY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, sizeY);
 
 	DrawDeformationPic(drawX, drawY, drawSizeX, drawSizeY, rot, handle);
 	return;
