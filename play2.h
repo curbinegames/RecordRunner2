@@ -194,17 +194,31 @@ void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	return;
 }
 
+static void RecPlayRescaleCurve(int x1, int y1, int x2, int y2, uint cr, int thick) {
+	int drawX = 0;
+	int drawY = 0;
+	int drawX2 = 0;
+	int drawY2 = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, x1);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y1);
+	drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, x2);
+	drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y2);
+	DrawLine(drawX, drawY, drawX2, drawY2, cr, thick);
+	return;
+}
+
 void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 	unsigned int color, int thick) {
 	int end = x1 + 10;
 	switch (mode) {
 	case 1: // lin
-		RecRescaleDrawLine(x1, y1, x2, y2, color, thick);
+		RecPlayRescaleCurve(x1, y1, x2, y2, color, thick);
 		break;
 	case 2: // acc
 		for (int i = x1; i <= x2; i++) {
 			end = maxs(i + 10, x2);
-			RecRescaleDrawLine(i, pals(x1, y1, x2, y2, i),
+			RecPlayRescaleCurve(i, pals(x1, y1, x2, y2, i),
 				end, pals(x1, y1, x2, y2, end),
 				color, thick);
 		}
@@ -212,7 +226,7 @@ void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 	case 3: // dec
 		for (int i = x1; i <= x2; i++) {
 			end = maxs(i + 10, x2);
-			RecRescaleDrawLine(i, pals(x2, y2, x1, y1, i),
+			RecPlayRescaleCurve(i, pals(x2, y2, x1, y1, i),
 				end, pals(x2, y2, x1, y1, end),
 				color, thick);
 		}
@@ -642,7 +656,7 @@ int PlayShowGuideLine(int Ntime, int Line,
 		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
 	drawLeft = (Ymove[Line].d[iDraw].Stime - Ntime) / 2.1 + Xline[Line] + 15 + camera.x;
-	if (640 < drawLeft) {
+	if (960 < drawLeft) {
 		return 1;
 	}
 	drawRight = (Ymove[Line].d[iDraw].Etime - Ntime) / 2.1 + Xline[Line] + 15 + camera.x;

@@ -35,22 +35,84 @@ void RecPlayGetCameraPos(int *retX, int *retY) {
 }
 
 void DrawGraphRecField(int xpos, int ypos, int pic) {
-	RecRescaleDrawGraph(xpos + camera_pos.x, ypos + camera_pos.y, pic, TRUE);
+	int drawX = 0;
+	int drawY = 0;
+	int drawX2 = 0;
+	int drawY2 = 0;
+	int sizeX = 0;
+	int sizeY = 0;
+
+	GetGraphSize(pic, &sizeX, &sizeY);
+
+	/* Xpos */
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos + camera_pos.x);
+	drawX2 = drawX + sizeX * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+
+	/* Ypos */
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos + camera_pos.y);
+	drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+
+	/* draw */
+	DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic, TRUE);
 	return;
 }
 
 void DrawTurnGraphRecField(int xpos, int ypos, int pic) {
-	DrawTurnGraph(xpos + camera_pos.x, ypos + camera_pos.y, pic, TRUE);
+	int drawX = 0;
+	int drawY = 0;
+	int drawX2 = 0;
+	int drawY2 = 0;
+	int sizeX = 0;
+	int sizeY = 0;
+
+	GetGraphSize(pic, &sizeX, &sizeY);
+
+	/* Xpos */
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos + camera_pos.x);
+	drawX2 = drawX + sizeX * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+
+	/* Ypos */
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos + camera_pos.y);
+	drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+
+	/* draw */
+	DrawExtendGraph(drawX2, drawY, drawX, drawY2, pic, TRUE);
 	return;
 }
 
 void DrawLineRecField(int posx1, int posy1, int posx2, int posy2, unsigned int color, int thick) {
-	RecRescaleDrawLine(posx1 + camera_pos.x, posy1 + camera_pos.y,
-		posx2 + camera_pos.x, posy2 + camera_pos.y, color, thick);
+	int drawX = 0;
+	int drawY = 0;
+	int drawX2 = 0;
+	int drawY2 = 0;
+
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posx1 + camera_pos.x);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posy1 + camera_pos.y);
+	drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posx2 + camera_pos.x);
+	drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posy2 + camera_pos.y);
+	DrawLine(drawX, drawY, drawX2, drawY2, color, thick);
 	return;
 }
 
 void DrawGraphRecBackField(int xpos, int ypos, int pic) {
-	RecRescaleDrawGraph(xpos + camera_pos.x / 5, ypos + camera_pos.y / 5, pic, TRUE);
+	int drawX = 0;
+	int drawY = 0;
+	int drawX2 = 0;
+	int drawY2 = 0;
+	int sizeX = 0;
+	int sizeY = 0;
+
+	GetGraphSize(pic, &sizeX, &sizeY);
+
+	/* Xpos */
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos + camera_pos.x / 5);
+	drawX2 = drawX + sizeX * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+
+	/* Ypos */
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos + camera_pos.y / 5);
+	drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
+
+	/* draw */
+	DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic, TRUE);
 	return;
 }
