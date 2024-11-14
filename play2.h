@@ -1502,10 +1502,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 #if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
 						for (objectN[i[0]] = 0; recfp.mapdata.note[objectN[i[0]]].lane != NOTE_LANE_UP; objectN[i[0]] += 0) {
-							objectN[i[0]]++;
+							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 						}
 						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
-							objectN[i[0]]++;
+							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 						}
 					}
 #else
@@ -1558,7 +1558,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 #if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
 						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
-							objectN[i[0]]++;
+							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 						}
 					}
 #else
