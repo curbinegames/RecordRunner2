@@ -686,7 +686,7 @@ int story(int a, int b) {
 		ClearDrawScreen();
 		DrawGraph(0, 0, backimg, TRUE);
 		DrawGraph(160, 0, noteimg, TRUE);
-		RecCollectDrawStory(10 * a + 1000 * b + com);
+		RecCollectDrawStory(10 * a + 1000 * b + com); /* secret function */
 		DrawGraph(0, 405, pageimg, TRUE);
 		DrawFormatString(15, 420, Cr, L"%d / 3", com + 1);
 		DrawGraph(0, 0, help, TRUE);
