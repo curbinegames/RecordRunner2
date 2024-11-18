@@ -1,4 +1,5 @@
 
+#include "option.h"
 #include "recr_cutin.h"
 #include "RecWindowRescale.h"
 
@@ -132,20 +133,13 @@ public:
 now_scene_t menu(void) {
 	/* 定数 */
 	int command = 0; //選択したモード
-	int help, goust, select;
-	int key = 1;
-	int	lan[7] = { 0,0,0,2,0,0,0 }; //使うのは[4,言語]だけ
+	DxPic_t help;
+	DxPic_t select;
 
 	now_scene_t next = SCENE_MENU; //次のモード
 	rec_manu_dataset_c menu_class;
 	rec_cutin_c cutin;
 
-	FILE *fp;
-	goust = _wfopen_s(&fp, L"save/system.dat", L"rb");
-	if (goust == 0) {
-		fread(&lan, sizeof(lan), 6, fp);
-		fclose(fp);
-	}
 	unsigned int Cr = GetColor(255, 255, 255);
 	help = LoadGraph(L"picture/help.png");
 	select = LoadSoundMem(L"sound/arrow.wav");
@@ -158,10 +152,10 @@ now_scene_t menu(void) {
 		menu_class.DrawMenu();
 
 		RecRescaleDrawGraph(0, 0, help, TRUE);
-		if (lan[4] == 0) {
+		if (optiondata.lang == 0) {
 			RecRescaleDrawString(5, 460, L"左右キー:選択   Enterキー:決定", Cr);
 		}
-		else if (lan[4] == 1) {
+		else if (optiondata.lang == 1) {
 			RecRescaleDrawString(5, 460, L"←→key:choose   Enter key:enter", Cr);
 		}
 

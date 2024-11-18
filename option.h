@@ -1,5 +1,7 @@
 #pragma once
 
+#include "system.h"
+
 #define LANG_JP 0
 #define LANG_EN 1
 
