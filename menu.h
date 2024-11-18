@@ -150,6 +150,7 @@ now_scene_t menu(void) {
 	help = LoadGraph(L"picture/help.png");
 	select = LoadSoundMem(L"sound/arrow.wav");
 	cutin.SetIo(0);
+	AvoidKeyRush();
 
 	while (1) {
 		ClearDrawScreen(); /* 描画エリアここから */
@@ -168,45 +169,40 @@ now_scene_t menu(void) {
 
 		ScreenFlip(); /* 描画エリアここまで */
 
-		//ここからキー判定
-		if (CheckHitKey(KEY_INPUT_LEFT)) {
-			//左が押された
-			if (key == 0) {
+		/* キー入力 */
+		if (cutin.IsClosing() == 0) {
+			bool breakFg = false;
+			InputAllKeyHold();
+			switch (GetKeyPushOnce()) {
+			case KEY_INPUT_LEFT:
 				menu_class.SetLeft();
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_RIGHT)) {
-			//右が押された
-			if (key == 0) {
+				break;
+			case KEY_INPUT_RIGHT:
 				menu_class.SetRight();
 				PlaySoundMem(select, DX_PLAYTYPE_BACK);
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_RETURN)) {
-			//エンターが押された
-			if (key == 0) {
+				break;
+			case KEY_INPUT_RETURN:
 				command = menu_class.GetCmd();
 				if (menu_item[command].num != SCENE_SERECT) {
 					next = menu_item[command].num;
+					breakFg = true;
 					break;
 				}
 				cutin.SetCutTipFg(CUTIN_TIPS_ON);
 				cutin.SetTipNo();
 				cutin.SetIo(1);
+				break;
+			default:
+				break;
 			}
-			key = 1;
+			if (breakFg) { break; }
 		}
-		else if (GetWindowUserCloseFlag(TRUE)) {
+
+		if (GetWindowUserCloseFlag(TRUE)) {
 			//閉じるボタンが押された
 			next = SCENE_EXIT;
 			break;
-		}
-		else {
-			//特定のキーが押されていない
-			key = 0;
 		}
 
 		if (cutin.IsEndAnim()) {
