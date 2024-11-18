@@ -129,22 +129,6 @@ public:
 	}
 };
 
-void RecMenuInitPic(void) {
-	menu_item[0].card = LoadGraph(L"picture/menu/FREE PLAY.png");
-	menu_item[0].ground = LoadGraph(L"picture/menu/FREE PLAY G.png");
-	menu_item[0].back = LoadGraph(L"picture/backskynoamal.png");
-	menu_item[1].card = LoadGraph(L"picture/menu/COLLECTION.png");
-	menu_item[1].ground = LoadGraph(L"picture/menu/COLLECT G.png");
-	menu_item[1].back = LoadGraph(L"picture/menu/COLLECT W.png");
-	menu_item[2].card = LoadGraph(L"picture/menu/OPTION.png");
-	menu_item[2].ground = LoadGraph(L"picture/menu/OPTION G.png");
-	menu_item[2].back = LoadGraph(L"picture/menu/OPTION W.png");
-	menu_item[3].card = LoadGraph(L"picture/menu/QUIT.png");
-	menu_item[3].ground = LoadGraph(L"picture/menu/QUIT G.png");
-	menu_item[3].back = LoadGraph(L"picture/backstar.png");
-	return;
-}
-
 now_scene_t menu(void) {
 	/* íËêî */
 	int command = 0; //ëIëÇµÇΩÉÇÅ[Éh
