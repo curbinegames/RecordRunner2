@@ -9,7 +9,6 @@ void ShowTitle2(const int back, const int string, const int white, const int tim
 
 now_scene_t title(void) {
 	now_scene_t next = SCENE_MENU;
-	char closeFg = 0;
 	int alpha[2] = { 255,-1 };
 	int StartTime = -1;
 	int TitleChar[12] = {
@@ -29,31 +28,34 @@ now_scene_t title(void) {
 	int Title = LoadGraph(L"picture/TitleMain.png");
 	int Push = LoadGraph(L"picture/pushkey.png");
 	int white = LoadGraph(L"picture/White.png");
-	int CutTime = 0;
+
+	rec_cutin_c cutin;
+
 	StartTime = GetNowCount();
-	CutTime = StartTime;
 	while (1) {
-		ClearDrawScreen();
-		//タイトル画面の始まりを表示する
+		ClearDrawScreen(); /* 描画エリアここから */
+
 		if (GetNowCount() - StartTime < EFF_TIME_1) {
 			ShowTitle1(TitleChar, GetNowCount() - StartTime);
 		}
 		else if (EFF_TIME_1 <= GetNowCount() - StartTime) {
 			ShowTitle2(Title, Push, white, GetNowCount() - StartTime);
 		}
-		if (closeFg == 1) {
-			ViewCutIn(CutTime);
+
+		cutin.DrawCut();
+
+		ScreenFlip(); /* 描画エリアここまで */
+
+		if (CheckHitKeyAll() && 1000 <= GetNowCount() - StartTime && cutin.IsClosing() == 0) {
+			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
+			cutin.SetIo(1);
 		}
-		ScreenFlip();
-		if (CheckHitKeyAll() && 1000 <= GetNowCount() - StartTime) {
-			SetCutTipFg(CUTIN_TIPS_NONE);
-			closeFg = 1;
-			CutTime = GetNowCount();
-		}
-		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
+
+		if (cutin.IsEndAnim()) {
 			INIT_MAT();
 			break;
 		}
+
 		if (GetWindowUserCloseFlag(TRUE)) {
 			next = SCENE_EXIT;
 			break;

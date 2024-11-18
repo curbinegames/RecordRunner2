@@ -79,21 +79,20 @@ char GetCharNo() {
 }
 
 static now_scene_t ViewResult(rec_result_pal_t *val) {
-	/* num */
-	char closeFg = 0;
-	int G[10] = { 0,0,0,0,0,0,0,0,0,0 };
-	int CutTime = 0;
 	/* typedef */
 	DxPic_t resultimg = LoadGraph(L"picture/result.png");
 	DxSnd_t musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
+	/* class */
+	rec_cutin_c cutin;
 
 	InitCurFont();
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_LOOP);
 	WaitTimer(10);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-	CutTime = GetNowCount();
+	cutin.SetIo(0);
 	while (1) {
-		ClearDrawScreen();
+		ClearDrawScreen(); /* 描画エリアここから */
+
 		RecRescaleDrawGraph(0, 0, resultimg, TRUE); /* back */
 		RecRescaleDrawGraph(460, 20, val->mat.difBer, TRUE); /* dif ber */
 		RecRescaleDrawString(100, 13, val->songN, COLOR_WHITE); /* song name */
@@ -122,19 +121,17 @@ static now_scene_t ViewResult(rec_result_pal_t *val) {
 		RecRescaleDrawGraph(5, 420, val->mat.clearRate, TRUE); /* clear rate */
 		RecRescaleDrawGraph(336, 252, val->mat.chara, TRUE); /* chara */
 
-		if (closeFg == 0) { ViewCutOut(CutTime); }
-		if (closeFg == 1) { ViewCutIn(CutTime); }
+		cutin.DrawCut();
 
-		ScreenFlip();
+		ScreenFlip(); /* 描画エリアここまで */
 
 		//エンターが押された
-		if (CheckHitKey(KEY_INPUT_RETURN) == 1) {
-			SetCutTipFg(CUTIN_TIPS_ON);
-			SetTipNo();
-			closeFg = 1;
-			CutTime = GetNowCount();
+		if (CheckHitKey(KEY_INPUT_RETURN) == 1 && cutin.IsClosing() == 0) {
+			cutin.SetCutTipFg(CUTIN_TIPS_ON);
+			cutin.SetTipNo();
+			cutin.SetIo(1);
 		}
-		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
+		if (cutin.IsEndAnim()) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
 			break;

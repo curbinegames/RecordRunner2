@@ -14,7 +14,6 @@ void DrawBack(_menu_item now, _menu_item before, int time);
 void DrawCard(_menu_item *card, int num, int LR, int time);
 
 now_scene_t menu(void) {
-	char closeFg = 0;
 	int command = 0; //選択中のモード
 	int before = 0; //前に選んでたモード
 	int LR = 1;
@@ -22,9 +21,11 @@ now_scene_t menu(void) {
 	int help, goust, select;
 	int key = 1;
 	int	lan[7] = { 0,0,0,2,0,0,0 }; //使うのは[4,言語]だけ
-	int CutTime = 0;
+
 	now_scene_t next = SCENE_MENU; //次のモード
 	_menu_item menu_item[MENU_NUM];
+	rec_cutin_c cutin;
+
 	FILE *fp;
 	goust = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (goust == 0) {
@@ -58,10 +59,11 @@ now_scene_t menu(void) {
 	};
 	help = LoadGraph(L"picture/help.png");
 	select = LoadSoundMem(L"sound/arrow.wav");
-	CutTime = GetNowCount();
+	cutin.SetIo(0);
+
 	while (1) {
-		ClearDrawScreen();
-		//背景表示
+		ClearDrawScreen(); /* 描画エリアここから */
+
 		DrawBack(menu_item[command], menu_item[before], GetNowCount() - starttime);
 		DrawCard(menu_item, command, LR, GetNowCount() - starttime);
 		RecRescaleDrawGraph(0, 0, help, TRUE);
@@ -71,13 +73,11 @@ now_scene_t menu(void) {
 		else if (lan[4] == 1) {
 			RecRescaleDrawString(5, 460, L"←→key:choose   Enter key:enter", Cr);
 		}
-		if (closeFg == 0) {
-			ViewCutOut(CutTime);
-		}
-		if (closeFg == 1) {
-			ViewCutIn(CutTime);
-		}
-		ScreenFlip();
+
+		cutin.DrawCut();
+
+		ScreenFlip(); /* 描画エリアここまで */
+
 		//ここからキー判定
 		if (CheckHitKey(KEY_INPUT_LEFT)) {
 			//左が押された
@@ -110,10 +110,9 @@ now_scene_t menu(void) {
 					next = menu_item[command].num;
 					break;
 				}
-				SetCutTipFg(CUTIN_TIPS_ON);
-				SetTipNo();
-				closeFg = 1;
-				CutTime = GetNowCount();
+				cutin.SetCutTipFg(CUTIN_TIPS_ON);
+				cutin.SetTipNo();
+				cutin.SetIo(1);
 			}
 			key = 1;
 		}
@@ -122,12 +121,16 @@ now_scene_t menu(void) {
 			next = SCENE_EXIT;
 			break;
 		}
-		//特定のキーが押されていない
-		else key = 0;
-		if (closeFg == 1 && CutTime + 2000 <= GetNowCount()) {
+		else {
+			//特定のキーが押されていない
+			key = 0;
+		}
+
+		if (cutin.IsEndAnim()) {
 			next = menu_item[command].num;
 			break;
 		}
+
 		WaitTimer(10);
 	}
 	return next;
