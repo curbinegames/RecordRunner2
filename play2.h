@@ -305,10 +305,13 @@ void PlayDrawItem(rec_map_eff_data_t *mapeff,
 				drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
 				drawS = betweens(0, lins(100, drawS, 0, 0, drawX), drawS);
 			}
+			//rescale
+			drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawX);
+			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawY);
+			drawS = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawS);
 			//drawing
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-			RecRescaleDrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR,
-				item[pMovie->ID]);
+			DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
 	}
