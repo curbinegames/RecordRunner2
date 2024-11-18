@@ -1,6 +1,7 @@
 
 #include "DxLib.h"
 #include "../general/sancur.h"
+#include "../option.h"
 #include "../RecWindowRescale.h"
 #include "playbox.h"
 #include "PlayCamera.h"
@@ -21,11 +22,11 @@ void PlaySetJudge(note_judge judge) {
 	return;
 }
 
-void PlayShowJudge(int posMode, int charaposX, int charaposY) {
+void PlayShowJudge(int charaposX, int charaposY) {
 	int BaseDrawX = 0;
 	int BaseDrawY = 0;
 	int drawY = 0;
-	switch (posMode) {
+	switch (optiondata.combopos) {
 	case 0:
 		BaseDrawX = 270;
 		BaseDrawY = 100;
