@@ -62,7 +62,7 @@ int CalPlayRate(judge_box judge, double DifRate);
 int GetFullRate();
 char JudgeClearRank(char drop, judge_box judge);
 void SaveCharPlayCount(char charaNo);
-void SavePlayCount(char drop, struct judge_box const* const judge);
+void SavePlayCount(char drop, const struct judge_box *judge, int dist);
 void SaveRate(wchar_t songN[], double rate);
 void SaveScore(wchar_t const songN[], char dif,
 	int score, double acc, int Dscore, short rank, char Clear);
@@ -201,7 +201,7 @@ now_scene_t result(rec_map_detail_t *map_detail, rec_play_userpal_t *userpal,
 	result_pal.width = CAL_GAP_WIDTH(userpal->gap.sum, userpal->gap.count, userpal->gap.ssum);
 
 	SaveScore(fileN, (char)dif, userpal->score.sum, result_pal.acc, userpal->Dscore.point, (short)rank, Clear); // スコア保存
-	SavePlayCount(drop, &userpal->judgeCount); // プレイ回数保存
+	SavePlayCount(drop, &userpal->judgeCount, userpal->Dscore.point); // プレイ回数保存
 	SaveCharPlayCount(CharNo); // キャラプレイ数保存
 	SaveRate(fileN, rate); // レート保存
 
@@ -395,26 +395,28 @@ void SaveCharPlayCount(char charaNo) {
 	return;
 }
 
-void SavePlayCount(char drop, struct judge_box const* const judge) {
-	int	data[7] = { 0,0,0,0,0,0,0 };
+void SavePlayCount(char drop, const struct judge_box *judge, int dist) {
+	rec_user_data_t data;
 	FILE* fp;
 	(void)_wfopen_s(&fp, L"save/data.dat", L"rb");
 	if (fp != NULL) {
-		(void)fread(&data, sizeof(data), 7, fp);
+		(void)fread(&data, sizeof(rec_user_data_t), 1, fp);
 		(void)fclose(fp);
 	}
-	data[0]++;
-	if (drop == 1) { data[1]++; }
-	else { data[3]++; }
+	data.playCount++;
+	if (drop == 1) { data.dropCount++; }
+	else { data.clearCount++; }
 	if (judge->miss == 0) {
-		data[4]++;
+		data.NMCount++;
 		if (judge->safe == 0) {
-			data[5]++;
-			if (judge->good == 0) { data[6]++; }
+			data.FCCount++;
+			if (judge->good == 0) { data.PFcount++; }
 		}
 	}
+	data.mileage += dist;
+
 	(void)_wfopen_s(&fp, L"save/data.dat", L"wb");
-	(void)fwrite(&data, sizeof(int), 7, fp);
+	(void)fwrite(&data, sizeof(rec_user_data_t), 1, fp);
 	(void)fclose(fp);
 	return;
 }

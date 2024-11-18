@@ -43,6 +43,17 @@ typedef enum now_scene_e {
 	SCENE_RESULT,
 } now_scene_t; /* = next */
 
+typedef struct rec_user_data_s {
+	int playCount = 0;
+	int dropCount = 0;
+	int a; /* ??? */
+	int clearCount = 0;
+	int NMCount = 0;
+	int FCCount = 0;
+	int PFcount = 0;
+	int mileage = 0;
+} rec_user_data_t;
+
 extern int SmallFontData;
 extern int LargeFontData;
 
