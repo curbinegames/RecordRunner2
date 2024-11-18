@@ -148,7 +148,11 @@ static void RecCutDrawDisk(int EffTime) {
 }
 
 static void RecCutDrawJacket(int EffTime) {
-	int PosY;
+	int drawX = 0;
+	int drawY = 0;
+	int drawX2 = 0;
+	int drawY2 = 0;
+	int PosY = 0;
 	int Alpha = 0;
 
 	if (s_cutIoFg == CUT_FRAG_OUT) {
@@ -160,8 +164,12 @@ static void RecCutDrawJacket(int EffTime) {
 		Alpha = lins(500, 255, 0, 0, EffTime);
 	}
 
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 200 - PosY);
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 120 - PosY);
+	drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 440 + PosY);
+	drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 360 + PosY);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
-	RecRescaleDrawExtendGraph(200 - PosY, 120 - PosY, 440 + PosY, 360 + PosY, pic_cutin[3], TRUE);
+	DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3], TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	return;
 }
@@ -212,10 +220,20 @@ void ViewCutIn(int Stime) {
 		RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, tip[TipNo], COLOR_BLACK);
 		break;
 	case CUTIN_TIPS_SONG:
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
-		RecRescaleDrawExtendGraph(200 - PosY, 120 - PosY, 440 + PosY, 360 + PosY, pic_cutin[3], TRUE);
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, COLOR_BLACK);
+		{
+			int drawX = 0;
+			int drawY = 0;
+			int drawX2 = 0;
+			int drawY2 = 0;
+			drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 200 - PosY) + 160;
+			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 120 - PosY);
+			drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 440 + PosY) + 160;
+			drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 360 + PosY);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
+			DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3], TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+			RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, COLOR_BLACK);
+		}
 		break;
 	default:
 		/* none */
@@ -251,10 +269,20 @@ void ViewCutOut(int Stime) {
 		RecRescaleDrawString(CUT_MES_POSX - PosY * 640 / 360, 430, tip[TipNo], COLOR_BLACK);
 		break;
 	case CUTIN_TIPS_SONG:
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
-		RecRescaleDrawExtendGraph(200 - PosY, 120 - PosY, 440 + PosY, 360 + PosY, pic_cutin[3], TRUE);
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		RecRescaleDrawString(CUT_MES_POSX - PosY * 640 / 360, 430, CutSongName, COLOR_BLACK);
+		{
+			int drawX = 0;
+			int drawY = 0;
+			int drawX2 = 0;
+			int drawY2 = 0;
+			drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 200 - PosY) + 160;
+			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 120 - PosY);
+			drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 440 + PosY) + 160;
+			drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 360 + PosY);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
+			DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3], TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+			RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, COLOR_BLACK);
+		}
 		break;
 	default:
 		/* none */
