@@ -1,19 +1,64 @@
+
 #include "recr_cutin.h"
 #include "RecWindowRescale.h"
 
-#define MENU_NUM 4
+#define MENU_NUM sizeof(menu_item) / sizeof(menu_item[0])
 
-typedef struct _menu_item {
-	int card;
-	int ground;
-	int back;
+typedef struct rec_menu_data_s {
+	DxPic_t card;
+	DxPic_t ground;
+	DxPic_t back;
 	now_scene_t num;
-} _menu_item;
+} rec_menu_data_t;
 
-void DrawBack(_menu_item now, _menu_item before, int time);
-void DrawCard(_menu_item *card, int num, int LR, int time);
+static rec_menu_data_t menu_item[] = {
+	{
+		LoadGraph(L"picture/menu/FREE PLAY.png"),
+		LoadGraph(L"picture/menu/FREE PLAY G.png"),
+		LoadGraph(L"picture/backskynoamal.png"),
+		SCENE_SERECT
+	},
+	{
+		LoadGraph(L"picture/menu/COLLECTION.png"),
+		LoadGraph(L"picture/menu/COLLECT G.png"),
+		LoadGraph(L"picture/menu/COLLECT W.png"),
+		SCENE_COLLECTION
+	},
+	{
+		LoadGraph(L"picture/menu/OPTION.png"),
+		LoadGraph(L"picture/menu/OPTION G.png"),
+		LoadGraph(L"picture/menu/OPTION W.png"),
+		SCENE_OPTION
+	},
+	{
+		LoadGraph(L"picture/menu/QUIT.png"),
+		LoadGraph(L"picture/menu/QUIT G.png"),
+		LoadGraph(L"picture/backstar.png"),
+		SCENE_EXIT
+	}
+};
+
+void DrawBack(int now, int before, int time);
+void DrawCard(int num, int LR, int time);
+
+void RecMenuInitPic(void) {
+	menu_item[0].card = LoadGraph(L"picture/menu/FREE PLAY.png");
+	menu_item[0].ground = LoadGraph(L"picture/menu/FREE PLAY G.png");
+	menu_item[0].back = LoadGraph(L"picture/backskynoamal.png");
+	menu_item[1].card = LoadGraph(L"picture/menu/COLLECTION.png");
+	menu_item[1].ground = LoadGraph(L"picture/menu/COLLECT G.png");
+	menu_item[1].back = LoadGraph(L"picture/menu/COLLECT W.png");
+	menu_item[2].card = LoadGraph(L"picture/menu/OPTION.png");
+	menu_item[2].ground = LoadGraph(L"picture/menu/OPTION G.png");
+	menu_item[2].back = LoadGraph(L"picture/menu/OPTION W.png");
+	menu_item[3].card = LoadGraph(L"picture/menu/QUIT.png");
+	menu_item[3].ground = LoadGraph(L"picture/menu/QUIT G.png");
+	menu_item[3].back = LoadGraph(L"picture/backstar.png");
+	return;
+}
 
 now_scene_t menu(void) {
+	/* 定数 */
 	int command = 0; //選択中のモード
 	int before = 0; //前に選んでたモード
 	int LR = 1;
@@ -23,7 +68,6 @@ now_scene_t menu(void) {
 	int	lan[7] = { 0,0,0,2,0,0,0 }; //使うのは[4,言語]だけ
 
 	now_scene_t next = SCENE_MENU; //次のモード
-	_menu_item menu_item[MENU_NUM];
 	rec_cutin_c cutin;
 
 	FILE *fp;
@@ -33,39 +77,16 @@ now_scene_t menu(void) {
 		fclose(fp);
 	}
 	unsigned int Cr = GetColor(255, 255, 255);
-	menu_item[0] = { 
-		LoadGraph(L"picture/menu/FREE PLAY.png"),
-		LoadGraph(L"picture/menu/FREE PLAY G.png"),
-		LoadGraph(L"picture/backskynoamal.png"),
-		SCENE_SERECT
-	};
-	menu_item[1] = { 
-		LoadGraph(L"picture/menu/COLLECTION.png"),
-		LoadGraph(L"picture/menu/COLLECT G.png"),
-		LoadGraph(L"picture/menu/COLLECT W.png"),
-		SCENE_COLLECTION
-	};
-	menu_item[2] = {
-		LoadGraph(L"picture/menu/OPTION.png"),
-		LoadGraph(L"picture/menu/OPTION G.png"),
-		LoadGraph(L"picture/menu/OPTION W.png"),
-		SCENE_OPTION
-	};
-	menu_item[3] = {
-		LoadGraph(L"picture/menu/QUIT.png"),
-		LoadGraph(L"picture/menu/QUIT G.png"),
-		LoadGraph(L"picture/backstar.png"),
-		SCENE_EXIT
-	};
 	help = LoadGraph(L"picture/help.png");
 	select = LoadSoundMem(L"sound/arrow.wav");
+	RecMenuInitPic();
 	cutin.SetIo(0);
 
 	while (1) {
 		ClearDrawScreen(); /* 描画エリアここから */
 
-		DrawBack(menu_item[command], menu_item[before], GetNowCount() - starttime);
-		DrawCard(menu_item, command, LR, GetNowCount() - starttime);
+		DrawBack(command, before, GetNowCount() - starttime);
+		DrawCard(command, LR, GetNowCount() - starttime);
 		RecRescaleDrawGraph(0, 0, help, TRUE);
 		if (lan[4] == 0) {
 			RecRescaleDrawString(5, 460, L"左右キー:選択   Enterキー:決定", Cr);
@@ -136,18 +157,18 @@ now_scene_t menu(void) {
 	return next;
 }
 
-void DrawBack(_menu_item now, _menu_item before, int time) {
+void DrawBack(int now, int before, int time) {
 	time = betweens(0, time, 250);
-	RecRescaleDrawGraph(0, 0, before.back, TRUE);
+	RecRescaleDrawGraph(0, 0, menu_item[before].back, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 0, 250, 255, time));
-	RecRescaleDrawGraph(0, 0, now.back, TRUE);
+	RecRescaleDrawGraph(0, 0, menu_item[now].back, TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-	RecRescaleDrawGraph(0, pals(250, 240, 0, 0, time), before.ground, TRUE);
-	RecRescaleDrawGraph(0, pals(250, 0, 0, 240, time), now.ground, TRUE);
+	RecRescaleDrawGraph(0, pals(250, 240, 0, 0, time), menu_item[before].ground, TRUE);
+	RecRescaleDrawGraph(0, pals(250, 0, 0, 240, time), menu_item[now].ground, TRUE);
 	return;
 }
 
-void DrawCard(_menu_item *card, int num, int LR, int time) {
+void DrawCard(int num, int LR, int time) {
 	time = betweens(0, time, 250);
 	num -= 2;
 	while (num < 0) {
@@ -156,7 +177,7 @@ void DrawCard(_menu_item *card, int num, int LR, int time) {
 	for (int i = 0; i < 5; i++) {
 		RecRescaleDrawGraph(pals(250, 420 * i - 680, 0, 420 * i + 420 * LR - 680, time),
 			pals(250, 100, -250, 0, -time * LR + 250 * i + 250 * LR - 250),
-			card[num].card, TRUE);
+			menu_item[num].card, TRUE);
 		num++;
 		if (MENU_NUM <= num) {
 			num -= MENU_NUM;
