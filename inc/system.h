@@ -10,8 +10,6 @@
 #define OLD_WINDOW_SIZE_X 640                         // 前バージョンのウィンドウの横のサイズ
 #define OLD_WINDOW_SIZE_Y (OLD_WINDOW_SIZE_X * 3 / 4) // 前バージョンのウィンドウの縦のサイズ 480
 
-#define COLOR_WHITE (0xffffffff)
-
 #define OLD_RATE_NUM 10
 #define OLD_RATE_FILE_NAME_S L"save/rateS.dat" /* 名前 */
 #define OLD_RATE_FILE_NAME_N L"save/rateN.dat" /* 数値 */

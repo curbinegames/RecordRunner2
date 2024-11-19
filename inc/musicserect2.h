@@ -28,7 +28,7 @@ typedef struct rec_to_play_set_s {
 typedef struct rec_serect_music_set_s {
 	MUSIC_BOX base[SongNumLim];
 	int mapping[SongNumLim];
-	int sortMode = SORT_DEFAULT;
+	int sortMode = REC_SORT_DEFAULT;
 	int musicNum = 0;
 } rec_serect_music_set_t;
 typedef rec_serect_music_set_t songdata_set_t;
@@ -339,7 +339,7 @@ void SortSong(songdata_set_t *songdata, int mode, int dif) {
 	int o = 0;
 	int p = 1;
 	switch (mode) {
-	case SORT_DEFAULT:
+	case REC_SORT_DEFAULT:
 		for (int i = 0; i < songdata->musicNum; i++) {
 			songdata->mapping[i] = i;
 		}
@@ -421,7 +421,7 @@ static void SortSongWithSave(songdata_set_t *songdata, int mode, int dif, int *c
 static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
 	int ret = dif;
 
-	if (SortMode != SORT_DEFAULT) { return ret; }
+	if (SortMode != REC_SORT_DEFAULT) { return ret; }
 	if (strands(songdata->SongName[dif], L"NULL") == 0) { return ret; }
 
 	if (strands(songdata->SongName[0], L"NULL") != 1) { ret = 0; }
@@ -736,7 +736,7 @@ private:
 	void DrawSort(int baseX, int baseY, int mode) {
 		if (optiondata.lang == 1) {
 			switch (mode) {
-			case SORT_DEFAULT:
+			case REC_SORT_DEFAULT:
 				DrawStringToHandleAnchor(baseX, baseY, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_LEVEL:
@@ -749,7 +749,7 @@ private:
 		}
 		else {
 			switch (mode) {
-			case SORT_DEFAULT:
+			case REC_SORT_DEFAULT:
 				DrawStringToHandleAnchor(baseX, baseY, L"デフォルト", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 				break;
 			case SORT_LEVEL:

@@ -25,7 +25,6 @@ static void GameMain() {
 	int G[5] = { 0,0,0,0,0 };
 	unsigned int Cr = GetColor(255, 255, 255);
 	now_scene_t next = SCENE_TITLE;
-	FILE *fp;
 	bgm = LoadSoundMem(L"song/no.mp3");
 	INIT_MAT();
 	upgrade_rate_f(); // レートのセーブデータ更新(Ver.1.04 -> Ver.1.05)

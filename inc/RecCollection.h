@@ -17,7 +17,6 @@ now_scene_t collection(void) {
 		LoadGraph(L"picture/CLSG.png"),
 		LoadGraph(L"picture/CLS.png")
 	};
-	int G[2];
 	int sel = LoadSoundMem(L"sound/select.wav");
 	const int keyCB[4] = {
 		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_LEFT, KEY_INPUT_RIGHT
@@ -78,7 +77,6 @@ now_scene_t collection(void) {
 
 int C_item(void) {
 	//ÉçÅ[Éh
-	int e;
 	int i;
 	int j;
 	int win = LoadGraph(L"picture/itemòg.png");
@@ -97,7 +95,6 @@ int C_item(void) {
 		LoadGraph(L"picture/item9.png"),
 		LoadGraph(L"picture/item10.png")
 	};
-	int G[2];
 	int sel = LoadSoundMem(L"sound/select.wav");
 	int flag[10] = { 0,0,0,0,0,0,0,0,0,0 };
 	double Grate = 0;

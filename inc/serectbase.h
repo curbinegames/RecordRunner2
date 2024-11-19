@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef SECERT_BASE
 #define SECERT_BASE
 
@@ -9,7 +11,7 @@
 
 #define PackNumLim 8
 #define SongNumLim 64
-#define SORT_DEFAULT 0
+#define REC_SORT_DEFAULT 0
 #define SORT_LEVEL 1
 #define SORT_SCORE 2
 

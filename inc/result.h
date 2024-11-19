@@ -390,8 +390,10 @@ void SaveCharPlayCount(char charaNo) {
 	}
 	chap[charaNo]++;
 	_wfopen_s(&fp, L"save/chap.dat", L"wb");
-	fwrite(&chap, sizeof(int), 3, fp);
-	fclose(fp);
+	if (fp != NULL) {
+		fwrite(&chap, sizeof(int), 3, fp);
+		fclose(fp);
+	}
 	return;
 }
 
@@ -416,8 +418,10 @@ void SavePlayCount(char drop, const struct judge_box *judge, int dist) {
 	data.mileage += dist;
 
 	(void)_wfopen_s(&fp, L"save/data.dat", L"wb");
-	(void)fwrite(&data, sizeof(rec_user_data_t), 1, fp);
-	(void)fclose(fp);
+	if (fp == NULL) {
+		(void)fwrite(&data, sizeof(rec_user_data_t), 1, fp);
+		(void)fclose(fp);
+	}
 	return;
 }
 

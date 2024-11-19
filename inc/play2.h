@@ -1098,7 +1098,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20];
-	uint UG[5];
 	int holdG = 0;
 	int key2 = 1;
 	int key3 = 1;
