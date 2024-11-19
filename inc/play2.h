@@ -770,8 +770,8 @@ private:
 	}
 
 public:
-	rec_play_runner_c(int num) {
-		switch (num) {
+	rec_play_runner_c(void) {
+		switch (optiondata.chara) {
 		case 0:
 			LoadDivGraph(L"picture/Picker.png",
 				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
@@ -1016,8 +1016,8 @@ private:
 	DxPic_t KeyViewimg[2];
 
 public:
-	rec_play_keyview_c(int s) {
-		this->enable = s;
+	rec_play_keyview_c(void) {
+		this->enable = optiondata.keydetail;
 		if (this->enable) {
 			this->KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
 			this->KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
@@ -1148,9 +1148,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_combo_c comboPicClass;
 	rec_play_gapbar_c gapbarClass;
 	rec_play_sound_c p_sound;
+	rec_play_runner_c runnerClass;
+	rec_play_keyview_c keyviewClass;
 	rec_cutin_c cutin;
-	/* extern rec_play_runner_c runnerClass(); */
-	/* extern rec_play_keyview_c keyviewClass(); */
 
 	/* mat */
 	int item[99]; //アイテムのfd、DrawGraphで呼べる。
@@ -1166,11 +1166,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 #endif /* num define */
 
-	//システムロード
-	recSystenLoad(&system);
-	rec_play_runner_c runnerClass(system.chara);
-	rec_play_keyview_c keyviewClass(system.keyViewEn);
-
 	/* ピクチャの用意 */
 	ReadyBonusPsmat();
 	ReadyEffPicture();
@@ -1182,7 +1177,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	fps[60] = 0;
 	fps[61] = 0;
 
-	if (system.soundEn == 0) { RecPlayInitMelodySnd(); }
+	if (optiondata.SEenable == 0) { RecPlayInitMelodySnd(); }
 
 	RecPlayGetMapFileNames(dataE, ret_fileN, p, n, o);
 	strcopy_2(dataE, GT1, 255);                  /* GT1 = record/<パック名>/<曲名>/ */
@@ -1276,7 +1271,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			recfp.mapeff.scrool[scroolN + 1].starttime <= recfp.time.now) {
 			scroolN++;
 		}
-		if (system.backLight != 0) {
+		if (optiondata.backbright != 0) {
 			while (recfp.mapeff.Movie[MovieN].endtime < recfp.time.now &&
 				recfp.mapeff.Movie[MovieN].endtime > -500)
 			{
@@ -1347,7 +1342,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//Xline(横位置)の計算
 		recSetLine(Xline, recfp.mapeff.move.x, recfp.time.now, 3);
 		//Yline(縦位置)の計算
-		if (system.backLight == 0) {
+		if (optiondata.backbright == 0) {
 			recSetLine(Yline, recfp.mapeff.move.y, recfp.time.now, 3);
 		}
 		else {
@@ -1376,16 +1371,16 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */
 		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
-			system.soundEn, &keyhold, &hitatk, LaneTrack, &charahit, charaput, &userpal, &p_sound);
+			&keyhold, &hitatk, LaneTrack, &charahit, charaput, &userpal, &p_sound);
 		RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time);
 
 		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示
-		if (system.backLight != 0) {
+		if (optiondata.backbright != 0) {
 			PlayDrawBackGround(&recfp.mapeff, speedN, scroolN, Yline, &backpic, item);
 		}
 		//フィルター表示
-		switch (system.backLight) {
+		switch (optiondata.backbright) {
 		case 1:
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
 			RecRescaleDrawGraph(0, 0, filterimg, TRUE);
@@ -1398,7 +1393,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			break;
 		}
 		//アイテム表示
-		if (system.backLight != 0) {
+		if (optiondata.backbright != 0) {
 			PlayDrawItem(&recfp.mapeff, MovieN, recfp.time.now, Xline[1], item);
 		}
 		// view line
@@ -1410,7 +1405,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
-		PlayShowJudge(system.judgePos, Xline[charaput], Yline[charaput]);
+		PlayShowJudge(Xline[charaput], Yline[charaput]);
 		/* 音符表示 */
 		RecPlayDrawNoteAll(objectN, recfp.mapdata.note, &recfp.mapeff, viewTN,
 			lockN, speedN, recfp.time.now, Xline, Yline, scroolN, &noteimg);
@@ -1631,10 +1626,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 		WaitTimer(5);
 		if (StopFrag == -1) {
-			recfp.time.now = GetNowCount() - Stime + system.offset * 5;
+			recfp.time.now = GetNowCount() - Stime + optiondata.offset * 5;
 		}
 		else {
-			Stime = GetNowCount() - recfp.time.now + system.offset * 5;
+			Stime = GetNowCount() - recfp.time.now + optiondata.offset * 5;
 		}
 		ScreenFlip();
 	}

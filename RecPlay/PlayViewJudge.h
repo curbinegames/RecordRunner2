@@ -4,4 +4,4 @@
 
 extern void ReadyJudgePicture();
 extern void PlaySetJudge(note_judge judge);
-extern void PlayShowJudge(int posMode, int charaposX, int charaposY);
+extern void PlayShowJudge(int charaposX, int charaposY);
