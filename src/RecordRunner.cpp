@@ -1,20 +1,20 @@
 
-#include "DxLib.h"
-#include "system.h"
-#include "general/sancur.h"
-#include "general/strcur.h"
-#include "title.h"
-#include "menu.h"
-#include "musicserect2.h"
-#include "play2.h"
-#include "collection.h"
-#include "option.h"
-#include "editserect.h"
-#include "serectbase.h"
-#include "edit.h"
-#include "recr_cutin.h"
-#include "versionup.h"
-#include "RecWindowRescale.h"
+#include <DxLib.h>
+#include <system.h>
+#include <sancur.h>
+#include <strcur.h>
+#include <title.h>
+#include <menu.h>
+#include <musicserect2.h>
+#include <play2.h>
+#include <RecCollection.h>
+#include <option.h>
+#include <editserect.h>
+#include <serectbase.h>
+#include <edit.h>
+#include <recr_cutin.h>
+#include <versionup.h>
+#include <RecWindowRescale.h>
 
 #define DX_MAIN_DEF HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
 

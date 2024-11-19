@@ -1,6 +1,6 @@
 #pragma once
 
-#include "general/dxcur.h"
+#include <dxcur.h>
 
 typedef enum cutin_tips_e {
 	CUTIN_TIPS_NONE = 0,

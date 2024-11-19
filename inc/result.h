@@ -1,11 +1,11 @@
-#include "general/sancur.h"
-#include "general/strcur.h"
-#include "general/dxcur.h"
-#include "fontcur/fontcur.h"
-#include "system.h"
-#include "recr_cutin.h"
-#include "RecScoreFile.h"
-#include "RecPlay/playbox.h"
+#include <sancur.h>
+#include <strcur.h>
+#include <dxcur.h>
+#include <fontcur.h>
+#include <system.h>
+#include <recr_cutin.h>
+#include <RecScoreFile.h>
+#include <playbox.h>
 
 #define VER_1_6 0
 

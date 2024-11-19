@@ -1,9 +1,9 @@
 
-#include "PlayNoteJudge.h"
 #include <DxLib.h>
-#include "../general/sancur.h"
-#include "../general/dxcur.h"
-#include "../system.h"
+#include <sancur.h>
+#include <dxcur.h>
+#include <system.h>
+#include "PlayNoteJudge.h"
 #include "playbox.h"
 #include "PlayViewJudge.h"
 #include "PlayHitEff.h"

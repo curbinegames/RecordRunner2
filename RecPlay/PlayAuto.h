@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RecPlay/playbox.h"
+#include <playbox.h>
 
 extern void InitAdif();
 extern int GetAdif();

@@ -1,7 +1,7 @@
 #pragma once
 
 /* include */
-#include "RecPlay/playbox.h"
+#include <playbox.h>
 
 /* enum */
 typedef enum difkey_act_e {

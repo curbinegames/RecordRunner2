@@ -1,10 +1,10 @@
 
 /* include */
-#include "DxLib.h"
-#include "general/sancur.h"
-#include "RecPlay/playbox.h"
-#include "recp_cal_ddif.h"
-#include "recp_cal_difkey.h"
+#include <DxLib.h>
+#include <sancur.h>
+#include <playbox.h>
+#include <recp_cal_ddif.h>
+#include <recp_cal_difkey.h>
 
 /* define */
 #define DDIF_NUM 25

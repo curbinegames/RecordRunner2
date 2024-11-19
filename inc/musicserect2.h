@@ -1,14 +1,14 @@
 
 #include <DxLib.h>
-#include "serectbase.h"
-#include "helpBar.h"
-#include "recr_cutin.h"
-#include "general/dxcur.h"
-#include "general/sancur.h"
-#include "general/strcur.h"
-#include "general/dxdraw.h"
-#include "system.h"
-#include "option.h"
+#include <serectbase.h>
+#include <helpBar.h>
+#include <recr_cutin.h>
+#include <dxcur.h>
+#include <sancur.h>
+#include <strcur.h>
+#include <dxdraw.h>
+#include <system.h>
+#include <option.h>
 
 #define MUSE_FADTM 250
 #define MUSE_KEYTM 500

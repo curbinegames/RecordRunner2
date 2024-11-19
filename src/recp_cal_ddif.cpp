@@ -1,6 +1,6 @@
 
-#include "general/sancur.h"
-#include "recp_cal_ddif.h"
+#include <sancur.h>
+#include <recp_cal_ddif.h>
 
 /* ŠÔŠu‚ª5msˆÈ‰º‚Ìƒm[ƒg‚Í“¯‰Ÿ‚µˆµ‚¢Bhit‚Í1.3”{Aarrow‚Í1.6”{ */
 #define MULTI_ARROW_MLP(x) ((x) * 16 / 10)

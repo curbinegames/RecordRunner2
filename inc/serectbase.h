@@ -2,10 +2,10 @@
 #define SECERT_BASE
 
 #include <DxLib.h>
-#include "general/dxcur.h"
-#include "general/sancur.h"
-#include "general/strcur.h"
-#include "RecWindowRescale.h"
+#include <dxcur.h>
+#include <sancur.h>
+#include <strcur.h>
+#include <RecWindowRescale.h>
 
 #define PackNumLim 8
 #define SongNumLim 64

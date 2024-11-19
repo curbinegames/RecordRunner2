@@ -1,9 +1,9 @@
-#include "system.h"
-#include "RecScoreFile.h"
-#include "RecPlay/playbox.h"
-#include "recp_cal_ddif.h"
-#include "recp_cal_difkey.h"
-#include "recp_cal_ddif_2.h"
+#include <system.h>
+#include <RecScoreFile.h>
+#include <playbox.h>
+#include <recp_cal_ddif.h>
+#include <recp_cal_difkey.h>
+#include <recp_cal_ddif_2.h>
 
 #if 1 /* typedef */
 

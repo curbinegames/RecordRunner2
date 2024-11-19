@@ -4,7 +4,7 @@
 #include "dxcur.h"
 #include "sancur.h"
 #include "strcur.h"
-#include "../system.h"
+#include "system.h"
 
 /**
  * DrawGraph‚ÉŠî€“_‚ğ’Ç‰Á‚µ‚½‚à‚Ì

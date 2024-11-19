@@ -1,6 +1,6 @@
 
 #include "DxLib.h"
-#include "general/dxcur.h"
+#include "dxcur.h"
 #include "helpBar.h"
 #include "system.h"
 #include "option.h"

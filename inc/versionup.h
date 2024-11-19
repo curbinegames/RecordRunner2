@@ -1,8 +1,8 @@
 #pragma once
 
-#include "DxLib.h"
-#include "system.h"
-#include "general/strcur.h"
+#include <DxLib.h>
+#include <system.h>
+#include <strcur.h>
 
 void upgrade_rate_f() {
 	play_rate_t prate[RATE_NUM];

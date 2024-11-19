@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdio.h>
-#include "RecPlay/playbox.h"
+#include <playbox.h>
 
 typedef struct rec_play_nameset_s {
 	wchar_t sky[255] = L"picture/backskynoamal.png";

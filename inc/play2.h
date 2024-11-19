@@ -8,25 +8,25 @@
 
 /* include */
 
-#include "general/sancur.h"
-#include "general/strcur.h"
-#include "general/dxdraw.h"
-#include "general/dxcur.h"
-#include "system.h"
-#include "RecScoreFile.h"
-#include "RecordLoad2.h"
-#include "result.h"
-#include "recr_cutin.h"
-#include "dxlibcur.h"
-#include "RecSystem.h"
+#include <sancur.h>
+#include <strcur.h>
+#include <dxdraw.h>
+#include <dxcur.h>
+#include <system.h>
+#include <RecScoreFile.h>
+#include <RecordLoad2.h>
+#include <result.h>
+#include <recr_cutin.h>
+#include <dxlibcur.h>
+#include <RecSystem.h>
 
-#include "RecPlay/playbox.h"
-#include "RecPlay/PlayBonus.h"
-#include "RecPlay/PlayAuto.h"
-#include "RecPlay/PlayCamera.h"
-#include "RecPlay/PlayHitEff.h"
-#include "RecPlay/PlayNoteJudge.h"
-#include "RecPlay/PlayViewJudge.h"
+#include <playbox.h>
+#include <PlayBonus.h>
+#include <PlayAuto.h>
+#include <PlayCamera.h>
+#include <PlayHitEff.h>
+#include <PlayNoteJudge.h>
+#include <PlayViewJudge.h>
 
 /* define */
 

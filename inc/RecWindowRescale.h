@@ -1,7 +1,7 @@
 #pragma once
 
-#include "system.h"
-#include "fontcur/fontcur.h"
+#include <system.h>
+#include <fontcur.h>
 
 #define RESCALE_SIZE_X ((double)WINDOW_SIZE_X / (double)OLD_WINDOW_SIZE_X)
 #define RESCALE_SIZE_Y ((double)WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "general/dxcur.h"
+#include <dxcur.h>
 
 typedef enum help_bar_mat_e {
 	HELP_MAT_MUSIC_NONE = 0,
