@@ -133,15 +133,14 @@ public:
 now_scene_t menu(void) {
 	/* 定数 */
 	int command = 0; //選択したモード
-	DxPic_t help;
 	DxPic_t select;
 
 	now_scene_t next = SCENE_MENU; //次のモード
 	rec_manu_dataset_c menu_class;
+	rec_helpbar_c help;
 	rec_cutin_c cutin;
 
 	unsigned int Cr = GetColor(255, 255, 255);
-	help = LoadGraph(L"picture/help.png");
 	select = LoadSoundMem(L"sound/arrow.wav");
 	cutin.SetIo(0);
 	AvoidKeyRush();
@@ -150,15 +149,7 @@ now_scene_t menu(void) {
 		ClearDrawScreen(); /* 描画エリアここから */
 
 		menu_class.DrawMenu();
-
-		RecRescaleDrawGraph(0, 0, help, TRUE);
-		if (optiondata.lang == 0) {
-			RecRescaleDrawString(5, 460, L"左右キー:選択   Enterキー:決定", Cr);
-		}
-		else if (optiondata.lang == 1) {
-			RecRescaleDrawString(5, 460, L"←→key:choose   Enter key:enter", Cr);
-		}
-
+		help.DrawHelp(HELP_MAT_MENU);
 		cutin.DrawCut();
 
 		ScreenFlip(); /* 描画エリアここまで */

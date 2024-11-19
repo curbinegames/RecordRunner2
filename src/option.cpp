@@ -238,6 +238,7 @@ now_scene_t option(void) {
 	} pic;
 	int sel = -1;
 	int exitFg = 0;
+	rec_helpbar_c help;
 
 	if (RecOpenOptionFile2(&optiondata) != 0) {
 		int	data[7] = { 0,0,0,2,0,0,0 };
@@ -452,7 +453,7 @@ now_scene_t option(void) {
 			DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s", optionstr[command].detail.en);
 		}
 
-		DrawHelpBar(HELP_MAT_OPTION, optiondata.lang); /* 操作方法 */
+		help.DrawHelp(HELP_MAT_OPTION); /* 操作方法 */
 
 		ScreenFlip(); /* 描画エリアここまで */
 

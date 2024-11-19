@@ -1,6 +1,7 @@
 
-#include "system.h"
-#include "collect_seclet.h"
+#include <system.h>
+#include <helpBar.h>
+#include <collect_seclet.h>
 
 int C_item();
 int C_story();
@@ -17,12 +18,12 @@ now_scene_t collection(void) {
 		LoadGraph(L"picture/CLS.png")
 	};
 	int G[2];
-	int help = LoadGraph(L"picture/help.png");
 	int sel = LoadSoundMem(L"sound/select.wav");
 	const int keyCB[4] = {
 		KEY_INPUT_RETURN, KEY_INPUT_BACK, KEY_INPUT_LEFT, KEY_INPUT_RIGHT
 	};
 	unsigned int Cr = GetColor(255, 255, 255);
+	rec_helpbar_c help;
 
 	AvoidKeyRush();
 	while (1) {
@@ -30,15 +31,7 @@ now_scene_t collection(void) {
 		DrawGraph(0, 0, backimg, TRUE);
 		DrawGraph(70, 130, icon[0 + command], TRUE);
 		DrawGraph(350, 130, icon[2 + command], TRUE);
-		DrawGraph(0, 0, help, TRUE);
-		if (optiondata.lang == 0) {
-			DrawString(5, 460,
-				L"左右キー:選択   Enterキー:決定   BackSpaceキー:戻る", Cr);
-		}
-		if (optiondata.lang == 1) {
-			DrawString(5, 460,
-				L"←→key:select   Enter key:enter   BackSpace key:back to menu", Cr);
-		}
+		help.DrawHelp(HELP_MAT_COLLECTION);
 		ScreenFlip();
 
 		/* キー入力 */
@@ -105,14 +98,14 @@ int C_item(void) {
 		LoadGraph(L"picture/item10.png")
 	};
 	int G[2];
-	int help = LoadGraph(L"picture/help.png");
 	int sel = LoadSoundMem(L"sound/select.wav");
 	int flag[10] = { 0,0,0,0,0,0,0,0,0,0 };
 	double Grate = 0;
 	int	play[7] = { 0,0,0,0,0,0,0 };
 	double rate[10] = { 0,0,0,0,0,0,0,0,0,0 };
-	play_rate_t rate2[RATE_NUM];
 	int	lan[6] = { 0,0,0,2,0,0 };//使うのは[4,言語]だけ
+	play_rate_t rate2[RATE_NUM];
+	rec_helpbar_c help;
 	FILE *fp;
 	(void)_wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (fp != NULL) {
@@ -285,9 +278,7 @@ int C_item(void) {
 			}
 			break;
 		}
-		DrawGraph(0, 0, help, TRUE);
-		if (lan[4] == 0)DrawString(5, 460, L"上下左右キー:選択   BackSpaceキー:戻る", Cr);
-		else if (lan[4] == 1)DrawString(5, 460, L"←↓↑→key:select   BackSpace key:back", Cr);
+		help.DrawHelp(HELP_MAT_COLLECTION_ITEM);
 		ScreenFlip();
 		if (CheckHitKey(KEY_INPUT_LEFT)) {
 			//左が押された
@@ -372,12 +363,13 @@ int C_item(void) {
 }
 
 int C_story(void) {
-	int e, i, j, end = 0, key = 1, backimg, noteimg, help, sel, chac[3] = { 0,0,0 }, sub1[8], command[2] = { 0,0 }, g[7];
+	int e, i, j, end = 0, key = 1, backimg, noteimg, sel, chac[3] = { 0,0,0 }, sub1[8], command[2] = { 0,0 }, g[7];
 	int StoryUpper[5] = { 10,10,10,4,2 };
 	wchar_t chan[5][9] = { L"ピッカー",L"マップゲーター",L"テイラー",L"サブストーリー1",L"EX ミッション" };
 	wchar_t chanE[5][12] = { L"Picker",L"Mapgator",L"Taylor",L"Sub Story 1",L"EX mission" };
 	unsigned int Cr, Crw;
 	int	lan[6] = { 0,0,0,2,0,0 };//使うのは[4,言語]だけ
+	rec_helpbar_c help;
 	FILE *fp;
 	e = _wfopen_s(&fp, L"save/system.dat", L"rb");
 	if (fp != NULL) {
@@ -468,7 +460,6 @@ int C_story(void) {
 	Crw = GetColor(255, 255, 255);
 	backimg = LoadGraph(L"picture/COLLECT back.png");
 	noteimg = LoadGraph(L"picture/Cnote.png");
-	help = LoadGraph(L"picture/help.png");
 	sel = LoadSoundMem(L"sound/select.wav");
 	while (1) {
 		ClearDrawScreen();
@@ -608,9 +599,7 @@ int C_story(void) {
 				break;
 			}
 		}
-		DrawGraph(0, 0, help, TRUE);
-		if (lan[4] == 0)DrawString(5, 460, L"上下左右キー:選択   Enterキー:決定   BackSpaceキー:戻る", Crw);
-		else if (lan[4] == 1)DrawString(5, 460, L"←↓↑→key:select   Enter key:enter   BackSpace key:back", Crw);
+		help.DrawHelp(HELP_MAT_COLLECTION_STORY);
 		ScreenFlip();
 		if (CheckHitKey(KEY_INPUT_LEFT)) {
 			//左が押された
@@ -673,14 +662,15 @@ int C_story(void) {
 }
 
 int story(int a, int b) {
-	int key = 1, com = 0, Cx = 220, Cy = 75, backimg, noteimg, pageimg, help, sel;
+	int key = 1, com = 0, Cx = 220, Cy = 75, backimg, noteimg, pageimg, sel;
 	unsigned int Cr, Crw;
+	rec_helpbar_c help;
+
 	Cr = GetColor(0, 0, 0);
 	Crw = GetColor(255, 255, 255);
 	backimg = LoadGraph(L"picture/COLLECT back.png");
 	noteimg = LoadGraph(L"picture/Snote.png");
 	pageimg = LoadGraph(L"picture/page.png");
-	help = LoadGraph(L"picture/help.png");
 	sel = LoadSoundMem(L"sound/select.wav");
 	while (1) {
 		ClearDrawScreen();
@@ -689,8 +679,7 @@ int story(int a, int b) {
 		RecCollectDrawStory(10 * a + 1000 * b + com); /* secret function */
 		DrawGraph(0, 405, pageimg, TRUE);
 		DrawFormatString(15, 420, Cr, L"%d / 3", com + 1);
-		DrawGraph(0, 0, help, TRUE);
-		DrawString(5, 460, L"上下キー:ページ選択   BackSpaceキー:戻る", Crw);
+		help.DrawHelp(HELP_MAT_COLLECTION);
 		ScreenFlip();
 		if (CheckHitKey(KEY_INPUT_UP)) {
 			//左が押された
