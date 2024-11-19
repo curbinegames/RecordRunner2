@@ -3,6 +3,7 @@
 #include <sancur.h>
 #include <dxcur.h>
 #include <system.h>
+#include <option.h>
 #include "PlayNoteJudge.h"
 #include "playbox.h"
 #include "PlayViewJudge.h"
