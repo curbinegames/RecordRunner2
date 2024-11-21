@@ -389,8 +389,7 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 #endif /* sub action */
 
 /* main action */
-void RecordLoad2(int p, int n, int o) {
-	//n: 曲ナンバー
+static void RecordLoad3(const TCHAR *mapPath, const TCHAR *folderPath, int o) {
 	//o: 難易度ナンバー
 	short int i[2] = { 0,0 };
 #if 0 /* fixing... */
@@ -400,7 +399,6 @@ void RecordLoad2(int p, int n, int o) {
 #endif
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
-	int songdata = 0;
 	int waningLv = 2;
 	double GD[5] = { 0,0,0,0,0 };
 	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
@@ -428,9 +426,9 @@ void RecordLoad2(int p, int n, int o) {
 	double bpmG = 120;
 	double timer[3] = { 0,0,0 }; //[上, 中, 下]レーンの時間
 	short int speedN[5] = { 1,1,1,1,1 }; //↑の番号
-	wchar_t dataE[255]; //フォルダの名前
 	wchar_t RRS[255]; //PC用譜面データの保存場所
 	wchar_t GT1[255];
+	DxFile_t songdata = 0;
 
 	playnum_box allnum;
 	rec_play_nameset_t nameset;
@@ -519,22 +517,16 @@ void RecordLoad2(int p, int n, int o) {
 
 	FILE *fp;
 
-	RecGetMusicPath(dataE, 255, p, n);
-	strcopy_2(dataE, GT1, 255);
-	stradds_2(GT1, 255, (TCHAR)(_T('0') + o)); //"record/<パック名>/<曲名>/<難易度>"
-	strcats_2(GT1, 255, _T(".txt")); //"record/<パック名>/<曲名>/<難易度>.txt"
+	songdata = FileRead_open(mapPath);
+	if (songdata == 0) { return; }
 
-	songdata = FileRead_open(GT1);
-	if (songdata == 0) {
-		return;
-	}
 	//テキストデータを読む
 	while (FileRead_eof(songdata) == 0) {
 		FileRead_gets(GT1, 256, songdata);
 		//音楽ファイルを読み込む
 		if (strands(GT1, L"#MUSIC:")) {
 			strmods(GT1, 7);
-			strcopy(dataE, nameset.mp3FN, 1);
+			strcopy(folderPath, nameset.mp3FN, 1);
 			strcats(nameset.mp3FN, GT1);
 		}
 		//BPMを読み込む
@@ -567,7 +559,7 @@ void RecordLoad2(int p, int n, int o) {
 		}
 		//難易度バー(another)を読み込む
 		else if (strands(GT1, L"#DIFBAR:")) {
-			strcopy(dataE, nameset.DifFN, 1);
+			strcopy(folderPath, nameset.DifFN, 1);
 			strmods(GT1, 8);
 			strcats(nameset.DifFN, GT1);
 		}
@@ -1104,6 +1096,88 @@ void RecordLoad2(int p, int n, int o) {
 #endif
 	Etime = timer[0];
 
+	{
+		//ここからPC用譜面データのファイルの作成(セーブ作業)
+		strcopy(folderPath, RRS, 1); //"record/<パック名>/<曲名>/"
+		stradds_2(RRS, 255, (TCHAR)(_T('0') + o)); //"record/<パック名>/<曲名>/<難易度>"
+		strcats_2(RRS, 255, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度>.rrs"
+
+		G[2] = _wfopen_s(&fp, RRS, L"wb");
+		fwrite(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
+		fwrite(&nameset.mp3FN, 255, 1, fp);//音楽ファイル名
+		fwrite(&mapdata.bpm, sizeof(double), 1, fp);//BPM
+		fwrite(&noteoff, sizeof(int), 1, fp);//offset
+		fwrite(&nameset.sky, 255, 1, fp);//空背景名
+		fwrite(&nameset.ground, 255, 1, fp);//地面画像名
+		fwrite(&nameset.water, 255, 1, fp);//水中画像名
+		fwrite(&nameset.songN, 255, 1, fp);//曲名
+		fwrite(&nameset.songNE, 255, 1, fp);//曲名(英語)
+		fwrite(&mapdata.Lv, sizeof(short int), 1, fp);//レベル
+		//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
+		{
+			int buf[99][2];
+			for (int inum = 0; inum < 99; inum++) {
+				buf[inum][0] = mapeff.fall.d[inum].No;
+				buf[inum][1] = mapeff.fall.d[inum].time;
+			}
+			fwrite(&buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
+		}
+		fwrite(&mapeff.speedt, sizeof(double), 990, fp);//レーン速度
+		{
+			int buf[3][99][2];
+			for (int ilane = 0; ilane < 3; ilane++) {
+				for (int inum = 0; inum < 99; inum++) {
+					buf[ilane][inum][0] = mapeff.chamo[ilane].gra[inum];
+					buf[ilane][inum][1] = mapeff.chamo[ilane].time[inum];
+				}
+			}
+			fwrite(&buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
+		}
+		fwrite(&mapeff.move.y[0].d, sizeof(rec_move_data_t), allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
+		fwrite(&mapeff.move.y[1].d, sizeof(rec_move_data_t), allnum.Ymovenum[1], fp);//中レーン縦位置移動タイミング
+		fwrite(&mapeff.move.y[2].d, sizeof(rec_move_data_t), allnum.Ymovenum[2], fp);//下レーン縦位置移動タイミング
+		fwrite(&mapeff.move.y[3].d, sizeof(rec_move_data_t), allnum.Ymovenum[3], fp);//地面縦位置移動タイミング
+		fwrite(&mapeff.move.y[4].d, sizeof(rec_move_data_t), allnum.Ymovenum[4], fp);//水面縦位置移動タイミング
+		fwrite(&mapeff.move.x[0].d, sizeof(rec_move_data_t), allnum.Xmovenum[0], fp);//上レーン横位置移動タイミング
+		fwrite(&mapeff.move.x[1].d, sizeof(rec_move_data_t), allnum.Xmovenum[1], fp);//中レーン横位置移動タイミング
+		fwrite(&mapeff.move.x[2].d, sizeof(rec_move_data_t), allnum.Xmovenum[2], fp);//下レーン横位置移動タイミング
+		fwrite(&mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
+		{
+			int buf[2][99];
+			for (int inum = 0; inum < 99; inum++) {
+				buf[0][inum] = mapeff.carrow.d[inum].data;
+				buf[1][inum] = mapeff.carrow.d[inum].time;
+			}
+			fwrite(&buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
+		}
+		fwrite(&mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
+#if SWITCH_NOTE_BOX_2
+		fwrite(&mapdata.note, sizeof(note_box_2_t), allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
+#else
+		fwrite(&mapdata.note[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
+		fwrite(&mapdata.note[1], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
+		fwrite(&mapdata.note[2], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
+#endif
+		fwrite(&mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
+		fwrite(&Etime, sizeof(int), 1, fp);//曲終了時間
+		G[0] = ddif2.maxdif;//最高難易度
+		G[1] = ddif2.lastdif;//最終難易度
+		fwrite(&G, sizeof(int), 2, fp);
+		fwrite(&mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
+		fwrite(&ddif2.nowdifsection, sizeof(int), 1, fp);//各区間難易度データ
+		fwrite(&mapdata.ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
+		fwrite(&nameset.DifFN, 255, 1, fp);//難易度バー名
+		fwrite(&mapeff.Movie, sizeof(item_box), allnum.movienum, fp);//動画データ
+		fwrite(&mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
+		fwrite(&mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+		fwrite(&mapeff.v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
+		fwrite(&outpoint, sizeof(int), 2, fp);//譜面エラー
+		fclose(fp);
+	}
+	return;
+
+#if 0 /* ddifの遺物 */
+
 	/*難易度計算
 	(3000000/ひとつ前のノーツとの間隔)を、そのノーツの難易度点数とする。
 	叩いたキーを50個記憶し、この組み合わせでできた最高値が曲の難易度。
@@ -1120,7 +1194,6 @@ void RecordLoad2(int p, int n, int o) {
 
 	/* その他倍率はrecp_cal_ddif.cppに記載 */
 
-#if 0
 	objectN[0] = 0;
 	objectN[1] = 0;
 	objectN[2] = 0;
@@ -1316,82 +1389,18 @@ void RecordLoad2(int p, int n, int o) {
 	ddif2.lastdif = lins(2713, 100, 34733, 800, ddif2.lastdif);
 #endif
 
-	//ここからPC用譜面データのファイルの作成(セーブ作業)
-	strcopy(dataE, RRS, 1); //"record/<パック名>/<曲名>/"
-	stradds_2(RRS, 255, (TCHAR)(_T('0') + o)); //"record/<パック名>/<曲名>/<難易度>"
-	strcats_2(RRS, 255, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度>.rrs"
+}
 
-	G[2] = _wfopen_s(&fp, RRS, L"wb");
-	fwrite(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
-	fwrite(&nameset.mp3FN, 255, 1, fp);//音楽ファイル名
-	fwrite(&mapdata.bpm, sizeof(double), 1, fp);//BPM
-	fwrite(&noteoff, sizeof(int), 1, fp);//offset
-	fwrite(&nameset.sky, 255, 1, fp);//空背景名
-	fwrite(&nameset.ground, 255, 1, fp);//地面画像名
-	fwrite(&nameset.water, 255, 1, fp);//水中画像名
-	fwrite(&nameset.songN, 255, 1, fp);//曲名
-	fwrite(&nameset.songNE, 255, 1, fp);//曲名(英語)
-	fwrite(&mapdata.Lv, sizeof(short int), 1, fp);//レベル
-	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
-	{
-		int buf[99][2];
-		for (int inum = 0; inum < 99; inum++) {
-			buf[inum][0] = mapeff.fall.d[inum].No;
-			buf[inum][1] = mapeff.fall.d[inum].time;
-		}
-		fwrite(&buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
-	}
-	fwrite(&mapeff.speedt, sizeof(double), 990, fp);//レーン速度
-	{
-		int buf[3][99][2];
-		for (int ilane = 0; ilane < 3; ilane++) {
-			for (int inum = 0; inum < 99; inum++) {
-				buf[ilane][inum][0] = mapeff.chamo[ilane].gra[inum];
-				buf[ilane][inum][1] = mapeff.chamo[ilane].time[inum];
-			}
-		}
-		fwrite(&buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
-	}
-	fwrite(&mapeff.move.y[0].d, sizeof(rec_move_data_t), allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
-	fwrite(&mapeff.move.y[1].d, sizeof(rec_move_data_t), allnum.Ymovenum[1], fp);//中レーン縦位置移動タイミング
-	fwrite(&mapeff.move.y[2].d, sizeof(rec_move_data_t), allnum.Ymovenum[2], fp);//下レーン縦位置移動タイミング
-	fwrite(&mapeff.move.y[3].d, sizeof(rec_move_data_t), allnum.Ymovenum[3], fp);//地面縦位置移動タイミング
-	fwrite(&mapeff.move.y[4].d, sizeof(rec_move_data_t), allnum.Ymovenum[4], fp);//水面縦位置移動タイミング
-	fwrite(&mapeff.move.x[0].d, sizeof(rec_move_data_t), allnum.Xmovenum[0], fp);//上レーン横位置移動タイミング
-	fwrite(&mapeff.move.x[1].d, sizeof(rec_move_data_t), allnum.Xmovenum[1], fp);//中レーン横位置移動タイミング
-	fwrite(&mapeff.move.x[2].d, sizeof(rec_move_data_t), allnum.Xmovenum[2], fp);//下レーン横位置移動タイミング
-	fwrite(&mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
-	{
-		int buf[2][99];
-		for (int inum = 0; inum < 99; inum++) {
-			buf[0][inum] = mapeff.carrow.d[inum].data;
-			buf[1][inum] = mapeff.carrow.d[inum].time;
-		}
-		fwrite(&buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
-	}
-	fwrite(&mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2
-	fwrite(&mapdata.note, sizeof(note_box_2_t), allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
-#else
-	fwrite(&mapdata.note[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
-	fwrite(&mapdata.note[1], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
-	fwrite(&mapdata.note[2], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
-	fwrite(&mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
-	fwrite(&Etime, sizeof(int), 1, fp);//曲終了時間
-	G[0] = ddif2.maxdif;//最高難易度
-	G[1] = ddif2.lastdif;//最終難易度
-	fwrite(&G, sizeof(int), 2, fp);
-	fwrite(&mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
-	fwrite(&ddif2.nowdifsection, sizeof(int), 1, fp);//各区間難易度データ
-	fwrite(&mapdata.ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
-	fwrite(&nameset.DifFN, 255, 1, fp);//難易度バー名
-	fwrite(&mapeff.Movie, sizeof(item_box), allnum.movienum, fp);//動画データ
-	fwrite(&mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
-	fwrite(&mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-	fwrite(&mapeff.v_BPM.data[0], sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
-	fwrite(&outpoint, sizeof(int), 2, fp);//譜面エラー
-	fclose(fp);
+void RecordLoad2(int packNo, int songNo, int difNo) {
+	TCHAR folderPath[255]; // フォルダのパス
+	TCHAR mapPath[255]; // マップのパス
+
+	RecGetMusicPath(folderPath, 255, packNo, songNo);
+	strcopy_2(folderPath, mapPath, 255);
+	stradds_2(mapPath, 255, (TCHAR)(_T('0') + difNo)); //"record/<パック名>/<曲名>/<難易度>"
+	strcats_2(mapPath, 255, _T(".txt")); //"record/<パック名>/<曲名>/<難易度>.txt"
+
+	RecordLoad3(mapPath, folderPath, difNo);
 	return;
 }
 
