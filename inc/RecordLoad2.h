@@ -1170,220 +1170,6 @@ static void RecordLoad3(const TCHAR *mapPath, const TCHAR *folderPath, int o) {
 		fclose(fp);
 	}
 	return;
-
-#if 0 /* ddifの遺物 */
-
-	/*難易度計算
-	(3000000/ひとつ前のノーツとの間隔)を、そのノーツの難易度点数とする。
-	叩いたキーを50個記憶し、この組み合わせでできた最高値が曲の難易度。
-	1個前と同じキーの時は(対象のキーはarrowのみ)
-	┣間隔が150ms以上の時は変動なし(BPM200の8分)
-	┣間隔が150ms以下75ms以上の時は得点("間隔"/(-75)+3)倍(1～2倍)
-	┗間隔が75ms以下の時は得点2倍(BPM200の16分)
-	1=hit,2=non,3=up,4=down,5=left,6=right,7=non or down,8=up or down,9=up or non
-	*/
-
-#define ARROW_TRICK_MLP(base) (base * 18 / 10) /* arrowひっかけは1.8倍 */
-#define DIF_BBEF_MLP(base) (base * 12 / 10) /* 2個前と違うキーの時は得点1.2倍(全キー対象) */
-#define ARROW_MLP(base) (base * 12 / 10) /* arrowキーは得点1.2倍 */
-
-	/* その他倍率はrecp_cal_ddif.cppに記載 */
-
-	objectN[0] = 0;
-	objectN[1] = 0;
-	objectN[2] = 0;
-	difkey[0][3] = recfp.mapdata.notes;
-	if (difkey[0][3] > 49)difkey[0][3] = 49;
-	difkey[7][3] = (Etime - recfp.time.offset) / 25 * 2;
-	if (difkey[7][3] < 10000)difkey[7][3] = 10000;
-	DifkeyCalInit(recfp.mapdata.notes, Etime - recfp.time.offset);
-
-	//ノーツがなくなるまで繰り返す
-	while (recfp.mapdata.note[0][objectN[0]].hittime >= 0 ||
-		recfp.mapdata.note[1][objectN[1]].hittime >= 0 ||
-		recfp.mapdata.note[2][objectN[2]].hittime >= 0) {
-		//GHOSTノーツをスキップ
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			while (recfp.mapdata.note[i[0]][objectN[i[0]]].object == 8 &&
-				recfp.mapdata.note[i[0]][objectN[i[0]]].hittime >= 0) {
-				objectN[i[0]]++;
-			}
-		}
-		G[0] = -1;
-		//一番早いノーツを探してG[0]に代入
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (recfp.mapdata.note[i[0]][objectN[i[0]]].hittime >= 0) {
-				G[0] = i[0];
-				break;
-			}
-		}
-		//無かったらブレーク
-		if (G[0] == -1) break;
-		//一番早いノーツを探してG[0]に代入
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (G[0] != i[0] && recfp.mapdata.note[G[0]][objectN[G[0]]].hittime >
-				recfp.mapdata.note[i[0]][objectN[i[0]]].hittime &&
-				recfp.mapdata.note[i[0]][objectN[i[0]]].hittime >= 0) {
-				G[0] = i[0];
-			}
-			else if (G[0] != i[0] &&
-				recfp.mapdata.note[G[0]][objectN[G[0]]].hittime ==
-				recfp.mapdata.note[i[0]][objectN[i[0]]].hittime &&
-				recfp.mapdata.note[G[0]][objectN[G[0]]].object == 2 &&
-				recfp.mapdata.note[i[0]][objectN[i[0]]].object != 2 &&
-				recfp.mapdata.note[i[0]][objectN[i[0]]].hittime >= 0) {
-				G[0] = i[0];
-			}
-		}
-		DifkeyCalInsertNote(&recfp.mapdata.note[G[0]][objectN[G[0]]], G[0]);
-		//ddifの計算
-		while (recfp.mapdata.note[G[0]][objectN[G[0]]].hittime >=
-			(Etime - recfp.time.offset) / 25 * ddif2.nowdifsection + recfp.time.offset) {
-			recfp.mapdata.ddif[ddif2.nowdifsection - 1] = cal_ddif(ddif2.datanum, difkey[0],
-				Etime, recfp.time.offset, ddif2.nowdifsection, difkey[7][3]);
-			ddif2.nowdifsection++;
-		}
-		difkey[difkey[1][3]][0] = recfp.mapdata.note[G[0]][objectN[G[0]]].object;
-		difkey[difkey[1][3]][1] = recfp.mapdata.note[G[0]][objectN[G[0]]].hittime;
-
-		G[2] = MapErrorCheck(difkey[difkey[1][3]][0], difkey[difkey[1][3]][1],
-			difkey[difkey[2][3]][0], difkey[difkey[2][3]][1], o, waningLv);
-		if (G[2] != 0 && recfp.outpoint[1] == 0) {
-			recfp.outpoint[0] = difkey[difkey[1][3]][1];
-			recfp.outpoint[1] = G[2];
-		}
-		switch (difkey[difkey[1][3]][0]) {
-		case 1: //hitノーツ補間
-			if (difkey[difkey[2][3]][0] == 1 &&
-				difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
-				difkey[difkey[2][3]][2] *= 1;
-				objectN[G[0]]++;
-				continue;
-			}
-			break;
-		case 2: //catchノーツ補間
-			if (G[0] != 1) difkey[difkey[1][3]][0] = G[0] / 2 + 3;
-			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 3 &&
-				(difkey[difkey[2][3]][0] == 8 ||
-				difkey[difkey[2][3]][0] == 9)) {
-				difkey[difkey[2][3]][0] = 3;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 2 && (difkey[difkey[2][3]][0] == 1 || difkey[difkey[2][3]][0] == 5 || difkey[difkey[2][3]][0] == 6)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 2 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9)) {
-				difkey[difkey[2][3]][0] = 2;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 4 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 8)) {
-				difkey[difkey[2][3]][0] = 4;
-				objectN[G[0]]++;
-				continue;
-			}
-			break;
-		case 5: //leftノーツ補間
-			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
-				difkey[difkey[2][3]][0] = 5;
-				continue;
-			}
-			break;
-		case 6: //rightノーツ補間
-			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
-				difkey[difkey[2][3]][0] = 6;
-				continue;
-			}
-			break;
-		case 7: //bombノーツ補間
-			if (G[0] != 0)difkey[difkey[1][3]][0] = G[0] + 7;
-			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && difkey[difkey[2][3]][0] == 8 || difkey[difkey[1][3]][0] == 8 && difkey[difkey[2][3]][0] == 7) {
-				difkey[difkey[2][3]][0] = 4;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && difkey[difkey[2][3]][0] == 9 || difkey[difkey[1][3]][0] == 9 && difkey[difkey[2][3]][0] == 7) {
-				difkey[difkey[2][3]][0] = 2;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 8 && difkey[difkey[2][3]][0] == 9 || difkey[difkey[1][3]][0] == 9 && difkey[difkey[2][3]][0] == 8) {
-				difkey[difkey[2][3]][0] = 3;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && (difkey[difkey[2][3]][0] != 3)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 8 && (difkey[difkey[2][3]][0] == 3 || difkey[difkey[2][3]][0] == 4)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 9 && (difkey[difkey[2][3]][0] != 4)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			break;
-		}
-		/* calculate difkey */
-		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
-			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
-				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
-				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
-				difkey[difkey[2][3]][2]);
-		}
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (recfp.mapdata.note[G[0]][objectN[G[0]]].object >= 3 && recfp.mapdata.note[G[0]][objectN[G[0]]].object <= 6 &&
-				G[0] != i[0] && recfp.mapdata.note[G[0]][objectN[G[0]]].object == recfp.mapdata.note[i[0]][objectN[i[0]]].object &&
-				recfp.mapdata.note[G[0]][objectN[G[0]]].hittime + 5 >= recfp.mapdata.note[i[0]][objectN[i[0]]].hittime) {
-				objectN[i[0]]++;
-			}
-		}
-		objectN[G[0]]++;
-		ddif2.datanum++;
-		G[0] = 0;
-		ddif2.maxdif = mins(ddif2.maxdif,
-			cal_nowdif_m(difkey[0], difkey[0][3], difkey[1][3], difkey[7][3]));
-		for (i[0] = 1; i[0] < 4; i[0]++) {
-			difkey[i[0]][3]++;
-			if (difkey[i[0]][3] > difkey[0][3])difkey[i[0]][3] = 0;
-		}
-	}
-	ddif2.datanum++;
-	for (i[0] = 0; i[0] < 2; i[0]++) {
-		if (difkey[i[0]][2] == 0 && difkey[2][2] > 0) { ddif2.datanum--; }
-	}
-	if (ddif2.datanum < 1) { ddif2.datanum = 1; }
-	if (ddif2.datanum > 50) { ddif2.datanum = 50; }
-	recfp.mapdata.ddifG[1] = ddif2.maxdif;
-	if (recfp.mapdata.ddifG[1] <= 0) { recfp.mapdata.ddifG[1] = 1; }
-	ddif2.maxdif /= 50;
-	recfp.mapdata.ddif[ddif2.nowdifsection - 1] = 0;
-	for (i[0] = 0; i[0] < ddif2.datanum; i[0]++) {
-		if (difkey[i[0]][1] > Etime - difkey[7][3]) {
-			recfp.mapdata.ddif[ddif2.nowdifsection - 1] += difkey[i[0]][2];
-		}
-	}
-	for (i[0] = ddif2.nowdifsection - 1; i[0] <= 24; i[0]++) {
-		recfp.mapdata.ddif[i[0]] = recfp.mapdata.ddif[ddif2.nowdifsection - 1];
-	}
-	ddif2.lastdif = recfp.mapdata.ddif[ddif2.nowdifsection - 1] / 50;
-	//NEEDYOU:Lv.1.0->2713, Co-op katyohugetsu:Lv.8.0->34733
-	ddif2.maxdif = lins(2713, 100, 34733, 800, ddif2.maxdif);
-	ddif2.lastdif = lins(2713, 100, 34733, 800, ddif2.lastdif);
-#endif
-
 }
 
 void RecordLoad2(int packNo, int songNo, int difNo) {
@@ -1629,3 +1415,226 @@ int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, i
 }
 
 #endif /* under */
+
+#if 0 /* ddifの遺物 */
+static void ddifLegacy(rec_score_file_t *recfp, ddef_box *ddif2, DxFile_t songdata) {
+
+	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
+	difkey[0][2] = 0;
+	difkey[1][2] = 0;
+	difkey[1][3] = 0;
+	difkey[2][3] = -1;
+	difkey[3][3] = -2;
+	difkey[4][3] = 0;
+
+	/*難易度計算
+	(3000000/ひとつ前のノーツとの間隔)を、そのノーツの難易度点数とする。
+	叩いたキーを50個記憶し、この組み合わせでできた最高値が曲の難易度。
+	1個前と同じキーの時は(対象のキーはarrowのみ)
+	┣間隔が150ms以上の時は変動なし(BPM200の8分)
+	┣間隔が150ms以下75ms以上の時は得点("間隔"/(-75)+3)倍(1～2倍)
+	┗間隔が75ms以下の時は得点2倍(BPM200の16分)
+	1=hit,2=non,3=up,4=down,5=left,6=right,7=non or down,8=up or down,9=up or non
+	*/
+
+#define ARROW_TRICK_MLP(base) (base * 18 / 10) /* arrowひっかけは1.8倍 */
+#define DIF_BBEF_MLP(base) (base * 12 / 10) /* 2個前と違うキーの時は得点1.2倍(全キー対象) */
+#define ARROW_MLP(base) (base * 12 / 10) /* arrowキーは得点1.2倍 */
+
+	/* その他倍率はrecp_cal_ddif.cppに記載 */
+
+	objectN[0] = 0;
+	objectN[1] = 0;
+	objectN[2] = 0;
+	difkey[0][3] = recfp->mapdata.notes;
+	if (difkey[0][3] > 49)difkey[0][3] = 49;
+	difkey[7][3] = (Etime - recfp->time.offset) / 25 * 2;
+	if (difkey[7][3] < 10000)difkey[7][3] = 10000;
+	DifkeyCalInit(recfp->mapdata.notes, Etime - recfp->time.offset);
+
+	//ノーツがなくなるまで繰り返す
+	while (recfp->mapdata.note[0][objectN[0]].hittime >= 0 ||
+		recfp->mapdata.note[1][objectN[1]].hittime >= 0 ||
+		recfp->mapdata.note[2][objectN[2]].hittime >= 0) {
+		//GHOSTノーツをスキップ
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			while (recfp->mapdata.note[i[0]][objectN[i[0]]].object == 8 &&
+				recfp->mapdata.note[i[0]][objectN[i[0]]].hittime >= 0) {
+				objectN[i[0]]++;
+			}
+		}
+		G[0] = -1;
+		//一番早いノーツを探してG[0]に代入
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			if (recfp->mapdata.note[i[0]][objectN[i[0]]].hittime >= 0) {
+				G[0] = i[0];
+				break;
+			}
+		}
+		//無かったらブレーク
+		if (G[0] == -1) break;
+		//一番早いノーツを探してG[0]に代入
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			if (G[0] != i[0] && recfp->mapdata.note[G[0]][objectN[G[0]]].hittime >
+				recfp->mapdata.note[i[0]][objectN[i[0]]].hittime &&
+				recfp->mapdata.note[i[0]][objectN[i[0]]].hittime >= 0) {
+				G[0] = i[0];
+			}
+			else if (G[0] != i[0] &&
+				recfp->mapdata.note[G[0]][objectN[G[0]]].hittime ==
+				recfp->mapdata.note[i[0]][objectN[i[0]]].hittime &&
+				recfp->mapdata.note[G[0]][objectN[G[0]]].object == 2 &&
+				recfp->mapdata.note[i[0]][objectN[i[0]]].object != 2 &&
+				recfp->mapdata.note[i[0]][objectN[i[0]]].hittime >= 0) {
+				G[0] = i[0];
+			}
+		}
+		DifkeyCalInsertNote(&recfp->mapdata.note[G[0]][objectN[G[0]]], G[0]);
+		//ddifの計算
+		while (recfp->mapdata.note[G[0]][objectN[G[0]]].hittime >=
+			(Etime - recfp->time.offset) / 25 * ddif2->nowdifsection + recfp->time.offset) {
+			recfp->mapdata.ddif[ddif2->nowdifsection - 1] = cal_ddif(ddif2->datanum, difkey[0],
+				Etime, recfp->time.offset, ddif2->nowdifsection, difkey[7][3]);
+			ddif2->nowdifsection++;
+		}
+		difkey[difkey[1][3]][0] = recfp->mapdata.note[G[0]][objectN[G[0]]].object;
+		difkey[difkey[1][3]][1] = recfp->mapdata.note[G[0]][objectN[G[0]]].hittime;
+
+		G[2] = MapErrorCheck(difkey[difkey[1][3]][0], difkey[difkey[1][3]][1],
+			difkey[difkey[2][3]][0], difkey[difkey[2][3]][1], o, waningLv);
+		if (G[2] != 0 && recfp->outpoint[1] == 0) {
+			recfp->outpoint[0] = difkey[difkey[1][3]][1];
+			recfp->outpoint[1] = G[2];
+		}
+		switch (difkey[difkey[1][3]][0]) {
+		case 1: //hitノーツ補間
+			if (difkey[difkey[2][3]][0] == 1 &&
+				difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
+				difkey[difkey[2][3]][2] *= 1;
+				objectN[G[0]]++;
+				continue;
+			}
+			break;
+		case 2: //catchノーツ補間
+			if (G[0] != 1) difkey[difkey[1][3]][0] = G[0] / 2 + 3;
+			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 3 &&
+				(difkey[difkey[2][3]][0] == 8 ||
+				difkey[difkey[2][3]][0] == 9)) {
+				difkey[difkey[2][3]][0] = 3;
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 2 && (difkey[difkey[2][3]][0] == 1 || difkey[difkey[2][3]][0] == 5 || difkey[difkey[2][3]][0] == 6)) {
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 2 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9)) {
+				difkey[difkey[2][3]][0] = 2;
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 4 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 8)) {
+				difkey[difkey[2][3]][0] = 4;
+				objectN[G[0]]++;
+				continue;
+			}
+			break;
+		case 5: //leftノーツ補間
+			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
+				difkey[difkey[2][3]][0] = 5;
+				continue;
+			}
+			break;
+		case 6: //rightノーツ補間
+			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
+				difkey[difkey[2][3]][0] = 6;
+				continue;
+			}
+			break;
+		case 7: //bombノーツ補間
+			if (G[0] != 0)difkey[difkey[1][3]][0] = G[0] + 7;
+			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 7 && difkey[difkey[2][3]][0] == 8 || difkey[difkey[1][3]][0] == 8 && difkey[difkey[2][3]][0] == 7) {
+				difkey[difkey[2][3]][0] = 4;
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 7 && difkey[difkey[2][3]][0] == 9 || difkey[difkey[1][3]][0] == 9 && difkey[difkey[2][3]][0] == 7) {
+				difkey[difkey[2][3]][0] = 2;
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 8 && difkey[difkey[2][3]][0] == 9 || difkey[difkey[1][3]][0] == 9 && difkey[difkey[2][3]][0] == 8) {
+				difkey[difkey[2][3]][0] = 3;
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 7 && (difkey[difkey[2][3]][0] != 3)) {
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 8 && (difkey[difkey[2][3]][0] == 3 || difkey[difkey[2][3]][0] == 4)) {
+				objectN[G[0]]++;
+				continue;
+			}
+			else if (difkey[difkey[1][3]][0] == 9 && (difkey[difkey[2][3]][0] != 4)) {
+				objectN[G[0]]++;
+				continue;
+			}
+			break;
+		}
+		/* calculate difkey */
+		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
+			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
+				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
+				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
+				difkey[difkey[2][3]][2]);
+		}
+		for (i[0] = 0; i[0] < 3; i[0]++) {
+			if (recfp->mapdata.note[G[0]][objectN[G[0]]].object >= 3 && recfp->mapdata.note[G[0]][objectN[G[0]]].object <= 6 &&
+				G[0] != i[0] && recfp->mapdata.note[G[0]][objectN[G[0]]].object == recfp->mapdata.note[i[0]][objectN[i[0]]].object &&
+				recfp->mapdata.note[G[0]][objectN[G[0]]].hittime + 5 >= recfp->mapdata.note[i[0]][objectN[i[0]]].hittime) {
+				objectN[i[0]]++;
+			}
+		}
+		objectN[G[0]]++;
+		ddif2->datanum++;
+		G[0] = 0;
+		ddif2->maxdif = mins(ddif2->maxdif,
+			cal_nowdif_m(difkey[0], difkey[0][3], difkey[1][3], difkey[7][3]));
+		for (i[0] = 1; i[0] < 4; i[0]++) {
+			difkey[i[0]][3]++;
+			if (difkey[i[0]][3] > difkey[0][3])difkey[i[0]][3] = 0;
+		}
+	}
+	ddif2->datanum++;
+	for (i[0] = 0; i[0] < 2; i[0]++) {
+		if (difkey[i[0]][2] == 0 && difkey[2][2] > 0) { ddif2->datanum--; }
+	}
+	if (ddif2->datanum < 1) { ddif2->datanum = 1; }
+	if (ddif2->datanum > 50) { ddif2->datanum = 50; }
+	recfp->mapdata.ddifG[1] = ddif2->maxdif;
+	if (recfp->mapdata.ddifG[1] <= 0) { recfp->mapdata.ddifG[1] = 1; }
+	ddif2->maxdif /= 50;
+	recfp->mapdata.ddif[ddif2->nowdifsection - 1] = 0;
+	for (i[0] = 0; i[0] < ddif2->datanum; i[0]++) {
+		if (difkey[i[0]][1] > Etime - difkey[7][3]) {
+			recfp->mapdata.ddif[ddif2->nowdifsection - 1] += difkey[i[0]][2];
+		}
+	}
+	for (i[0] = ddif2->nowdifsection - 1; i[0] <= 24; i[0]++) {
+		recfp->mapdata.ddif[i[0]] = recfp->mapdata.ddif[ddif2->nowdifsection - 1];
+	}
+	ddif2->lastdif = recfp->mapdata.ddif[ddif2->nowdifsection - 1] / 50;
+	//NEEDYOU:Lv.1.0->2713, Co-op katyohugetsu:Lv.8.0->34733
+	ddif2->maxdif = lins(2713, 100, 34733, 800, ddif2->maxdif);
+	ddif2->lastdif = lins(2713, 100, 34733, 800, ddif2->lastdif);
+}
+#endif
