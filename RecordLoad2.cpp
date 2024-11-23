@@ -82,7 +82,7 @@ int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, i
 
 #endif /* proto */
 
-#if 1 /* sub action */
+#if 1 /* sub action 2 */
 
 double SETbpm(wchar_t *p1) {
 	strmods(p1, 5);
@@ -390,49 +390,9 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 	return;
 }
 
-#endif /* sub action */
+#endif /* sub action 2 */
 
-/* main action */
-static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath, int o) {
-	//o: 難易度ナンバー
-	short int i[2] = { 0,0 };
-#if 0 /* fixing... */
-	int G[4] = { 0,0,0,0 };
-#else
-	int G[14] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-#endif
-	int noteoff = 0; //ノーツのオフセット
-	int Etime = 0; //譜面の終わりの時間
-	int waningLv = 2;
-	double GD[5] = { 0,0,0,0,0 };
-	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
-	//short int itemN = 0; //↑の番号
-	short int YmoveN2[3] = { 0,0,0 };
-	short int XmoveN2[3] = { 0,0,0 };
-	short int lockN[2] = { 1,1 }; //↑の番号
-	short int viewTN = 1;
-	item_set_box item_set[99];
-	short int MovieN = 0;
-	short int cameraN = 1; //↑の番号
-	struct custom_note_box customnote[9];
-	short int scroolN = 1;
-	int objectN = 0; //↑の番号
-	int noteLaneNo[3] = { -1,-1,-1 };
-	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
-	difkey[0][2] = 0;
-	difkey[1][2] = 0;
-	difkey[1][3] = 0;
-	difkey[2][3] = -1;
-	difkey[3][3] = -2;
-	difkey[4][3] = 0;
-	ddef_box ddif2;
-	double bpmG = 120;
-	double timer[3] = { 0,0,0 }; //[上, 中, 下]レーンの時間
-	short int speedN[5] = { 1,1,1,1,1 }; //↑の番号
-	TCHAR RRS[255]; //PC用譜面データの保存場所
-	TCHAR GT1[255];
-	DxFile_t songdata = 0;
-
+static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.camera[0].starttime = 0;
 	recfp->mapeff.camera[0].endtime = 0;
 	recfp->mapeff.camera[0].xpos = 0;
@@ -512,9 +472,52 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 	recfp->mapeff.speedt[3][0][1] = 1;
 	recfp->mapeff.speedt[4][0][0] = 0;
 	recfp->mapeff.speedt[4][0][1] = 1;
+	return;
+}
 
+/* main action */
+static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath, int o) {
+	//o: 難易度ナンバー
+	short int i[2] = { 0,0 };
+#if 0 /* fixing... */
+	int G[4] = { 0,0,0,0 };
+#else
+	int G[14] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+#endif
+	int noteoff = 0; //ノーツのオフセット
+	int Etime = 0; //譜面の終わりの時間
+	int waningLv = 2;
+	double GD[5] = { 0,0,0,0,0 };
+	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
+	//short int itemN = 0; //↑の番号
+	short int YmoveN2[3] = { 0,0,0 };
+	short int XmoveN2[3] = { 0,0,0 };
+	short int lockN[2] = { 1,1 }; //↑の番号
+	short int viewTN = 1;
+	item_set_box item_set[99];
+	short int MovieN = 0;
+	short int cameraN = 1; //↑の番号
+	struct custom_note_box customnote[9];
+	short int scroolN = 1;
+	int objectN = 0; //↑の番号
+	int noteLaneNo[3] = { -1,-1,-1 };
+	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
+	difkey[0][2] = 0;
+	difkey[1][2] = 0;
+	difkey[1][3] = 0;
+	difkey[2][3] = -1;
+	difkey[3][3] = -2;
+	difkey[4][3] = 0;
+	ddef_box ddif2;
+	double bpmG = 120;
+	double timer[3] = { 0,0,0 }; //[上, 中, 下]レーンの時間
+	short int speedN[5] = { 1,1,1,1,1 }; //↑の番号
+	TCHAR RRS[255]; //PC用譜面データの保存場所
+	TCHAR GT1[255];
+	DxFile_t songdata = 0;
 	FILE *fp;
 
+	RecMapLoad_SetInitRecfp(recfp);
 	songdata = FileRead_open(mapPath);
 	if (songdata == 0) { return; }
 
@@ -1528,7 +1531,7 @@ static void ddifLegacy(rec_score_file_t *recfp, ddef_box *ddif2, DxFile_t songda
 			}
 			else if (difkey[difkey[1][3]][0] == 3 &&
 				(difkey[difkey[2][3]][0] == 8 ||
-					difkey[difkey[2][3]][0] == 9)) {
+				difkey[difkey[2][3]][0] == 9)) {
 				difkey[difkey[2][3]][0] = 3;
 				objectN[G[0]]++;
 				continue;
