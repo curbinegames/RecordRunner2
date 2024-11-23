@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include "RecPlay/playbox.h"
+#include <playbox.h>
 
 void noteLoadOld(struct note_box *noteup, struct note_box *notemid,
 	struct note_box *notelow, int allnotenum, FILE *fp) {

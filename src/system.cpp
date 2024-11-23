@@ -1,8 +1,8 @@
 
 #include <DxLib.h>
-#include "general/sancur.h"
-#include "general/strcur.h"
-#include "general/dxcur.h"
+#include <sancur.h>
+#include <strcur.h>
+#include <dxcur.h>
 
 int SmallFontData = 0;
 int LargeFontData = 0;

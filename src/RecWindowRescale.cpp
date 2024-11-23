@@ -1,11 +1,11 @@
 
-#include "DxLib.h"
-#include "general/sancur.h"
-#include "general/strcur.h"
-#include "general/dxdraw.h"
-#include "fontcur/fontcur.h"
-#include "system.h"
-#include "RecWindowRescale.h"
+#include <DxLib.h>
+#include <sancur.h>
+#include <strcur.h>
+#include <dxdraw.h>
+#include <fontcur.h>
+#include <system.h>
+#include <RecWindowRescale.h>
 
 void RecRescaleDrawLine(int x1, int y1, int x2, int y2, uint cr, int thick) {
 	int drawX = 0;
