@@ -1082,7 +1082,7 @@ public:
  * @return now_scene_t éüÇÃÉVÅ[Éì
  */
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
-	rec_play_nameset_t *ret_nameset, TCHAR *ret_fileN, int p, int n, int o, int shift, int AutoFlag)
+	rec_play_nameset_t *ret_nameset, TCHAR *ret_fileN, int p, int n, int o, int AutoFlag)
 {
 
 #if 1 /* num define */
@@ -1666,17 +1666,17 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 		strcats_2(mapPath, 255, L".rrs");
 		_wfopen_s(&fp, mapPath, L"rb");
 	}
+
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
-		cal_ddif_3(mapPath);
+		// cal_ddif_3(mapPath);
 	}
 	else {
 		fclose(fp);
 	}
 
 	/* TODO: RecPlayMain ÇÃï‘ÇËílÇ int Ç…ïœÇ¶ÇÈ */
-	ret = RecPlayMain(&map_detail, &userpal, &nameset,
-		fileName, packNo, musicNo, difNo, shift, AutoFlag);
+	ret = RecPlayMain(&map_detail, &userpal, &nameset, fileName, packNo, musicNo, difNo, AutoFlag);
 
 	if (ret == SCENE_EXIT) { return SCENE_EXIT; }
 	if (AutoFlag == 1) { return SCENE_SERECT; }
