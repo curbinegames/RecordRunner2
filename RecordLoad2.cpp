@@ -392,6 +392,8 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 
 #endif /* sub action 2 */
 
+#if 1 /* sub action */
+
 static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.camera[0].starttime = 0;
 	recfp->mapeff.camera[0].endtime = 0;
@@ -472,6 +474,39 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.speedt[3][0][1] = 1;
 	recfp->mapeff.speedt[4][0][0] = 0;
 	recfp->mapeff.speedt[4][0][1] = 1;
+	return;
+}
+
+static void RecMapLoad_SetEndRecfp(rec_score_file_t *recfp, double *timer, uint objectN[],
+	uint lockN0, uint lockN1)
+{
+	//譜面の最後にgoustを置く
+#if SWITCH_NOTE_BOX_2 == 1
+	recfp->mapdata.note[*objectN].lane = NOTE_LANE_MID;
+	recfp->mapdata.note[*objectN].hittime = timer[0];
+	recfp->mapdata.note[*objectN + 1].hittime = -1;
+	recfp->mapdata.note[*objectN].object = NOTE_GHOST;
+	recfp->mapdata.note[*objectN].ypos = 1000;
+#else
+	for (uint iLane = 0; iLane < 3; iLane++) {
+		recfp->mapdata.note[iLane][objectN[iLine]].hittime = timer[iLane];
+		recfp->mapdata.note[iLane][objectN[iLine] + 1].hittime = -1;
+		recfp->mapdata.note[iLane][objectN[iLine]].object = NOTE_GHOST;
+		recfp->mapdata.note[iLane][objectN[iLine]].ypos = 1000;
+	}
+#endif
+	recfp->mapeff.lock[0][0][lockN0] = 1;
+	recfp->mapeff.lock[0][1][lockN0] = -1;
+	recfp->mapeff.lock[1][0][lockN1] = -1;
+	recfp->mapeff.lock[1][1][lockN1] = -1;
+#if SWITCH_NOTE_BOX_2 == 1
+	recfp->allnum.notenum[1]++;
+#else
+	recfp->allnum.notenum[0]++;
+	recfp->allnum.notenum[1]++;
+	recfp->allnum.notenum[2]++;
+#endif
+	recfp->time.end = timer[0];
 	return;
 }
 
@@ -558,7 +593,6 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 	return;
 }
 
-/* main action */
 static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath, int o) {
 	//o: 難易度ナンバー
 	short int i[2] = { 0,0 };
@@ -1152,37 +1186,14 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 		}
 	}
 	FileRead_close(songdata);
-	//譜面の最後にgoustを置く
-#if SWITCH_NOTE_BOX_2 == 1
-	recfp->mapdata.note[objectN].lane = NOTE_LANE_MID;
-	recfp->mapdata.note[objectN].hittime = timer[i[0]];
-	recfp->mapdata.note[objectN + 1].hittime = -1;
-	recfp->mapdata.note[objectN].object = NOTE_GHOST;
-	recfp->mapdata.note[objectN].ypos = 1000;
-#else
-	for (i[0] = 0; i[0] < 3; i[0]++) {
-		recfp->mapdata.note[i[0]][objectN[i[0]]].hittime = timer[i[0]];
-		recfp->mapdata.note[i[0]][objectN[i[0]] + 1].hittime = -1;
-		recfp->mapdata.note[i[0]][objectN[i[0]]].object = NOTE_GHOST;
-		recfp->mapdata.note[i[0]][objectN[i[0]]].ypos = 1000;
-	}
-#endif
-	recfp->mapeff.lock[0][0][lockN[0]] = 1;
-	recfp->mapeff.lock[0][1][lockN[0]] = -1;
-	recfp->mapeff.lock[1][0][lockN[1]] = -1;
-	recfp->mapeff.lock[1][1][lockN[1]] = -1;
-#if SWITCH_NOTE_BOX_2 == 1
-	recfp->allnum.notenum[1]++;
-#else
-	recfp->allnum.notenum[0]++;
-	recfp->allnum.notenum[1]++;
-	recfp->allnum.notenum[2]++;
-#endif
-	recfp->time.end = timer[0];
+	RecMapLoad_SetEndRecfp(recfp, timer, (uint *)&objectN, lockN[0], lockN[1]);
 	RecMapLoad_SaveMap(folderPath, recfp, o);
 	return;
 }
 
+#endif /* sub action */
+
+/* main action */
 void RecordLoad2(int packNo, int songNo, int difNo) {
 	TCHAR folderPath[255]; // フォルダのパス
 	TCHAR mapPath[255]; // マップのパス
