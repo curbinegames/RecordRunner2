@@ -475,6 +475,89 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	return;
 }
 
+static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int difNo) {
+	int dummy = 0;
+	TCHAR RRS[255]; //PC用譜面データの保存場所
+	FILE *fp;
+
+	//ここからPC用譜面データのファイルの作成(セーブ作業)
+	strcopy(dataE, RRS, 1); //"record/<パック名>/<曲名>/"
+	stradds_2(RRS, 255, (TCHAR)(_T('0') + difNo)); //"record/<パック名>/<曲名>/<難易度>"
+	strcats_2(RRS, 255, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度>.rrs"
+
+	_wfopen_s(&fp, RRS, L"wb");
+	fwrite(&recfp->allnum, sizeof(playnum_box), 1, fp);//各データの個数
+	fwrite(&recfp->nameset.mp3FN, 255, 1, fp);//音楽ファイル名
+	fwrite(&recfp->mapdata.bpm, sizeof(double), 1, fp);//BPM
+	fwrite(&recfp->time.offset, sizeof(int), 1, fp);//offset
+	fwrite(&recfp->nameset.sky, 255, 1, fp);//空背景名
+	fwrite(&recfp->nameset.ground, 255, 1, fp);//地面画像名
+	fwrite(&recfp->nameset.water, 255, 1, fp);//水中画像名
+	fwrite(&recfp->nameset.songN, 255, 1, fp);//曲名
+	fwrite(&recfp->nameset.songNE, 255, 1, fp);//曲名(英語)
+	fwrite(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//レベル
+	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
+	{
+		int buf[99][2];
+		for (int inum = 0; inum < 99; inum++) {
+			buf[inum][0] = recfp->mapeff.fall.d[inum].No;
+			buf[inum][1] = recfp->mapeff.fall.d[inum].time;
+		}
+		fwrite(&buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
+	}
+	fwrite(&recfp->mapeff.speedt, sizeof(double), 990, fp);//レーン速度
+	{
+		int buf[3][99][2];
+		for (int ilane = 0; ilane < 3; ilane++) {
+			for (int inum = 0; inum < 99; inum++) {
+				buf[ilane][inum][0] = recfp->mapeff.chamo[ilane].gra[inum];
+				buf[ilane][inum][1] = recfp->mapeff.chamo[ilane].time[inum];
+			}
+		}
+		fwrite(&buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
+	}
+	fwrite(&recfp->mapeff.move.y[0].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
+	fwrite(&recfp->mapeff.move.y[1].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[1], fp);//中レーン縦位置移動タイミング
+	fwrite(&recfp->mapeff.move.y[2].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[2], fp);//下レーン縦位置移動タイミング
+	fwrite(&recfp->mapeff.move.y[3].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[3], fp);//地面縦位置移動タイミング
+	fwrite(&recfp->mapeff.move.y[4].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[4], fp);//水面縦位置移動タイミング
+	fwrite(&recfp->mapeff.move.x[0].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[0], fp);//上レーン横位置移動タイミング
+	fwrite(&recfp->mapeff.move.x[1].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[1], fp);//中レーン横位置移動タイミング
+	fwrite(&recfp->mapeff.move.x[2].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[2], fp);//下レーン横位置移動タイミング
+	fwrite(&recfp->mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
+	{
+		int buf[2][99];
+		for (int inum = 0; inum < 99; inum++) {
+			buf[0][inum] = recfp->mapeff.carrow.d[inum].data;
+			buf[1][inum] = recfp->mapeff.carrow.d[inum].time;
+		}
+		fwrite(&buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
+	}
+	fwrite(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
+#if SWITCH_NOTE_BOX_2
+	fwrite(&recfp->mapdata.note, sizeof(note_box_2_t), recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
+#else
+	fwrite(&recfp->mapdata.note[0], sizeof(struct note_box), recfp->allnum.notenum[0], fp); /* 上レーンノーツデータ */
+	fwrite(&recfp->mapdata.note[1], sizeof(struct note_box), recfp->allnum.notenum[1], fp); /* 中レーンノーツデータ */
+	fwrite(&recfp->mapdata.note[2], sizeof(struct note_box), recfp->allnum.notenum[2], fp); /* 下レーンノーツデータ */
+#endif
+	fwrite(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
+	fwrite(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
+	fwrite(&dummy, sizeof(int), 1, fp);//最高難易度
+	fwrite(&dummy, sizeof(int), 1, fp);//最終難易度
+	fwrite(&recfp->mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
+	fwrite(&dummy, sizeof(int), 1, fp);//各区間難易度データ
+	fwrite(&recfp->mapdata.ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
+	fwrite(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
+	fwrite(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//動画データ
+	fwrite(&recfp->mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
+	fwrite(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+	fwrite(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
+	fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
+	fclose(fp);
+	return;
+}
+
 /* main action */
 static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath, int o) {
 	//o: 難易度ナンバー
@@ -1096,85 +1179,7 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 	recfp->allnum.notenum[2]++;
 #endif
 	recfp->time.end = timer[0];
-
-	{
-		//ここからPC用譜面データのファイルの作成(セーブ作業)
-		strcopy(folderPath, RRS, 1); //"record/<パック名>/<曲名>/"
-		stradds_2(RRS, 255, (TCHAR)(_T('0') + o)); //"record/<パック名>/<曲名>/<難易度>"
-		strcats_2(RRS, 255, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度>.rrs"
-
-		G[2] = _wfopen_s(&fp, RRS, L"wb");
-		fwrite(&recfp->allnum, sizeof(playnum_box), 1, fp);//各データの個数
-		fwrite(&recfp->nameset.mp3FN, 255, 1, fp);//音楽ファイル名
-		fwrite(&recfp->mapdata.bpm, sizeof(double), 1, fp);//BPM
-		fwrite(&recfp->time.offset, sizeof(int), 1, fp);//offset
-		fwrite(&recfp->nameset.sky, 255, 1, fp);//空背景名
-		fwrite(&recfp->nameset.ground, 255, 1, fp);//地面画像名
-		fwrite(&recfp->nameset.water, 255, 1, fp);//水中画像名
-		fwrite(&recfp->nameset.songN, 255, 1, fp);//曲名
-		fwrite(&recfp->nameset.songNE, 255, 1, fp);//曲名(英語)
-		fwrite(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//レベル
-		//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
-		{
-			int buf[99][2];
-			for (int inum = 0; inum < 99; inum++) {
-				buf[inum][0] = recfp->mapeff.fall.d[inum].No;
-				buf[inum][1] = recfp->mapeff.fall.d[inum].time;
-			}
-			fwrite(&buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
-		}
-		fwrite(&recfp->mapeff.speedt, sizeof(double), 990, fp);//レーン速度
-		{
-			int buf[3][99][2];
-			for (int ilane = 0; ilane < 3; ilane++) {
-				for (int inum = 0; inum < 99; inum++) {
-					buf[ilane][inum][0] = recfp->mapeff.chamo[ilane].gra[inum];
-					buf[ilane][inum][1] = recfp->mapeff.chamo[ilane].time[inum];
-				}
-			}
-			fwrite(&buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
-		}
-		fwrite(&recfp->mapeff.move.y[0].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
-		fwrite(&recfp->mapeff.move.y[1].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[1], fp);//中レーン縦位置移動タイミング
-		fwrite(&recfp->mapeff.move.y[2].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[2], fp);//下レーン縦位置移動タイミング
-		fwrite(&recfp->mapeff.move.y[3].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[3], fp);//地面縦位置移動タイミング
-		fwrite(&recfp->mapeff.move.y[4].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[4], fp);//水面縦位置移動タイミング
-		fwrite(&recfp->mapeff.move.x[0].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[0], fp);//上レーン横位置移動タイミング
-		fwrite(&recfp->mapeff.move.x[1].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[1], fp);//中レーン横位置移動タイミング
-		fwrite(&recfp->mapeff.move.x[2].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[2], fp);//下レーン横位置移動タイミング
-		fwrite(&recfp->mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
-		{
-			int buf[2][99];
-			for (int inum = 0; inum < 99; inum++) {
-				buf[0][inum] = recfp->mapeff.carrow.d[inum].data;
-				buf[1][inum] = recfp->mapeff.carrow.d[inum].time;
-			}
-			fwrite(&buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
-		}
-		fwrite(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2
-		fwrite(&recfp->mapdata.note, sizeof(note_box_2_t), recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
-#else
-		fwrite(&recfp->mapdata.note[0], sizeof(struct note_box), recfp->allnum.notenum[0], fp); /* 上レーンノーツデータ */
-		fwrite(&recfp->mapdata.note[1], sizeof(struct note_box), recfp->allnum.notenum[1], fp); /* 中レーンノーツデータ */
-		fwrite(&recfp->mapdata.note[2], sizeof(struct note_box), recfp->allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
-		fwrite(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
-		fwrite(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
-		G[0] = ddif2.maxdif;//最高難易度
-		G[1] = ddif2.lastdif;//最終難易度
-		fwrite(&G, sizeof(int), 2, fp);
-		fwrite(&recfp->mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
-		fwrite(&ddif2.nowdifsection, sizeof(int), 1, fp);//各区間難易度データ
-		fwrite(&recfp->mapdata.ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
-		fwrite(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
-		fwrite(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//動画データ
-		fwrite(&recfp->mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
-		fwrite(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-		fwrite(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
-		fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
-		fclose(fp);
-	}
+	RecMapLoad_SaveMap(folderPath, recfp, o);
 	return;
 }
 
