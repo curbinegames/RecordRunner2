@@ -76,15 +76,6 @@ typedef enum rec_play_status_e {
 	REC_PLAY_STATUS_DROPED,
 } rec_play_status_t;
 
-struct camera_box {
-	int starttime = -1;
-	int endtime = -1;
-	int xpos = -1;
-	int ypos = -1;
-	double zoom = -1;
-	int rot = -1;
-	int mode = -1;
-};
 struct custom_note_box {
 	wchar_t note = L'\0';
 	int color = 0;/*(only hit note)0=green, 1=red, 2=blue, 3=yellow, 4=black, 5=white*/

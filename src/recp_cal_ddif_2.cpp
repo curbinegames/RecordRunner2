@@ -1,6 +1,7 @@
 
 #include <sancur.h>
 #include <playbox.h>
+#include <RecScoreFile.h>
 #include <recp_cal_difkey.h>
 #include <recp_cal_ddif.h>
 #include <noteLoad.h>

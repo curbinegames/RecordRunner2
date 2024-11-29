@@ -1,9 +1,15 @@
 #pragma once
 
-#include "DxLib.h"
+#include <DxLib.h>
 
 typedef unsigned int uint;
 typedef int intx100_t; /** 100”{‚µ‚Ä‚¢‚é‚±‚Æ‚ðŽ¦‚·intŒ^ */
+
+typedef enum cur_move_e {
+	CUR_MOVE_LINE = 1,
+	CUR_MOVE_ACC,
+	CUR_MOVE_DEC
+} cur_move_type_t;
 
 extern int mins(int a, int b);
 extern int mins_2(int a, int b);
