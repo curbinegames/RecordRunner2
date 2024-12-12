@@ -19,6 +19,7 @@
 #include <recr_cutin.h>
 #include <dxlibcur.h>
 #include <RecSystem.h>
+#include <recp_cal_ddif_2.h>
 
 #include <playbox.h>
 #include <PlayBonus.h>
@@ -1669,7 +1670,10 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
-		// cal_ddif_3(mapPath);
+		RecGetMusicPath(mapPath, 255, packNo, musicNo);
+		stradds_2(mapPath, 255, (TCHAR)((int)L'0' + difNo));
+		strcats_2(mapPath, 255, L".rrs");
+		cal_ddif_3(mapPath);
 	}
 	else {
 		fclose(fp);

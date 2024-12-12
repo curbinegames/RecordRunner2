@@ -1,3 +1,5 @@
 #pragma once
 
-extern int cal_ddif_3(wchar_t path[]);
+#include <tchar.h>
+
+extern void cal_ddif_3(const TCHAR *path);
