@@ -116,4 +116,12 @@ typedef struct rec_score_file_s {
 	int outpoint[2] = { -1,0 };
 } rec_score_file_t;
 
+typedef struct rec_score_file_row_s {
+	playnum_box allnum;
+	rec_map_detail_t mapdata;
+} rec_score_file_row_t;
+
 extern int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path);
+extern int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path);
+extern int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path);
+extern int RecScoreWriteForDdif(rec_score_file_row_t *recfp, const TCHAR *path);
