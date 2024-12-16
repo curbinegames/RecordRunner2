@@ -55,15 +55,112 @@ static int cal_ddif_2(int num, int const *difkey, int Etime, int noteoff, int di
 	}
 }
 
-#define REC_FREE 0
-#define REC_PUSH 1
-#define REC_HOLD 2
-#define REC_NONE 3
-#define REC_RELA 4
+#define REC_FREE 0 //何でもいい
+#define REC_PUSH 1 //押す
+#define REC_HOLD 2 //押しっぱなし
+#define REC_NONE 3 //離しっぱなし
+#define REC_RELA 4 //離す
+
+class rec_ddif_btn_c {
+private:
+	uint btn = REC_FREE;
+
+public:
+	uint GetVal() const {
+		return this->btn;
+	}
+
+	void Reset() {
+		this->btn = REC_FREE;
+	}
+
+	void SetPush() {
+		switch (this->btn) {
+		case REC_FREE:
+		case REC_HOLD:
+			this->btn = REC_PUSH;
+			break;
+		case REC_PUSH:
+		case REC_NONE:
+		case REC_RELA:
+			break;
+		}
+	}
+
+	void SetHold() {
+		switch (this->btn) {
+		case REC_FREE:
+			this->btn = REC_HOLD;
+			break;
+		case REC_PUSH:
+		case REC_HOLD:
+		case REC_NONE:
+		case REC_RELA:
+			break;
+		}
+	}
+
+	void SetNone() {
+		switch (this->btn) {
+		case REC_FREE:
+			this->btn = REC_NONE;
+			break;
+		case REC_PUSH:
+		case REC_HOLD:
+		case REC_NONE:
+		case REC_RELA:
+			break;
+		}
+	}
+
+	void SetRelease() {
+		switch (this->btn) {
+		case REC_FREE:
+		case REC_NONE:
+			this->btn = REC_RELA;
+			break;
+		case REC_PUSH:
+		case REC_HOLD:
+		case REC_RELA:
+			break;
+		}
+	}
+
+	bool CheckPushGroup() const {
+		return this->btn == REC_PUSH || this->btn == REC_HOLD;
+	}
+
+	bool CheckReleaseGroup() const {
+		return this->btn == REC_FREE || this->btn == REC_RELA || this->btn == REC_NONE;
+	}
+};
+
+typedef struct rec_ddif_pal_s {
+	uint notes = 0; //HIT,ARROWの密度
+	uint trill = 0; //トリルの密度
+	uint arrow = 0; //ARROWの密度
+	uint chord = 0; //同時押しの密度
+	uint chain = 0; //縦連密度
+	uint meldy = 0; //乱打密度
+	uint actor = 0; //CATCH,BOMBの密度
+	uint trick = 0; //ARROWひっかけの密度
+} rec_ddif_pal_t;
 
 typedef struct rec_ddif_data_s {
-	int time = -1;
-	char btn[7];
+	DxTime_t time = 0;
+	note_material note[3] = { NOTE_NONE,NOTE_NONE,NOTE_NONE };
+	uint hitN = 0;
+	uint arwN = 0;
+	struct {
+		rec_ddif_btn_c z;
+		rec_ddif_btn_c x;
+		rec_ddif_btn_c c;
+		rec_ddif_btn_c u;
+		rec_ddif_btn_c d;
+		rec_ddif_btn_c l;
+		rec_ddif_btn_c r;
+	} btn;
+	rec_ddif_pal_t pal;
 } rec_ddif_data_t;
 
 void cal_ddif_3(const TCHAR *path) {
@@ -72,14 +169,16 @@ void cal_ddif_3(const TCHAR *path) {
 	(void)path;
 
 	int G[5];
-	rec_score_file_t recfp;
+	rec_score_file_row_t recfp;
 	rec_ddif_data_t key[50];
+	uint keyN = 0;
+	rec_ddif_pal_t mdif;
 	int objectN[3] = { 0,0,0 }; //↑の番号
 
-	rec_score_fread(&recfp, esc_path);
+	RecScoreReadForDdif(&recfp, esc_path);
 	//各初期値
-	for (int iLane = 0; iLane < 3; iLane++) {
-		for (int iNum = 0; iNum < recfp.allnum.notenum[iLane]; iNum++) {
+	for (uint iLane = 0; iLane < 3; iLane++) {
+		for (uint iNum = 0; iNum < recfp.allnum.notenum[iLane]; iNum++) {
 			if ((int)recfp.mapdata.note[iNum].lane == iLane) {
 				objectN[iLane] = iNum;
 				break;
@@ -88,7 +187,7 @@ void cal_ddif_3(const TCHAR *path) {
 	}
 
 	//GHOSTノーツをスキップ
-	for (int iLane = 0; iLane < 3; iLane++) {
+	for (uint iLane = 0; iLane < 3; iLane++) {
 		while (recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST &&
 			0 <= recfp.mapdata.note[objectN[iLane]].hittime)
 		{
@@ -100,11 +199,396 @@ void cal_ddif_3(const TCHAR *path) {
 		recfp.mapdata.note[objectN[1]].next != -1 ||
 		recfp.mapdata.note[objectN[2]].next != -1)
 	{
+		note_material mattemp[3] = { NOTE_NONE,NOTE_NONE,NOTE_NONE };
+
+		//次のノーツの時間を取得
+		G[0] = 0; //次のノーツのレーン番号
+		if (recfp.mapdata.note[objectN[1]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) {
+			G[0] = 1;
+		}
+		if (recfp.mapdata.note[objectN[2]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) {
+			G[0] = 2;
+		}
+		key[keyN].time = recfp.mapdata.note[objectN[G[0]]].hittime;
+
+		//次のノーツ群を取得
+		if (recfp.mapdata.note[objectN[0]].hittime < key[keyN].time + 40) {
+			key[keyN].note[0] = recfp.mapdata.note[objectN[0]].object;
+		}
+		if (recfp.mapdata.note[objectN[1]].hittime < key[keyN].time + 40) {
+			key[keyN].note[1] = recfp.mapdata.note[objectN[1]].object;
+		}
+		if (recfp.mapdata.note[objectN[2]].hittime < key[keyN].time + 40) {
+			key[keyN].note[2] = recfp.mapdata.note[objectN[2]].object;
+		}
+
+		//押しキーの判定,初期化
+		key[keyN].btn.z.Reset();
+		key[keyN].btn.x.Reset();
+		key[keyN].btn.c.Reset();
+		key[keyN].btn.u.Reset();
+		key[keyN].btn.d.Reset();
+		key[keyN].btn.l.Reset();
+		key[keyN].btn.r.Reset();
+		key[keyN].hitN = 0;
+		key[keyN].arwN = 0;
+		//押しキーの判定,HIT
+		if (key[keyN].note[0] == NOTE_HIT) { key[keyN].hitN++; }
+		if (key[keyN].note[1] == NOTE_HIT) { key[keyN].hitN++; }
+		if (key[keyN].note[2] == NOTE_HIT) { key[keyN].hitN++; }
+		switch (key[keyN].hitN) {
+		case 1:
+			G[1] = (keyN + 49) % 50; // ひとつ前のkeyN
+			if (key[G[1]].btn.c.GetVal() == REC_PUSH) {
+				key[keyN].btn.z.SetPush();
+			}
+			else {
+				key[keyN].btn.c.SetPush();
+			}
+			break;
+		case 2:
+			G[1] = (keyN + 49) % 50; // ひとつ前のkeyN
+			key[keyN].btn.x.SetPush();
+			if (key[G[1]].btn.c.GetVal() == REC_PUSH) {
+				key[keyN].btn.z.SetPush();
+			}
+			else {
+				key[keyN].btn.c.SetPush();
+			}
+			break;
+		case 3:
+			key[keyN].btn.z.SetPush();
+			key[keyN].btn.x.SetPush();
+			key[keyN].btn.c.SetPush();
+			break;
+		}
+		//押しキーの判定,アロー
+		if (key[keyN].note[0] == NOTE_UP ||
+			key[keyN].note[1] == NOTE_UP ||
+			key[keyN].note[2] == NOTE_UP)
+		{
+			key[keyN].btn.u.SetPush();
+			key[keyN].arwN++;
+		}
+		if (key[keyN].note[0] == NOTE_DOWN ||
+			key[keyN].note[1] == NOTE_DOWN ||
+			key[keyN].note[2] == NOTE_DOWN)
+		{
+			key[keyN].btn.d.SetPush();
+			key[keyN].arwN++;
+		}
+		if (key[keyN].note[0] == NOTE_LEFT ||
+			key[keyN].note[1] == NOTE_LEFT ||
+			key[keyN].note[2] == NOTE_LEFT)
+		{
+			key[keyN].btn.l.SetPush();
+			key[keyN].arwN++;
+		}
+		if (key[keyN].note[0] == NOTE_RIGHT ||
+			key[keyN].note[1] == NOTE_RIGHT ||
+			key[keyN].note[2] == NOTE_RIGHT)
+		{
+			key[keyN].btn.r.SetPush();
+			key[keyN].arwN++;
+		}
+		//押しキーの判定,キャッチ
+		G[0] = (keyN + 49) % 50; // ひとつ前のkeyN
+		if (key[G[0]].btn.u.CheckPushGroup()) { // 前で上にいる
+			if (key[keyN].note[2] == NOTE_CATCH) {
+				key[keyN].btn.u.SetNone();
+				key[keyN].btn.d.SetHold();
+			}
+			else if (key[keyN].note[1] == NOTE_CATCH) {
+				key[keyN].btn.u.SetNone();
+			}
+			else if (key[keyN].note[0] == NOTE_CATCH) {
+				key[keyN].btn.u.SetHold();
+			}
+		}
+		else if (key[G[0]].btn.d.CheckPushGroup()) { // 前で下にいる
+			if (key[keyN].note[0] == NOTE_CATCH) {
+				key[keyN].btn.u.SetHold();
+				key[keyN].btn.d.SetNone();
+			}
+			else if (key[keyN].note[1] == NOTE_CATCH) {
+				key[keyN].btn.d.SetNone();
+			}
+			else if (key[keyN].note[2] == NOTE_CATCH) {
+				key[keyN].btn.d.SetHold();
+			}
+		}
+		else { // 前で中にいる
+			if (key[keyN].note[0] == NOTE_CATCH) {
+				key[keyN].btn.u.SetHold();
+			}
+			if (key[keyN].note[2] == NOTE_CATCH) {
+				key[keyN].btn.d.SetHold();
+			}
+		}
+		//押しキーの判定,ボム
+		G[0] = (keyN + 49) % 50; // ひとつ前のkeyN
+		if (key[G[0]].btn.u.CheckPushGroup()) { // 前で上にいる
+			if (key[keyN].note[0] == NOTE_BOMB) {
+				if (key[keyN].note[1] == NOTE_BOMB) {
+					key[keyN].btn.u.SetNone();
+					key[keyN].btn.d.SetHold();
+				}
+				else if (key[G[0]].btn.u.CheckPushGroup()) {
+					key[keyN].pal.trick = 1;
+					key[keyN].btn.d.SetHold();
+				}
+				else {
+					key[keyN].btn.u.SetNone();
+				}
+			}
+		}
+		else if (key[G[0]].btn.d.CheckPushGroup()) { // 前で下にいる
+			if (key[keyN].note[2] == NOTE_BOMB) {
+				if (key[keyN].note[1] == NOTE_BOMB) {
+					key[keyN].btn.u.SetHold();
+					key[keyN].btn.d.SetNone();
+				}
+				else if (key[G[0]].btn.d.CheckPushGroup()) {
+					key[keyN].pal.trick = 1;
+					key[keyN].btn.u.SetHold();
+				}
+				else {
+					key[keyN].btn.d.SetNone();
+				}
+			}
+		}
+		else { // 前で中にいる
+			if (key[keyN].note[1] == NOTE_BOMB) {
+				if (key[keyN].note[0] == NOTE_BOMB) {
+					key[keyN].btn.d.SetHold();
+				}
+				else  {
+					key[keyN].btn.u.SetHold();
+				}
+			}
+		}
+
+		// 譜面パラメータ各種計算,初期化
+		key[keyN].pal.notes = 0;
+		key[keyN].pal.arrow = 0;
+		key[keyN].pal.chord = 0;
+		key[keyN].pal.chain = 0;
+		key[keyN].pal.meldy = 0;
+		key[keyN].pal.actor = 0;
+		key[keyN].pal.trick = 0;
+		// 譜面パラメータ各種計算,重み計算,notes,2000/前回からの時間
+		key[keyN].pal.notes = 10;
+		
+		// 譜面パラメータ各種計算,重み計算,arrow
+		switch (key[keyN].arwN) {
+		case 0:
+			key[keyN].pal.arrow = 0;
+			break;
+		case 1:
+			key[keyN].pal.arrow = 10;
+			break;
+		case 2:
+			key[keyN].pal.arrow = 12;
+			break;
+		case 3:
+			key[keyN].pal.arrow = 15;
+			break;
+		}
+
+		// 譜面パラメータ各種計算,重み計算,chord
+		// hit/arw
+		//    0  1  2   3
+		// 0  0  0 15 (18)
+		// 1  0 12 17  --
+		// 2 10 13 --  --
+		// 3 12 -- --  --
+		switch (key[keyN].arwN) {
+		case 0:
+			switch (key[keyN].hitN) {
+			case 2:
+				key[keyN].pal.chord = 10;
+				break;
+			case 3:
+				key[keyN].pal.chord = 12;
+				break;
+			}
+			break;
+		case 1:
+			switch (key[keyN].hitN) {
+			case 1:
+				key[keyN].pal.chord = 12;
+				break;
+			case 2:
+				key[keyN].pal.chord = 13;
+				break;
+			}
+			break;
+		case 2:
+			switch (key[keyN].hitN) {
+			case 0:
+				key[keyN].pal.chord = 15;
+				break;
+			case 1:
+				key[keyN].pal.chord = 17;
+				break;
+			}
+			break;
+		case 3:
+			key[keyN].pal.chord = 19;
+			break;
+		}
+
+		// 譜面パラメータ各種計算,重み計算,chain
+		G[0] = (keyN + 49) % 50; // ひとつ前のkeyN
+		G[1] = (keyN + 48) % 50; // ふたつ前のkeyN
+		G[2] = 0; // 2連カウント
+		G[3] = 0; // 縦連カウント
+		if (key[keyN].btn.z.CheckPushGroup() &&
+			key[G[0]].btn.z.CheckPushGroup())
+		{
+			G[2]++;
+			if (key[G[1]].btn.z.CheckPushGroup()) { G[3]++; }
+		}
+		if (key[keyN].btn.x.CheckPushGroup() &&
+			key[G[0]].btn.x.CheckPushGroup())
+		{
+			G[2]++;
+			if (key[G[1]].btn.x.CheckPushGroup()) { G[3]++; }
+		}
+		if (key[keyN].btn.c.CheckPushGroup() &&
+			key[G[0]].btn.c.CheckPushGroup())
+		{
+			G[2]++;
+			if (key[G[1]].btn.c.CheckPushGroup()) { G[3]++; }
+		}
+		if (key[keyN].btn.u.CheckPushGroup() &&
+			key[G[0]].btn.u.CheckPushGroup())
+		{
+			G[2]++;
+			if (key[G[1]].btn.u.CheckPushGroup()) { G[3]++; }
+		}
+		if (key[keyN].btn.d.CheckPushGroup() &&
+			key[G[0]].btn.d.CheckPushGroup())
+		{
+			G[2]++;
+			if (key[G[1]].btn.d.CheckPushGroup()) { G[3]++; }
+		}
+		if (key[keyN].btn.l.CheckPushGroup() &&
+			key[G[0]].btn.l.CheckPushGroup())
+		{
+			G[2]++;
+			if (key[G[1]].btn.l.CheckPushGroup()) { G[3]++; }
+		}
+		if (key[keyN].btn.r.CheckPushGroup() &&
+			key[G[0]].btn.r.CheckPushGroup())
+		{
+			G[2]++;
+			if (key[G[1]].btn.r.CheckPushGroup()) { G[3]++; }
+		}
+
+		// 譜面パラメータ各種計算,重み計算,trill
+		G[0] = (keyN + 49) % 50; // ひとつ前のkeyN
+		G[1] = (keyN + 48) % 50; // ふたつ前のkeyN
+		G[2] = 0; // トリルカウント
+		if (key[keyN].btn.z.CheckPushGroup() &&
+			key[G[1]].btn.z.CheckPushGroup() &&
+			key[G[0]].btn.z.CheckReleaseGroup())
+		{
+			G[2]++;
+		}
+		if (key[keyN].btn.x.CheckPushGroup() &&
+			key[G[1]].btn.x.CheckPushGroup() &&
+			key[G[0]].btn.x.CheckReleaseGroup())
+		{
+			G[2]++;
+		}
+		if (key[keyN].btn.c.CheckPushGroup() &&
+			key[G[1]].btn.c.CheckPushGroup() &&
+			key[G[0]].btn.c.CheckReleaseGroup())
+		{
+			G[2]++;
+		}
+		if (key[keyN].btn.u.CheckPushGroup() &&
+			key[G[1]].btn.u.CheckPushGroup() &&
+			key[G[0]].btn.u.CheckReleaseGroup())
+		{
+			G[2]++;
+		}
+		if (key[keyN].btn.d.CheckPushGroup() &&
+			key[G[1]].btn.d.CheckPushGroup() &&
+			key[G[0]].btn.d.CheckReleaseGroup())
+		{
+			G[2]++;
+		}
+		if (key[keyN].btn.l.CheckPushGroup() &&
+			key[G[1]].btn.l.CheckPushGroup() &&
+			key[G[0]].btn.l.CheckReleaseGroup())
+		{
+			G[2]++;
+		}
+		if (key[keyN].btn.r.CheckPushGroup() &&
+			key[G[1]].btn.r.CheckPushGroup() &&
+			key[G[0]].btn.r.CheckReleaseGroup())
+		{
+			G[2]++;
+		}
+		if (G[2] == 0) {
+			key[keyN].pal.trill = 0;
+		}
+		else if (G[2] == 1) {
+			key[keyN].pal.trill = 10;
+		}
+		else {
+			key[keyN].pal.trill = 10 + G[2];
+		}
+
+		// 譜面パラメータ各種計算,重み計算,meldy
+		// 譜面パラメータ各種計算,重み計算,actor
+		// 譜面パラメータ各種計算,重み計算,trick
+#if 0
+		/**
+		 * 
+notes: 単にHITとアローの密度
+trill: トリルの密度
+┣1HITで、一つ前が1HITで、二つ前が1HIT、重みは1.0
+┣1HITで、一つ前が2HITで、二つ前が1HIT、重みは1.2
+┣2HITで、一つ前が1HITで、二つ前が2HIT、重みは1.2
+┣1アローで、一つ前が違う1アローで、二つ前が同じ1アロー、重みは1.2
+┣1アローで、一つ前が違う2アローで、二つ前が同じ1アロー、重みは1.4
+┣2アローで、一つ前が違う1アローで、二つ前が同じ2アロー、重みは1.4
+┗2アローで、一つ前が違う2アローで、二つ前が同じ2アロー、重みは1.5
+arrow: 単にアロー密度
+chord: 単に同時押し密度
+┣2HITの重みは1.0
+┣3HITの重みは1.2
+┣1HIT1アローの重みは1.2
+┣2HIT1アローの重みは1.3
+┣2アローの重みは1.4
+┣1HIT2アローの重みは1.6
+┗(3アローは禁止されているが、一応重みは1.8とする)
+chain: 縦連密度
+┣2HITで、一つ前が2HITか3HIT、重みは1.0、二つ前も2HITか3HITなら重みは1.2
+┣3HITで、一つ前が1HITか2HITか3HIT、重みは1.0、二つ前も1HITか2HITか3HITなら重みは1.2
+┗アローで、一つ前が同じアロー、重みは1.0、二つ前も同じアローなら重みは1.2
+meldy: 乱打密度
+┣今のノーツが、一つ前と違う、重みは1.0
+┣今のノーツが、二つ前と違う、重みは1.1
+┗今のノーツが、一つ前とも二つ前とも違う、重みは1.3
+
+actor: catchとbombによる操作の密度(要検討)
+trick: アローひっかけの頻度(要検討)
+
+lanes: レーンの移動頻度
+┣linは重み1.0、accとdecは重み1.2
+┗easyは合計3以内、normalは合計6以内、hardは合計10以内を目安にしたい
+
+		 */
+#endif
 
 		/*+++*/
 
 		//GHOSTノーツをスキップ
-		for (int iLane = 0; iLane < 3; iLane++) {
+		for (uint iLane = 0; iLane < 3; iLane++) {
 			while (recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST &&
 				0 <= recfp.mapdata.note[objectN[iLane]].hittime)
 			{

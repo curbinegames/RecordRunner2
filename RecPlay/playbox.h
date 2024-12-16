@@ -38,6 +38,7 @@ typedef enum note_material {
 	NOTE_BOMB,
 	NOTE_GHOST
 } note_material;
+#define IS_NOTE_ARROW_GROUP(mat) ((mat) == NOTE_UP || (mat) == NOTE_DOWN || (mat) == NOTE_LEFT || (mat) == NOTE_RIGHT)
 
 enum maperror_enum {
 	HITNOTETOONEAR = 1,
