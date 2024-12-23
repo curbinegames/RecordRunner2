@@ -8,6 +8,11 @@
 #include "helpBar.h"
 #include "option.h"
 
+#include <RecScoreFile.h>
+#include <playbox.h>
+#include <RecordLoad2.h>
+#include <recp_cal_ddif_2.h>
+
 /**
  * TODO: 追加したいオプション
  * 　文字の大きさ
@@ -327,9 +332,9 @@ now_scene_t option(void) {
 			}
 			exitFg = 1;
 			break;
-#if 0 /* デバッグ用コード */
+#if 1 /* デバッグ用コード */
 		case KEY_INPUT_Q:
-#if 0 /* 全譜面定数を出力 */
+#if 1 /* 全譜面定数を出力 */
 			/* output dif */
 			int G[10];
 			int difl[4] = { 0,0,0,0 };
@@ -343,40 +348,22 @@ now_scene_t option(void) {
 			FILE *qfp;
 			FILE *ofp;
 			G[1] = _wfopen_s(&ofp, L"difout.txt", L"w");
-			fwprintf(ofp, L"\t\t\tEASY\tNORMAL\tHARD\tANOTHER\n");
+			fwprintf(ofp, L"\t\t\tnotes\tarrow\tchord\tchain\ttrill\tmeldy\tactor\ttrick\tmdif\n");
 			for (int i = 0; i < 10; i++) {
 				for (int j = 0; j < 20; j++) {
-					difl[0] = 0;
-					difl[1] = 0;
-					difl[2] = 0;
-					difl[3] = 0;
+					rec_ddif_pal_t ddif[4];
 					songN[0][0] = L'\0';
 					songN[1][0] = L'\0';
 					songN[2][0] = L'\0';
 					songN[3][0] = L'\0';
 					for (int dif = 0; dif < 4; dif++) {
-						RecordLoad2(i, j, dif + 1);
-						get_rec_file(file, i, j, dif + 1, FILETYPE_RRS);
-						G[0] = _wfopen_s(&qfp, file, L"rb");//rrsデータを読み込む
-						if (G[0] == 0) {
-							fread(&allnum, sizeof(playnum_box), 1, qfp);//各データの個数
-
-							fseek(qfp, 255 * 4 + sizeof(int) + sizeof(double), SEEK_CUR);
-
-							fread(&songN[dif], 255, 1, qfp);//曲名
-
-							fseek(qfp, 255 + sizeof(short int) * 2 +
-								sizeof(int) * 1585 + sizeof(double) * 990 +
-								sizeof(int) * (allnum.Ymovenum[0] * 4 + allnum.Ymovenum[1] * 4 +
-									allnum.Ymovenum[2] * 4 + allnum.Ymovenum[3] * 4 +
-									allnum.Ymovenum[4] * 4 + allnum.Xmovenum[0] * 4 +
-									allnum.Xmovenum[1] * 4 + allnum.Xmovenum[2] * 4) +
-								sizeof(struct note_box) * (allnum.notenum[0] + allnum.notenum[1] +
-									allnum.notenum[2]), SEEK_CUR);
-
-							fread(&difl[dif], sizeof(int), 1, qfp);
-							fclose(qfp);
-						}
+						RecordLoad2(i, j, dif);
+						RecGetMusicPath(file, 255, i, j);
+						stradds_2(file, 255, (TCHAR)((int)L'0' + dif));
+						strcats_2(file, 255, L".rrs");
+						cal_ddif_3(file);
+						RecScoreReadDdif(songN[dif], file);
+						RecScoreReadDdif(&ddif[dif], file);
 					}
 					for (G[0] = 0; G[0] < 4; G[0]++) {
 						if (songN[G[0]][0] != L'\0') {
@@ -392,11 +379,20 @@ now_scene_t option(void) {
 						fwprintf(ofp, L"\t");
 					}
 					for (int dif = 0; dif < 4; dif++) {
-						if (difl[dif] == 0) {
+						if (ddif[dif].mdif == 0) {
 							fwprintf(ofp, L"-");
 						}
 						else {
-							fwprintf(ofp, L"%2.2f", difl[dif] / 100.0);
+							fwprintf(ofp, L"%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f",
+								ddif[dif].notes / 100.0,
+								ddif[dif].trill / 100.0,
+								ddif[dif].arrow / 100.0,
+								ddif[dif].chord / 100.0,
+								ddif[dif].chain / 100.0,
+								ddif[dif].meldy / 100.0,
+								ddif[dif].actor / 100.0,
+								ddif[dif].trick / 100.0,
+								ddif[dif].mdif / 100.0);
 						}
 						if (dif < 3) {
 							fwprintf(ofp, L"\t");
