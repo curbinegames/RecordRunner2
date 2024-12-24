@@ -2,7 +2,8 @@
 
 #include <tchar.h>
 #include <DxLib.h>
-#include "../general/dxcur.h"
+#include <dxcur.h>
+#include <sancur.h>
 
 #define SE_HIT (1 << 0)
 #define SE_CATCH (1 << 1)
@@ -329,3 +330,15 @@ typedef struct judge_action_box_t {
 	rec_play_sound_c *p_sound;
 	struct score_box *score;
 } judge_action_box;
+
+typedef struct rec_ddif_pal_s {
+	uint notes = 0; //HIT,ARROWの密度
+	uint arrow = 0; //ARROWの密度
+	uint chord = 0; //同時押しの密度
+	uint chain = 0; //縦連密度
+	uint trill = 0; //トリルの密度
+	uint meldy = 0; //乱打密度
+	uint actor = 0; //CATCH,BOMBの密度
+	uint trick = 0; //ARROWひっかけの密度
+	intx100_t mdif = 0; //全体の難易度
+} rec_ddif_pal_t;

@@ -55,4 +55,4 @@ typedef struct rec_user_data_s {
 extern int SmallFontData;
 extern int LargeFontData;
 
-extern void RecGetMusicPath(TCHAR *ret, size_t size, uint packNo, uint songNo);
+extern int RecGetMusicPath(TCHAR *ret, size_t size, uint packNo, uint songNo);

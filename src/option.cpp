@@ -1,4 +1,6 @@
 
+#define REC_DEBUG 1 // 0or1 1でデバッグ用コードがビルドされる
+
 #include <DxLib.h>
 #include <dxcur.h>
 #include <strcur.h>
@@ -8,10 +10,12 @@
 #include "helpBar.h"
 #include "option.h"
 
+#if REC_DEBUG == 1
 #include <RecScoreFile.h>
 #include <playbox.h>
 #include <RecordLoad2.h>
 #include <recp_cal_ddif_2.h>
+#endif
 
 /**
  * TODO: 追加したいオプション
@@ -47,6 +51,8 @@ static const int title_txgapy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50)
 
 static const int det_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 20);
 static const int det_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 410);
+
+#if 1 /* option_file */
 
 int RecOpenOptionFile(int *data) {
 	FILE *fp = NULL;
@@ -115,6 +121,10 @@ void RecOpenOptionFileSystem() {
 		}
 	}
 }
+
+#endif /* option_file */
+
+#if 1 /* option_data */
 
 static void RecOptionChar(TCHAR *ret, int pal, int lang) {
 	const TCHAR jp[3][20] = {
@@ -187,7 +197,7 @@ static void RecOptionComboPos(TCHAR *ret, int pal, int lang) {
 	return;
 }
 
-static rec_opt_text_t optionstr[] {
+static rec_opt_text_t optionstr[]{
 	{
 		RecOptionChar,
 		L"キャラクター", L"Character",
@@ -235,6 +245,78 @@ static rec_opt_text_t optionstr[] {
 
 static const int optionstr_count = sizeof(optionstr) / sizeof(rec_opt_text_t);
 
+#endif /* option_data */
+
+#if REC_DEBUG == 1 /* デバッグ用関数 */
+
+void RecTxtWriteAllDdif() {
+	rec_ddif_pal_t ddif[5];
+	TCHAR path[255];
+	TCHAR songN[5][255];
+	FILE *fp;
+
+	_wfopen_s(&fp, L"difout.txt", L"w");
+	if (fp == NULL) { return; }
+
+	fwprintf(fp, L"\t\tnotes\tarrow\tchord\tchain\ttrill\tmeldy\tactor\ttrick\tmdif\n");
+
+	for (uint iPack = 0; iPack < 10; iPack++) {
+		for (uint iSong = 0; iSong < 20; iSong++) {
+			songN[0][0] = L'\0';
+			songN[1][0] = L'\0';
+			songN[2][0] = L'\0';
+			songN[3][0] = L'\0';
+			songN[4][0] = L'\0';
+			for (uint iDif = 0; iDif < 5; iDif++) {
+				RecordLoad2(iPack, iSong, iDif);
+				if (RecGetMusicPath(path, 255, iPack, iSong) != 0) { continue; }
+				stradds_2(path, 255, (TCHAR)((int)L'0' + iDif));
+				strcats_2(path, 255, L".rrs");
+				cal_ddif_3(path);
+				if (RecScoreReadSongName(songN[iDif], path) != 0) { continue; }
+				RecScoreReadDdif(&ddif[iDif], path);
+				if (songN[iDif][0] == L'\0') { continue; }
+
+				fwprintf(fp, L"%s", songN[iDif]);
+				switch (iDif) {
+				case 0:
+					fwprintf(fp, L"[AUTO]\n");
+					break;
+				case 1:
+					fwprintf(fp, L"[EASY]\n");
+					break;
+				case 2:
+					fwprintf(fp, L"[NORMAL]\n");
+					break;
+				case 3:
+					fwprintf(fp, L"[HARD]\n");
+					break;
+				case 4:
+					fwprintf(fp, L"[ANOTHER]\n");
+					break;
+				}
+
+				fwprintf(fp, L"\t\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\n",
+					ddif[iDif].notes / 100.0,
+					ddif[iDif].trill / 100.0,
+					ddif[iDif].arrow / 100.0,
+					ddif[iDif].chord / 100.0,
+					ddif[iDif].chain / 100.0,
+					ddif[iDif].meldy / 100.0,
+					ddif[iDif].actor / 100.0,
+					ddif[iDif].trick / 100.0,
+					ddif[iDif].mdif / 100.0);
+			}
+		}
+	}
+
+	fclose(fp);
+
+	return;
+}
+
+#endif /* デバッグ用関数 */
+
 now_scene_t option(void) {
 	int command = 0;
 	struct {
@@ -248,13 +330,13 @@ now_scene_t option(void) {
 	if (RecOpenOptionFile2(&optiondata) != 0) {
 		int	data[7] = { 0,0,0,2,0,0,0 };
 		RecOpenOptionFile(data);
-		optiondata.chara      = data[0];
-		optiondata.offset     = data[1];
-		optiondata.SEenable   = data[2];
+		optiondata.chara = data[0];
+		optiondata.offset = data[1];
+		optiondata.SEenable = data[2];
 		optiondata.backbright = data[3];
-		optiondata.lang       = data[4];
-		optiondata.keydetail  = data[5];
-		optiondata.combopos   = data[6];
+		optiondata.lang = data[4];
+		optiondata.keydetail = data[5];
+		optiondata.combopos = data[6];
 	}
 
 	optionstr[0].val_p = &optiondata.chara;
@@ -274,14 +356,14 @@ now_scene_t option(void) {
 		}
 	}
 
-	pic.back   = LoadGraph(L"picture/OPTION back.png");
+	pic.back = LoadGraph(L"picture/OPTION back.png");
 	pic.cursor = LoadGraph(L"picture/OC.png");
-	sel        = LoadSoundMem(L"sound/select.wav");
+	sel = LoadSoundMem(L"sound/select.wav");
 
 	AvoidKeyRush();
 
 	//処理
-	while (1) {		
+	while (1) {
 		InputAllKeyHold();
 		switch (GetKeyPushOnce()) {
 		case KEY_INPUT_LEFT:
@@ -332,79 +414,12 @@ now_scene_t option(void) {
 			}
 			exitFg = 1;
 			break;
-#if 1 /* デバッグ用コード */
+#if REC_DEBUG == 1 /* デバッグ用コード */
 		case KEY_INPUT_Q:
-#if 1 /* 全譜面定数を出力 */
-			/* output dif */
-			int G[10];
-			int difl[4] = { 0,0,0,0 };
-			wchar_t file[255];
-			wchar_t songN[4][255];
-			songN[0][0] = L'\0';
-			songN[1][0] = L'\0';
-			songN[2][0] = L'\0';
-			songN[3][0] = L'\0';
-			playnum_box allnum;
-			FILE *qfp;
-			FILE *ofp;
-			G[1] = _wfopen_s(&ofp, L"difout.txt", L"w");
-			fwprintf(ofp, L"\t\t\tnotes\tarrow\tchord\tchain\ttrill\tmeldy\tactor\ttrick\tmdif\n");
-			for (int i = 0; i < 10; i++) {
-				for (int j = 0; j < 20; j++) {
-					rec_ddif_pal_t ddif[4];
-					songN[0][0] = L'\0';
-					songN[1][0] = L'\0';
-					songN[2][0] = L'\0';
-					songN[3][0] = L'\0';
-					for (int dif = 0; dif < 4; dif++) {
-						RecordLoad2(i, j, dif);
-						RecGetMusicPath(file, 255, i, j);
-						stradds_2(file, 255, (TCHAR)((int)L'0' + dif));
-						strcats_2(file, 255, L".rrs");
-						cal_ddif_3(file);
-						RecScoreReadDdif(songN[dif], file);
-						RecScoreReadDdif(&ddif[dif], file);
-					}
-					for (G[0] = 0; G[0] < 4; G[0]++) {
-						if (songN[G[0]][0] != L'\0') {
-							break;
-						}
-					}
-					if (G[0] >= 4) {
-						break;
-					}
-					songN[G[0]][23] = L'\0';
-					fwprintf(ofp, L"%s", songN[G[0]]);
-					for (int i = 24 - strlens(songN[G[0]]); i > 0; i -= 8) {
-						fwprintf(ofp, L"\t");
-					}
-					for (int dif = 0; dif < 4; dif++) {
-						if (ddif[dif].mdif == 0) {
-							fwprintf(ofp, L"-");
-						}
-						else {
-							fwprintf(ofp, L"%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f",
-								ddif[dif].notes / 100.0,
-								ddif[dif].trill / 100.0,
-								ddif[dif].arrow / 100.0,
-								ddif[dif].chord / 100.0,
-								ddif[dif].chain / 100.0,
-								ddif[dif].meldy / 100.0,
-								ddif[dif].actor / 100.0,
-								ddif[dif].trick / 100.0,
-								ddif[dif].mdif / 100.0);
-						}
-						if (dif < 3) {
-							fwprintf(ofp, L"\t");
-						}
-					}
-					fwprintf(ofp, L"\n");
-				}
-			}
-			fclose(ofp);
-#elif 0 /* プレイヤーのレートの詳細を出力 */
-			FILE* fp;
-			FILE* outfp;
+			RecTxtWriteAllDdif();
+#if 0 /* プレイヤーのレートの詳細を出力 */
+			FILE *fp;
+			FILE *outfp;
 			play_rate_t temp;
 			wchar_t temp2[255];
 			(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");

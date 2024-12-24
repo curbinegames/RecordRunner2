@@ -23,10 +23,11 @@ typedef struct rec_map_detail_s {
 	note_lane_t note2;
 #endif
 	short int notes = 0;
-	int mdif = 0;
+	intx100_t mdif = 0;
 	int ldif = 0;
 	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//各区間の難易度
 	int ddifG[2] = { 1,25 };//0=今いる区間番号(1～25),1=最大値
+	rec_ddif_pal_t mpal;//新ddif
 } rec_map_detail_t;
 
 #if 1 /* rec_map_eff_data_t */
@@ -124,4 +125,6 @@ typedef struct rec_score_file_row_s {
 extern int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path);
 extern int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path);
 extern int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path);
-extern int RecScoreWriteForDdif(rec_score_file_row_t *recfp, const TCHAR *path);
+extern int RecScoreReadSongName(TCHAR *songName, const TCHAR *path);
+extern int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path);
+extern int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path);

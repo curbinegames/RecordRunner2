@@ -7,59 +7,30 @@
 #include <recp_cal_ddif.h>
 #include <noteLoad.h>
 
-typedef struct ddef_box_2 {
-	int maxdif = 0;
-	int lastdif = 0;
-	int nowdifsection = 1;
-	int datanum = -1;
-} ddef_box_2;
-
-static int cal_nowdif_m_2(int *difkey, int num, int now, int voidtime) {
-	int ret = 0;
-	int count = 0;
-	for (int i = 0; i <= num; i++) {
-		if (difkey[i * 4 + 2] < 0) {
-			break;
-		}
-		if (difkey[i * 4 + 1] > difkey[now * 4 + 1] - voidtime) {
-			ret += difkey[i * 4 + 2];
-			count++;
-		}
-	}
-	if (count == 0) {
-		return 0;
-	}
-	else {
-		return ret * 50 / count;
-	}
-}
-
-static int cal_ddif_2(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime) {
-	int ret = 0;
-	int count = 0;
-	if (num >= 50) {
-		num = 49;
-	}
-	for (int i = 0; i < num; i++) {
-		if (difkey[i * 4 + 1] > (Etime - noteoff) / 25 *
-			difsec - voidtime + noteoff) {
-			count++;
-			ret += difkey[i * 4 + 2];
-		}
-	}
-	if (count == 0) {
-		return 0;
-	}
-	else {
-		return ret * 50 / count;
-	}
-}
+#define REC_DDIF_BUF_NUM 50 //ddif計算で使用するバッファの数
+#define REC_DDIF_GROUP_TIME 40 //まとまりと見なす時間[ms]
 
 #define REC_FREE 0 //何でもいい
 #define REC_PUSH 1 //押す
 #define REC_HOLD 2 //押しっぱなし
 #define REC_NONE 3 //離しっぱなし
 #define REC_RELA 4 //離す
+
+#define REC_DDIF_NOTES_BASE    1115 // Co-op Taylorのnotesの値
+#define REC_DDIF_ARROW_BASE    5360 // Co-op Taylorのarrowの値
+#define REC_DDIF_CHORD_BASE    1288 // FURRY TIME  のchordの値
+#define REC_DDIF_CHAIN_BASE 1000000 // Co-op Taylorのchainの値
+#define REC_DDIF_TRILL_BASE    8930 // Co-op Taylorのtrillの値
+#define REC_DDIF_MELDY_BASE   13395 // Co-op Taylorのmaldyの値
+#define REC_DDIF_ACTOR_BASE    1710 // 花調風月    のactorの値 (Lv8)
+#define REC_DDIF_TRICK_BASE       1 // xxxのtrickの値
+
+typedef struct ddef_box_2 {
+	int maxdif = 0;
+	int lastdif = 0;
+	int nowdifsection = 1;
+	int datanum = -1;
+} ddef_box_2;
 
 class rec_ddif_btn_c {
 private:
@@ -135,17 +106,6 @@ public:
 	}
 };
 
-typedef struct rec_ddif_pal_s {
-	uint notes = 0; //HIT,ARROWの密度
-	uint trill = 0; //トリルの密度
-	uint arrow = 0; //ARROWの密度
-	uint chord = 0; //同時押しの密度
-	uint chain = 0; //縦連密度
-	uint meldy = 0; //乱打密度
-	uint actor = 0; //CATCH,BOMBの密度
-	uint trick = 0; //ARROWひっかけの密度
-} rec_ddif_pal_t;
-
 typedef struct rec_ddif_data_s {
 	DxTime_t time = 0;
 	note_material note[3] = { NOTE_NONE,NOTE_NONE,NOTE_NONE };
@@ -163,16 +123,564 @@ typedef struct rec_ddif_data_s {
 	rec_ddif_pal_t pal;
 } rec_ddif_data_t;
 
-void cal_ddif_3(const TCHAR *path) {
+#if 0
+static int cal_nowdif_m_2(int *difkey, int num, int now, int voidtime) {
+	int ret = 0;
+	int count = 0;
+	for (int i = 0; i <= num; i++) {
+		if (difkey[i * 4 + 2] < 0) {
+			break;
+		}
+		if (difkey[i * 4 + 1] > difkey[now * 4 + 1] - voidtime) {
+			ret += difkey[i * 4 + 2];
+			count++;
+		}
+	}
+	if (count == 0) {
+		return 0;
+	}
+	else {
+		return ret * 50 / count;
+	}
+}
+
+static int cal_ddif_2(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime) {
+	int ret = 0;
+	int count = 0;
+	if (num >= 50) {
+		num = 49;
+	}
+	for (int i = 0; i < num; i++) {
+		if (difkey[i * 4 + 1] > (Etime - noteoff) / 25 *
+			difsec - voidtime + noteoff) {
+			count++;
+			ret += difkey[i * 4 + 2];
+		}
+	}
+	if (count == 0) {
+		return 0;
+	}
+	else {
+		return ret * 50 / count;
+	}
+}
+#endif
+
+#if 1 /* RecDdifGetKey */
+
+static void RecDdifGetKeyHit(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+	switch (Nowkey->hitN) {
+	case 1:
+		if (Befkey->btn.c.GetVal() == REC_PUSH) {
+			Nowkey->btn.z.SetPush();
+		}
+		else {
+			Nowkey->btn.c.SetPush();
+		}
+		break;
+	case 2:
+		Nowkey->btn.x.SetPush();
+		if (Befkey->btn.c.GetVal() == REC_PUSH) {
+			Nowkey->btn.z.SetPush();
+		}
+		else {
+			Nowkey->btn.c.SetPush();
+		}
+		break;
+	case 3:
+		Nowkey->btn.z.SetPush();
+		Nowkey->btn.x.SetPush();
+		Nowkey->btn.c.SetPush();
+		break;
+	}
+	return;
+}
+
+static void RecDdifGetKeyArrow(rec_ddif_data_t *Nowkey) {
+	if (Nowkey->note[0] == NOTE_UP ||
+		Nowkey->note[1] == NOTE_UP ||
+		Nowkey->note[2] == NOTE_UP)
+	{
+		Nowkey->btn.u.SetPush();
+	}
+	if (Nowkey->note[0] == NOTE_DOWN ||
+		Nowkey->note[1] == NOTE_DOWN ||
+		Nowkey->note[2] == NOTE_DOWN)
+	{
+		Nowkey->btn.d.SetPush();
+	}
+	if (Nowkey->note[0] == NOTE_LEFT ||
+		Nowkey->note[1] == NOTE_LEFT ||
+		Nowkey->note[2] == NOTE_LEFT)
+	{
+		Nowkey->btn.l.SetPush();
+	}
+	if (Nowkey->note[0] == NOTE_RIGHT ||
+		Nowkey->note[1] == NOTE_RIGHT ||
+		Nowkey->note[2] == NOTE_RIGHT)
+	{
+		Nowkey->btn.r.SetPush();
+	}
+	return;
+}
+
+static void RecDdifGetKeyCatch(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+	if (Befkey->btn.u.CheckPushGroup()) { // 前で上にいる
+		if (Nowkey->note[2] == NOTE_CATCH) {
+			Nowkey->btn.u.SetNone();
+			Nowkey->btn.d.SetHold();
+		}
+		else if (Nowkey->note[1] == NOTE_CATCH) { Nowkey->btn.u.SetNone(); }
+		else if (Nowkey->note[0] == NOTE_CATCH) { Nowkey->btn.u.SetHold(); }
+	}
+	else if (Befkey->btn.d.CheckPushGroup()) { // 前で下にいる
+		if (Nowkey->note[0] == NOTE_CATCH) {
+			Nowkey->btn.u.SetHold();
+			Nowkey->btn.d.SetNone();
+		}
+		else if (Nowkey->note[1] == NOTE_CATCH) { Nowkey->btn.d.SetNone(); }
+		else if (Nowkey->note[2] == NOTE_CATCH) { Nowkey->btn.d.SetHold(); }
+	}
+	else { // 前で中にいる
+		if (Nowkey->note[0] == NOTE_CATCH) { Nowkey->btn.u.SetHold(); }
+		if (Nowkey->note[2] == NOTE_CATCH) { Nowkey->btn.d.SetHold(); }
+	}
+	return;
+}
+
+/* trickもこの関数でやってる */
+static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+	Nowkey->pal.trick = 0;
+	if (Befkey->btn.u.CheckPushGroup()) { // 前で上にいる
+		if (Nowkey->note[0] == NOTE_BOMB) {
+			if (Nowkey->note[1] == NOTE_BOMB) {
+				Nowkey->btn.u.SetNone();
+				Nowkey->btn.d.SetHold();
+			}
+			else if (Befkey->btn.u.CheckPushGroup()) {
+				Nowkey->pal.trick = 1;
+				Nowkey->btn.d.SetHold();
+			}
+			else {
+				Nowkey->btn.u.SetNone();
+			}
+		}
+	}
+	else if (Befkey->btn.d.CheckPushGroup()) { // 前で下にいる
+		if (Nowkey->note[2] == NOTE_BOMB) {
+			if (Nowkey->note[1] == NOTE_BOMB) {
+				Nowkey->btn.u.SetHold();
+				Nowkey->btn.d.SetNone();
+			}
+			else if (Befkey->btn.d.CheckPushGroup()) {
+				Nowkey->pal.trick = 1;
+				Nowkey->btn.u.SetHold();
+			}
+			else {
+				Nowkey->btn.d.SetNone();
+			}
+		}
+	}
+	else { // 前で中にいる
+		if (Nowkey->note[1] == NOTE_BOMB) {
+			if (Nowkey->note[0] == NOTE_BOMB) {
+				Nowkey->btn.d.SetHold();
+			}
+			else  {
+				Nowkey->btn.u.SetHold();
+			}
+		}
+	}
+	return;
+}
+
+#endif /* RecDdifGetKey */
+
+#if 1 /* RecDdifGetPal */
+
+/**
+ * hit/arw
+ *    0  1  2   3
+ * 0  0  0 15 (18)
+ * 1  0 12 17  --
+ * 2 10 13 --  --
+ * 3 12 -- --  --
+ */
+static void RecDdifGetPalChord(rec_ddif_data_t *Nowkey) {
+	Nowkey->pal.chord = 0;
+	switch (Nowkey->arwN) {
+	case 0:
+		switch (Nowkey->hitN) {
+		case 2:
+			Nowkey->pal.chord = 10;
+			break;
+		case 3:
+			Nowkey->pal.chord = 12;
+			break;
+		}
+		break;
+	case 1:
+		switch (Nowkey->hitN) {
+		case 1:
+			Nowkey->pal.chord = 12;
+			break;
+		case 2:
+			Nowkey->pal.chord = 13;
+			break;
+		}
+		break;
+	case 2:
+		switch (Nowkey->hitN) {
+		case 0:
+			Nowkey->pal.chord = 15;
+			break;
+		case 1:
+			Nowkey->pal.chord = 17;
+			break;
+		}
+		break;
+	case 3:
+		Nowkey->pal.chord = 19;
+		break;
+	}
+	return;
+}
+
+static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+	uint divN = 0; // 2連カウント
+	uint chainN = 0; // 縦連カウント
+	Nowkey->pal.chain = 0;
+	if (Nowkey->btn.z.CheckPushGroup() &&
+		Befkey->btn.z.CheckPushGroup())
+	{
+		divN++;
+		if (BBefkey->btn.z.CheckPushGroup()) { chainN++; }
+	}
+	if (Nowkey->btn.x.CheckPushGroup() &&
+		Befkey->btn.x.CheckPushGroup())
+	{
+		divN++;
+		if (BBefkey->btn.x.CheckPushGroup()) { chainN++; }
+	}
+	if (Nowkey->btn.c.CheckPushGroup() &&
+		Befkey->btn.c.CheckPushGroup())
+	{
+		divN++;
+		if (BBefkey->btn.c.CheckPushGroup()) { chainN++; }
+	}
+	if (Nowkey->btn.u.CheckPushGroup() &&
+		Befkey->btn.u.CheckPushGroup())
+	{
+		divN++;
+		if (BBefkey->btn.u.CheckPushGroup()) { chainN++; }
+	}
+	if (Nowkey->btn.d.CheckPushGroup() &&
+		Befkey->btn.d.CheckPushGroup())
+	{
+		divN++;
+		if (BBefkey->btn.d.CheckPushGroup()) { chainN++; }
+	}
+	if (Nowkey->btn.l.CheckPushGroup() &&
+		Befkey->btn.l.CheckPushGroup())
+	{
+		divN++;
+		if (BBefkey->btn.l.CheckPushGroup()) { chainN++; }
+	}
+	if (Nowkey->btn.r.CheckPushGroup() &&
+		Befkey->btn.r.CheckPushGroup())
+	{
+		divN++;
+		if (BBefkey->btn.r.CheckPushGroup()) { chainN++; }
+	}
+
+	if (0 < chainN) {
+		Nowkey->pal.chain = 13;
+	}
+	else {
+		Nowkey->pal.chain = 10;
+	}
+	Nowkey->pal.chain += divN;
+
+	return;
+}
+
+static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+	uint count = 0; // トリルカウント
+	Nowkey->pal.trill = 0;
+	if (Nowkey->btn.z.CheckPushGroup() &&
+		BBefkey->btn.z.CheckPushGroup() &&
+		Befkey->btn.z.CheckReleaseGroup())
+	{
+		count++;
+	}
+	if (Nowkey->btn.x.CheckPushGroup() &&
+		BBefkey->btn.x.CheckPushGroup() &&
+		Befkey->btn.x.CheckReleaseGroup())
+	{
+		count++;
+	}
+	if (Nowkey->btn.c.CheckPushGroup() &&
+		BBefkey->btn.c.CheckPushGroup() &&
+		Befkey->btn.c.CheckReleaseGroup())
+	{
+		count++;
+	}
+	if (Nowkey->btn.u.CheckPushGroup() &&
+		BBefkey->btn.u.CheckPushGroup() &&
+		Befkey->btn.u.CheckReleaseGroup())
+	{
+		count++;
+	}
+	if (Nowkey->btn.d.CheckPushGroup() &&
+		BBefkey->btn.d.CheckPushGroup() &&
+		Befkey->btn.d.CheckReleaseGroup())
+	{
+		count++;
+	}
+	if (Nowkey->btn.l.CheckPushGroup() &&
+		BBefkey->btn.l.CheckPushGroup() &&
+		Befkey->btn.l.CheckReleaseGroup())
+	{
+		count++;
+	}
+	if (Nowkey->btn.r.CheckPushGroup() &&
+		BBefkey->btn.r.CheckPushGroup() &&
+		Befkey->btn.r.CheckReleaseGroup())
+	{
+		count++;
+	}
+
+	if (count == 0) { Nowkey->pal.trill = 0; }
+	else if (count == 1) { Nowkey->pal.trill = 10; }
+	else { Nowkey->pal.trill = 10 + count; }
+
+	return;
+}
+
+static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+	uint count = 0; // 乱打カウント
+	Nowkey->pal.meldy = 0;
+	if (Nowkey->btn.z.CheckPushGroup()) {
+		if (Befkey->btn.z.CheckReleaseGroup() &&
+			BBefkey->btn.z.CheckPushGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 15;
+		}
+		else if (Befkey->btn.z.CheckPushGroup() &&
+			BBefkey->btn.z.CheckReleaseGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 40;
+		}
+	}
+	if (Nowkey->btn.x.CheckPushGroup()) {
+		if (Befkey->btn.x.CheckReleaseGroup() &&
+			BBefkey->btn.x.CheckPushGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 15;
+		}
+		else if (Befkey->btn.x.CheckPushGroup() &&
+			BBefkey->btn.x.CheckReleaseGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 40;
+		}
+	}
+	if (Nowkey->btn.c.CheckPushGroup()) {
+		if (Befkey->btn.c.CheckReleaseGroup() &&
+			BBefkey->btn.c.CheckPushGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 15;
+		}
+		else if (Befkey->btn.c.CheckPushGroup() &&
+			BBefkey->btn.c.CheckReleaseGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 40;
+		}
+	}
+	if (Nowkey->btn.u.CheckPushGroup()) {
+		if (Befkey->btn.u.CheckReleaseGroup() &&
+			BBefkey->btn.u.CheckPushGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 15;
+		}
+		else if (Befkey->btn.u.CheckPushGroup() &&
+			BBefkey->btn.u.CheckReleaseGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 40;
+		}
+	}
+	if (Nowkey->btn.d.CheckPushGroup()) {
+		if (Befkey->btn.d.CheckReleaseGroup() &&
+			BBefkey->btn.d.CheckPushGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 15;
+		}
+		else if (Befkey->btn.d.CheckPushGroup() &&
+			BBefkey->btn.d.CheckReleaseGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 40;
+		}
+	}
+	if (Nowkey->btn.l.CheckPushGroup()) {
+		if (Befkey->btn.l.CheckReleaseGroup() &&
+			BBefkey->btn.l.CheckPushGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 15;
+		}
+		else if (Befkey->btn.l.CheckPushGroup() &&
+			BBefkey->btn.l.CheckReleaseGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 40;
+		}
+	}
+	if (Nowkey->btn.r.CheckPushGroup()) {
+		if (Befkey->btn.r.CheckReleaseGroup() &&
+			BBefkey->btn.r.CheckPushGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 15;
+		}
+		else if (Befkey->btn.r.CheckPushGroup() &&
+			BBefkey->btn.r.CheckReleaseGroup())
+		{
+			count++;
+			Nowkey->pal.meldy += 40;
+		}
+	}
+
+	switch (count) {
+	case 0: /* 0 -> 0 */
+		Nowkey->pal.meldy = 0;
+		break;
+	case 1: /* 1 -> 1.0 */
+		// Nowkey->pal.meldy = Nowkey->pal.meldy * 1;
+		break;
+	case 2: /* 2 -> 1.3 */
+		Nowkey->pal.meldy = Nowkey->pal.meldy * 13 / 20;
+		break;
+	case 3: /* 3 -> 1.5 */
+		Nowkey->pal.meldy = Nowkey->pal.meldy * 15 / 30;
+		break;
+	case 4: /* 4 -> 1.7 */
+		Nowkey->pal.meldy = Nowkey->pal.meldy * 17 / 40;
+		break;
+	case 5: /* 5 -> 1.8 */
+		Nowkey->pal.meldy = Nowkey->pal.meldy * 18 / 50;
+		break;
+	case 6: /* 6 -> 1.9 */
+		Nowkey->pal.meldy = Nowkey->pal.meldy * 19 / 60;
+		break;
+	case 7: /* 7 -> 2.0 */
+		Nowkey->pal.meldy = Nowkey->pal.meldy * 20 / 70;
+		break;
+	}
+
+	return;
+}
+
+/**
+ * cth/bom
+ *    0  1  2  3
+ * 0  0 10 12 (0)
+ * 1 10 12 14 --
+ * 2 12 13 -- --
+ * 3 12 -- -- --
+ */
+static void RecDdifGetPalActor(rec_ddif_data_t *Nowkey) {
+	uint catchN = 0; // catchの数
+	uint bombN = 0; // bombの数
+	Nowkey->pal.actor = 0;
+	if (Nowkey->note[0] == NOTE_CATCH) {
+		catchN++;
+	}
+	if (Nowkey->note[1] == NOTE_CATCH) {
+		catchN++;
+	}
+	if (Nowkey->note[2] == NOTE_CATCH) {
+		catchN++;
+	}
+	if (Nowkey->note[0] == NOTE_BOMB) {
+		bombN++;
+	}
+	if (Nowkey->note[1] == NOTE_BOMB) {
+		bombN++;
+	}
+	if (Nowkey->note[2] == NOTE_BOMB) {
+		bombN++;
+	}
+	Nowkey->pal.actor = 0;
+	switch (catchN) {
+	case 0:
+		switch (bombN) {
+		case 1:
+			Nowkey->pal.actor = 10;
+			break;
+		case 2:
+			Nowkey->pal.actor = 12;
+			break;
+		case 3:
+			Nowkey->pal.actor = 12;
+			break;
+		}
+		break;
+	case 1:
+		switch (bombN) {
+		case 0:
+			Nowkey->pal.actor = 10;
+			break;
+		case 1:
+			Nowkey->pal.actor = 12;
+			break;
+		case 2:
+			Nowkey->pal.actor = 13;
+			break;
+		}
+		break;
+	case 2:
+		switch (bombN) {
+		case 0:
+			Nowkey->pal.actor = 12;
+			break;
+		case 1:
+			Nowkey->pal.actor = 14;
+			break;
+		}
+		break;
+	}
+	return;
+}
+
+#endif /* RecDdifGetPal */
+
+template<typename T>
+static int qsort_protocol(const void *n1, const void *n2) {
+	if (*(T *)n1 > *(T *)n2) { return -1; }
+	else if (*(T *)n1 < *(T *)n2) { return 1; }
+	else { return 0; }
+}
+
+#define qsort_ease(type, mat) qsort((mat), sizeof(mat) / sizeof(type), sizeof(type), qsort_protocol<type>)
+
+static void cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	TCHAR esc_path[255];
 	strcopy_2(path, esc_path, 255);
 	(void)path;
 
 	int G[5];
 	rec_score_file_row_t recfp;
-	rec_ddif_data_t key[50];
+	rec_ddif_data_t key[REC_DDIF_BUF_NUM];
 	uint keyN = 0;
-	rec_ddif_pal_t mdif;
 	int objectN[3] = { 0,0,0 }; //↑の番号
 
 	RecScoreReadForDdif(&recfp, esc_path);
@@ -195,606 +703,207 @@ void cal_ddif_3(const TCHAR *path) {
 		}
 	}
 
-	while (recfp.mapdata.note[objectN[0]].next != -1 ||
-		recfp.mapdata.note[objectN[1]].next != -1 ||
-		recfp.mapdata.note[objectN[2]].next != -1)
-	{
-		note_material mattemp[3] = { NOTE_NONE,NOTE_NONE,NOTE_NONE };
+	while (objectN[0] != 5999 || objectN[1] != 5999 || objectN[2] != 5999) {
+		rec_ddif_data_t *Nowkey = &key[keyN];
+		rec_ddif_data_t *Befkey = &key[(keyN + REC_DDIF_BUF_NUM - 1) % REC_DDIF_BUF_NUM];
+		rec_ddif_data_t *BBefkey = &key[(keyN + REC_DDIF_BUF_NUM - 2) % REC_DDIF_BUF_NUM];
 
 		//次のノーツの時間を取得
 		G[0] = 0; //次のノーツのレーン番号
-		if (recfp.mapdata.note[objectN[1]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) {
-			G[0] = 1;
-		}
-		if (recfp.mapdata.note[objectN[2]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) {
-			G[0] = 2;
-		}
-		key[keyN].time = recfp.mapdata.note[objectN[G[0]]].hittime;
+		if (recfp.mapdata.note[objectN[1]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 1; }
+		if (recfp.mapdata.note[objectN[2]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 2; }
+		Nowkey->time = recfp.mapdata.note[objectN[G[0]]].hittime;
 
 		//次のノーツ群を取得
-		if (recfp.mapdata.note[objectN[0]].hittime < key[keyN].time + 40) {
-			key[keyN].note[0] = recfp.mapdata.note[objectN[0]].object;
+		Nowkey->note[0] = NOTE_NONE;
+		if (recfp.mapdata.note[objectN[0]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+			Nowkey->note[0] = recfp.mapdata.note[objectN[0]].object;
 		}
-		if (recfp.mapdata.note[objectN[1]].hittime < key[keyN].time + 40) {
-			key[keyN].note[1] = recfp.mapdata.note[objectN[1]].object;
+		Nowkey->note[1] = NOTE_NONE;
+		if (recfp.mapdata.note[objectN[1]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+			Nowkey->note[1] = recfp.mapdata.note[objectN[1]].object;
 		}
-		if (recfp.mapdata.note[objectN[2]].hittime < key[keyN].time + 40) {
-			key[keyN].note[2] = recfp.mapdata.note[objectN[2]].object;
-		}
-
-		//押しキーの判定,初期化
-		key[keyN].btn.z.Reset();
-		key[keyN].btn.x.Reset();
-		key[keyN].btn.c.Reset();
-		key[keyN].btn.u.Reset();
-		key[keyN].btn.d.Reset();
-		key[keyN].btn.l.Reset();
-		key[keyN].btn.r.Reset();
-		key[keyN].hitN = 0;
-		key[keyN].arwN = 0;
-		//押しキーの判定,HIT
-		if (key[keyN].note[0] == NOTE_HIT) { key[keyN].hitN++; }
-		if (key[keyN].note[1] == NOTE_HIT) { key[keyN].hitN++; }
-		if (key[keyN].note[2] == NOTE_HIT) { key[keyN].hitN++; }
-		switch (key[keyN].hitN) {
-		case 1:
-			G[1] = (keyN + 49) % 50; // ひとつ前のkeyN
-			if (key[G[1]].btn.c.GetVal() == REC_PUSH) {
-				key[keyN].btn.z.SetPush();
-			}
-			else {
-				key[keyN].btn.c.SetPush();
-			}
-			break;
-		case 2:
-			G[1] = (keyN + 49) % 50; // ひとつ前のkeyN
-			key[keyN].btn.x.SetPush();
-			if (key[G[1]].btn.c.GetVal() == REC_PUSH) {
-				key[keyN].btn.z.SetPush();
-			}
-			else {
-				key[keyN].btn.c.SetPush();
-			}
-			break;
-		case 3:
-			key[keyN].btn.z.SetPush();
-			key[keyN].btn.x.SetPush();
-			key[keyN].btn.c.SetPush();
-			break;
-		}
-		//押しキーの判定,アロー
-		if (key[keyN].note[0] == NOTE_UP ||
-			key[keyN].note[1] == NOTE_UP ||
-			key[keyN].note[2] == NOTE_UP)
-		{
-			key[keyN].btn.u.SetPush();
-			key[keyN].arwN++;
-		}
-		if (key[keyN].note[0] == NOTE_DOWN ||
-			key[keyN].note[1] == NOTE_DOWN ||
-			key[keyN].note[2] == NOTE_DOWN)
-		{
-			key[keyN].btn.d.SetPush();
-			key[keyN].arwN++;
-		}
-		if (key[keyN].note[0] == NOTE_LEFT ||
-			key[keyN].note[1] == NOTE_LEFT ||
-			key[keyN].note[2] == NOTE_LEFT)
-		{
-			key[keyN].btn.l.SetPush();
-			key[keyN].arwN++;
-		}
-		if (key[keyN].note[0] == NOTE_RIGHT ||
-			key[keyN].note[1] == NOTE_RIGHT ||
-			key[keyN].note[2] == NOTE_RIGHT)
-		{
-			key[keyN].btn.r.SetPush();
-			key[keyN].arwN++;
-		}
-		//押しキーの判定,キャッチ
-		G[0] = (keyN + 49) % 50; // ひとつ前のkeyN
-		if (key[G[0]].btn.u.CheckPushGroup()) { // 前で上にいる
-			if (key[keyN].note[2] == NOTE_CATCH) {
-				key[keyN].btn.u.SetNone();
-				key[keyN].btn.d.SetHold();
-			}
-			else if (key[keyN].note[1] == NOTE_CATCH) {
-				key[keyN].btn.u.SetNone();
-			}
-			else if (key[keyN].note[0] == NOTE_CATCH) {
-				key[keyN].btn.u.SetHold();
-			}
-		}
-		else if (key[G[0]].btn.d.CheckPushGroup()) { // 前で下にいる
-			if (key[keyN].note[0] == NOTE_CATCH) {
-				key[keyN].btn.u.SetHold();
-				key[keyN].btn.d.SetNone();
-			}
-			else if (key[keyN].note[1] == NOTE_CATCH) {
-				key[keyN].btn.d.SetNone();
-			}
-			else if (key[keyN].note[2] == NOTE_CATCH) {
-				key[keyN].btn.d.SetHold();
-			}
-		}
-		else { // 前で中にいる
-			if (key[keyN].note[0] == NOTE_CATCH) {
-				key[keyN].btn.u.SetHold();
-			}
-			if (key[keyN].note[2] == NOTE_CATCH) {
-				key[keyN].btn.d.SetHold();
-			}
-		}
-		//押しキーの判定,ボム
-		G[0] = (keyN + 49) % 50; // ひとつ前のkeyN
-		if (key[G[0]].btn.u.CheckPushGroup()) { // 前で上にいる
-			if (key[keyN].note[0] == NOTE_BOMB) {
-				if (key[keyN].note[1] == NOTE_BOMB) {
-					key[keyN].btn.u.SetNone();
-					key[keyN].btn.d.SetHold();
-				}
-				else if (key[G[0]].btn.u.CheckPushGroup()) {
-					key[keyN].pal.trick = 1;
-					key[keyN].btn.d.SetHold();
-				}
-				else {
-					key[keyN].btn.u.SetNone();
-				}
-			}
-		}
-		else if (key[G[0]].btn.d.CheckPushGroup()) { // 前で下にいる
-			if (key[keyN].note[2] == NOTE_BOMB) {
-				if (key[keyN].note[1] == NOTE_BOMB) {
-					key[keyN].btn.u.SetHold();
-					key[keyN].btn.d.SetNone();
-				}
-				else if (key[G[0]].btn.d.CheckPushGroup()) {
-					key[keyN].pal.trick = 1;
-					key[keyN].btn.u.SetHold();
-				}
-				else {
-					key[keyN].btn.d.SetNone();
-				}
-			}
-		}
-		else { // 前で中にいる
-			if (key[keyN].note[1] == NOTE_BOMB) {
-				if (key[keyN].note[0] == NOTE_BOMB) {
-					key[keyN].btn.d.SetHold();
-				}
-				else  {
-					key[keyN].btn.u.SetHold();
-				}
-			}
+		Nowkey->note[2] = NOTE_NONE;
+		if (recfp.mapdata.note[objectN[2]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+			Nowkey->note[2] = recfp.mapdata.note[objectN[2]].object;
 		}
 
-		// 譜面パラメータ各種計算,初期化
-		key[keyN].pal.notes = 0;
-		key[keyN].pal.arrow = 0;
-		key[keyN].pal.chord = 0;
-		key[keyN].pal.chain = 0;
-		key[keyN].pal.meldy = 0;
-		key[keyN].pal.actor = 0;
-		key[keyN].pal.trick = 0;
-		// 譜面パラメータ各種計算,重み計算,notes,2000/前回からの時間
-		key[keyN].pal.notes = 10;
+		//hitノーツ数取得
+		Nowkey->hitN = 0;
+		if (Nowkey->note[0] == NOTE_HIT) { Nowkey->hitN++; }
+		if (Nowkey->note[1] == NOTE_HIT) { Nowkey->hitN++; }
+		if (Nowkey->note[2] == NOTE_HIT) { Nowkey->hitN++; }
+
+		//arwノーツ数取得
+		Nowkey->arwN = 0;
+		if (IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
+		if (IS_NOTE_ARROW_GROUP(Nowkey->note[1])) { Nowkey->arwN++; }
+		if (IS_NOTE_ARROW_GROUP(Nowkey->note[2])) { Nowkey->arwN++; }
+
+		//押しキーの初期化
+		Nowkey->btn.z.Reset();
+		Nowkey->btn.x.Reset();
+		Nowkey->btn.c.Reset();
+		Nowkey->btn.u.Reset();
+		Nowkey->btn.d.Reset();
+		Nowkey->btn.l.Reset();
+		Nowkey->btn.r.Reset();
+
+		//押しキーの判定
+		RecDdifGetKeyHit(Nowkey, Befkey);
+		RecDdifGetKeyArrow(Nowkey);
+		RecDdifGetKeyCatch(Nowkey, Befkey);
+		RecDdifGetKeyBomb(Nowkey, Befkey);
+
+		// 譜面パラメータ各種計算,重み計算,notes
+		Nowkey->pal.notes = 0;
+		if (Nowkey->note[0] == NOTE_HIT || IS_NOTE_ARROW_GROUP(Nowkey->note[0]) ||
+			Nowkey->note[1] == NOTE_HIT || IS_NOTE_ARROW_GROUP(Nowkey->note[1]) ||
+			Nowkey->note[2] == NOTE_HIT || IS_NOTE_ARROW_GROUP(Nowkey->note[2]))
+		{
+			Nowkey->pal.notes = 1;
+		}
 		
 		// 譜面パラメータ各種計算,重み計算,arrow
-		switch (key[keyN].arwN) {
+		Nowkey->pal.arrow = 0;
+		switch (Nowkey->arwN) {
 		case 0:
-			key[keyN].pal.arrow = 0;
+			Nowkey->pal.arrow = 0;
 			break;
 		case 1:
-			key[keyN].pal.arrow = 10;
+			Nowkey->pal.arrow = 10;
 			break;
 		case 2:
-			key[keyN].pal.arrow = 12;
+			Nowkey->pal.arrow = 12;
 			break;
 		case 3:
-			key[keyN].pal.arrow = 15;
+			Nowkey->pal.arrow = 15;
 			break;
 		}
 
-		// 譜面パラメータ各種計算,重み計算,chord
-		// hit/arw
-		//    0  1  2   3
-		// 0  0  0 15 (18)
-		// 1  0 12 17  --
-		// 2 10 13 --  --
-		// 3 12 -- --  --
-		switch (key[keyN].arwN) {
-		case 0:
-			switch (key[keyN].hitN) {
-			case 2:
-				key[keyN].pal.chord = 10;
-				break;
-			case 3:
-				key[keyN].pal.chord = 12;
-				break;
+		// 譜面パラメータ各種計算,重み計算,Chord~Actor
+		RecDdifGetPalChord(Nowkey);
+		RecDdifGetPalChain(Nowkey, Befkey, BBefkey);
+		RecDdifGetPalTrill(Nowkey, Befkey, BBefkey);
+		RecDdifGetPalMeldy(Nowkey, Befkey, BBefkey);
+		RecDdifGetPalActor(Nowkey);
+		// trickはRecDdifGetKeyBomb()で計算済み
+
+		// 時間でかける(2000/前回からの時間)
+		G[0] = 2000 / maxs_2(1, Nowkey->time - Befkey->time);
+		Nowkey->pal.notes *= G[0];
+		Nowkey->pal.trill *= G[0];
+		Nowkey->pal.arrow *= G[0];
+		Nowkey->pal.chord *= G[0];
+		Nowkey->pal.chain *= G[0];
+		Nowkey->pal.meldy *= G[0];
+		Nowkey->pal.actor *= G[0];
+		Nowkey->pal.trick *= G[0];
+
+		// maxの計算
+		{
+			rec_ddif_pal_t buf;
+			for (uint iNum = 0; iNum < REC_DDIF_BUF_NUM; iNum++) {
+				buf.notes += key[iNum].pal.notes;
+				buf.trill += key[iNum].pal.trill;
+				buf.arrow += key[iNum].pal.arrow;
+				buf.chord += key[iNum].pal.chord;
+				buf.chain += key[iNum].pal.chain;
+				buf.meldy += key[iNum].pal.meldy;
+				buf.actor += key[iNum].pal.actor;
+				buf.trick += key[iNum].pal.trick;
 			}
-			break;
-		case 1:
-			switch (key[keyN].hitN) {
-			case 1:
-				key[keyN].pal.chord = 12;
-				break;
-			case 2:
-				key[keyN].pal.chord = 13;
-				break;
-			}
-			break;
-		case 2:
-			switch (key[keyN].hitN) {
-			case 0:
-				key[keyN].pal.chord = 15;
-				break;
-			case 1:
-				key[keyN].pal.chord = 17;
-				break;
-			}
-			break;
-		case 3:
-			key[keyN].pal.chord = 19;
-			break;
+			if (mpal->notes < buf.notes) { mpal->notes = buf.notes; }
+			if (mpal->trill < buf.trill) { mpal->trill = buf.trill; }
+			if (mpal->arrow < buf.arrow) { mpal->arrow = buf.arrow; }
+			if (mpal->chord < buf.chord) { mpal->chord = buf.chord; }
+			if (mpal->chain < buf.chain) { mpal->chain = buf.chain; }
+			if (mpal->meldy < buf.meldy) { mpal->meldy = buf.meldy; }
+			if (mpal->actor < buf.actor) { mpal->actor = buf.actor; }
+			if (mpal->trick < buf.trick) { mpal->trick = buf.trick; }
 		}
 
-		// 譜面パラメータ各種計算,重み計算,chain
-		G[0] = (keyN + 49) % 50; // ひとつ前のkeyN
-		G[1] = (keyN + 48) % 50; // ふたつ前のkeyN
-		G[2] = 0; // 2連カウント
-		G[3] = 0; // 縦連カウント
-		if (key[keyN].btn.z.CheckPushGroup() &&
-			key[G[0]].btn.z.CheckPushGroup())
-		{
-			G[2]++;
-			if (key[G[1]].btn.z.CheckPushGroup()) { G[3]++; }
+		//次のノートへ
+		if (recfp.mapdata.note[objectN[0]].next != -1) {
+			objectN[0] = recfp.mapdata.note[objectN[0]].next;
 		}
-		if (key[keyN].btn.x.CheckPushGroup() &&
-			key[G[0]].btn.x.CheckPushGroup())
-		{
-			G[2]++;
-			if (key[G[1]].btn.x.CheckPushGroup()) { G[3]++; }
+		if (recfp.mapdata.note[objectN[1]].next != -1) {
+			objectN[1] = recfp.mapdata.note[objectN[1]].next;
 		}
-		if (key[keyN].btn.c.CheckPushGroup() &&
-			key[G[0]].btn.c.CheckPushGroup())
-		{
-			G[2]++;
-			if (key[G[1]].btn.c.CheckPushGroup()) { G[3]++; }
-		}
-		if (key[keyN].btn.u.CheckPushGroup() &&
-			key[G[0]].btn.u.CheckPushGroup())
-		{
-			G[2]++;
-			if (key[G[1]].btn.u.CheckPushGroup()) { G[3]++; }
-		}
-		if (key[keyN].btn.d.CheckPushGroup() &&
-			key[G[0]].btn.d.CheckPushGroup())
-		{
-			G[2]++;
-			if (key[G[1]].btn.d.CheckPushGroup()) { G[3]++; }
-		}
-		if (key[keyN].btn.l.CheckPushGroup() &&
-			key[G[0]].btn.l.CheckPushGroup())
-		{
-			G[2]++;
-			if (key[G[1]].btn.l.CheckPushGroup()) { G[3]++; }
-		}
-		if (key[keyN].btn.r.CheckPushGroup() &&
-			key[G[0]].btn.r.CheckPushGroup())
-		{
-			G[2]++;
-			if (key[G[1]].btn.r.CheckPushGroup()) { G[3]++; }
+		if (recfp.mapdata.note[objectN[2]].next != -1) {
+			objectN[2] = recfp.mapdata.note[objectN[2]].next;
 		}
 
-		// 譜面パラメータ各種計算,重み計算,trill
-		G[0] = (keyN + 49) % 50; // ひとつ前のkeyN
-		G[1] = (keyN + 48) % 50; // ふたつ前のkeyN
-		G[2] = 0; // トリルカウント
-		if (key[keyN].btn.z.CheckPushGroup() &&
-			key[G[1]].btn.z.CheckPushGroup() &&
-			key[G[0]].btn.z.CheckReleaseGroup())
-		{
-			G[2]++;
-		}
-		if (key[keyN].btn.x.CheckPushGroup() &&
-			key[G[1]].btn.x.CheckPushGroup() &&
-			key[G[0]].btn.x.CheckReleaseGroup())
-		{
-			G[2]++;
-		}
-		if (key[keyN].btn.c.CheckPushGroup() &&
-			key[G[1]].btn.c.CheckPushGroup() &&
-			key[G[0]].btn.c.CheckReleaseGroup())
-		{
-			G[2]++;
-		}
-		if (key[keyN].btn.u.CheckPushGroup() &&
-			key[G[1]].btn.u.CheckPushGroup() &&
-			key[G[0]].btn.u.CheckReleaseGroup())
-		{
-			G[2]++;
-		}
-		if (key[keyN].btn.d.CheckPushGroup() &&
-			key[G[1]].btn.d.CheckPushGroup() &&
-			key[G[0]].btn.d.CheckReleaseGroup())
-		{
-			G[2]++;
-		}
-		if (key[keyN].btn.l.CheckPushGroup() &&
-			key[G[1]].btn.l.CheckPushGroup() &&
-			key[G[0]].btn.l.CheckReleaseGroup())
-		{
-			G[2]++;
-		}
-		if (key[keyN].btn.r.CheckPushGroup() &&
-			key[G[1]].btn.r.CheckPushGroup() &&
-			key[G[0]].btn.r.CheckReleaseGroup())
-		{
-			G[2]++;
-		}
-		if (G[2] == 0) {
-			key[keyN].pal.trill = 0;
-		}
-		else if (G[2] == 1) {
-			key[keyN].pal.trill = 10;
-		}
-		else {
-			key[keyN].pal.trill = 10 + G[2];
-		}
-
-		// 譜面パラメータ各種計算,重み計算,meldy
-		// 譜面パラメータ各種計算,重み計算,actor
-		// 譜面パラメータ各種計算,重み計算,trick
-#if 0
-		/**
-		 * 
-notes: 単にHITとアローの密度
-trill: トリルの密度
-┣1HITで、一つ前が1HITで、二つ前が1HIT、重みは1.0
-┣1HITで、一つ前が2HITで、二つ前が1HIT、重みは1.2
-┣2HITで、一つ前が1HITで、二つ前が2HIT、重みは1.2
-┣1アローで、一つ前が違う1アローで、二つ前が同じ1アロー、重みは1.2
-┣1アローで、一つ前が違う2アローで、二つ前が同じ1アロー、重みは1.4
-┣2アローで、一つ前が違う1アローで、二つ前が同じ2アロー、重みは1.4
-┗2アローで、一つ前が違う2アローで、二つ前が同じ2アロー、重みは1.5
-arrow: 単にアロー密度
-chord: 単に同時押し密度
-┣2HITの重みは1.0
-┣3HITの重みは1.2
-┣1HIT1アローの重みは1.2
-┣2HIT1アローの重みは1.3
-┣2アローの重みは1.4
-┣1HIT2アローの重みは1.6
-┗(3アローは禁止されているが、一応重みは1.8とする)
-chain: 縦連密度
-┣2HITで、一つ前が2HITか3HIT、重みは1.0、二つ前も2HITか3HITなら重みは1.2
-┣3HITで、一つ前が1HITか2HITか3HIT、重みは1.0、二つ前も1HITか2HITか3HITなら重みは1.2
-┗アローで、一つ前が同じアロー、重みは1.0、二つ前も同じアローなら重みは1.2
-meldy: 乱打密度
-┣今のノーツが、一つ前と違う、重みは1.0
-┣今のノーツが、二つ前と違う、重みは1.1
-┗今のノーツが、一つ前とも二つ前とも違う、重みは1.3
-
-actor: catchとbombによる操作の密度(要検討)
-trick: アローひっかけの頻度(要検討)
-
-lanes: レーンの移動頻度
-┣linは重み1.0、accとdecは重み1.2
-┗easyは合計3以内、normalは合計6以内、hardは合計10以内を目安にしたい
-
-		 */
-#endif
-
-		/*+++*/
-
-		//GHOSTノーツをスキップ
+		//GHOSTノーツ,連actをスキップ
 		for (uint iLane = 0; iLane < 3; iLane++) {
-			while (recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST &&
-				0 <= recfp.mapdata.note[objectN[iLane]].hittime)
-			{
-				objectN[iLane] = recfp.mapdata.note[objectN[iLane]].next;
+			if (Nowkey->note[iLane] == NOTE_CATCH) {
+				while ((recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST ||
+					recfp.mapdata.note[objectN[iLane]].object == NOTE_CATCH) &&
+					recfp.mapdata.note[objectN[iLane]].next != -1)
+				{
+					objectN[iLane] = recfp.mapdata.note[objectN[iLane]].next;
+				}
+			}
+			else if (Nowkey->note[iLane] == NOTE_BOMB) {
+				while ((recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST ||
+					recfp.mapdata.note[objectN[iLane]].object == NOTE_BOMB) &&
+					recfp.mapdata.note[objectN[iLane]].next != -1)
+				{
+					objectN[iLane] = recfp.mapdata.note[objectN[iLane]].next;
+				}
+			}
+			else {
+				while (recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST &&
+					recfp.mapdata.note[objectN[iLane]].next != -1)
+				{
+					objectN[iLane] = recfp.mapdata.note[objectN[iLane]].next;
+				}
 			}
 		}
+
+		// keyNを進める
+		keyN = (keyN + 1) % REC_DDIF_BUF_NUM;
+	}
+	return;
+}
+
+void cal_ddif_3(const TCHAR *path) {
+	rec_ddif_pal_t mpal;
+
+	cal_ddif_4(&mpal, path);
+
+	// 各項目をLv9の基準に合わせる
+	mpal.notes = mpal.notes * 990 / REC_DDIF_NOTES_BASE;
+	mpal.trill = mpal.trill * 990 / REC_DDIF_TRILL_BASE;
+	mpal.arrow = mpal.arrow * 990 / REC_DDIF_ARROW_BASE;
+	mpal.chord = mpal.chord * 990 / REC_DDIF_CHORD_BASE;
+	mpal.chain = mpal.chain * 990 / REC_DDIF_CHAIN_BASE;
+	mpal.meldy = mpal.meldy * 990 / REC_DDIF_MELDY_BASE;
+	mpal.actor = mpal.actor * 990 / REC_DDIF_ACTOR_BASE;
+	mpal.trick = mpal.trick * 990 / REC_DDIF_TRICK_BASE;
+
+	/**
+	 * 内部レート計算
+	 * A = 一番高い項目
+	 * B = 上位2位～上位4位の平均
+	 * C = 全ての項目の平均
+	 * D = B + 2 * C / B
+	 * レート = D + bitween(0, A - D, 2) / 3
+	 */
+	{
+		uint pal[8] = {
+			mpal.notes, mpal.trill, mpal.arrow, mpal.chord,
+			mpal.chain, mpal.meldy, mpal.actor, mpal.trick
+		};
+		qsort_ease(uint, pal);
+
+		mpal.mdif = (pal[1] + pal[2] + pal[3]) / 3; // 上位2位～上位4位の平均
+		mpal.mdif = mpal.mdif + 2 * (pal[0] + pal[1] + pal[2] + pal[3] + pal[4] + pal[5] + pal[6] + pal[7]) / 8 / maxs_2(mpal.mdif, 1); // D
+		mpal.mdif = mpal.mdif + betweens(0, pal[0] - mpal.mdif, 2) / 3; // レート
 	}
 
-#if 0
-
-	//ノーツがなくなるまで繰り返す
-	while (NULL) {
-		DifkeyCalInsertNote(&note[G[0]][objectN[G[0]]], G[0]);
-		//ddifの計算
-		while (note[G[0]][objectN[G[0]]].hittime >=
-			(Etime - noteoff) / 25 * ddif2.nowdifsection + noteoff) {
-			ddif[ddif2.nowdifsection - 1] = cal_ddif_2(ddif2.datanum, difkey[0],
-				Etime, noteoff, ddif2.nowdifsection, difkey[7][3]);
-			ddif2.nowdifsection++;
-		}
-		difkey[difkey[1][3]][0] = note[G[0]][objectN[G[0]]].object;
-		difkey[difkey[1][3]][1] = note[G[0]][objectN[G[0]]].hittime;
-
-		switch (difkey[difkey[1][3]][0]) {
-		case 1: //hitノーツ補間
-			if (difkey[difkey[2][3]][0] == 1 &&
-				difkey[difkey[1][3]][1] - 20 < difkey[difkey[2][3]][1]) {
-				difkey[difkey[2][3]][2] *= 1;
-				objectN[G[0]]++;
-				continue;
-			}
-			break;
-		case 2: //catchノーツ補間
-			if (G[0] != 1) difkey[difkey[1][3]][0] = G[0] / 2 + 3;
-			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 3 &&
-				(difkey[difkey[2][3]][0] == 8 ||
-					difkey[difkey[2][3]][0] == 9)) {
-				difkey[difkey[2][3]][0] = 3;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 2 && (difkey[difkey[2][3]][0] == 1 || difkey[difkey[2][3]][0] == 5 || difkey[difkey[2][3]][0] == 6)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 2 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9)) {
-				difkey[difkey[2][3]][0] = 2;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 4 && (difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 8)) {
-				difkey[difkey[2][3]][0] = 4;
-				objectN[G[0]]++;
-				continue;
-			}
-			break;
-		case 5: //leftノーツ補間
-			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
-				difkey[difkey[2][3]][0] = 5;
-				continue;
-			}
-			break;
-		case 6: //rightノーツ補間
-			if (difkey[difkey[2][3]][0] == 2 || difkey[difkey[2][3]][0] == 7 || difkey[difkey[2][3]][0] == 9) {
-				difkey[difkey[2][3]][0] = 6;
-				continue;
-			}
-			break;
-		case 7: //bombノーツ補間
-			if (G[0] != 0)difkey[difkey[1][3]][0] = G[0] + 7;
-			if (difkey[difkey[1][3]][0] == difkey[difkey[2][3]][0]) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && difkey[difkey[2][3]][0] == 8 || difkey[difkey[1][3]][0] == 8 && difkey[difkey[2][3]][0] == 7) {
-				difkey[difkey[2][3]][0] = 4;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && difkey[difkey[2][3]][0] == 9 || difkey[difkey[1][3]][0] == 9 && difkey[difkey[2][3]][0] == 7) {
-				difkey[difkey[2][3]][0] = 2;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 8 && difkey[difkey[2][3]][0] == 9 || difkey[difkey[1][3]][0] == 9 && difkey[difkey[2][3]][0] == 8) {
-				difkey[difkey[2][3]][0] = 3;
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 7 && (difkey[difkey[2][3]][0] != 3)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 8 && (difkey[difkey[2][3]][0] == 3 || difkey[difkey[2][3]][0] == 4)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			else if (difkey[difkey[1][3]][0] == 9 && (difkey[difkey[2][3]][0] != 4)) {
-				objectN[G[0]]++;
-				continue;
-			}
-			break;
-		}
-		/* calculate difkey */
-		if (difkey[2][3] != -1 && difkey[3][3] != -1) {
-			difkey[difkey[1][3]][2] = cal_difkey(difkey[difkey[1][3]][1],
-				difkey[difkey[2][3]][1], difkey[difkey[1][3]][0],
-				difkey[difkey[2][3]][0], difkey[difkey[3][3]][0],
-				difkey[difkey[2][3]][2]);
-		}
-		for (i[0] = 0; i[0] < 3; i[0]++) {
-			if (note[G[0]][objectN[G[0]]].object >= 3 && note[G[0]][objectN[G[0]]].object <= 6 &&
-				G[0] != i[0] && note[G[0]][objectN[G[0]]].object == note[i[0]][objectN[i[0]]].object &&
-				note[G[0]][objectN[G[0]]].hittime + 5 >= note[i[0]][objectN[i[0]]].hittime) {
-				objectN[i[0]]++;
-			}
-		}
-		objectN[G[0]]++;
-		ddif2.datanum++;
-		G[0] = 0;
-		ddif2.maxdif = mins(ddif2.maxdif,
-			cal_nowdif_m_2(difkey[0], difkey[0][3], difkey[1][3], difkey[7][3]));
-		for (i[0] = 1; i[0] < 4; i[0]++) {
-			difkey[i[0]][3]++;
-			if (difkey[i[0]][3] > difkey[0][3]) { difkey[i[0]][3] = 0; }
-		}
-	}
-	ddif2.datanum++;
-	for (i[0] = 0; i[0] < 2; i[0]++) {
-		if (difkey[i[0]][2] == 0 && difkey[2][2] > 0) { ddif2.datanum--; }
-	}
-	if (ddif2.datanum < 1) { ddif2.datanum = 1; }
-	if (ddif2.datanum > 50) { ddif2.datanum = 50; }
-	ddifG[1] = ddif2.maxdif;
-	if (ddifG[1] <= 0) { ddifG[1] = 1; }
-	ddif2.maxdif /= 50;
-	ddif[ddif2.nowdifsection - 1] = 0;
-	for (i[0] = 0; i[0] < ddif2.datanum; i[0]++) {
-		if (difkey[i[0]][1] > Etime - difkey[7][3]) {
-			ddif[ddif2.nowdifsection - 1] += difkey[i[0]][2];
-		}
-	}
-	for (i[0] = ddif2.nowdifsection - 1; i[0] <= 24; i[0]++) {
-		ddif[i[0]] = ddif[ddif2.nowdifsection - 1];
-	}
-	ddif2.lastdif = ddif[ddif2.nowdifsection - 1] / 50;
-	//NEEDYOU:Lv.1.0->2713, Co-op katyohugetsu:Lv.8.0->34733
-	ddif2.maxdif = lins(2713, 100, 34733, 800, ddif2.maxdif);
-	ddif2.lastdif = lins(2713, 100, 34733, 800, ddif2.lastdif);
-
-	//譜面セーブ
-	_wfopen_s(&fp, path, L"wb");
-	if (fp == NULL) { return 0; }
-	fwrite(&allnum, sizeof(playnum_box), 1, fp);//各データの個数
-	fwrite(&mp3FN, 255, 1, fp);//音楽ファイル名
-	fwrite(&bpm, sizeof(double), 1, fp);//BPM
-	fwrite(&noteoff, sizeof(int), 1, fp);//offset
-	fwrite(&skyFN, 255, 1, fp);//空背景名
-	fwrite(&groundFN, 255, 1, fp);//地面画像名
-	fwrite(&waterFN, 255, 1, fp);//水中画像名
-	fwrite(&songN, 255, 1, fp);//曲名
-	fwrite(&songNE, 255, 1, fp);//曲名(英語)
-	fwrite(&Lv, sizeof(short int), 1, fp);//レベル
-	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
-	fwrite(&fall, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
-	fwrite(&speedt, sizeof(double), 990, fp);//レーン速度
-	fwrite(&chamo, sizeof(int), 594, fp);//キャラグラ変換タイミング
-	fwrite(&Ymove[0], sizeof(int), allnum.Ymovenum[0] * 4, fp);//上レーン縦位置移動タイミング
-	fwrite(&Ymove[1], sizeof(int), allnum.Ymovenum[1] * 4, fp);//中レーン縦位置移動タイミング
-	fwrite(&Ymove[2], sizeof(int), allnum.Ymovenum[2] * 4, fp);//下レーン縦位置移動タイミング
-	fwrite(&Ymove[3], sizeof(int), allnum.Ymovenum[3] * 4, fp);//地面縦位置移動タイミング
-	fwrite(&Ymove[4], sizeof(int), allnum.Ymovenum[4] * 4, fp);//水面縦位置移動タイミング
-	fwrite(&Xmove[0], sizeof(int), allnum.Xmovenum[0] * 4, fp);//上レーン横位置移動タイミング
-	fwrite(&Xmove[1], sizeof(int), allnum.Xmovenum[1] * 4, fp);//中レーン横位置移動タイミング
-	fwrite(&Xmove[2], sizeof(int), allnum.Xmovenum[2] * 4, fp);//下レーン横位置移動タイミング
-	fwrite(&lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
-	fwrite(&carrow, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
-	fwrite(&viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2 == 1
-	noteSaveOld(&note[0][0], &note[1][0], &note[2][0], &allnum, fp);
-#else
-	fwrite(&note[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
-	fwrite(&note[1], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
-	fwrite(&note[2], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
-	fwrite(&notes, sizeof(short int), 1, fp);//ノーツ数
-	fwrite(&Etime, sizeof(int), 1, fp);//曲終了時間
-	G[0] = ddif2.maxdif;//最高難易度
-	G[1] = ddif2.lastdif;//最終難易度
-	fwrite(&G, sizeof(int), 2, fp);
-	fwrite(&ddif, sizeof(int), 25, fp);//各区間難易度データ
-	fwrite(&ddif2.nowdifsection, sizeof(int), 1, fp);//各区間難易度データ
-	fwrite(&ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
-	fwrite(&DifFN, 255, 1, fp);//難易度バー名
-	fwrite(&Movie, sizeof(item_box), allnum.movienum, fp);//動画データ
-	fwrite(&camera, sizeof(struct camera_box), 255, fp);//カメラデータ
-	fwrite(&scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
-	fwrite(&v_bpm, sizeof(view_BPM_box), allnum.v_BPMnum, fp);//見た目のBPMデータ
-	fwrite(&outpoint, sizeof(int), 2, fp);//譜面エラー
-	fclose(fp);
-
-#endif
+	// mpal と ddifRate を何らかの方法で保存する
+	RecScoreWriteDdif(&mpal, path);
 
 	return;
 }
