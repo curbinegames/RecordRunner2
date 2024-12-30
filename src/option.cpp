@@ -258,9 +258,8 @@ void RecTxtWriteAllDdif() {
 	_wfopen_s(&fp, L"difout.txt", L"w");
 	if (fp == NULL) { return; }
 
-	fwprintf(fp, L"\t\tnotes\tarrow\tchord\tchain\ttrill\tmeldy\tactor\ttrick\tmdif\n");
-
 	for (uint iPack = 0; iPack < 10; iPack++) {
+		fwprintf(fp, L"\t\tnotes\tarrow\tchord\tchain\ttrill\tmeldy\tactor\ttrick\tmdif\n");
 		for (uint iSong = 0; iSong < 20; iSong++) {
 			songN[0][0] = L'\0';
 			songN[1][0] = L'\0';
@@ -277,7 +276,7 @@ void RecTxtWriteAllDdif() {
 				RecScoreReadDdif(&ddif[iDif], path);
 				if (songN[iDif][0] == L'\0') { continue; }
 
-				fwprintf(fp, L"%s", songN[iDif]);
+				fwprintf(fp, L"%ls", songN[iDif]);
 				switch (iDif) {
 				case 0:
 					fwprintf(fp, L"[AUTO]\n");
@@ -298,10 +297,10 @@ void RecTxtWriteAllDdif() {
 
 				fwprintf(fp, L"\t\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\t%2.2f\n",
 					ddif[iDif].notes / 100.0,
-					ddif[iDif].trill / 100.0,
 					ddif[iDif].arrow / 100.0,
 					ddif[iDif].chord / 100.0,
 					ddif[iDif].chain / 100.0,
+					ddif[iDif].trill / 100.0,
 					ddif[iDif].meldy / 100.0,
 					ddif[iDif].actor / 100.0,
 					ddif[iDif].trick / 100.0,

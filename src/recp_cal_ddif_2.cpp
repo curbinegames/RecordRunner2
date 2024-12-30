@@ -16,14 +16,25 @@
 #define REC_NONE 3 //離しっぱなし
 #define REC_RELA 4 //離す
 
-#define REC_DDIF_NOTES_BASE    1115 // Co-op Taylorのnotesの値
-#define REC_DDIF_ARROW_BASE    5360 // Co-op Taylorのarrowの値
-#define REC_DDIF_CHORD_BASE    1288 // FURRY TIME  のchordの値
-#define REC_DDIF_CHAIN_BASE 1000000 // Co-op Taylorのchainの値
-#define REC_DDIF_TRILL_BASE    8930 // Co-op Taylorのtrillの値
-#define REC_DDIF_MELDY_BASE   13395 // Co-op Taylorのmaldyの値
-#define REC_DDIF_ACTOR_BASE    1710 // 花調風月    のactorの値 (Lv8)
-#define REC_DDIF_TRICK_BASE       1 // xxxのtrickの値
+#define REC_DDIF_BASE 990 // ddifの基準難易度
+
+#define REC_DDIF_NOTES_BASE  354 // Dynamic Galaxy  のnotesの値
+#define REC_DDIF_ARROW_BASE 3757 // Chartreuse Greenのarrowの値
+#define REC_DDIF_CHORD_BASE 3319 // Dynamic Galaxy  のchordの値
+#define REC_DDIF_CHAIN_BASE 2102 // drop DOWN DOWN  のchainの値 (normal)
+#define REC_DDIF_TRILL_BASE 3420 // Chartreuse Greenのtrillの値
+#define REC_DDIF_MELDY_BASE 8321 // drop DOWN DOWN  のmaldyの値 (normal)
+#define REC_DDIF_ACTOR_BASE 2561 // Dynamic Galaxy  のactorの値
+#define REC_DDIF_TRICK_BASE REC_DDIF_BASE // trick譜面がないので初期値
+
+#define REC_DDIF_1ST_WAIGHT  50
+#define REC_DDIF_2ND_WAIGHT  90
+#define REC_DDIF_3RD_WAIGHT 100
+#define REC_DDIF_4TH_WAIGHT  90
+#define REC_DDIF_5TH_WAIGHT  75
+#define REC_DDIF_6TH_WAIGHT  50
+#define REC_DDIF_7TH_WAIGHT  25
+#define REC_DDIF_8TH_WAIGHT  10
 
 typedef struct ddef_box_2 {
 	int maxdif = 0;
@@ -122,49 +133,6 @@ typedef struct rec_ddif_data_s {
 	} btn;
 	rec_ddif_pal_t pal;
 } rec_ddif_data_t;
-
-#if 0
-static int cal_nowdif_m_2(int *difkey, int num, int now, int voidtime) {
-	int ret = 0;
-	int count = 0;
-	for (int i = 0; i <= num; i++) {
-		if (difkey[i * 4 + 2] < 0) {
-			break;
-		}
-		if (difkey[i * 4 + 1] > difkey[now * 4 + 1] - voidtime) {
-			ret += difkey[i * 4 + 2];
-			count++;
-		}
-	}
-	if (count == 0) {
-		return 0;
-	}
-	else {
-		return ret * 50 / count;
-	}
-}
-
-static int cal_ddif_2(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime) {
-	int ret = 0;
-	int count = 0;
-	if (num >= 50) {
-		num = 49;
-	}
-	for (int i = 0; i < num; i++) {
-		if (difkey[i * 4 + 1] > (Etime - noteoff) / 25 *
-			difsec - voidtime + noteoff) {
-			count++;
-			ret += difkey[i * 4 + 2];
-		}
-	}
-	if (count == 0) {
-		return 0;
-	}
-	else {
-		return ret * 50 / count;
-	}
-}
-#endif
 
 #if 1 /* RecDdifGetKey */
 
@@ -394,12 +362,14 @@ static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 	}
 
 	if (0 < chainN) {
-		Nowkey->pal.chain = 13;
+		Nowkey->pal.chain += 12 + max(chainN * 1.5, divN);
+	}
+	else if (0 < divN) {
+		Nowkey->pal.chain = 9 + divN;
 	}
 	else {
-		Nowkey->pal.chain = 10;
+		Nowkey->pal.chain = 0;
 	}
-	Nowkey->pal.chain += divN;
 
 	return;
 }
@@ -672,7 +642,7 @@ static int qsort_protocol(const void *n1, const void *n2) {
 
 #define qsort_ease(type, mat) qsort((mat), sizeof(mat) / sizeof(type), sizeof(type), qsort_protocol<type>)
 
-static void cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
+static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	TCHAR esc_path[255];
 	strcopy_2(path, esc_path, 255);
 	(void)path;
@@ -683,7 +653,8 @@ static void cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	uint keyN = 0;
 	int objectN[3] = { 0,0,0 }; //↑の番号
 
-	RecScoreReadForDdif(&recfp, esc_path);
+	if (RecScoreReadForDdif(&recfp, esc_path) != 0) { return -1; }
+
 	//各初期値
 	for (uint iLane = 0; iLane < 3; iLane++) {
 		for (uint iNum = 0; iNum < recfp.allnum.notenum[iLane]; iNum++) {
@@ -707,6 +678,29 @@ static void cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		rec_ddif_data_t *Nowkey = &key[keyN];
 		rec_ddif_data_t *Befkey = &key[(keyN + REC_DDIF_BUF_NUM - 1) % REC_DDIF_BUF_NUM];
 		rec_ddif_data_t *BBefkey = &key[(keyN + REC_DDIF_BUF_NUM - 2) % REC_DDIF_BUF_NUM];
+
+		//Nowkeyの初期化
+		Nowkey->time = 0;
+		Nowkey->note[0] = NOTE_NONE;
+		Nowkey->note[1] = NOTE_NONE;
+		Nowkey->note[2] = NOTE_NONE;
+		Nowkey->hitN = 0;
+		Nowkey->arwN = 0;
+		Nowkey->btn.z.Reset();
+		Nowkey->btn.x.Reset();
+		Nowkey->btn.c.Reset();
+		Nowkey->btn.u.Reset();
+		Nowkey->btn.d.Reset();
+		Nowkey->btn.l.Reset();
+		Nowkey->btn.r.Reset();
+		Nowkey->pal.notes = 0;
+		Nowkey->pal.trill = 0;
+		Nowkey->pal.arrow = 0;
+		Nowkey->pal.chord = 0;
+		Nowkey->pal.chain = 0;
+		Nowkey->pal.meldy = 0;
+		Nowkey->pal.actor = 0;
+		Nowkey->pal.trick = 0;
 
 		//次のノーツの時間を取得
 		G[0] = 0; //次のノーツのレーン番号
@@ -739,15 +733,6 @@ static void cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		if (IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
 		if (IS_NOTE_ARROW_GROUP(Nowkey->note[1])) { Nowkey->arwN++; }
 		if (IS_NOTE_ARROW_GROUP(Nowkey->note[2])) { Nowkey->arwN++; }
-
-		//押しキーの初期化
-		Nowkey->btn.z.Reset();
-		Nowkey->btn.x.Reset();
-		Nowkey->btn.c.Reset();
-		Nowkey->btn.u.Reset();
-		Nowkey->btn.d.Reset();
-		Nowkey->btn.l.Reset();
-		Nowkey->btn.r.Reset();
 
 		//押しキーの判定
 		RecDdifGetKeyHit(Nowkey, Befkey);
@@ -803,15 +788,18 @@ static void cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		// maxの計算
 		{
 			rec_ddif_pal_t buf;
+			uint mlp = 100;
 			for (uint iNum = 0; iNum < REC_DDIF_BUF_NUM; iNum++) {
-				buf.notes += key[iNum].pal.notes;
-				buf.trill += key[iNum].pal.trill;
-				buf.arrow += key[iNum].pal.arrow;
-				buf.chord += key[iNum].pal.chord;
-				buf.chain += key[iNum].pal.chain;
-				buf.meldy += key[iNum].pal.meldy;
-				buf.actor += key[iNum].pal.actor;
-				buf.trick += key[iNum].pal.trick;
+				uint iView = (keyN + 50 - iNum) % 50;
+				buf.notes += key[iView].pal.notes * mlp / 100;
+				buf.trill += key[iView].pal.trill * mlp / 100;
+				buf.arrow += key[iView].pal.arrow * mlp / 100;
+				buf.chord += key[iView].pal.chord * mlp / 100;
+				buf.chain += key[iView].pal.chain * mlp / 100;
+				buf.meldy += key[iView].pal.meldy * mlp / 100;
+				buf.actor += key[iView].pal.actor * mlp / 100;
+				buf.trick += key[iView].pal.trick * mlp / 100;
+				mlp = mlp * 95 / 100;
 			}
 			if (mpal->notes < buf.notes) { mpal->notes = buf.notes; }
 			if (mpal->trill < buf.trill) { mpal->trill = buf.trill; }
@@ -824,15 +812,21 @@ static void cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		}
 
 		//次のノートへ
-		if (recfp.mapdata.note[objectN[0]].next != -1) {
+		G[0] = 1; // ノーツなしフラグ
+		if (Nowkey->note[0] != NOTE_NONE && recfp.mapdata.note[objectN[0]].next != -1) {
 			objectN[0] = recfp.mapdata.note[objectN[0]].next;
+			G[0] = 0;
 		}
-		if (recfp.mapdata.note[objectN[1]].next != -1) {
+		if (Nowkey->note[1] != NOTE_NONE && recfp.mapdata.note[objectN[1]].next != -1) {
 			objectN[1] = recfp.mapdata.note[objectN[1]].next;
+			G[0] = 0;
 		}
-		if (recfp.mapdata.note[objectN[2]].next != -1) {
+		if (Nowkey->note[2] != NOTE_NONE && recfp.mapdata.note[objectN[2]].next != -1) {
 			objectN[2] = recfp.mapdata.note[objectN[2]].next;
+			G[0] = 0;
 		}
+
+		if (G[0] == 1) { break; }
 
 		//GHOSTノーツ,連actをスキップ
 		for (uint iLane = 0; iLane < 3; iLane++) {
@@ -864,32 +858,24 @@ static void cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		// keyNを進める
 		keyN = (keyN + 1) % REC_DDIF_BUF_NUM;
 	}
-	return;
+	return 0;
 }
 
 void cal_ddif_3(const TCHAR *path) {
 	rec_ddif_pal_t mpal;
 
-	cal_ddif_4(&mpal, path);
+	if (cal_ddif_4(&mpal, path) != 0) { return; }
 
 	// 各項目をLv9の基準に合わせる
-	mpal.notes = mpal.notes * 990 / REC_DDIF_NOTES_BASE;
-	mpal.trill = mpal.trill * 990 / REC_DDIF_TRILL_BASE;
-	mpal.arrow = mpal.arrow * 990 / REC_DDIF_ARROW_BASE;
-	mpal.chord = mpal.chord * 990 / REC_DDIF_CHORD_BASE;
-	mpal.chain = mpal.chain * 990 / REC_DDIF_CHAIN_BASE;
-	mpal.meldy = mpal.meldy * 990 / REC_DDIF_MELDY_BASE;
-	mpal.actor = mpal.actor * 990 / REC_DDIF_ACTOR_BASE;
-	mpal.trick = mpal.trick * 990 / REC_DDIF_TRICK_BASE;
+	mpal.notes = mpal.notes * REC_DDIF_BASE / REC_DDIF_NOTES_BASE;
+	mpal.arrow = mpal.arrow * REC_DDIF_BASE / REC_DDIF_ARROW_BASE;
+	mpal.chord = mpal.chord * REC_DDIF_BASE / REC_DDIF_CHORD_BASE;
+	mpal.chain = mpal.chain * REC_DDIF_BASE / REC_DDIF_CHAIN_BASE;
+	mpal.trill = mpal.trill * REC_DDIF_BASE / REC_DDIF_TRILL_BASE;
+	mpal.meldy = mpal.meldy * REC_DDIF_BASE / REC_DDIF_MELDY_BASE;
+	mpal.actor = mpal.actor * REC_DDIF_BASE / REC_DDIF_ACTOR_BASE;
+	mpal.trick = mpal.trick * REC_DDIF_BASE / REC_DDIF_TRICK_BASE;
 
-	/**
-	 * 内部レート計算
-	 * A = 一番高い項目
-	 * B = 上位2位～上位4位の平均
-	 * C = 全ての項目の平均
-	 * D = B + 2 * C / B
-	 * レート = D + bitween(0, A - D, 2) / 3
-	 */
 	{
 		uint pal[8] = {
 			mpal.notes, mpal.trill, mpal.arrow, mpal.chord,
@@ -897,9 +883,16 @@ void cal_ddif_3(const TCHAR *path) {
 		};
 		qsort_ease(uint, pal);
 
-		mpal.mdif = (pal[1] + pal[2] + pal[3]) / 3; // 上位2位～上位4位の平均
-		mpal.mdif = mpal.mdif + 2 * (pal[0] + pal[1] + pal[2] + pal[3] + pal[4] + pal[5] + pal[6] + pal[7]) / 8 / maxs_2(mpal.mdif, 1); // D
-		mpal.mdif = mpal.mdif + betweens(0, pal[0] - mpal.mdif, 2) / 3; // レート
+		mpal.mdif =
+			pal[0] * REC_DDIF_1ST_WAIGHT +
+			pal[1] * REC_DDIF_2ND_WAIGHT +
+			pal[2] * REC_DDIF_3RD_WAIGHT +
+			pal[3] * REC_DDIF_4TH_WAIGHT +
+			pal[4] * REC_DDIF_5TH_WAIGHT +
+			pal[5] * REC_DDIF_6TH_WAIGHT +
+			pal[6] * REC_DDIF_7TH_WAIGHT +
+			pal[7] * REC_DDIF_8TH_WAIGHT;
+		mpal.mdif = lins(0, 0, 414885, REC_DDIF_BASE, mpal.mdif); // リスケール
 	}
 
 	// mpal と ddifRate を何らかの方法で保存する
