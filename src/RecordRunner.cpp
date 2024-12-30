@@ -10,7 +10,6 @@
 #include <RecCollection.h>
 #include <option.h>
 #include <editserect.h>
-#include <serectbase.h>
 #include <edit.h>
 #include <recr_cutin.h>
 #include <versionup.h>
