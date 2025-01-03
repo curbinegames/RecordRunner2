@@ -10,6 +10,8 @@
 #include <option.h>
 #include <musicserect2.h>
 #include <RecWindowRescale.h>
+#include <playbox.h>
+#include <RecScoreFile.h>
 
 #define PackNumLim 8
 #define SongNumLim 64
@@ -39,6 +41,7 @@ typedef struct music_box {
 	wchar_t artist[6][256];
 	wchar_t SongFileName[6][256];
 	wchar_t jacketP[6][256];
+	rec_ddif_pal_t mpal[6];
 } MUSIC_BOX;
 
 typedef struct rec_serect_music_set_s {
@@ -156,6 +159,7 @@ static void RecSerectReadHighscore(MUSIC_BOX *songdata, TCHAR *songName) {
 static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TCHAR *songName) {
 	TCHAR path[256];
 	TCHAR subPath[256];
+	TCHAR rrsPath[256];
 
 	songdata->limit = 3;
 	strcopy(L"NULL", songdata->difP, 1);
@@ -168,7 +172,9 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
 		stradds(path, L'/'); //"record/<パック名>/<曲名>/"
 		strcopy(path, subPath, 1); //subPathにコピー
 		stradds(path, (TCHAR)((int)_T('0') + iDif)); //"record/<パック名>/<曲名>/<難易度番号>"
+		strcopy(path, rrsPath, 1); //rrsPathにコピー
 		strcats(path, _T(".txt")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
+		strcats(rrsPath, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 		//初期値定義(ファイルがなくても代入する)
 		strcopy(L"NULL", songdata->SongName[iDif], 1);
 		strcopy(L"NULL", songdata->artist[iDif], 1);
@@ -179,6 +185,7 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
 		songdata->preview[iDif][0] = 441000;
 		songdata->preview[iDif][1] = 2646000;
 		RecSerectReadMapDataOneDif(path, subPath, songdata, iDif);
+		RecScoreReadDdif(&songdata->mpal[iDif], rrsPath);
 	}
 
 	RecSerectReadHighscore(songdata, songName);
@@ -875,54 +882,8 @@ private:
 	TCHAR viewingDifBar[255] = { L"NULL" };
 	DxPic_t difbar[6];
 	DxPic_t detail;
+	DxPic_t mpalNamePic;
 	DxPic_t difC[10];
-
-	void DrawDifMark(MUSIC_BOX *songdata, int comdif) {
-		int posX = 0;
-		int posY = 0;
-		for (int i = 0; i < 5; i++) {
-			posY = 0;
-			if (comdif == i) { posY = 1; }
-			if (comdif <= i) { posX = 1; }
-			if (strands(songdata->SongFileName[i], L"NULL") == 0 && i <= songdata->limit) {
-				DrawGraphAnchor(11 * posX + 16 * i - 80, -165, this->difC[i * 2 + posY], DXDRAW_ANCHOR_BOTTOM_RIGHT);
-			}
-		}
-	}
-
-	void DrawDifBar(int dif) {
-		int XmoveC = mins(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
-
-		if (this->LR == 1) {
-			XmoveC = pals(0, 640, MUSE_FADTM, 460, XmoveC);
-			DrawGraphAnchor(5, -120, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
-			DrawGraphAnchor(XmoveC - 640 + 184, -120, this->difbar[dif + 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
-		}
-		else if (this->LR == -1) {
-			XmoveC = pals(0, 460, MUSE_FADTM, 640, XmoveC);
-			DrawGraphAnchor(5, -120, this->difbar[dif - 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
-			DrawGraphAnchor(XmoveC - 640 + 184, -120, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
-		}
-	}
-
-	void DrawDetail(MUSIC_BOX *songdata, int dif) {
-		DrawGraphAnchor(20, 70, this->detail, DXDRAW_ANCHOR_BOTTOM_RIGHT);
-		DrawFormatStringToHandleAnchor(-310, -100, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"%s", songdata->packName);
-		DrawFormatStringToHandleAnchor(-305, -75, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"Lv.%2d", songdata->level[dif]);
-		for (int i = 0; i < 15; i++) {
-			if (10 <= i && songdata->level[dif] <= i) {
-				break;
-			}
-			if (i < songdata->level[dif]) {
-				DrawStringToHandleAnchor(16 * i - 250, -75, L"★", COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT);
-			}
-			else {
-				DrawStringToHandleAnchor(16 * i - 250, -75, L"☆", COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT);
-			}
-		}
-		DrawFormatStringToHandleAnchor(-300, -50, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
-			songdata->Hscore[dif], songdata->Hacc[dif], songdata->Hdis[dif] / 1000.0);
-	}
 
 public:
 	rec_serect_detail_c() {
@@ -933,6 +894,7 @@ public:
 		this->difbar[4] = LoadGraph(L"picture/difanother.png");
 		this->difbar[5] = this->difbar[4];
 		this->detail = LoadGraph(L"picture/detail.png");
+		this->mpalNamePic = LoadGraph(_T("picture/mpalName.png"));
 		this->difC[0] = LoadGraph(L"picture/Dif0S.png");
 		this->difC[1] = LoadGraph(L"picture/Dif0B.png");
 		this->difC[2] = LoadGraph(L"picture/Dif1S.png");
@@ -947,6 +909,7 @@ public:
 
 	~rec_serect_detail_c() {
 		DeleteGraph(this->detail);
+		DeleteGraph(this->mpalNamePic);
 		DeleteGraph(this->difbar[0]);
 		DeleteGraph(this->difbar[1]);
 		DeleteGraph(this->difbar[2]);
@@ -957,6 +920,85 @@ public:
 		}
 	}
 
+private:
+	void DrawDifMark(int baseX, int baseY, MUSIC_BOX *songdata, int comdif) {
+		int posX = 0;
+		int posY = 0;
+
+		for (int i = 0; i < 5; i++) {
+			posY = 0;
+			if (comdif == i) { posY = 1; }
+			if (comdif <= i) { posX = 1; }
+			if (strands(songdata->SongFileName[i], L"NULL") == 0 && i <= songdata->limit) {
+				DrawGraphAnchor(baseX + 11 * posX + 16 * i, baseY, this->difC[i * 2 + posY], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			}
+		}
+	}
+
+	void DrawDifBar(int baseX, int baseY, int dif) {
+		int XmoveC = mins(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
+
+		if (this->LR == 1) {
+			XmoveC = pals(0, 640, MUSE_FADTM, 460, XmoveC);
+			DrawGraphAnchor(baseX, baseY, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif + 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		}
+		else if (this->LR == -1) {
+			XmoveC = pals(0, 460, MUSE_FADTM, 640, XmoveC);
+			DrawGraphAnchor(baseX, baseY, this->difbar[dif - 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		}
+	}
+
+	void DrawDifMpal(int baseX, int baseY, rec_ddif_pal_t *mpal, int dif) {
+		const int thick = 8;
+		const DxColor_t color[8] = {
+			/*        赤,  緑,  青   */
+			GetColor(  0,   0, 255), // 青
+			GetColor(255,   0,   0), // 赤
+			GetColor(  0, 255,   0), // 緑
+			GetColor(127,   0, 255), // 紫
+			GetColor(255, 255,   0), // 黄色
+			GetColor(255, 127, 255), // ピンク
+			GetColor(255, 127,   0), // オレンジ
+			GetColor(127,   0,   0)	 // 茶色
+		};
+		const DxColor_t SubColor[8] = {
+			/*        赤,  緑,  青   */
+			GetColor(  0,   0, 127), // 青
+			GetColor(127,   0,   0), // 赤
+			GetColor(  0, 127,   0), // 緑
+			GetColor( 63,   0, 127), // 紫
+			GetColor(127, 127,   0), // 黄色
+			GetColor(127,  63, 127), // ピンク
+			GetColor(127,  63,   0), // オレンジ
+			GetColor( 63,   0,   0)	 // 茶色
+		};
+		uint *p_mpal = (uint *)&mpal[dif];
+		for (uint iPal = 0; iPal < 8; iPal++) {
+			uint length = lins(0, 0, 900, 450, p_mpal[7 - iPal]);
+			DrawBoxAnchor(baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2, baseX - 70, baseY - 2 * thick * iPal - thick / 2, color[7 - iPal], DXDRAW_ANCHOR_BOTTOM_RIGHT, TRUE);
+			DrawBoxAnchor(baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2, baseX - 70, baseY - 2 * thick * iPal - thick / 2, SubColor[7 - iPal], DXDRAW_ANCHOR_BOTTOM_RIGHT, FALSE);
+		}
+		DrawGraphAnchor(baseX, baseY, this->mpalNamePic, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+	}
+
+	void DrawDetail(int baseX, int baseY, MUSIC_BOX *songdata, int dif) {
+		const TCHAR starChar[2][2] = { _T("★"),_T("☆")};
+		DrawGraphAnchor(baseX, baseY, this->detail, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		DrawFormatStringToHandleAnchor(baseX - 330, baseY - 170, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"%s", songdata->packName);
+		DrawFormatStringToHandleAnchor(baseX - 325, baseY - 145, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"Lv.%2d", songdata->level[dif]);
+		for (int i = 0; i < 15; i++) {
+			int temp = 0;
+			if (10 <= i && songdata->level[dif] <= i) { break; }
+			temp = (i < songdata->level[dif]) ? 0 : 1;
+			DrawStringToHandleAnchor(baseX + 16 * i - 270, baseY - 145, starChar[temp], COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		}
+		DrawFormatStringToHandleAnchor(baseX - 320, baseY - 120, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
+			songdata->Hscore[dif], songdata->Hacc[dif], songdata->Hdis[dif] / 1000.0);
+	}
+
+public:
 	void SlideDif(int vect) {
 		this->LR = vect;
 		this->XstartC = GetNowCount();
@@ -981,10 +1023,11 @@ public:
 		}
 	}
 
-	void DrawDetailAll(MUSIC_BOX *songdata, int dif) {
-		this->DrawDifMark(songdata, dif);
-		this->DrawDifBar(dif);
-		this->DrawDetail(songdata, dif);
+	void DrawDetailAll(int baseX, int baseY, MUSIC_BOX *songdata, int dif) {
+		this->DrawDifMark(baseX - 100, baseY - 360, songdata, dif);
+		this->DrawDifBar(baseX - 15, baseY - 320, dif);
+		this->DrawDifMpal(baseX - 20, baseY - 186, songdata->mpal, dif);
+		this->DrawDetail(baseX, baseY, songdata, dif);
 	}
 };
 
@@ -1073,7 +1116,7 @@ public:
 	}
 
 	void UpdateLR(MUSIC_BOX *songdata, int dif, int vect) {
-		this->detail.SlideDif(1);
+		this->detail.SlideDif(vect);
 		this->Update4th(songdata->jacketP[dif]);
 	}
 
@@ -1082,7 +1125,7 @@ public:
 		this->jacket.DrawJacket(580, 85, 500);
 		this->musicbar.DrawAll(300, cmd, songdata);
 		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
-		this->detail.DrawDetailAll(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->detail.DrawDetailAll(20, 60, &SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
 		this->previewSnd.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
 		this->previewSnd.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
 		this->help.DrawHelp(HELP_MAT_MUSIC_SELECT);
