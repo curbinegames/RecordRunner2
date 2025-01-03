@@ -6,6 +6,56 @@
 #include "strcur.h"
 #include "system.h"
 
+void DrawBoxAnchor(int left, int up, int right, int down, uint color, dxdraw_anchor_t anchor, int FillFg) {
+	int drawX = left;
+	int drawY = up;
+	int sizeX = right - left;
+	int sizeY = down - up;
+
+	if (anchor == DXDRAW_ANCHOR_TOP_LEFT) {
+		DrawBox(left, up, right, down, color, FillFg);
+		return;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+		drawX = left;
+		break;
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+		drawX = (WINDOW_SIZE_X - sizeX + 2 * left) / 2;
+		break;
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawX = WINDOW_SIZE_X + left;
+		break;
+	}
+
+	switch (anchor) {
+	case DXDRAW_ANCHOR_TOP_CENTRE:
+	case DXDRAW_ANCHOR_TOP_RIGHT:
+		drawY = up;
+		break;
+	case DXDRAW_ANCHOR_CENTRE_LEFT:
+	case DXDRAW_ANCHOR_CENTRE:
+	case DXDRAW_ANCHOR_CENTRE_RIGHT:
+		drawY = (WINDOW_SIZE_Y - sizeY + 2 * up) / 2;
+		break;
+	case DXDRAW_ANCHOR_BOTTOM_LEFT:
+	case DXDRAW_ANCHOR_BOTTOM_CENTRE:
+	case DXDRAW_ANCHOR_BOTTOM_RIGHT:
+		drawY = WINDOW_SIZE_Y + up;
+		break;
+	}
+
+	DrawBox(drawX, drawY, drawX + sizeX, drawY + sizeY, color, FillFg);
+
+	return;
+}
+
 /**
  * DrawGraphÇ…äÓèÄì_Çí«â¡ÇµÇΩÇ‡ÇÃ
  * @param[in] x xà íu

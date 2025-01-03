@@ -16,6 +16,7 @@ typedef enum dxdraw_anchor_e {
 	DXDRAW_ANCHOR_BOTTOM_RIGHT,  /** ‰º‚Ì‰E */
 } dxdraw_anchor_t;
 
+extern void DrawBoxAnchor(int left, int up, int right, int down, uint color, dxdraw_anchor_t anchor, int FillFg);
 extern void DrawGraphAnchor(int x, int y, int pic, dxdraw_anchor_t anchor);
 extern void DrawZoomGraphAnchor(int x, int y, intx100_t size, int pic, dxdraw_anchor_t anchor);
 extern void DrawRotaGraphAnchor(int x, int y, double size, double rot, DxPic_t pic, dxdraw_anchor_t anchor, int TransFlag, int ReverseXFlag = 0, int ReverseYFlag = 0);
