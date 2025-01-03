@@ -7,7 +7,10 @@
 #define REC_LINE_WRITE(pointer, size, count, fp) fwrite((pointer), (size), (count), (fp))
 #define REC_LINE_SEEK(pointer, size, count, fp)  fseek((fp), ((size) * (count)), SEEK_CUR)
 
-/* 0: OK, -1: error */
+/**
+ * rrsファイルからallnumを読み込む
+ * @return 0: OK, -1: error
+ */
 static int RecScoreGetAllnum(playnum_box *allnum, const TCHAR *path) {
 	FILE *fp;
 
@@ -19,7 +22,10 @@ static int RecScoreGetAllnum(playnum_box *allnum, const TCHAR *path) {
 	return 0;
 }
 
-/* 0: OK, -1: error */
+/**
+ * rrsファイルから全ての情報を読み込む
+ * @return 0: OK, -1: error
+ */
 int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	FILE *fp;
 
@@ -116,7 +122,10 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	return 0;
 }
 
-/* 0: OK, -1: error */
+/**
+ * rrsファイルから全ての情報を書き込む
+ * @return 0: OK, -1: error
+ */
 int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	int dummy = 0;
 	FILE *fp;
@@ -200,7 +209,10 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	return 0;
 }
 
-/* 0: OK, -1: error */
+/**
+ * rrsファイルからddif計算に必要な情報を読み込む
+ * @return 0: OK, -1: error
+ */
 int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path) {
 	FILE *fp;
 
@@ -262,7 +274,10 @@ int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path) {
 	return 0;
 }
 
-/* 0: OK, -1: error */
+/**
+ * rrsファイルから曲名を読み込む
+ * @return 0: OK, -1: error
+ */
 int RecScoreReadSongName(TCHAR *songName, const TCHAR *path) {
 	FILE *fp;
 
@@ -284,7 +299,10 @@ int RecScoreReadSongName(TCHAR *songName, const TCHAR *path) {
 	return 0;
 }
 
-/* 0: OK, -1: error */
+/**
+ * rrsファイルからddifを読み込む
+ * @return 0: OK, -1: error
+ */
 int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	FILE *fp;
 
@@ -344,7 +362,10 @@ int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	return 0;
 }
 
-/* 0: OK, -1: error */
+/**
+ * rrsファイルからddifを書き込む
+ * @return 0: OK, -1: error
+ */
 int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	FILE *fp;
 
