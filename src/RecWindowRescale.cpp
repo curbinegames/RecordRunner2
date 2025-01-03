@@ -303,12 +303,12 @@ void RecRescaleDrawFormatString(int x, int y, uint cr, const TCHAR *s, ...) {
 
 	int drawX = 0;
 	int drawY = 0;
-	TCHAR buf[64];
+	TCHAR buf[256];
 
 	drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
 	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
 
-	vScanPrintfStr(buf, 64, s, as);
+	vswprintf_s(buf, 256, s, as);
 
 	DrawString(drawX, drawY, buf, cr);
 
@@ -365,7 +365,7 @@ void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const T
 	}
 
 	/* string */
-	vScanPrintfStr(buf, 64, s, as);
+	vswprintf_s(buf, 64, s, as);
 
 	/* draw */
 	switch (anchor) {
