@@ -25,7 +25,7 @@
 #define REC_DDIF_TRILL_BASE 3420 // Chartreuse Greenのtrillの値
 #define REC_DDIF_MELDY_BASE 8321 // drop DOWN DOWN  のmaldyの値 (normal)
 #define REC_DDIF_ACTOR_BASE 2561 // Dynamic Galaxy  のactorの値
-#define REC_DDIF_TRICK_BASE REC_DDIF_BASE // trick譜面がないので初期値
+#define REC_DDIF_TRICK_BASE   60 // drop DOWN DOWN  のtrickの値 (another)
 
 #define REC_DDIF_1ST_WAIGHT  50
 #define REC_DDIF_2ND_WAIGHT  90
@@ -216,7 +216,6 @@ static void RecDdifGetKeyCatch(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey)
 	return;
 }
 
-/* trickもこの関数でやってる */
 static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
 	Nowkey->pal.trick = 0;
 	if (Befkey->btn.u.CheckPushGroup()) { // 前で上にいる
@@ -226,7 +225,6 @@ static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) 
 				Nowkey->btn.d.SetHold();
 			}
 			else if (Befkey->btn.u.CheckPushGroup()) {
-				Nowkey->pal.trick = 1;
 				Nowkey->btn.d.SetHold();
 			}
 			else {
@@ -241,7 +239,6 @@ static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) 
 				Nowkey->btn.d.SetNone();
 			}
 			else if (Befkey->btn.d.CheckPushGroup()) {
-				Nowkey->pal.trick = 1;
 				Nowkey->btn.u.SetHold();
 			}
 			else {
@@ -435,13 +432,13 @@ static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 			BBefkey->btn.z.CheckPushGroup())
 		{
 			count++;
-			Nowkey->pal.meldy += 15;
+			Nowkey->pal.meldy += 0;
 		}
 		else if (Befkey->btn.z.CheckPushGroup() &&
 			BBefkey->btn.z.CheckReleaseGroup())
 		{
 			count++;
-			Nowkey->pal.meldy += 40;
+			Nowkey->pal.meldy += 10;
 		}
 	}
 	if (Nowkey->btn.x.CheckPushGroup()) {
@@ -449,13 +446,13 @@ static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 			BBefkey->btn.x.CheckPushGroup())
 		{
 			count++;
-			Nowkey->pal.meldy += 15;
+			Nowkey->pal.meldy += 0;
 		}
 		else if (Befkey->btn.x.CheckPushGroup() &&
 			BBefkey->btn.x.CheckReleaseGroup())
 		{
 			count++;
-			Nowkey->pal.meldy += 40;
+			Nowkey->pal.meldy += 10;
 		}
 	}
 	if (Nowkey->btn.c.CheckPushGroup()) {
@@ -463,13 +460,13 @@ static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 			BBefkey->btn.c.CheckPushGroup())
 		{
 			count++;
-			Nowkey->pal.meldy += 15;
+			Nowkey->pal.meldy += 0;
 		}
 		else if (Befkey->btn.c.CheckPushGroup() &&
 			BBefkey->btn.c.CheckReleaseGroup())
 		{
 			count++;
-			Nowkey->pal.meldy += 40;
+			Nowkey->pal.meldy += 10;
 		}
 	}
 	if (Nowkey->btn.u.CheckPushGroup()) {
@@ -631,6 +628,27 @@ static void RecDdifGetPalActor(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
+static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey) {
+	Nowkey->pal.trick = 0;
+	if (Nowkey->note[0] == NOTE_BOMB) {
+		if (Nowkey->note[1] == NOTE_UP && Nowkey->note[2] == NOTE_BOMB) {
+			Nowkey->pal.trick = 3;
+		}
+		else if (Nowkey->note[1] == NOTE_UP || Nowkey->note[2] == NOTE_UP) {
+			Nowkey->pal.trick = 1;
+		}
+	}
+	else if (Nowkey->note[2] == NOTE_BOMB) {
+		if (Nowkey->note[0] == NOTE_BOMB && Nowkey->note[1] == NOTE_DOWN) {
+			Nowkey->pal.trick = 3;
+		}
+		else if (Nowkey->note[0] == NOTE_DOWN || Nowkey->note[1] == NOTE_DOWN) {
+			Nowkey->pal.trick = 1;
+		}
+	}
+	return;
+}
+
 #endif /* RecDdifGetPal */
 
 template<typename T>
@@ -651,7 +669,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	rec_score_file_row_t recfp;
 	rec_ddif_data_t key[REC_DDIF_BUF_NUM];
 	uint keyN = 0;
-	int objectN[3] = { 0,0,0 }; //↑の番号
+	int objectN[3] = { 5999,5999,5999 }; //↑の番号
 
 	if (RecScoreReadForDdif(&recfp, esc_path) != 0) { return -1; }
 
@@ -703,9 +721,15 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		Nowkey->pal.trick = 0;
 
 		//次のノーツの時間を取得
-		G[0] = 0; //次のノーツのレーン番号
-		if (recfp.mapdata.note[objectN[1]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 1; }
-		if (recfp.mapdata.note[objectN[2]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 2; }
+		G[0] = -1; //次のノーツのレーン番号
+		if (0 <= recfp.mapdata.note[objectN[0]].hittime) { G[0] = 0; }
+		else if (0 <= recfp.mapdata.note[objectN[1]].hittime) { G[0] = 1; }
+		else if (0 <= recfp.mapdata.note[objectN[2]].hittime) { G[0] = 2; }
+		if (G[0] == -1) { break; }
+
+		if (0 <= recfp.mapdata.note[objectN[0]].hittime && recfp.mapdata.note[objectN[0]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 0; }
+		if (0 <= recfp.mapdata.note[objectN[1]].hittime && recfp.mapdata.note[objectN[1]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 1; }
+		if (0 <= recfp.mapdata.note[objectN[2]].hittime && recfp.mapdata.note[objectN[2]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 2; }
 		Nowkey->time = recfp.mapdata.note[objectN[G[0]]].hittime;
 
 		//次のノーツ群を取得
@@ -772,7 +796,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		RecDdifGetPalTrill(Nowkey, Befkey, BBefkey);
 		RecDdifGetPalMeldy(Nowkey, Befkey, BBefkey);
 		RecDdifGetPalActor(Nowkey);
-		// trickはRecDdifGetKeyBomb()で計算済み
+		RecDdifGetPalTrick(Nowkey);
 
 		// 時間でかける(2000/前回からの時間)
 		G[0] = 2000 / maxs_2(1, Nowkey->time - Befkey->time);
