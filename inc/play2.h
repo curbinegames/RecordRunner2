@@ -68,7 +68,41 @@ static int RecPlayDebug[3] = { 0,0,0 };
 
 #if 1 /* sub action */
 
-static void RecResetPlayObjectNum(short int objectN[], rec_score_file_t *recfp) {
+static void RecResetPlayPartNum(short *cameraN, int *scroolN, short *itemN, short *SitemN,
+	short LineMoveN[], short lockN[], short *viewTN, short *MovieN)
+{
+	*cameraN = 0;
+	*scroolN = 0;
+	*itemN = 0;
+	*SitemN = 0;
+	LineMoveN[0] = 0;
+	LineMoveN[1] = 0;
+	LineMoveN[2] = 0;
+	lockN[0] = 0;
+	lockN[1] = 0;
+	*viewTN = 0;
+	*MovieN = 0;
+	return;
+}
+
+static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
+	mapeff->chamo[0].num = 0;
+	mapeff->chamo[1].num = 0;
+	mapeff->chamo[2].num = 0;
+	mapeff->fall.num = 0;
+	mapeff->move.y[0].num = 0;
+	mapeff->move.y[1].num = 0;
+	mapeff->move.y[2].num = 0;
+	mapeff->move.y[3].num = 0;
+	mapeff->move.y[4].num = 0;
+	mapeff->move.x[0].num = 0;
+	mapeff->move.x[1].num = 0;
+	mapeff->move.x[2].num = 0;
+	mapeff->carrow.num = 0;
+	return;
+}
+
+static void RecResetPlayObjectNum(short int objectN[], const rec_score_file_t *recfp) {
 	uint allnum = recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2];
 	for (uint iView = 0; iView < allnum; iView++) {
 		if (recfp->mapdata.note[iView].lane == NOTE_LANE_UP) {
@@ -1517,38 +1551,16 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				if (key3 == 0) {
 					recfp.time.now = mins(recfp.time.now - 10000, 0);
 					RecResetPlayObjectNum(objectN, &recfp);
-					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
-						recfp.mapdata.note[objectN[i[0]]].next != 5999)
-					{
-						objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
-					}
+					RecResetPlayRecfpMapeffNum(&recfp.mapeff);
+					RecResetPlayPartNum(&cameraN, &scroolN, &itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);
 					for (i[0] = 0; i[0] < 3; i[0]++) {
+						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
+							recfp.mapdata.note[objectN[i[0]]].next != 5999)
+						{
+							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
+						}
 						objectNG[i[0]] = objectN[i[0]];
 					}
-					cameraN = 0;
-					scroolN = 0;
-					itemN = 0;
-					SitemN = 0;
-					recfp.mapeff.chamo[0].num = 0;
-					recfp.mapeff.chamo[1].num = 0;
-					recfp.mapeff.chamo[2].num = 0;
-					recfp.mapeff.fall.num = 0;
-					recfp.mapeff.move.y[0].num = 0;
-					recfp.mapeff.move.y[1].num = 0;
-					recfp.mapeff.move.y[2].num = 0;
-					recfp.mapeff.move.y[3].num = 0;
-					recfp.mapeff.move.y[4].num = 0;
-					recfp.mapeff.move.x[0].num = 0;
-					recfp.mapeff.move.x[1].num = 0;
-					recfp.mapeff.move.x[2].num = 0;
-					LineMoveN[0] = 0;
-					LineMoveN[1] = 0;
-					LineMoveN[2] = 0;
-					lockN[0] = 0;
-					lockN[1] = 0;
-					recfp.mapeff.carrow.num = 0;
-					viewTN = 0;
-					MovieN = 0;
 				}
 				key3 = 1;
 			}
@@ -1561,34 +1573,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 						{
 							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 						}
-					}
-					for (i[0] = 0; i[0] < 3; i[0]++) {
 						objectNG[i[0]] = objectN[i[0]];
 					}
-					cameraN = 0;
-					scroolN = 0;
-					itemN = 0;
-					SitemN = 0;
-					recfp.mapeff.chamo[0].num = 0;
-					recfp.mapeff.chamo[1].num = 0;
-					recfp.mapeff.chamo[2].num = 0;
-					recfp.mapeff.fall.num = 0;
-					recfp.mapeff.move.y[0].num = 0;
-					recfp.mapeff.move.y[1].num = 0;
-					recfp.mapeff.move.y[2].num = 0;
-					recfp.mapeff.move.y[3].num = 0;
-					recfp.mapeff.move.y[4].num = 0;
-					recfp.mapeff.move.x[0].num = 0;
-					recfp.mapeff.move.x[1].num = 0;
-					recfp.mapeff.move.x[2].num = 0;
-					LineMoveN[0] = 0;
-					LineMoveN[1] = 0;
-					LineMoveN[2] = 0;
-					lockN[0] = 0;
-					lockN[1] = 0;
-					recfp.mapeff.carrow.num = 0;
-					viewTN = 0;
-					MovieN = 0;
 				}
 				key3 = 1;
 			}
