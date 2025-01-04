@@ -22,6 +22,14 @@
 #define MUSE_FADTM 250
 #define MUSE_KEYTM 500
 
+#define REC_SERECT_KEY_RETURN 1
+#define REC_SERECT_KEY_BACK   2
+#define REC_SERECT_KEY_UP     3
+#define REC_SERECT_KEY_DOWN   4
+#define REC_SERECT_KEY_LEFT   5
+#define REC_SERECT_KEY_RIGHT  6
+#define REC_SERECT_KEY_SORT   7
+
 #define SONGDATA_FROM_MAP(songdata, mapNo) ((songdata)->base[(songdata)->mapping[mapNo]])
 
 typedef TCHAR rec_pack_name_set_t[256];
@@ -290,51 +298,47 @@ static int RecSerectKeyCheck() {
 	while (GetMouseInputLog2(&mouseBtn, &mouseX, &mouseY, &mouseAct, true) == 0) {}
 	if (mouseBtn == MOUSE_INPUT_LEFT && mouseAct == MOUSE_INPUT_LOG_UP) {
 		if (5 <= mouseX && mouseX <= 280 && 195 <= mouseY && mouseY <= 290) {
-			ret = 1;
+			ret = REC_SERECT_KEY_RETURN;
 		}
 		if (5 <= mouseX && mouseX <= 245 && 5 <= mouseY && mouseY <= 175) {
-			ret = 3;
+			ret = REC_SERECT_KEY_UP;
 		}
 		if (5 <= mouseX && mouseX <= 305 && 310 <= mouseY && mouseY <= 475) {
-			ret = 4;
+			ret = REC_SERECT_KEY_DOWN;
 		}
 		if (505 <= mouseX && mouseX <= 635 && 5 <= mouseY && mouseY <= 130) {
-			ret = 7;
+			ret = REC_SERECT_KEY_SORT;
 		}
 	}
 
 	/* ホイール入力 */
 	mouseHoil = GetMouseWheelRotVol();
-	if (1 <= mouseHoil) { /* 奥回し */
-		ret = 3;
-	}
-	if (mouseHoil <= -1) { /* 手前回し */
-		ret = 4;
-	}
+	if (1 <= mouseHoil)  { ret = REC_SERECT_KEY_UP;   } /* 奥回し */
+	if (mouseHoil <= -1) { ret = REC_SERECT_KEY_DOWN; } /* 手前回し */
 
 	/* キー入力 */
 	InputAllKeyHold();
 	switch (GetKeyPushOnce()) {
 	case KEY_INPUT_RETURN:
-		ret = 1;
+		ret = REC_SERECT_KEY_RETURN;
 		break;
 	case KEY_INPUT_BACK:
-		ret = 2;
+		ret = REC_SERECT_KEY_BACK;
 		break;
 	case KEY_INPUT_UP:
-		ret = 3;
+		ret = REC_SERECT_KEY_UP;
 		break;
 	case KEY_INPUT_DOWN:
-		ret = 4;
+		ret = REC_SERECT_KEY_DOWN;
 		break;
 	case KEY_INPUT_LEFT:
-		ret = 5;
+		ret = REC_SERECT_KEY_LEFT;
 		break;
 	case KEY_INPUT_RIGHT:
-		ret = 6;
+		ret = REC_SERECT_KEY_RIGHT;
 		break;
 	case KEY_INPUT_Z:
-		ret = 7;
+		ret = REC_SERECT_KEY_SORT;
 		break;
 	default:
 		break;
