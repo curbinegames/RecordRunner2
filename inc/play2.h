@@ -1517,7 +1517,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				if (key3 == 0) {
 					recfp.time.now = mins(recfp.time.now - 10000, 0);
 					RecResetPlayObjectNum(objectN, &recfp);
-					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
+					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
+						recfp.mapdata.note[objectN[i[0]]].next != 5999)
+					{
 						objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 					}
 					for (i[0] = 0; i[0] < 3; i[0]++) {
@@ -1554,7 +1556,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				if (key3 == 0) {
 					recfp.time.now += 10000;
 					for (i[0] = 0; i[0] < 3; i[0]++) {
-						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
+						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
+							recfp.mapdata.note[objectN[i[0]]].next != 5999)
+						{
 							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 						}
 					}
