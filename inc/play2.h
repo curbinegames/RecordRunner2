@@ -1528,60 +1528,55 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			DeleteSoundMem(musicmp3);
 			break;
 		}
+
+		/* ÉLÅ[ì¸óÕ */
+		InputAllKeyHold();
 		if (AutoFlag == 1) {
-			if (CheckHitKey(KEY_INPUT_SPACE)) {
-				if (key2 == 0) {
-					StopFrag *= -1;
-					if (StopFrag == 1) {
-						StopSoundMem(musicmp3);
-					}
-					else {
-						SetCurrentPositionSoundMem((int)((double)recfp.time.now / 1000.0 * 44100.0), musicmp3);
-						PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK, FALSE);
-					}
+			switch (GetKeyPushOnce()) {
+			case KEY_INPUT_SPACE:
+				StopFrag *= -1;
+				if (StopFrag == 1) { StopSoundMem(musicmp3); }
+				else {
+					SetCurrentPositionSoundMem((int)((double)recfp.time.now / 1000.0 * 44100.0), musicmp3);
+					PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK, FALSE);
 				}
-				key2 = 1;
-			}
-			else {
-				key2 = 0;
+				break;
+			default:
+				break;
 			}
 		}
 		if (StopFrag == 1) {
-			if (CheckHitKey(KEY_INPUT_LEFT) == 1) {
-				if (key3 == 0) {
-					recfp.time.now = mins(recfp.time.now - 10000, 0);
-					RecResetPlayObjectNum(objectN, &recfp);
-					RecResetPlayRecfpMapeffNum(&recfp.mapeff);
-					RecResetPlayPartNum(&cameraN, &scroolN, &itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);
-					for (i[0] = 0; i[0] < 3; i[0]++) {
-						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
-							recfp.mapdata.note[objectN[i[0]]].next != 5999)
-						{
-							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
-						}
-						objectNG[i[0]] = objectN[i[0]];
+			switch (GetKeyPushOnce()) {
+			case KEY_INPUT_LEFT:
+				recfp.time.now = mins(recfp.time.now - 10000, 0);
+				RecResetPlayObjectNum(objectN, &recfp);
+				RecResetPlayRecfpMapeffNum(&recfp.mapeff);
+				RecResetPlayPartNum(&cameraN, &scroolN, &itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);
+				for (i[0] = 0; i[0] < 3; i[0]++) {
+					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
+						recfp.mapdata.note[objectN[i[0]]].next != 5999)
+					{
+						objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 					}
+					objectNG[i[0]] = objectN[i[0]];
 				}
-				key3 = 1;
-			}
-			else if (CheckHitKey(KEY_INPUT_RIGHT) == 1) {
-				if (key3 == 0) {
-					recfp.time.now += 10000;
-					for (i[0] = 0; i[0] < 3; i[0]++) {
-						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
-							recfp.mapdata.note[objectN[i[0]]].next != 5999)
-						{
-							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
-						}
-						objectNG[i[0]] = objectN[i[0]];
+				break;
+			case KEY_INPUT_RIGHT:
+				recfp.time.now += 10000;
+				for (i[0] = 0; i[0] < 3; i[0]++) {
+					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
+						recfp.mapdata.note[objectN[i[0]]].next != 5999)
+					{
+						objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 					}
+					objectNG[i[0]] = objectN[i[0]];
 				}
-				key3 = 1;
-			}
-			else {
-				key3 = 0;
+				break;
+			default:
+				break;
 			}
 		}
+
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			StopSoundMem(musicmp3);
 			DeleteSoundMem(musicmp3);
