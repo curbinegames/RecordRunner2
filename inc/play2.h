@@ -377,7 +377,7 @@ static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 	}
 }
 
-static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time) {
+static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time, int AutoFg) {
 	userpal->Mcombo = mins(userpal->Mcombo, userpal->Ncombo);
 	//ライフが0未満の時、1毎に減点スコアを20増やす。
 	if (userpal->life < 0) {
@@ -389,7 +389,7 @@ static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play
 	//スコア計算
 	userpal->score = GetScore3(userpal->score, userpal->judgeCount, notes, userpal->Mcombo);
 	//ステータス
-	if (userpal->life <= 0 && userpal->status == REC_PLAY_STATUS_PLAYING) {
+	if (userpal->life <= 0 && userpal->status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
 		userpal->status = REC_PLAY_STATUS_DROPED;
 		userpal->Dscore.add_save = userpal->Dscore.add;
 		userpal->Dscore.dis_save = mins(time->now - time->offset, 0);
@@ -1411,7 +1411,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		/* ノーツ判定 */
 		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
 			&keyhold, &hitatk, LaneTrack, &charahit, charaput, &userpal, &p_sound);
-		RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time);
+		RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
 
 		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示
