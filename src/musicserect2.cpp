@@ -1246,8 +1246,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 
 #endif /* after class action */
 
-// TODO: musicserect3Çíºê⁄åƒÇ—ÇΩÇ¢
-now_scene_t musicserect3(rec_to_play_set_t *toPlay) {
+now_scene_t musicserect(rec_to_play_set_t *toPlay) {
 	/* char */
 	char closeFg = 0;
 
@@ -1288,25 +1287,6 @@ now_scene_t musicserect3(rec_to_play_set_t *toPlay) {
 	RecSerectSaveBefCmd(cmd, songdata.sortMode);
 
 	INIT_MAT();
-
-	return next;
-}
-
-now_scene_t musicserect2(int *p1) {
-	now_scene_t next = SCENE_EXIT;
-	rec_to_play_set_t toPlay;
-
-	next = musicserect3(&toPlay);
-
-	*p1 = toPlay.packNo;
-	p1++;
-	*p1 = toPlay.musicNo;
-	p1++;
-	*p1 = toPlay.dif;
-	p1++;
-	*p1 = toPlay.shift;
-	p1++;
-	*p1 = toPlay.autoFg;
 
 	return next;
 }

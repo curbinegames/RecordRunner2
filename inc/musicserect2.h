@@ -10,5 +10,4 @@ typedef struct rec_to_play_set_s {
 	int autoFg = 0;
 } rec_to_play_set_t;
 
-extern now_scene_t musicserect3(rec_to_play_set_t *toPlay);
-extern now_scene_t musicserect2(int *p1);
+extern now_scene_t musicserect(rec_to_play_set_t *toPlay);

@@ -24,6 +24,7 @@ static void GameMain() {
 	int G[5] = { 0,0,0,0,0 };
 	unsigned int Cr = GetColor(255, 255, 255);
 	now_scene_t next = SCENE_TITLE;
+	rec_to_play_set_t ps;
 	bgm = LoadSoundMem(L"song/no.mp3");
 	INIT_MAT();
 	upgrade_rate_f(); // レートのセーブデータ更新(Ver.1.04 -> Ver.1.05)
@@ -55,7 +56,7 @@ static void GameMain() {
 			next = menu();
 			break;
 		case SCENE_SERECT:
-			next = musicserect2(&G[0]);
+			next = musicserect(&ps);
 			break;
 		case SCENE_COLLECTION:
 			next = collection();
@@ -64,7 +65,7 @@ static void GameMain() {
 			next = option();
 			break;
 		case SCENE_MUSIC:
-			next = play3(G[0], G[1], G[2], G[3], G[4]);
+			next = play3(ps.packNo, ps.musicNo, ps.dif, ps.shift, ps.autoFg);
 			break;
 #if 0
 		case 7:
