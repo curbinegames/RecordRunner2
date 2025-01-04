@@ -38,7 +38,7 @@
 #define CHARA_POS_DOWN 2
 
 /* debug */
-#if 1
+#if 0
 #define RECR_DEBUG(ofs, data)											\
 		RecRescaleDrawFormatString(20, 120 + ofs * 20, Cr, L#data": %d", data)
 #define RECR_DEBUG_LOOP(ofs, n, data_a, data_b)							\
@@ -64,7 +64,32 @@ typedef struct rec_play_back_pic_s {
 
 #endif /* typedef group */
 
+static int RecPlayDebug[3] = { 0,0,0 };
+
 #if 1 /* sub action */
+
+static void RecResetPlayObjectNum(short int objectN[], rec_score_file_t *recfp) {
+	uint allnum = recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2];
+	for (uint iView = 0; iView < allnum; iView++) {
+		if (recfp->mapdata.note[iView].lane == NOTE_LANE_UP) {
+			objectN[0] = iView;
+			break;
+		}
+	}
+	for (uint iView = 0; iView < allnum; iView++) {
+		if (recfp->mapdata.note[iView].lane == NOTE_LANE_MID) {
+			objectN[1] = iView;
+			break;
+		}
+	}
+	for (uint iView = 0; iView < allnum; iView++) {
+		if (recfp->mapdata.note[iView].lane == NOTE_LANE_LOW) {
+			objectN[2] = iView;
+			break;
+		}
+	}
+	return;
+}
 
 static struct score_box GetScore3(struct score_box score,
 	struct judge_box judge, const int notes, const int MaxCombo)
@@ -81,7 +106,7 @@ static struct score_box GetScore3(struct score_box score,
 	return score;
 }
 
-void Getxxxpng(wchar_t *str, int num) {
+static void Getxxxpng(wchar_t *str, int num) {
 	*str = num / 100 + '0';
 	str++;
 	*str = num / 10 % 10 + '0';
@@ -100,7 +125,7 @@ void Getxxxpng(wchar_t *str, int num) {
 	return;
 }
 
-void Getxxxwav(wchar_t *str, int num) {
+static void Getxxxwav(wchar_t *str, int num) {
 	*str = num / 100 + '0';
 	str++;
 	*str = num / 10 % 10 + '0';
@@ -120,7 +145,7 @@ void Getxxxwav(wchar_t *str, int num) {
 }
 
 /* (ret / 100) */
-void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int scroolN, int cam) {
+static void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int scroolN, int cam) {
 	xpos[0] -= (int)(100 * mapeff->speedt[3][speedN[3]][1] * mapeff->scrool[scroolN].speed);
 	while (xpos[0] + 100 * cam / 5 > 0) {
 		xpos[0] -= 64000;
@@ -139,7 +164,7 @@ void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int s
 	return;
 }
 
-int GetCharaPos3(int time, note_box_2_t note[], short int No[],
+static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
 {
 	int ans = CHARA_POS_MID;
@@ -170,7 +195,7 @@ int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	return ans;
 }
 
-void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
+static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	for (int iLine = 0; iLine < loop; iLine++) {
 		if (move[iLine].d[move[iLine].num].Stime <= Ntime &&
 			move[iLine].d[move[iLine].num].Stime >= 0)
@@ -209,7 +234,7 @@ static void RecPlayRescaleCurve(int x1, int y1, int x2, int y2, uint cr, int thi
 	return;
 }
 
-void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
+static void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 	unsigned int color, int thick) {
 	int end = x1 + 10;
 	switch (mode) {
@@ -236,7 +261,7 @@ void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 	return;
 }
 
-int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
+static int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
 	int ret = 0;
 	int sect = 0;
 	int stime = 0;
@@ -255,7 +280,7 @@ int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
 	return ret;
 }
 
-void PlayDrawItem(rec_map_eff_data_t *mapeff,
+static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 	short int MovieN, int Ntime, int Xmidline, int item[])
 {
 	view_BPM_box *v_BPM = &mapeff->v_BPM.data[mapeff->v_BPM.num];
@@ -318,7 +343,7 @@ void PlayDrawItem(rec_map_eff_data_t *mapeff,
 	}
 }
 
-void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time) {
+static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time) {
 	userpal->Mcombo = mins(userpal->Mcombo, userpal->Ncombo);
 	//ライフが0未満の時、1毎に減点スコアを20増やす。
 	if (userpal->life < 0) {
@@ -549,7 +574,6 @@ void RecPlayDrawNoteAll(short int objectN[], note_box_2_t note[],
 	int XLockNoAdd = 0;
 	int YLockNoAdd = 0;
 	int SpeedNoAdd = 0;
-	int G[10] = { 0,0,0,0,0,0,0,0,0,0 };
 
 	for (int iLine = 0; iLine < 3; iLine++) {
 		viewTadd = 0;
@@ -1216,26 +1240,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	else if (2 <= GD[0]) { DifRate = recfp.mapdata.Lv + 0.9; }
 	else if (0 <= GD[0] && GD[0] < 2) { DifRate = recfp.mapdata.Lv + 0.45 * GD[0]; }
 	else { DifRate = recfp.mapdata.mdif / 100.0; }
-#if SWITCH_NOTE_BOX_2 == 1
-	for (i[0] = 0; i[0] < recfp.allnum.notenum[0] + recfp.allnum.notenum[1] + recfp.allnum.notenum[2]; i[0]++) {
-		if (recfp.mapdata.note[i[0]].lane == NOTE_LANE_UP) {
-			objectN[0] = i[0];
-			break;
-		}
-	}
-	for (i[0] = 0; i[0] < recfp.allnum.notenum[0] + recfp.allnum.notenum[1] + recfp.allnum.notenum[2]; i[0]++) {
-		if (recfp.mapdata.note[i[0]].lane == NOTE_LANE_MID) {
-			objectN[1] = i[0];
-			break;
-		}
-	}
-	for (i[0] = 0; i[0] < recfp.allnum.notenum[0] + recfp.allnum.notenum[1] + recfp.allnum.notenum[2]; i[0]++) {
-		if (recfp.mapdata.note[i[0]].lane == NOTE_LANE_LOW) {
-			objectN[2] = i[0];
-			break;
-		}
-	}
-#endif
+	RecResetPlayObjectNum(objectN, &recfp);
 	PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK);
 	WaitTimer(10);
 	Stime = GetNowCount();
@@ -1448,9 +1453,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			RecRescaleDrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
 			RecRescaleDrawFormatString(20, 100, Cr, L"Autoplay");
 		}
-		//RECR_DEBUG(0, speedN[0]);
-		//RECR_DEBUG(1, speedN[1]);
-		//RECR_DEBUG(2, speedN[2]);
+		RECR_DEBUG(0, RecPlayDebug[0]);
+		RECR_DEBUG(1, RecPlayDebug[1]);
+		RECR_DEBUG(2, RecPlayDebug[2]);
 
 		//データオーバーフローで警告文表示
 #if 0
@@ -1511,29 +1516,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			if (CheckHitKey(KEY_INPUT_LEFT) == 1) {
 				if (key3 == 0) {
 					recfp.time.now = mins(recfp.time.now - 10000, 0);
-#if SWITCH_NOTE_BOX_2 == 1
-					for (i[0] = 0; i[0] < 3; i[0]++) {
-						for (objectN[i[0]] = 0; recfp.mapdata.note[objectN[i[0]]].lane != NOTE_LANE_UP; objectN[i[0]] += 0) {
-							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
-						}
-						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
-							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
-						}
+					RecResetPlayObjectNum(objectN, &recfp);
+					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
+						objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 					}
-#else
-					while (recfp.time.now < recfp.mapdata.note2.up[objectN[0]].hittime ||
-						recfp.mapdata.note2.up[objectN[0]].hittime < 0) {
-						objectN[0]--;
-					}
-					while (recfp.time.now < recfp.mapdata.note2.mid[objectN[1]].hittime ||
-						recfp.mapdata.note2.mid[objectN[1]].hittime < 0) {
-						objectN[1]--;
-					}
-					while (recfp.time.now < recfp.mapdata.note2.low[objectN[2]].hittime ||
-						recfp.mapdata.note2.low[objectN[2]].hittime < 0) {
-						objectN[2]--;
-					}
-#endif
 					for (i[0] = 0; i[0] < 3; i[0]++) {
 						objectNG[i[0]] = objectN[i[0]];
 					}
@@ -1567,23 +1553,11 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			else if (CheckHitKey(KEY_INPUT_RIGHT) == 1) {
 				if (key3 == 0) {
 					recfp.time.now += 10000;
-#if SWITCH_NOTE_BOX_2 == 1
 					for (i[0] = 0; i[0] < 3; i[0]++) {
 						while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now) {
 							objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
 						}
 					}
-#else
-					while (recfp.mapdata.note2.up[objectN[0]].hittime < recfp.time.now) {
-						objectN[0]++;
-					}
-					while (recfp.mapdata.note2.mid[objectN[1]].hittime < recfp.time.now) {
-						objectN[1]++;
-					}
-					while (recfp.mapdata.note2.low[objectN[2]].hittime < recfp.time.now) {
-						objectN[2]++;
-					}
-#endif
 					for (i[0] = 0; i[0] < 3; i[0]++) {
 						objectNG[i[0]] = objectN[i[0]];
 					}
