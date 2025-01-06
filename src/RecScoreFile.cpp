@@ -112,7 +112,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	fread(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
 	fread(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//アイテムデータ
 	fread(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
-	fread(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+	fread(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
 	fread(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
 	fread(&recfp->outpoint, sizeof(int), 2, fp);//エラーデータ
 	REC_LINE_READ(&recfp->mapdata.mpal, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
@@ -199,7 +199,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	fwrite(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
 	fwrite(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//動画データ
 	fwrite(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
-	fwrite(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+	fwrite(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
 	fwrite(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
 	fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
 	REC_LINE_WRITE(&recfp->mapdata.mpal, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
@@ -265,7 +265,7 @@ int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path) {
 	// fseek(fp, 255, SEEK_CUR);//難易度バー名
 	// fseek(fp, sizeof(item_box) * recfp->allnum.movienum, SEEK_CUR);//アイテムデータ
 	// fseek(fp, sizeof(rec_camera_data_t) * 255, SEEK_CUR);//カメラデータ
-	// fseek(fp, sizeof(struct scrool_box) * 99, SEEK_CUR);//スクロールデータ
+	// fseek(fp, sizeof(rec_scrool_data_t) * 99, SEEK_CUR);//スクロールデータ
 	// fseek(fp, sizeof(view_BPM_box) * recfp->allnum.v_BPMnum, SEEK_CUR);//スクロールデータ
 	// fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 
@@ -352,7 +352,7 @@ int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, 255, SEEK_CUR);//難易度バー名
 	fseek(fp, sizeof(item_box) * allnum.movienum, SEEK_CUR);//アイテムデータ
 	fseek(fp, sizeof(rec_camera_data_t) * 255, SEEK_CUR);//カメラデータ
-	fseek(fp, sizeof(struct scrool_box) * 99, SEEK_CUR);//スクロールデータ
+	fseek(fp, sizeof(rec_scrool_data_t) * 99, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(view_BPM_box) * allnum.v_BPMnum, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 	REC_LINE_READ(ddif, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
@@ -415,7 +415,7 @@ int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, 255, SEEK_CUR);//難易度バー名
 	fseek(fp, sizeof(item_box) * allnum.movienum, SEEK_CUR);//アイテムデータ
 	fseek(fp, sizeof(rec_camera_data_t) * 255, SEEK_CUR);//カメラデータ
-	fseek(fp, sizeof(struct scrool_box) * 99, SEEK_CUR);//スクロールデータ
+	fseek(fp, sizeof(rec_scrool_data_t) * 99, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(view_BPM_box) * allnum.v_BPMnum, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 	REC_LINE_WRITE(ddif, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ

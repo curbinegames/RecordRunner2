@@ -38,7 +38,7 @@
 #define CHARA_POS_DOWN 2
 
 /* debug */
-#if 0
+#if 1
 #define RECR_DEBUG(ofs, data)											\
 		RecRescaleDrawFormatString(20, 120 + ofs * 20, Cr, L#data": %d", data)
 #define RECR_DEBUG_LOOP(ofs, n, data_a, data_b)							\
@@ -68,10 +68,9 @@ static int RecPlayDebug[3] = { 0,0,0 };
 
 #if 1 /* sub action */
 
-static void RecResetPlayPartNum(int *scroolN, short *itemN, short *SitemN, short LineMoveN[],
-	short lockN[], short *viewTN, short *MovieN)
+static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[], short lockN[],
+	short *viewTN, short *MovieN)
 {
-	*scroolN = 0;
 	*itemN = 0;
 	*SitemN = 0;
 	LineMoveN[0] = 0;
@@ -86,6 +85,7 @@ static void RecResetPlayPartNum(int *scroolN, short *itemN, short *SitemN, short
 
 static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->camera.num = 0;
+	mapeff->scrool.num = 0;
 	mapeff->carrow.num = 0;
 	mapeff->move.y[0].num = 0;
 	mapeff->move.y[1].num = 0;
@@ -179,21 +179,17 @@ static void Getxxxwav(wchar_t *str, int num) {
 }
 
 /* (ret / 100) */
-static void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int scroolN, int cam) {
-	xpos[0] -= (int)(100 * mapeff->speedt[3][speedN[3]][1] * mapeff->scrool[scroolN].speed);
-	while (xpos[0] + 100 * cam / 5 > 0) {
-		xpos[0] -= 64000;
-	}
-	while (xpos[0] + 100 * cam / 5 < -64000) {
-		xpos[0] += 64000;
-	}
-	xpos[1] -= (int)(500 * mapeff->speedt[4][speedN[4]][1] * mapeff->scrool[scroolN].speed);
-	while (xpos[1] + 100 * cam > 0) {
-		xpos[1] -= 64000;
-	}
-	while (xpos[1] + 100 * cam < -64000) {
-		xpos[1] += 64000;
-	}
+static void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int cam) {
+	const double scrool = mapeff->scrool.data[mapeff->scrool.num].speed;
+
+	xpos[0] -= (int)(100 * mapeff->speedt[3][speedN[3]][1] * scrool);
+	while (xpos[0] + 100 * cam / 5 > 0)      { xpos[0] -= 64000; }
+	while (xpos[0] + 100 * cam / 5 < -64000) { xpos[0] += 64000; }
+
+	xpos[1] -= (int)(500 * mapeff->speedt[4][speedN[4]][1] * scrool);
+	while (xpos[1] + 100 * cam > 0)      { xpos[1] -= 64000; }
+	while (xpos[1] + 100 * cam < -64000) { xpos[1] += 64000; }
+
 	xpos[2] = xpos[1];
 	return;
 }
@@ -528,13 +524,16 @@ static int StepNoDrawNote(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *
 }
 
 static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, int lock0, int lock1,
-	note_box_2_t *note, int Xline, int Yline, double speedt, struct scrool_box *scrool, int Ntime)
+	note_box_2_t *note, int Xline, int Yline, double speedt, rec_scrool_set_t *scrool, int Ntime)
 {
+	const double scroolSpeed = scrool->data[scrool->num].speed;
+	const double scroolBaseTime = scrool->data[scrool->num].basetime;
+
 	//縦位置
 	*DrawY = ((lock1 == 1) ? note->ypos : Yline);
 	//横位置
 	*DrawX = (int)((speedt * 20 * (note->viewtime -
-		(scrool->speed * Ntime + scrool->basetime)) + 5000) / 50) + 50;
+		(scroolSpeed * Ntime + scroolBaseTime)) + 5000) / 50) + 50;
 	*DrawX += ((lock0 == 1) ? note->xpos - 150 : Xline - 150);
 	//色
 	*DrawC = note->color;
@@ -545,7 +544,7 @@ static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, int lock0, int lo
  */
 static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *SpeedNoAdd,
 	note_box_2_t *note, rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
-	short speedN, int Ntime, int Xline, int Yline, int scroolN, struct note_img *noteimg)
+	short speedN, int Ntime, int Xline, int Yline, struct note_img *noteimg)
 {
 	int ret = 0;
 	int DrawX = 0;
@@ -558,8 +557,7 @@ static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *Spe
 	else if (ret == 2) { return 2; }
 	CalPalCrawNote(&DrawX, &DrawY, &DrawC, mapeff->lock[0][0][lockN[0] + *XLockNoAdd],
 		mapeff->lock[1][0][lockN[1] + *YLockNoAdd], note, Xline, Yline,
-		mapeff->speedt[iLine][0][(speedN + *SpeedNoAdd) * 2 + 1],
-		&mapeff->scrool[scroolN], Ntime);
+		mapeff->speedt[iLine][0][(speedN + *SpeedNoAdd) * 2 + 1], &mapeff->scrool, Ntime);
 	switch (note->object) {
 	case 1:
 	case 3:
@@ -599,9 +597,9 @@ static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *Spe
 	return 0;
 }
 
-void RecPlayDrawNoteAll(short int objectN[], note_box_2_t note[],
+static void RecPlayDrawNoteAll(short int objectN[], note_box_2_t note[],
 	rec_map_eff_data_t *mapeff, short int viewTN, short int *lockN, short int speedN[],
-	int Ntime, int Xline[], int Yline[], int scroolN, struct note_img *noteimg)
+	int Ntime, int Xline[], int Yline[], struct note_img *noteimg)
 {
 	int ret = 0;
 	int viewTadd = 0;
@@ -617,7 +615,7 @@ void RecPlayDrawNoteAll(short int objectN[], note_box_2_t note[],
 		for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
 			ret = DrawNoteOne(&viewTadd, &XLockNoAdd, &YLockNoAdd, &SpeedNoAdd,
 				&note[iNote], mapeff, viewTN, lockN, iLine, speedN[iLine],
-				Ntime, Xline[iLine], Yline[iLine], scroolN, noteimg);
+				Ntime, Xline[iLine], Yline[iLine], noteimg);
 			if (ret == 1) { continue; }
 			else if (ret == 2) { break; }
 			if (note[iNote].next == -1) { break; }
@@ -646,12 +644,12 @@ static void DrawFallBack(int Yline, int item[], rec_fall_data_t *falleff) {
 }
 
 static void PlayDrawBackGround(rec_map_eff_data_t *mapeff, short int *speedN,
-	int scroolN, int Yline[], rec_play_back_pic_t *backpic, int *item)
+	int Yline[], rec_play_back_pic_t *backpic, int *item)
 {
 	static int bgp[3] = { 0,0,0 };
 	int camX = 0;
 	RecPlayGetCameraPos(&camX, NULL);
-	cal_back_x(bgp, mapeff, speedN, scroolN, camX);
+	cal_back_x(bgp, mapeff, speedN, camX);
 	//draw background picture
 	for (int loop = bgp[0] / 100; loop + camX / 5 < 70000; loop += 640) {
 		DrawGraphRecBackField(loop, Yline[3] / 5 - 160, backpic->sky);
@@ -1162,7 +1160,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int AllNotesHitTime = -1;
 	int LaneTrack[3] = { -150,-150,-150 };
 	int StopFrag = -1;
-	int scroolN = 0;
 	int HighScore; //ハイスコア
 	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
@@ -1302,16 +1299,21 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			recfp.mapeff.v_BPM.num++;
 		}
 		{
-			uint *const numC = &recfp.mapeff.camera.num;
-			while (0 <= recfp.mapeff.camera.data[*numC].endtime &&
+			uint *numC = &recfp.mapeff.camera.num;
+			while (
+				recfp.mapeff.camera.data[*numC].endtime >= 0 &&
 				recfp.mapeff.camera.data[*numC].endtime < recfp.time.now)
 			{
 				(*numC)++;
 			}
-		}
-		while (0 <= recfp.mapeff.scrool[scroolN + 1].starttime &&
-			recfp.mapeff.scrool[scroolN + 1].starttime <= recfp.time.now) {
-			scroolN++;
+
+			numC = &recfp.mapeff.scrool.num;
+			while (
+				recfp.mapeff.scrool.data[*numC + 1].starttime >= 0 &&
+				recfp.mapeff.scrool.data[*numC + 1].starttime <= recfp.time.now)
+			{
+				(*numC)++;
+			}
 		}
 		if (optiondata.backbright != 0) {
 			while (recfp.mapeff.Movie[MovieN].endtime < recfp.time.now &&
@@ -1419,7 +1421,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示
 		if (optiondata.backbright != 0) {
-			PlayDrawBackGround(&recfp.mapeff, speedN, scroolN, Yline, &backpic, item);
+			PlayDrawBackGround(&recfp.mapeff, speedN, Yline, &backpic, item);
 		}
 		//フィルター表示
 		switch (optiondata.backbright) {
@@ -1450,7 +1452,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowJudge(Xline[charaput], Yline[charaput]);
 		/* 音符表示 */
 		RecPlayDrawNoteAll(objectN, recfp.mapdata.note, &recfp.mapeff, viewTN,
-			lockN, speedN, recfp.time.now, Xline, Yline, scroolN, &noteimg);
+			lockN, speedN, recfp.time.now, Xline, Yline, &noteimg);
 		//ヒットエフェクト表示
 		PlayShowHitEffect(Xline, Yline);
 		PlayCheckHitEffect();
@@ -1554,7 +1556,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				recfp.time.now = mins(recfp.time.now - 10000, 0);
 				RecResetPlayObjectNum(objectN, &recfp);
 				RecResetPlayRecfpMapeffNum(&recfp.mapeff);
-				RecResetPlayPartNum(&scroolN, &itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);
+				RecResetPlayPartNum(&itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);
 				for (i[0] = 0; i[0] < 3; i[0]++) {
 					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
 						recfp.mapdata.note[objectN[i[0]]].next != 5999)

@@ -134,13 +134,14 @@ static note_material GetNoteObjMat(TCHAR code) {
 	return NOTE_NONE;
 }
 
-static void CalNoteViewTime(note_box_2_t *note, scrool_box scrool[]) {
+static void CalNoteViewTime(note_box_2_t *note, rec_scrool_set_t *scrool) {
 	int num = 0;
-	while (0 <= scrool[num + 1].starttime &&
-		scrool[num + 1].starttime <= note->hittime) {
+	while (0 <= scrool->data[num + 1].starttime &&
+		scrool->data[num + 1].starttime <= note->hittime) {
 		num++;
 	}
-	note->viewtime = note->hittime * scrool[num].speed + scrool[num].basetime;
+	note->viewtime = note->hittime * scrool->data[num].speed + scrool->data[num].basetime;
+	return;
 }
 
 void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
@@ -184,10 +185,10 @@ void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 	return;
 }
 
-int RecMapLoadGetc(TCHAR c, int istr, note_box_2_t note[], int *objectN, int iLine, double timer[],
-	int noteLaneNo[], double bpmG, int BlockNoteNum, struct custom_note_box customnote[],
-	struct scrool_box scrool[], rec_move_all_set_t *move, short int YmoveN2[], short int XmoveN2[],
-	short int *notes, playnum_box *allnum)
+static int RecMapLoadGetc(TCHAR c, int istr, note_box_2_t note[], int *objectN, int iLine,
+	double timer[], int noteLaneNo[], double bpmG, int BlockNoteNum,
+	struct custom_note_box customnote[], rec_scrool_set_t *scrool, rec_move_all_set_t *move,
+	short int YmoveN2[], short int XmoveN2[], short int *notes, playnum_box *allnum)
 {
 	TCHAR strcode = L'0';
 	if (IsNoteCode(c) == 0) { return -1; }
@@ -402,9 +403,11 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.camera.data[0].zoom = 1;
 	recfp->mapeff.camera.data[0].rot = 0;
 	recfp->mapeff.camera.data[0].mode = 0;
-	recfp->mapeff.scrool[0].starttime = 0;
-	recfp->mapeff.scrool[0].basetime = 0;
-	recfp->mapeff.scrool[0].speed = 1;
+	recfp->mapeff.camera.num = 1;
+	recfp->mapeff.scrool.data[0].starttime = 0;
+	recfp->mapeff.scrool.data[0].basetime = 0;
+	recfp->mapeff.scrool.data[0].speed = 1;
+	recfp->mapeff.scrool.num = 1;
 	recfp->mapeff.viewT[0][0] = 0;
 	recfp->mapeff.viewT[1][0] = 3000;
 	recfp->mapeff.carrow.d[0].data = 1;
@@ -586,7 +589,7 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 	fwrite(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
 	fwrite(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//動画データ
 	fwrite(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
-	fwrite(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
+	fwrite(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
 	fwrite(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
 	fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
 	fclose(fp);
@@ -614,7 +617,6 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 	item_set_box item_set[99];
 	short int MovieN = 0;
 	struct custom_note_box customnote[9];
-	short int scroolN = 1;
 	int objectN = 0; //↑の番号
 	int noteLaneNo[3] = { -1,-1,-1 };
 	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
@@ -1161,16 +1163,19 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 			break;
 		}
 		case OBJ_CODE_SCROOL: //スクロール
+		{
+			const uint numS = recfp->mapeff.scrool.num;
 			strmods(GT1, 8);
-			recfp->mapeff.scrool[scroolN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
+			recfp->mapeff.scrool.data[numS].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
 			strnex(GT1);
-			recfp->mapeff.scrool[scroolN].speed = strsans2(GT1);
-			G[0] = recfp->mapeff.scrool[scroolN - 1].speed *
-				recfp->mapeff.scrool[scroolN].starttime + recfp->mapeff.scrool[scroolN - 1].basetime;
-			recfp->mapeff.scrool[scroolN].basetime = G[0] - recfp->mapeff.scrool[scroolN].speed *
-				recfp->mapeff.scrool[scroolN].starttime;
-			scroolN++;
+			recfp->mapeff.scrool.data[numS].speed = strsans2(GT1);
+			G[0] = recfp->mapeff.scrool.data[numS - 1].speed *
+				recfp->mapeff.scrool.data[numS].starttime + recfp->mapeff.scrool.data[numS - 1].basetime;
+			recfp->mapeff.scrool.data[numS].basetime = G[0] - recfp->mapeff.scrool.data[numS].speed *
+				recfp->mapeff.scrool.data[numS].starttime;
+			recfp->mapeff.scrool.num++;
 			break;
+		}
 		case OBJ_CODE_CUSTOM: //カスタムノーツセット
 			RecMapLoad_ComCustomNote(GT1, customnote);
 			break;
@@ -1182,8 +1187,9 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 				while (GT1[BlockNoteNum] != L'\0' && GT1[BlockNoteNum] != L',') { BlockNoteNum++; }
 				for (int istr = 0; istr < BlockNoteNum; istr++) {
 					RecMapLoadGetc(GT1[istr], istr, recfp->mapdata.note, &objectN, iLine, timer,
-						noteLaneNo, bpmG, BlockNoteNum, customnote, recfp->mapeff.scrool, &recfp->mapeff.move, YmoveN2,
-						XmoveN2, &recfp->mapdata.notes, &recfp->allnum);
+						noteLaneNo, bpmG, BlockNoteNum, customnote, &recfp->mapeff.scrool,
+						&recfp->mapeff.move, YmoveN2, XmoveN2, &recfp->mapdata.notes,
+						&recfp->allnum);
 				}
 				if (iLine <= 1) { FileRead_gets(GT1, 256, songdata); }
 			}

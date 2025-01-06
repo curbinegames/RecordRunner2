@@ -47,6 +47,17 @@ typedef struct rec_camera_set_s {
 	uint num = 0;
 } rec_camera_set_t;
 
+typedef struct rec_scrool_data_s {
+	int starttime = -1;
+	double basetime = -1;
+	double speed = -1;
+} rec_scrool_data_t;
+
+typedef struct rec_scrool_set_s {
+	rec_scrool_data_t data[99];
+	uint num = 0;
+} rec_scrool_set_t;
+
 typedef struct rec_view_bpm_set_s {
 	view_BPM_box data[100];
 	int num = 0;
@@ -93,7 +104,7 @@ typedef struct rec_fall_data_s {
 
 typedef struct rec_map_eff_data_s {
 	rec_camera_set_t camera;
-	struct scrool_box scrool[99];
+	rec_scrool_set_t scrool;
 	item_box Movie[999];
 	rec_view_bpm_set_t v_BPM;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]

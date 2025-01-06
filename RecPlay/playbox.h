@@ -229,12 +229,6 @@ struct score_box {
 	int time = 0;
 };
 
-struct scrool_box {
-	int starttime = -1;
-	double basetime = -1;
-	double speed = -1;
-};
-
 typedef struct rec_play_xy_set_s {
 	int x;
 	int y;
