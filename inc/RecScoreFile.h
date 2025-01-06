@@ -32,7 +32,7 @@ typedef struct rec_map_detail_s {
 
 #if 1 /* rec_map_eff_data_t */
 
-typedef struct camera_box {
+typedef struct rec_camera_data_s {
 	int starttime = -1;
 	int endtime = -1;
 	int xpos = -1;
@@ -40,7 +40,12 @@ typedef struct camera_box {
 	double zoom = -1;
 	int rot = -1;
 	int mode = -1;
-} rec_camera_t;
+} rec_camera_data_t;
+
+typedef struct rec_camera_set_s {
+	rec_camera_data_t data[256];
+	uint num = 0;
+} rec_camera_set_t;
 
 typedef struct rec_view_bpm_set_s {
 	view_BPM_box data[100];
@@ -87,7 +92,7 @@ typedef struct rec_fall_data_s {
 } rec_fall_data_t;
 
 typedef struct rec_map_eff_data_s {
-	rec_camera_t camera[255];
+	rec_camera_set_t camera;
 	struct scrool_box scrool[99];
 	item_box Movie[999];
 	rec_view_bpm_set_t v_BPM;

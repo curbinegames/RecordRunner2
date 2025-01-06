@@ -13,18 +13,23 @@ void RecPlayResetCamera() {
 	return;
 }
 
-void RecPlaySetCamera(struct camera_box camset[], int camN, int Ntime) {
-	if (camset[camN].starttime <= Ntime && Ntime <= camset[camN].endtime) {
-		camera_pos.x = (int)movecal(camset[camN].mode,
-			camset[camN].starttime, camset[camN - 1].xpos,
-			camset[camN].endtime, camset[camN].xpos, Ntime);
-		camera_pos.y = (int)movecal(camset[camN].mode,
-			camset[camN].starttime, camset[camN - 1].ypos,
-			camset[camN].endtime, camset[camN].ypos, Ntime);
+void RecPlaySetCamera(rec_camera_set_t *camera, int Ntime) {
+	const     uint    num = camera->num;
+	const DxTime_t startT = camera->data[num].starttime;
+	const DxTime_t   endT = camera->data[num].endtime;
+	const      int  moveM = camera->data[num].mode;
+	const      int  nposX = camera->data[num].xpos;
+	const      int  nposY = camera->data[num].ypos;
+	const      int  bposX = (num == 0) ? 0 : camera->data[num - 1].xpos;
+	const      int  bposY = (num == 0) ? 0 : camera->data[num - 1].ypos;
+
+	if (startT <= Ntime && Ntime <= endT) {
+		camera_pos.x = (int)movecal(moveM, startT, bposX, endT, nposX, Ntime);
+		camera_pos.y = (int)movecal(moveM, startT, bposY, endT, nposY, Ntime);
 	}
 	else {
-		camera_pos.x = camset[camN - 1].xpos;
-		camera_pos.y = camset[camN - 1].ypos;
+		camera_pos.x = bposX;
+		camera_pos.y = bposY;
 	}
 	return;
 }

@@ -395,13 +395,13 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 #if 1 /* sub action */
 
 static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
-	recfp->mapeff.camera[0].starttime = 0;
-	recfp->mapeff.camera[0].endtime = 0;
-	recfp->mapeff.camera[0].xpos = 0;
-	recfp->mapeff.camera[0].ypos = 0;
-	recfp->mapeff.camera[0].zoom = 1;
-	recfp->mapeff.camera[0].rot = 0;
-	recfp->mapeff.camera[0].mode = 0;
+	recfp->mapeff.camera.data[0].starttime = 0;
+	recfp->mapeff.camera.data[0].endtime = 0;
+	recfp->mapeff.camera.data[0].xpos = 0;
+	recfp->mapeff.camera.data[0].ypos = 0;
+	recfp->mapeff.camera.data[0].zoom = 1;
+	recfp->mapeff.camera.data[0].rot = 0;
+	recfp->mapeff.camera.data[0].mode = 0;
 	recfp->mapeff.scrool[0].starttime = 0;
 	recfp->mapeff.scrool[0].basetime = 0;
 	recfp->mapeff.scrool[0].speed = 1;
@@ -585,7 +585,7 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 	fwrite(&recfp->mapdata.ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
 	fwrite(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//動画データ
-	fwrite(&recfp->mapeff.camera, sizeof(struct camera_box), 255, fp);//カメラデータ
+	fwrite(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
 	fwrite(&recfp->mapeff.scrool, sizeof(struct scrool_box), 99, fp);//スクロールデータ
 	fwrite(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
 	fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
@@ -613,7 +613,6 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 	short int viewTN = 1;
 	item_set_box item_set[99];
 	short int MovieN = 0;
-	short int cameraN = 1; //↑の番号
 	struct custom_note_box customnote[9];
 	short int scroolN = 1;
 	int objectN = 0; //↑の番号
@@ -1105,56 +1104,62 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 #endif
 			break;
 		case OBJ_CODE_CAMERA: //カメラ移動+ズーム+角度(未実装)
+		{
+			const uint numC = recfp->mapeff.camera.num;
 			strmods(GT1, 8);
-			recfp->mapeff.camera[cameraN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
+			recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
 			strnex(GT1);
-			recfp->mapeff.camera[cameraN].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
+			recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
 			strnex(GT1);
-			recfp->mapeff.camera[cameraN].xpos = strsans2(GT1) * 50;
+			recfp->mapeff.camera.data[numC].xpos = strsans2(GT1) * 50;
 			strnex(GT1);
-			recfp->mapeff.camera[cameraN].ypos = strsans2(GT1) * 50;
+			recfp->mapeff.camera.data[numC].ypos = strsans2(GT1) * 50;
 			strnex(GT1);
-			recfp->mapeff.camera[cameraN].zoom = strsans2(GT1);
+			recfp->mapeff.camera.data[numC].zoom = strsans2(GT1);
 			strnex(GT1);
-			recfp->mapeff.camera[cameraN].rot = strsans2(GT1);
+			recfp->mapeff.camera.data[numC].rot = strsans2(GT1);
 			strnex(GT1);
 			switch (GT1[0]) {
 			case L'a':
-				recfp->mapeff.camera[cameraN].mode = 2;
+				recfp->mapeff.camera.data[numC].mode = 2;
 				break;
 			case L'd':
-				recfp->mapeff.camera[cameraN].mode = 3;
+				recfp->mapeff.camera.data[numC].mode = 3;
 				break;
 			default:
-				recfp->mapeff.camera[cameraN].mode = 1;
+				recfp->mapeff.camera.data[numC].mode = 1;
 				break;
 			}
-			cameraN++;
+			recfp->mapeff.camera.num++;
 			break;
+		}
 		case OBJ_CODE_CAMMOVE: //カメラ移動
+		{
+			const uint numC = recfp->mapeff.camera.num;
 			if (strands(GT1, L"#CMOV:")) { strmods(GT1, 6); }
 			if (strands(GT1, L"#CAMMOVE:")) { strmods(GT1, 9); }
-			recfp->mapeff.camera[cameraN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
+			recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
 			strnex(GT1);
-			recfp->mapeff.camera[cameraN].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
+			recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
 			strnex(GT1);
-			recfp->mapeff.camera[cameraN].xpos = strsans2(GT1) * 50;
+			recfp->mapeff.camera.data[numC].xpos = strsans2(GT1) * 50;
 			strnex(GT1);
-			recfp->mapeff.camera[cameraN].ypos = strsans2(GT1) * 50;
+			recfp->mapeff.camera.data[numC].ypos = strsans2(GT1) * 50;
 			strnex(GT1);
 			switch (GT1[0]) {
 			case L'a':
-				recfp->mapeff.camera[cameraN].mode = 2;
+				recfp->mapeff.camera.data[numC].mode = 2;
 				break;
 			case L'd':
-				recfp->mapeff.camera[cameraN].mode = 3;
+				recfp->mapeff.camera.data[numC].mode = 3;
 				break;
 			default:
-				recfp->mapeff.camera[cameraN].mode = 1;
+				recfp->mapeff.camera.data[numC].mode = 1;
 				break;
 			}
-			cameraN++;
+			recfp->mapeff.camera.num++;
 			break;
+		}
 		case OBJ_CODE_SCROOL: //スクロール
 			strmods(GT1, 8);
 			recfp->mapeff.scrool[scroolN].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);

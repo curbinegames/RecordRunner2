@@ -1,10 +1,11 @@
 #pragma once
 
-#include "playbox.h"
+#include <RecScoreFile.h>
+#include <playbox.h>
 
 /* main action */
 extern void RecPlayResetCamera();
-extern void RecPlaySetCamera(struct camera_box camset[], int camN, int Ntime);
+extern void RecPlaySetCamera(rec_camera_set_t *camera, int Ntime);
 extern void RecPlayGetCameraPos(int *retX, int *retY);
 
 /* Draw on Rec Field */

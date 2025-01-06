@@ -68,10 +68,9 @@ static int RecPlayDebug[3] = { 0,0,0 };
 
 #if 1 /* sub action */
 
-static void RecResetPlayPartNum(short *cameraN, int *scroolN, short *itemN, short *SitemN,
-	short LineMoveN[], short lockN[], short *viewTN, short *MovieN)
+static void RecResetPlayPartNum(int *scroolN, short *itemN, short *SitemN, short LineMoveN[],
+	short lockN[], short *viewTN, short *MovieN)
 {
-	*cameraN = 0;
 	*scroolN = 0;
 	*itemN = 0;
 	*SitemN = 0;
@@ -86,10 +85,8 @@ static void RecResetPlayPartNum(short *cameraN, int *scroolN, short *itemN, shor
 }
 
 static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
-	mapeff->chamo[0].num = 0;
-	mapeff->chamo[1].num = 0;
-	mapeff->chamo[2].num = 0;
-	mapeff->fall.num = 0;
+	mapeff->camera.num = 0;
+	mapeff->carrow.num = 0;
 	mapeff->move.y[0].num = 0;
 	mapeff->move.y[1].num = 0;
 	mapeff->move.y[2].num = 0;
@@ -98,7 +95,10 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->move.x[0].num = 0;
 	mapeff->move.x[1].num = 0;
 	mapeff->move.x[2].num = 0;
-	mapeff->carrow.num = 0;
+	mapeff->chamo[0].num = 0;
+	mapeff->chamo[1].num = 0;
+	mapeff->chamo[2].num = 0;
+	mapeff->fall.num = 0;
 	return;
 }
 
@@ -1152,7 +1152,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	/* short */
 	short int i[3];
 	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
-	short int cameraN = 0;
 
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
@@ -1302,9 +1301,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			recfp.mapeff.v_BPM.data[recfp.mapeff.v_BPM.num + 1].time <= recfp.time.now) {
 			recfp.mapeff.v_BPM.num++;
 		}
-		while (0 <= recfp.mapeff.camera[cameraN].endtime &&
-			recfp.mapeff.camera[cameraN].endtime < recfp.time.now) {
-			cameraN++;
+		{
+			uint *const numC = &recfp.mapeff.camera.num;
+			while (0 <= recfp.mapeff.camera.data[*numC].endtime &&
+				recfp.mapeff.camera.data[*numC].endtime < recfp.time.now)
+			{
+				(*numC)++;
+			}
 		}
 		while (0 <= recfp.mapeff.scrool[scroolN + 1].starttime &&
 			recfp.mapeff.scrool[scroolN + 1].starttime <= recfp.time.now) {
@@ -1377,7 +1380,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 
 		//カメラ移動
-		RecPlaySetCamera(recfp.mapeff.camera, cameraN, recfp.time.now);
+		RecPlaySetCamera(&recfp.mapeff.camera, recfp.time.now);
 		//Xline(横位置)の計算
 		recSetLine(Xline, recfp.mapeff.move.x, recfp.time.now, 3);
 		//Yline(縦位置)の計算
@@ -1551,7 +1554,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				recfp.time.now = mins(recfp.time.now - 10000, 0);
 				RecResetPlayObjectNum(objectN, &recfp);
 				RecResetPlayRecfpMapeffNum(&recfp.mapeff);
-				RecResetPlayPartNum(&cameraN, &scroolN, &itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);
+				RecResetPlayPartNum(&scroolN, &itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);
 				for (i[0] = 0; i[0] < 3; i[0]++) {
 					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
 						recfp.mapdata.note[objectN[i[0]]].next != 5999)
