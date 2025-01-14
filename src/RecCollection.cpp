@@ -1,17 +1,111 @@
 
 #include <sancur.h>
+#include <strcur.h>
 #include <RecWindowRescale.h>
 #include <system.h>
 #include <collect_seclet.h>
+#include <option.h>
+
+#if 1 /* C_item */
+
+static void RecClctGetItemOpenFg(bool openFg[]) {
+	double Grate = 0;
+	int	play[7] = { 0,0,0,0,0,0,0 };
+	play_rate_t rate2[RATE_NUM];
+	FILE *fp;
+
+	(void)_wfopen_s(&fp, L"save/data.dat", L"rb");
+	if (fp != NULL) {
+		fread(&play, sizeof(int), 7, fp);
+		fclose(fp);
+	}
+
+	(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
+	if (fp != NULL) {
+		fread(&rate2[0], sizeof(play_rate_t), RATE_NUM, fp);
+		fclose(fp);
+	}
+	for (int i = 0; i < RATE_NUM; i++) {
+		if (0 <= rate2[i].num && rate2[i].num <= 20) {
+			Grate += rate2[i].num;
+		}
+	}
+
+	openFg[0] = ( 1 <= play[1]);
+	openFg[1] = ( 1 <= play[3]);
+	openFg[2] = ( 1 <= play[4]);
+	openFg[3] = ( 1 <= play[5]);
+	openFg[4] = ( 1 <= play[6]);
+	openFg[5] = ( 1 <= play[0]);
+	openFg[6] = (10 <= play[0]);
+	openFg[7] = (25 <= Grate);
+	openFg[8] = (55 <= Grate);
+	openFg[9] = (90 <= Grate);
+	return;
+}
+
+static void RecClctDrawItemPictureLine(uint DrawX, int DrawY, uint StartNum, uint count,
+	uint cmdX, uint cmdY, const bool openFg[], DxPic_t item[], DxPic_t win, DxPic_t cover)
+{
+	uint cmd_item_num = 0;
+	uint DrawP = 0;
+	switch (cmdY) {
+	case 0:
+		cmd_item_num = cmdX + 0;
+		break;
+	case 1:
+		cmd_item_num = cmdX + 3;
+		break;
+	case 2:
+		cmd_item_num = cmdX + 7;
+		break;
+	}
+	for (int i = 0; i < count; i++) {
+		DrawP = (openFg[i + StartNum]) ? (i + 1 + StartNum) : 0;
+		RecRescaleDrawGraph(DrawX + i * 150, DrawY, win, TRUE);
+		RecRescaleDrawGraph(DrawX + i * 150 + 3, DrawY + 3, item[DrawP], TRUE);
+		if (i + StartNum != cmd_item_num) {
+			RecRescaleDrawGraph(DrawX + i * 150, DrawY, cover, TRUE);
+		}
+	}
+	return;
+}
+
+static void RecClctDrawItemDetail(uint cmdX, int cmdY, const bool openFg[]) {
+	const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
+	uint itemNo = 0;
+	switch (cmdY) {
+	case 0:
+		itemNo = cmdX + 0;
+		break;
+	case 1:
+		itemNo = cmdX + 3;
+		break;
+	case 2:
+		itemNo = cmdX + 7;
+		break;
+	}
+	if (openFg[itemNo]) {
+		RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("%s:\n%s\n%s[%s]"),
+			p_item_data[itemNo].name,
+			p_item_data[itemNo].detail1,
+			p_item_data[itemNo].detail2,
+			p_item_data[itemNo].condition);
+	}
+	else {
+		RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("???\n[%s]"),
+			p_item_data[itemNo].condition);
+	}
+	return;
+}
 
 static int C_item(void) {
-	//ロード
-	int i;
-	int j;
-	int win = LoadGraph(L"picture/item枠.png");
-	int cover = LoadGraph(L"picture/itemカバー.png");
-	int backimg = LoadGraph(L"picture/COLLECT back.png");
-	int item[11] = {
+	bool openFg[10] = { false,false,false,false,false,false,false,false,false,false };
+	int	command[2] = { 0,0 };
+	DxPic_t win = LoadGraph(L"picture/item枠.png");
+	DxPic_t cover = LoadGraph(L"picture/itemカバー.png");
+	DxPic_t backimg = LoadGraph(L"picture/COLLECT back.png");
+	DxPic_t item[11] = {
 		LoadGraph(L"picture/item0.png"),
 		LoadGraph(L"picture/item1.png"),
 		LoadGraph(L"picture/item2.png"),
@@ -24,269 +118,59 @@ static int C_item(void) {
 		LoadGraph(L"picture/item9.png"),
 		LoadGraph(L"picture/item10.png")
 	};
-	int sel = LoadSoundMem(L"sound/select.wav");
-	int flag[10] = { 0,0,0,0,0,0,0,0,0,0 };
-	double Grate = 0;
-	int	play[7] = { 0,0,0,0,0,0,0 };
-	double rate[10] = { 0,0,0,0,0,0,0,0,0,0 };
-	int	lan[6] = { 0,0,0,2,0,0 };//使うのは[4,言語]だけ
-	play_rate_t rate2[RATE_NUM];
+	DxSnd_t sel = LoadSoundMem(L"sound/select.wav");
 	rec_helpbar_c help;
-	FILE *fp;
-	(void)_wfopen_s(&fp, L"save/system.dat", L"rb");
-	if (fp != NULL) {
-		fread(&lan, sizeof(int), 5, fp);
-		fclose(fp);
-	}
-	(void)_wfopen_s(&fp, L"save/data.dat", L"rb");
-	if (fp != NULL) {
-		fread(&play, sizeof(int), 7, fp);
-		fclose(fp);
-	}
-	(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp != NULL) {
-		fread(&rate2[0], sizeof(play_rate_t), RATE_NUM, fp);
-		fclose(fp);
-	}
-	for (int i = 0; i < RATE_NUM; i++) {
-		if (0 <= rate2[i].num && rate2[i].num <= 20) { Grate += rate2[i].num; }
-	}
-	//達成フラグ
-	if (play[1] >= 1) flag[0] = 1;
-	if (play[3] >= 1) flag[1] = 1;
-	if (play[4] >= 1) flag[2] = 1;
-	if (play[5] >= 1) flag[3] = 1;
-	if (play[6] >= 1) flag[4] = 1;
-	if (play[0] >= 1) flag[5] = 1;
-	if (play[0] >= 10) flag[6] = 1;
-	if (Grate >= 25) flag[7] = 1;
-	if (Grate >= 55) flag[8] = 1;
-	if (Grate >= 90) flag[9] = 1;
-	//動作
-	int key = 1;
-	int	command[2] = { 0,0 };
-	unsigned int Cr;
-	Cr = GetColor(255, 255, 255);
+
+	RecClctGetItemOpenFg(openFg);
+
 	while (1) {
+		InputAllKeyHold();
+		switch (GetKeyPushOnce()) {
+		case KEY_INPUT_LEFT:
+			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+			command[0] = (command[0] + 3) % 4;
+			if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 2; }
+			break;
+		case KEY_INPUT_RIGHT:
+			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+			command[0] = (command[0] + 1) % 4;
+			if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 0; }
+			break;
+		case KEY_INPUT_UP:
+			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+			command[1] = (command[1] + 2) % 3;
+			if (command[0] == 3 && command[1] == 0) { command[0] = 2; }
+			break;
+		case KEY_INPUT_DOWN:
+			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+			command[1] = (command[1] + 1) % 3;
+			if (command[0] == 3 && command[1] == 2) { command[0] = 2; }
+			break;
+		case KEY_INPUT_BACK:
+			return 0;
+		default:
+			break;
+		}
+
+		if (GetWindowUserCloseFlag(TRUE)) { return 5; }
+
 		ClearDrawScreen();
 		RecRescaleDrawGraph(0, 0, backimg, TRUE);
-		for (i = 0; i < 2; i++) {
-			for (j = 0; j < 3; j++) {
-				RecRescaleDrawGraph(110 + j * 150, 20 + i * 240, win, TRUE);
-				if (flag[j + i * 7]) {
-					RecRescaleDrawGraph(113 + j * 150, 23 + i * 240, item[1 + j + i * 7], TRUE);
-				}
-				else {
-					RecRescaleDrawGraph(113 + j * 150, 23 + i * 240, item[0], TRUE);
-				}
-				if (j + i * 7 != (7 * command[1] + 2 * command[0]) / 2) {
-					RecRescaleDrawGraph(110 + j * 150, 20 + i * 240, cover, TRUE);
-				}
-			}
-		}
-		for (i = 0; i < 4; i++) {
-			RecRescaleDrawGraph(40 + i * 150, 140, win, TRUE);
-			if (flag[3 + i]) RecRescaleDrawGraph(43 + i * 150, 143, item[4 + i], TRUE);
-			else RecRescaleDrawGraph(43 + i * 150, 143, item[0], TRUE);
-			if (3 + i != 3 * command[1] + command[0] || command[1] != 1) RecRescaleDrawGraph(40 + i * 150, 140, cover, TRUE);
-		}
-		switch (command[1]) {
-		case 0:
-			switch (command[0]) {
-			case 0:
-				if (play[1] >= 1) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0]].name, item_data_jp[command[0]].detail1, item_data_jp[command[0]].detail2, item_data_jp[command[0]].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0]].name, item_data_en[command[0]].detail1, item_data_en[command[0]].detail2, item_data_en[command[0]].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0]].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0]].condition);
-				}
-				break;
-			case 1:
-				if (play[3] >= 1) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0]].name, item_data_jp[command[0]].detail1, item_data_jp[command[0]].detail2, item_data_jp[command[0]].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0]].name, item_data_en[command[0]].detail1, item_data_en[command[0]].detail2, item_data_en[command[0]].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0]].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0]].condition);
-				}
-				break;
-			case 2:
-				if (play[4] >= 1) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0]].name, item_data_jp[command[0]].detail1, item_data_jp[command[0]].detail2, item_data_jp[command[0]].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0]].name, item_data_en[command[0]].detail1, item_data_en[command[0]].detail2, item_data_en[command[0]].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0]].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0]].condition);
-				}
-				break;
-			}
-			break;
-		case 1:
-			switch (command[0]) {
-			case 0:
-				if (play[5] >= 1) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0] + 3].name, item_data_jp[command[0] + 3].detail1, item_data_jp[command[0] + 3].detail2, item_data_jp[command[0] + 3].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0] + 3].name, item_data_en[command[0] + 3].detail1, item_data_en[command[0] + 3].detail2, item_data_en[command[0] + 3].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0] + 3].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0] + 3].condition);
-				}
-				break;
-			case 1:
-				if (play[6] >= 1) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0] + 3].name, item_data_jp[command[0] + 3].detail1, item_data_jp[command[0] + 3].detail2, item_data_jp[command[0] + 3].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0] + 3].name, item_data_en[command[0] + 3].detail1, item_data_en[command[0] + 3].detail2, item_data_en[command[0] + 3].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0] + 3].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0] + 3].condition);
-				}
-				break;
-			case 2:
-				if (play[0] >= 1) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0] + 3].name, item_data_jp[command[0] + 3].detail1, item_data_jp[command[0] + 3].detail2, item_data_jp[command[0] + 3].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0] + 3].name, item_data_en[command[0] + 3].detail1, item_data_en[command[0] + 3].detail2, item_data_en[command[0] + 3].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0] + 3].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0] + 3].condition);
-				}
-				break;
-			case 3:
-				if (play[0] >= 10) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0]].name, item_data_jp[command[0]].detail1, item_data_jp[command[0]].detail2, item_data_jp[command[0]].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0]].name, item_data_en[command[0]].detail1, item_data_en[command[0]].detail2, item_data_en[command[0]].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0]].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0]].condition);
-				}
-				break;
-			}
-			break;
-		case 2:
-			switch (command[0]) {
-			case 0:
-				if (Grate >= 25) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0] + 7].name, item_data_jp[command[0] + 7].detail1, item_data_jp[command[0] + 7].detail2, item_data_jp[command[0] + 7].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0] + 7].name, item_data_en[command[0] + 7].detail1, item_data_en[command[0] + 7].detail2, item_data_en[command[0] + 7].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0] + 7].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0] + 7].condition);
-				}
-				break;
-			case 1:
-				if (Grate >= 55) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0] + 7].name, item_data_jp[command[0] + 7].detail1, item_data_jp[command[0] + 7].detail2, item_data_jp[command[0] + 7].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0] + 7].name, item_data_en[command[0] + 7].detail1, item_data_en[command[0] + 7].detail2, item_data_en[command[0] + 7].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0] + 7].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0] + 7].condition);
-				}
-				break;
-			case 2:
-				if (Grate >= 90) {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_jp[command[0] + 7].name, item_data_jp[command[0] + 7].detail1, item_data_jp[command[0] + 7].detail2, item_data_jp[command[0] + 7].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("%s:\n%s\n%s[%s]"), item_data_en[command[0] + 7].name, item_data_en[command[0] + 7].detail1, item_data_en[command[0] + 7].detail2, item_data_en[command[0] + 7].condition);
-				}
-				else {
-					if (lan[4] == 0) RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_jp[command[0] + 7].condition);
-					else RecRescaleDrawFormatString(50, 400, Cr, _T("???\n[%s]"), item_data_en[command[0] + 7].condition);
-				}
-				break;
-			}
-			break;
-		}
+
+		RecClctDrawItemPictureLine(110,  20, 0, 3, command[0], command[1], openFg, item, win, cover);
+		RecClctDrawItemPictureLine( 40, 140, 3, 4, command[0], command[1], openFg, item, win, cover);
+		RecClctDrawItemPictureLine(110, 260, 7, 3, command[0], command[1], openFg, item, win, cover);
+		RecClctDrawItemDetail(command[0], command[1], openFg);
+
 		help.DrawHelp(HELP_MAT_COLLECTION_ITEM);
 		ScreenFlip();
-		if (CheckHitKey(KEY_INPUT_LEFT)) {
-			//左が押された
-			if (key == 0) {
-				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
-				command[0]--;
-				if (command[0] < 0) {
-					command[0] = 3;
-				}
-				if (command[0] == 3 && command[1] == 0) {
-					command[0] = 2;
-				}
-				if (command[0] == 3 && command[1] == 2) {
-					command[0] = 2;
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_RIGHT)) {
-			//右が押された
-			if (key == 0) {
-				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
-				command[0]++;
-				if (command[0] > 3) {
-					command[0] = 0;
-				}
-				if (command[0] == 3 && command[1] == 0) {
-					command[0] = 0;
-				}
-				if (command[0] == 3 && command[1] == 2) {
-					command[0] = 0;
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_UP)) {
-			//上が押された
-			if (key == 0) {
-				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
-				command[1]--;
-				if (command[0] == 3 && command[1] == 0) {
-					command[0] = 2;
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_DOWN)) {
-			//下が押された
-			if (key == 0) {
-				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
-				command[1]++;
-				if (command[0] == 3 && command[1] == 2) {
-					command[0] = 2;
-				}
-			}
-			key = 1;
-		}
-		else if (CheckHitKey(KEY_INPUT_BACK)) {
-			//バックスペースが押された
-			if (key == 0) {
-				ClearDrawScreen();
-				break;
-			}
-			key = 1;
-		}
-		else if (GetWindowUserCloseFlag(TRUE)) {
-			//閉じるボタンが押された
-			return 5;
-		}
-		else {
-			//特定のキーが押されていない
-			key = 0;
-		}
-		if (command[1] < 0) {
-			command[1] = 2;
-		}
-		if (command[1] > 2) {
-			command[1] = 0;
-		}
+
+		WaitTimer(10);
 	}
 	return 0;
 }
+
+#endif /* C_item */
 
 static int story(int a, int b) {
 	int key = 1, com = 0, Cx = 220, Cy = 75, backimg, noteimg, pageimg, sel;
