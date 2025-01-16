@@ -37,20 +37,6 @@
 #define CHARA_POS_MID 1
 #define CHARA_POS_DOWN 2
 
-/* debug */
-#if 0
-#define RECR_DEBUG(ofs, data)											\
-		RecRescaleDrawFormatString(20, 120 + ofs * 20, Cr, L#data": %d", data)
-#define RECR_DEBUG_LOOP(ofs, n, data_a, data_b)							\
-	for (int _rep = 0; _rep < n; _rep++) {								\
-		RecRescaleDrawFormatString(20, 120 + _rep * 20 + ofs * 20, Cr,			\
-		L#data_a"[%d]"#data_b": %d", _rep, data_a[_rep]data_b);			\
-	}
-#else
-#define RECR_DEBUG(n, data_a, data_b)
-#define RECR_DEBUG_LOOP(n, data_a, data_b)
-#endif
-
 #endif /* define group */
 
 #if 1 /* typedef group */
@@ -63,8 +49,6 @@ typedef struct rec_play_back_pic_s {
 } rec_play_back_pic_t;
 
 #endif /* typedef group */
-
-static int RecPlayDebug[3] = { 0,0,0 };
 
 #if 1 /* sub action */
 

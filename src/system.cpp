@@ -7,6 +7,8 @@
 int SmallFontData = 0;
 int LargeFontData = 0;
 
+int RecPlayDebug[3] = { 0,0,0 };
+
 /**
  * packNoとsongNoからファイルパスを取得する
  * @param[out] ret ファイルパスの格納先

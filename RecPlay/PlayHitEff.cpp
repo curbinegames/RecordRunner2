@@ -1,5 +1,6 @@
 
 #include "DxLib.h"
+#include <system.h>
 #include "playbox.h"
 #include "PlayHitEff.h"
 #include "PlayCamera.h"
@@ -39,6 +40,9 @@ void PlaySetHitEffect(note_judge judge, note_material notemat, int LineNo) {
 	EffState[LineNo].time = GetNowCount();
 	EffState[LineNo].judge = judge;
 	EffState[LineNo].note = notemat;
+	RecPlayDebug[0] = EffState[0].time;
+	RecPlayDebug[1] = EffState[0].judge;
+	RecPlayDebug[2] = EffState[0].note;
 	return;
 }
 
@@ -97,7 +101,10 @@ static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo) {
 	case NOTE_DOWN:
 	case NOTE_LEFT:
 	case NOTE_RIGHT:
-		if (EffState[lineNo].judge < NOTE_JUDGE_JUST || EffState[lineNo].judge > NOTE_JUDGE_SAFE) {
+		if ((EffState[lineNo].judge < NOTE_JUDGE_JUST ||
+			EffState[lineNo].judge > NOTE_JUDGE_SAFE) &&
+			EffState[lineNo].judge != NOTE_JUDGE_PJUST)
+		{
 			return;
 		}
 		break;
