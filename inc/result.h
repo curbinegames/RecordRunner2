@@ -6,6 +6,7 @@
 #include <recr_cutin.h>
 #include <RecScoreFile.h>
 #include <playbox.h>
+#include <RecWindowRescale.h>
 
 #define VER_1_6 0
 

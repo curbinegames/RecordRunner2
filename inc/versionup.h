@@ -4,6 +4,43 @@
 #include <system.h>
 #include <strcur.h>
 
+static void VerSaveScore(wchar_t const songN[], char dif,
+	int score, double acc, int Dscore, short rank, char Clear) {
+	int	read[7] = { 0,0,0,0,0,0,0 };
+	int	Readdis[7] = { 0,0,0,0,0,0,0 };
+	int	ReadRank[7] = { 6,6,6,6,6,6,6 };
+	int	ReadClear[7] = { 0,0,0,0,0,0,0 };
+	double ReadAcc[7] = { 0,0,0,0,0,0,0 };
+	wchar_t save[255] = L"score/";
+	strcats(save, songN); // save = score/<曲名>
+	strcats(save, L".dat"); // save = score/<曲名>.dat
+	FILE *fp;
+	(void)_wfopen_s(&fp, save, L"rb");
+	if (fp != NULL) {
+		fread(&read, sizeof(int), 6, fp);
+		fread(&ReadAcc, sizeof(double), 6, fp);
+		fread(&Readdis, sizeof(int), 6, fp);
+		fread(&ReadRank, sizeof(int), 6, fp);
+		fread(&ReadClear, sizeof(int), 6, fp);
+		fclose(fp);
+	}
+	if (read[dif] < score) { read[dif] = score; } //ハイスコア保存
+	if (ReadAcc[dif] < acc) { ReadAcc[dif] = acc; } //ACC保存
+	if (Readdis[dif] < Dscore) { Readdis[dif] = Dscore; } //最長走行距離保存
+	if (ReadRank[dif] > rank || ReadRank[dif] < 0) {
+		ReadRank[dif] = rank; //ランク保存
+	}
+	if (ReadClear[dif] < Clear) { ReadClear[dif] = Clear; } //クリアレート保存
+	_wfopen_s(&fp, save, L"wb");
+	fwrite(&read, sizeof(int), 6, fp);
+	fwrite(&ReadAcc, sizeof(double), 6, fp);
+	fwrite(&Readdis, sizeof(int), 6, fp);
+	fwrite(&ReadRank, sizeof(int), 6, fp);
+	fwrite(&ReadClear, sizeof(int), 6, fp);
+	fclose(fp);
+	return;
+}
+
 void upgrade_rate_f() {
 	play_rate_t prate[RATE_NUM];
 	wchar_t name[10][255] = {L"\0", L"\0", L"\0", L"\0", L"\0", L"\0", L"\0", L"\0", L"\0", L"\0"};
@@ -58,7 +95,7 @@ void fix10501to10502_2(wchar_t const *oldFL, wchar_t const *newFL) {
 	fread(&ReadClear, sizeof(int), 6, fp);
 	fclose(fp);
 	for (int i = 0; i < 7; i++) {
-		SaveScore(newFL, i, read[i], ReadAcc[i], Readdis[i],
+		VerSaveScore(newFL, i, read[i], ReadAcc[i], Readdis[i],
 			(short)ReadRank[i], (char)ReadClear[i]);
 	}
 	//_wremove(oldFL);
