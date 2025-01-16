@@ -24,7 +24,7 @@
 #define SWITCH_NOTE_BOX_2 1
 
 /* debug */
-#if 1
+#if 0
 #define RECR_DEBUG(ofs, data)											\
 		RecRescaleDrawFormatString(20, 120 + ofs * 20, Cr, L#data": %d", data)
 #define RECR_DEBUG_LOOP(ofs, n, data_a, data_b)							\
