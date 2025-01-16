@@ -23,6 +23,20 @@
 
 #define SWITCH_NOTE_BOX_2 1
 
+/* debug */
+#if 1
+#define RECR_DEBUG(ofs, data)											\
+		RecRescaleDrawFormatString(20, 120 + ofs * 20, Cr, L#data": %d", data)
+#define RECR_DEBUG_LOOP(ofs, n, data_a, data_b)							\
+	for (int _rep = 0; _rep < n; _rep++) {								\
+		RecRescaleDrawFormatString(20, 120 + _rep * 20 + ofs * 20, Cr,			\
+		L#data_a"[%d]"#data_b": %d", _rep, data_a[_rep]data_b);			\
+	}
+#else
+#define RECR_DEBUG(n, data_a, data_b)
+#define RECR_DEBUG_LOOP(n, data_a, data_b)
+#endif
+
 typedef unsigned int uint;
 
 typedef struct play_rate_s {
@@ -51,6 +65,8 @@ typedef struct rec_user_data_s {
 	int PFcount = 0;
 	int mileage = 0;
 } rec_user_data_t;
+
+extern int RecPlayDebug[3];
 
 extern int SmallFontData;
 extern int LargeFontData;

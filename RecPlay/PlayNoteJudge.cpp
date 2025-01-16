@@ -9,6 +9,8 @@
 #include "PlayViewJudge.h"
 #include "PlayHitEff.h"
 
+#define IS_BETWEEN(a, b, c) ((a) <= (b) && (b) <= (c))
+
 #define P_JUST_TIME 15
 #define JUST_TIME 40
 #define GOOD_TIME 70
@@ -31,6 +33,9 @@ typedef enum chara_pos_e {
 
 /* DOTO: 効果音系を別ファイルに移動する */
 static int MelodySnd[24];
+static rec_play_sound_c *sp_sound = NULL;
+static int *s_soundItem = NULL;
+static int s_Ntime = 0;
 
 void RecPlayInitMelodySnd() {
 	MelodySnd[0] = LoadSoundMem(L"sound/melody/lowF.wav");
@@ -60,52 +65,59 @@ void RecPlayInitMelodySnd() {
 	return;
 }
 
-static void PlayNoteHitSound(const note_box_2_t *note, int *Sitem, rec_play_sound_c *p_sound) {
+static void PlayNoteHitSound(const note_box_2_t *note) {
 	if (note->melody != MELODYSOUND_NONE) {
 		PlaySoundMem(MelodySnd[note->melody], DX_PLAYTYPE_BACK);
 	}
 	else if (note->sound != 0) {
-		PlaySoundMem(Sitem[note->sound - 1], DX_PLAYTYPE_BACK);
+		PlaySoundMem(s_soundItem[note->sound - 1], DX_PLAYTYPE_BACK);
 	}
 	else {
-		p_sound->PlayNoteSound(note->object);
+		sp_sound->PlayNoteSound(note->object);
+	}
+	return;
+}
+
+static void PlayNoteHitSoundGeneral(note_judge judge, const note_box_2_t *noteinfo) {
+	if (optiondata.SEenable != 0) { return; }
+
+	switch (noteinfo->object) {
+	case NOTE_HIT:
+	case NOTE_CATCH:
+	case NOTE_UP:
+	case NOTE_DOWN:
+	case NOTE_LEFT:
+	case NOTE_RIGHT:
+		if (judge != NOTE_JUDGE_MISS) {
+			PlayNoteHitSound(noteinfo);
+		}
+		break;
+	case NOTE_BOMB:
+		if (judge == NOTE_JUDGE_MISS) {
+			PlayNoteHitSound(noteinfo);
+		}
+		break;
 	}
 	return;
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-static void AddGap(gap_box* const box, int data) {
-	box->view[box->count % 30] = data;
-	if (box->ssum + data * data < box->ssum) {
-		box->sum /= 2;
-		box->ssum /= 2;
-		box->count /= 2;
-	}
-	box->sum += data;
-	box->ssum += data * data;
-	box->count++;
-	return;
-}
-
 /**
- * 指定されたノートがどのレーンにあるかを調べる
+ * HITノートがどのレーンにあるかを調べる
  * @param[in] note ノーツ情報
  * @param[in] noteNo ノーツの番号
- * @param[in] mat 探すノートの種類
  * @param[in] Ntime 曲が開始してからの時間[ms]
  * @return レーンナンバー、見つからない場合は-1
  */
-static int RecPlayFindNearNote(const note_box_2_t note[],
-	short int noteNo[], note_material mat, int Ntime)
-{
+static int RecPlayFindNearHitNote(const note_box_2_t note[], short noteNo[]) {
 	int ans = -1;
 	int mintime = 200;
 	int gap = 300;
 
 	for (int i = 0; i < 3; i++) {
-		gap = note[noteNo[i]].hittime - Ntime;
-		if (note[noteNo[i]].object == mat && gap < mintime) {
+		gap = note[noteNo[i]].hittime - s_Ntime;
+		if (note[noteNo[i]].object == NOTE_HIT && gap < mintime) {
 			ans = i;
 			mintime = gap;
 		}
@@ -120,9 +132,10 @@ static int RecPlayFindNearNote(const note_box_2_t note[],
  * @return note_judge
  */
 static note_judge CheckJudge(int gap) {
-	if (-JUST_TIME <= gap && gap <= JUST_TIME) { return NOTE_JUDGE_JUST; }
-	else if (-GOOD_TIME <= gap && gap <= GOOD_TIME) { return NOTE_JUDGE_GOOD; }
-	else if (-SAFE_TIME <= gap && gap <= SAFE_TIME) { return NOTE_JUDGE_SAFE; }
+	if (IS_BETWEEN(-(P_JUST_TIME), gap, P_JUST_TIME)) { return NOTE_JUDGE_PJUST; }
+	else if (IS_BETWEEN(-(JUST_TIME), gap, JUST_TIME)) { return NOTE_JUDGE_JUST; }
+	else if (IS_BETWEEN(-(GOOD_TIME), gap, GOOD_TIME)) { return NOTE_JUDGE_GOOD; }
+	else if (IS_BETWEEN(-(SAFE_TIME), gap, SAFE_TIME)) { return NOTE_JUDGE_SAFE; }
 	else if (gap <= F_MISS_TIME) { return NOTE_JUDGE_MISS; }
 	else { return NOTE_JUDGE_NONE; }
 }
@@ -130,34 +143,32 @@ static note_judge CheckJudge(int gap) {
 /**
  * arrow ノートをたたいたかどうかの判定を返す
  * @param[in] mat ノートの種類
- * @param[in] gap 判定の差[ms]
  * @param[in] key 押しているキーの情報
- * @return たたいていたら1, たたいていなかったら0
+ * @return たたいていたらtrue, たたいていなかったらfalse
  */
-static int CheckArrowInJudge(note_material mat, int gap, key_hold_t *key) {
-	if (CheckJudge(gap) == NOTE_JUDGE_NONE) { return 0; }
+static bool CheckArrowInJudge(note_material mat, key_hold_t *key) {
 	switch (mat) {
 	case NOTE_UP:
-		if (key->up == 1) { return 1; }
+		if (key->up == 1) { return true; }
 		break;
 	case NOTE_DOWN:
-		if (key->down == 1) { return 1; }
+		if (key->down == 1) { return true; }
 		break;
 	case NOTE_LEFT:
-		if (key->left == 1) { return 1; }
+		if (key->left == 1) { return true; }
 		break;
 	case NOTE_RIGHT:
-		if (key->right == 1) { return 1; }
+		if (key->right == 1) { return true; }
 		break;
 	}
-	return 0;
+	return false;
 }
 
-static void SetHitPosByHit(hitatt_t *hitatk, char const hitflag, int Ntime) {
+static void SetHitPosByHit(hitatt_t *hitatk, const char hitflag) {
 	int n = 0;
 	int ret = 0;
 	for (int i = 0; i < 3; i++) {
-		if (hitflag & 1 << i) {
+		if (hitflag & (1 << i)) {
 			n++;
 			ret = i;
 		}
@@ -165,7 +176,7 @@ static void SetHitPosByHit(hitatt_t *hitatk, char const hitflag, int Ntime) {
 	if (n == 0) { return; }
 	if (n >= 2) {
 		hitatk->pos = RECR_CHARP_M;
-		hitatk->time = Ntime;
+		hitatk->time = s_Ntime;
 		return;
 	}
 	switch (ret) {
@@ -179,188 +190,165 @@ static void SetHitPosByHit(hitatt_t *hitatk, char const hitflag, int Ntime) {
 		hitatk->pos = RECR_CHARP_D;
 		break;
 	}
-	hitatk->time = Ntime;
+	hitatk->time = s_Ntime;
 	return;
 }
 
-static void note_judge_event(note_judge judge, note_box_2_t const *noteinfo, int *Sitem, int Ntime,
-	int Jtime, int lineNo, userpal_t *userpal, rec_play_sound_c *p_sound)
+/**
+ * Hitキーが押された個数を返す
+ * @param[in] keyhold 押しているキーの情報
+ * @return Hitキーが押された個数
+ */
+static uint RecLPlayGetHitKeyPushCount(const key_hold_t *keyhold) {
+	uint ret = 0;
+	if (keyhold == NULL) { return 0; }
+	if (keyhold->z == 1) { ret++; }
+	if (keyhold->x == 1) { ret++; }
+	if (keyhold->c == 1) { ret++; }
+	return ret;
+}
+
+#if 1 /* RecNoteJudgeEventAll */
+
+/**
+ * userpalの値を更新します
+ * @param[out] userpal  更新するuserpalへのポインタ
+ * @param[in] Ntime     Ntimeの値
+ * @param[in] setBscore trueを入れるとBscoreを更新します
+ * @param[in] PjustFg   pjustであるかをtrue/falseで入力してください
+ * @param[in] addLife   増減するlifeの値
+ * @param[in] addDscore 増減するDscoreの値
+ * @param[in] addCombo  増減するcomboの値、0未満を入れるとコンボが0になります
+ */
+static void RecJudgeSetUserpal(userpal_t *userpal, bool setBscore, bool PjustFg,
+	int addLife, int addDscore, int addCombo)
 {
-	if (judge == NOTE_JUDGE_NONE) { return; }
-	note_material note = noteinfo->object;
-	PlaySetJudge(judge);
-	PlaySetHitEffect(judge, note, lineNo);
+	if (setBscore) { userpal->score.before = pals(500, userpal->score.sum, 0, userpal->score.before, maxs(s_Ntime - userpal->score.time, 500)); }
+	userpal->score.time = s_Ntime;
+	if (PjustFg) { (userpal->judgeCount.pjust)++; }
+	(userpal->life) += addLife;
+	(userpal->Dscore.add) += addDscore;
+	if (addCombo < 0) { userpal->Ncombo = 0; }
+	else { (userpal->Ncombo) += addCombo; }
+	return;
+}
 
-	/* 全ノーツ共通 */
-	if (judge != NOTE_JUDGE_MISS) {
-		userpal->score.before =
-			pals(500, userpal->score.sum, 0, userpal->score.before,
-				maxs(Ntime - userpal->score.time, 500));
-		userpal->score.time = Ntime;
-	}
-
-	/* 判定ごとの処理 */
+static void note_judge_event(note_judge judge, userpal_t *userpal) {
 	switch (judge) {
+	case NOTE_JUDGE_PJUST:
 	case NOTE_JUDGE_JUST:
-		(userpal->Ncombo)++;
-		(userpal->life) += 2;
-		(userpal->Dscore.add)++;
 		(userpal->judgeCount.just)++;
 		break;
 	case NOTE_JUDGE_GOOD:
-		(userpal->Ncombo)++;
-		(userpal->life)++;
-		// (userpal->Dscore.add) += 0;
 		(userpal->judgeCount.good)++;
 		break;
 	case NOTE_JUDGE_SAFE:
-		// (userpal->Ncombo) += 0;
-		// (userpal->life) += 0;
-		// (userpal->Dscore.add) += 0;
 		(userpal->judgeCount.safe)++;
 		break;
 	case NOTE_JUDGE_MISS:
-		(userpal->Ncombo) = 0;
-		(userpal->life) -= 20;
-		// (userpal->Dscore.add) += 0;
 		(userpal->judgeCount.miss)++;
 		break;
-	default:
-		/* none */
+	}
+
+	switch (judge) {
+	/*      userpal, setBscore, Pjust, +Life, +Dscore, +Combo); */
+	case NOTE_JUDGE_PJUST:
+		RecJudgeSetUserpal(
+			userpal,      true,  true,     2,       2,      1);
+		break;
+	case NOTE_JUDGE_JUST:
+		RecJudgeSetUserpal(
+			userpal,      true, false,     2,       2,      1);
+		break;
+	case NOTE_JUDGE_GOOD:
+		RecJudgeSetUserpal(
+			userpal,      true, false,     1,       1,      1);
+		break;
+	case NOTE_JUDGE_SAFE:
+		RecJudgeSetUserpal(
+			userpal,      true, false,     0,       0,      0);
+		break;
+	case NOTE_JUDGE_MISS:
+		RecJudgeSetUserpal(
+			userpal,     false, false,   -20,       0,     -1);
 		break;
 	}
 
-	/* ノートごとの処理 */
-	switch (note) {
-	case NOTE_HIT:
-		AddGap(&userpal->gap, Jtime); // slow miss はやらない
-		if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
-			(userpal->judgeCount.pjust)++;
-		}
-		if (judge != NOTE_JUDGE_MISS && optiondata.SEenable == 0) {
-			PlayNoteHitSound(noteinfo, Sitem, p_sound);
-		}
-		break;
-	case NOTE_CATCH:
-		if (judge == NOTE_JUDGE_JUST) {
-			(userpal->judgeCount.pjust)++;
-			if (optiondata.SEenable == 0) {
-				PlayNoteHitSound(noteinfo, Sitem, p_sound);
-			}
-		}
-		break;
-	case NOTE_UP:
-	case NOTE_DOWN:
-	case NOTE_LEFT:
-	case NOTE_RIGHT:
-		AddGap(&userpal->gap, Jtime); // slow miss はやらない
-		if (-P_JUST_TIME <= Jtime && Jtime <= P_JUST_TIME) {
-			(userpal->judgeCount.pjust)++;
-		}
-		if (judge != NOTE_JUDGE_MISS && optiondata.SEenable == 0) {
-			PlayNoteHitSound(noteinfo, Sitem, p_sound);
-		}
-		break;
-	case NOTE_BOMB:
-		switch (judge) {
-		case NOTE_JUDGE_JUST:
-			(userpal->judgeCount.pjust)++;
-			break;
-		case NOTE_JUDGE_MISS:
-			if (optiondata.SEenable == 0) {
-				PlayNoteHitSound(noteinfo, Sitem, p_sound);
-			}
-			break;
-		default:
-			/* nope */
-			break;
-		}
-		break;
-	default:
-		/* nope */
-		break;
-	}
 	return;
 }
 
-static void note_judge_while_event(note_material mat, note_box_2_t note[], short int objectN[],
-	int Ntime, note_judge judge, int Sitem[], int Line, int *charahit, hitatt_t *hitatk,
-	userpal_t *userpal, rec_play_sound_c *p_sound)
+/* 目標の関数の形: RecNoteJudgeEventAll(判定, ノーツの種類); */
+static void RecNoteJudgeEventAll(note_judge judge, const note_box_2_t note[], int lineNo,
+	userpal_t *userpal, short noteNo[])
 {
-	/* パラメータチェック */
-	if (mat == NOTE_CATCH && charahit == NULL) { return; }
-	if (mat == NOTE_CATCH && hitatk == NULL) { return; }
+	int GapTime = 0;
+	const note_box_2_t *noteinfo = &note[noteNo[lineNo]];
+	if (judge == NOTE_JUDGE_NONE) { return; }
 
-	switch (mat) {
-	case NOTE_CATCH:
-		while (note[objectN[Line]].hittime - Ntime <= 0 &&
-			0 <= note[objectN[Line]].hittime &&
-			note[objectN[Line]].object == NOTE_CATCH)
-		{
-			note_judge_event(judge, &note[objectN[Line]], Sitem, Ntime, 0, Line, userpal, p_sound);
-			*charahit = 0;
-			hitatk->time = -1000;
-			objectN[Line] = note[objectN[Line]].next;
+	PlaySetJudge(judge);
+	PlaySetHitEffect(judge, noteinfo->object, lineNo);
+	note_judge_event(judge, userpal);
+	PlayNoteHitSoundGeneral(judge, noteinfo);
+
+	/* gapのデータ(ズレの平均と偏差値)を更新する */
+	GapTime = noteinfo->hittime - s_Ntime;
+	if ((-SAFE_TIME) <= GapTime && GapTime <= SAFE_TIME) {
+		switch (noteinfo->object) {
+		case NOTE_HIT:
+		case NOTE_UP:
+		case NOTE_DOWN:
+		case NOTE_LEFT:
+		case NOTE_RIGHT:
+			userpal->gap.view[userpal->gap.count % 30] = GapTime;
+			if ((int)(userpal->gap.ssum + GapTime * GapTime) < (int)(userpal->gap.ssum)) {
+				userpal->gap.sum /= 2;
+				userpal->gap.ssum /= 2;
+				userpal->gap.count /= 2;
+			}
+			userpal->gap.sum += GapTime;
+			userpal->gap.ssum += GapTime * GapTime;
+			userpal->gap.count++;
+			break;
 		}
-		break;
-	case NOTE_BOMB:
-		while (note[objectN[Line]].hittime - Ntime <= 0 &&
-			0 <= note[objectN[Line]].hittime &&
-			note[objectN[Line]].object == NOTE_BOMB)
-		{
-			note_judge_event(judge, &note[objectN[Line]], Sitem, Ntime, -JUST_TIME - 1, Line,
-				userpal, p_sound);
-			objectN[Line] = note[objectN[Line]].next;
-		}
-		break;
-	case NOTE_GHOST:
-		while (note[objectN[Line]].hittime - Ntime < 0 &&
-			note[objectN[Line]].object == NOTE_GHOST)
-		{
-			PlayNoteHitSound(&note[objectN[Line]], Sitem, p_sound);
-			objectN[Line] = note[objectN[Line]].next;
-		}
-		break;
 	}
+
+	noteNo[lineNo] = noteinfo->next;
 	return;
 }
 
-static void RecJudgeHit(note_box_2_t note[], short int noteNo[], int Ntime, int Sitem[],
-	userpal_t *userpal, key_hold_t *keyhold, hitatt_t *hitatk, rec_play_sound_c *p_sound)
+#endif /* RecNoteJudgeEventAll */
+
+#if 1 /* RecJudge */
+
+static void RecJudgeHitNote(note_box_2_t note[], short noteNo[], userpal_t *userpal,
+	hitatt_t *hitatk, int push_key_count)
 {
-	int push_key_count = 0;
 	int near_lane = -1;
-	char hitatk2 = 0; //hit event, bit unit: 0: upper hit, 1: middle hit, 2: lower hit, 3~7: reserved
+	char hitflag = 0; //hit event, bit unit: 0: upper hit, 1: middle hit, 2: lower hit, 3~7: reserved
 	int gap = 0;
-	note_judge NJ = NOTE_JUDGE_JUST;
-
-	if (keyhold->z == 1) { push_key_count++; }
-	if (keyhold->x == 1) { push_key_count++; }
-	if (keyhold->c == 1) { push_key_count++; }
+	note_judge NJ = NOTE_JUDGE_PJUST;
 	
 	for (int iPush = 0; iPush < push_key_count; iPush++) {
-		near_lane = RecPlayFindNearNote(note, noteNo, NOTE_HIT, Ntime);
+		near_lane = RecPlayFindNearHitNote(note, noteNo);
 		if (near_lane == -1) {
 			if (iPush == 0) {
-				p_sound->PlaySwing();
+				sp_sound->PlaySwing();
 			}
 			break;
 		}
-		gap = note[noteNo[near_lane]].hittime - Ntime;
-		hitatk2 |= (1 << near_lane);
+		gap = note[noteNo[near_lane]].hittime - s_Ntime;
+		hitflag |= (1 << near_lane);
 		NJ = CheckJudge(gap);
 		if (NJ == NOTE_JUDGE_MISS) {
-			p_sound->PlaySwing();
+			sp_sound->PlaySwing();
 		}
-		note_judge_event(NJ, &note[noteNo[near_lane]], Sitem, Ntime, gap, near_lane, userpal,
-			p_sound);
-		noteNo[near_lane] = note[noteNo[near_lane]].next;
+		RecNoteJudgeEventAll(NJ, note, near_lane, userpal, noteNo);
 	}
-	SetHitPosByHit(hitatk, hitatk2, Ntime);
+	SetHitPosByHit(hitatk, hitflag);
 }
 
-static void RecJudgeArrow(note_box_2_t note[], short int noteNo[], int Ntime, int Sitem[],
-	userpal_t *userpal, key_hold_t *keyhold, rec_play_sound_c *p_sound)
+static void RecJudgeArrowNote(note_box_2_t note[], short noteNo[], userpal_t *userpal,
+	key_hold_t *keyhold)
 {
 	int avoidFg[3] = { 0,0,0 };
 	note_box_2_t buf[3];
@@ -369,7 +357,7 @@ static void RecJudgeArrow(note_box_2_t note[], short int noteNo[], int Ntime, in
 	buf[1] = note[noteNo[1]];
 	buf[2] = note[noteNo[2]];
 
-	/* アローの微ズレを検出する(AVOID_ARROW_DIV_TIME) */
+	/* アローのAVOID_ARROW_DIV_TIME以上のズレを検出する */
 	if (IS_REC_ARROW(buf[0].object)) {
 		if (buf[0].object == buf[1].object) {
 			if (buf[0].hittime >= buf[1].hittime + AVOID_ARROW_DIV_TIME) {
@@ -403,82 +391,106 @@ static void RecJudgeArrow(note_box_2_t note[], short int noteNo[], int Ntime, in
 
 	for (int iLine = 0; iLine < 3; iLine++) {
 		int GapTime = 0;
+		note_judge NJ = NOTE_JUDGE_NONE;
 
-		/* 微ズレを検出しているレーンは無視 */
+		/* ズレを検出しているレーンは無視 */
 		if (avoidFg[iLine] == 1) { continue; }
 
-		GapTime = note[noteNo[iLine]].hittime - Ntime;
+		GapTime = note[noteNo[iLine]].hittime - s_Ntime;
+		NJ = CheckJudge(GapTime);
+		if (NJ == NOTE_JUDGE_NONE) { continue; }
 
-		switch (note[noteNo[iLine]].object) {
-		case NOTE_UP:
-		case NOTE_DOWN:
-		case NOTE_LEFT:
-		case NOTE_RIGHT:
-			if (CheckArrowInJudge(note[noteNo[iLine]].object, GapTime, keyhold)) {
-				note_judge_event(CheckJudge(GapTime), &note[noteNo[iLine]], Sitem, Ntime, GapTime,
-					iLine, userpal, p_sound);
-				noteNo[iLine] = note[noteNo[iLine]].next;
-			}
-			break;
+		if (CheckArrowInJudge(note[noteNo[iLine]].object, keyhold)) {
+			RecNoteJudgeEventAll(NJ, note, iLine, userpal, noteNo);
 		}
 	}
 	return;
 }
 
-static void RecJudgeOthersNote(note_box_2_t note[], short int noteNo[], int Ntime, int Sitem[],
-	userpal_t *userpal, hitatt_t *hitatk, int LaneTrack[], int *charahit, short int charaput,
-	rec_play_sound_c *p_sound)
+static void RecJudgeCatchNote(note_box_2_t note[], short noteNo[], userpal_t *userpal,
+	hitatt_t *hitatk, int *charahit, int LaneTrack[])
 {
 	int GapTime = 0;
 
 	for (int iLine = 0; iLine < 3; iLine++) {
-		GapTime = note[noteNo[iLine]].hittime - Ntime;
-		switch (note[noteNo[iLine]].object) {
-		case NOTE_CATCH:
-			if (LaneTrack[iLine] + SAFE_TIME >= note[noteNo[iLine]].hittime) {
-				note_judge_while_event(NOTE_CATCH, note, noteNo, Ntime, NOTE_JUDGE_JUST, Sitem,
-					iLine, charahit, hitatk, userpal, p_sound);
-			}
-			break;
-		case NOTE_BOMB:
-			if (iLine == charaput && GapTime <= 0) {
-				note_judge_while_event(NOTE_BOMB, note, noteNo, Ntime, NOTE_JUDGE_MISS, Sitem,
-					iLine, NULL, NULL, userpal, p_sound);
-			}
-			else {
-				note_judge_while_event(NOTE_BOMB, note, noteNo, Ntime, NOTE_JUDGE_JUST, Sitem,
-					iLine, NULL, NULL, userpal, p_sound);
-			}
-			break;
-		case NOTE_GHOST:
-			if (GapTime < 0) {
-				note_judge_while_event(NOTE_GHOST, note, noteNo, Ntime, NOTE_JUDGE_NONE, Sitem,
-					iLine, NULL, NULL, userpal, p_sound);
-			}
-			break;
-		}
-
-		//全ノーツslowmiss
-		while (GapTime <= -SAFE_TIME && GapTime >= -1000000 &&
-			note[noteNo[iLine]].object >= NOTE_HIT &&
-			note[noteNo[iLine]].object <= NOTE_RIGHT)
+		while (IS_BETWEEN(0, note[noteNo[iLine]].hittime, LaneTrack[iLine] + SAFE_TIME) &&
+			IS_BETWEEN(0, note[noteNo[iLine]].hittime, s_Ntime) &&
+			note[noteNo[iLine]].object == NOTE_CATCH)
 		{
-			note_judge_event(NOTE_JUDGE_MISS, &note[noteNo[iLine]], Sitem, Ntime, -SAFE_TIME,
-				iLine, userpal, p_sound);
-			noteNo[iLine] = note[noteNo[iLine]].next;
-			GapTime = note[noteNo[iLine]].hittime - Ntime;
+			RecNoteJudgeEventAll(NOTE_JUDGE_PJUST, note, iLine, userpal, noteNo);
+			*charahit = 0;
+			hitatk->time = -1000;
 		}
 	}
 	return;
 }
 
-void RecJudgeAllNotes(note_box_2_t note[], short int noteNo[], int Ntime, int Sitem[],
-	key_hold_t *keyhold, hitatt_t *hitatk, int LaneTrack[], int *charahit, short int charaput,
-	userpal_t *userpal, rec_play_sound_c *p_sound)
+static void RecJudgeBombNote(note_box_2_t note[], short noteNo[], userpal_t *userpal,
+	hitatt_t *hitatk, int *charahit, short charaput)
 {
-	RecJudgeHit(note, noteNo, Ntime, Sitem, userpal, keyhold, hitatk, p_sound);
-	RecJudgeArrow(note, noteNo, Ntime, Sitem, userpal, keyhold, p_sound);
-	RecJudgeOthersNote(note, noteNo, Ntime, Sitem, userpal, hitatk, LaneTrack, charahit, charaput,
-		p_sound);
+	int GapTime = 0;
+
+	for (int iLine = 0; iLine < 3; iLine++) {
+		while (IS_BETWEEN(0, note[noteNo[iLine]].hittime, s_Ntime) &&
+			note[noteNo[iLine]].object == NOTE_BOMB)
+		{
+			GapTime = note[noteNo[iLine]].hittime - s_Ntime;
+			note_judge b_judge =
+				(iLine == charaput && GapTime <= 0) ? NOTE_JUDGE_MISS : NOTE_JUDGE_PJUST;
+			RecNoteJudgeEventAll(b_judge, note, iLine, userpal, noteNo);
+			*charahit = 0;
+			hitatk->time = -1000;
+		}
+	}
 	return;
 }
+
+static void RecJudgeGhostNote(note_box_2_t note[], short noteNo[])
+{
+	for (int iLine = 0; iLine < 3; iLine++) {
+		while (IS_BETWEEN(0, note[noteNo[iLine]].hittime, s_Ntime) &&
+			note[noteNo[iLine]].object == NOTE_GHOST)
+		{
+			PlayNoteHitSound(&note[noteNo[iLine]]);
+			noteNo[iLine] = note[noteNo[iLine]].next;
+		}
+	}
+	return;
+}
+
+//HIT/CATCH/ARROWノーツslowmiss
+static void RecJudgeSlowMiss(note_box_2_t note[], short noteNo[], userpal_t *userpal) {
+	int GapTime = 0;
+
+	for (int iLine = 0; iLine < 3; iLine++) {
+		GapTime = note[noteNo[iLine]].hittime - s_Ntime;
+		while (
+			IS_BETWEEN(-1000000, GapTime, -(SAFE_TIME)) &&
+			IS_BETWEEN(NOTE_HIT, note[noteNo[iLine]].object, NOTE_RIGHT))
+		{
+			RecNoteJudgeEventAll(NOTE_JUDGE_MISS, note, iLine, userpal, noteNo);
+			GapTime = note[noteNo[iLine]].hittime - s_Ntime;
+		}
+	}
+	return;
+}
+
+void RecJudgeAllNotes(note_box_2_t note[], short noteNo[], int Ntime, int *Sitem,
+	key_hold_t *keyhold, hitatt_t *hitatk, int LaneTrack[], int *charahit, short charaput,
+	userpal_t *userpal, rec_play_sound_c *p_sound)
+{
+	int push_key_count = RecLPlayGetHitKeyPushCount(keyhold);
+	sp_sound = p_sound;
+	s_soundItem = Sitem;
+	s_Ntime = Ntime;
+	
+	RecJudgeHitNote(  note, noteNo, userpal, hitatk, push_key_count);
+	RecJudgeArrowNote(note, noteNo, userpal, keyhold);
+	RecJudgeCatchNote(note, noteNo, userpal, hitatk, charahit, LaneTrack);
+	RecJudgeBombNote( note, noteNo, userpal, hitatk, charahit, charaput);
+	RecJudgeGhostNote(note, noteNo);
+	RecJudgeSlowMiss( note, noteNo, userpal);
+	return;
+}
+
+#endif /* RecJudge */

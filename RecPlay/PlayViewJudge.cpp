@@ -18,7 +18,12 @@ void ReadyJudgePicture() {
 }
 
 void PlaySetJudge(note_judge judge) {
-	viewjudge[judge] = GetNowCount();
+	if (judge == NOTE_JUDGE_PJUST) {
+		viewjudge[0] = GetNowCount();
+	}
+	else {
+		viewjudge[judge] = GetNowCount();
+	}
 	return;
 }
 

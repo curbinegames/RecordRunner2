@@ -25,7 +25,8 @@ typedef enum note_judge {
 	NOTE_JUDGE_JUST = 0,
 	NOTE_JUDGE_GOOD,
 	NOTE_JUDGE_SAFE,
-	NOTE_JUDGE_MISS
+	NOTE_JUDGE_MISS,
+	NOTE_JUDGE_PJUST
 } note_judge;
 
 typedef enum note_material {
