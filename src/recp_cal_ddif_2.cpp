@@ -7,6 +7,20 @@
 #include <recp_cal_ddif.h>
 #include <noteLoad.h>
 
+#if 1 /* define */
+
+#define IS_BETWEEN_RIGHT_LESS(a, b, c) ((a) <= (b) && (b) < (c))
+
+/* numがtarget±gap以内であればtrueを返すdefine */
+#define IS_NEAR_NUM(num, target, gap) (((target) - (gap)) <= (num) && (num) <= ((target) + (gap)))
+
+/* いずれかのレーンに対象のノーツがあればtrueを返すdefine */
+#define IS_NOTE_MAT_ANYLANE(note, mat) ((note)[0] == (mat) || (note)[1] == (mat) || (note)[2] == (mat))
+#define IS_NOTE_UP_ANYLANE(note)    IS_NOTE_MAT_ANYLANE(note, NOTE_UP)
+#define IS_NOTE_DOWN_ANYLANE(note)  IS_NOTE_MAT_ANYLANE(note, NOTE_DOWN)
+#define IS_NOTE_LEFT_ANYLANE(note)  IS_NOTE_MAT_ANYLANE(note, NOTE_LEFT)
+#define IS_NOTE_RIGHT_ANYLANE(note) IS_NOTE_MAT_ANYLANE(note, NOTE_RIGHT)
+
 #define REC_DDIF_BUF_NUM 50 //ddif計算で使用するバッファの数
 #define REC_DDIF_GROUP_TIME 40 //まとまりと見なす時間[ms]
 
@@ -18,14 +32,16 @@
 
 #define REC_DDIF_BASE 990 // ddifの基準難易度
 
-#define REC_DDIF_NOTES_BASE  354 // Dynamic Galaxy  のnotesの値
-#define REC_DDIF_ARROW_BASE 3757 // Chartreuse Greenのarrowの値
-#define REC_DDIF_CHORD_BASE 3319 // Dynamic Galaxy  のchordの値
-#define REC_DDIF_CHAIN_BASE 2102 // drop DOWN DOWN  のchainの値 (normal)
-#define REC_DDIF_TRILL_BASE 3420 // Chartreuse Greenのtrillの値
-#define REC_DDIF_MELDY_BASE 8321 // drop DOWN DOWN  のmaldyの値 (normal)
-#define REC_DDIF_ACTOR_BASE 2561 // Dynamic Galaxy  のactorの値
-#define REC_DDIF_TRICK_BASE   60 // drop DOWN DOWN  のtrickの値 (another)
+// それぞれ、Lv9以下の楽曲で9.9を上回らないように、うまい具合に設定している
+// Lv10? 振り切れてなんぼよ
+#define REC_DDIF_NOTES_BASE  276
+#define REC_DDIF_ARROW_BASE 3757
+#define REC_DDIF_CHORD_BASE 3319
+#define REC_DDIF_CHAIN_BASE 2102
+#define REC_DDIF_TRILL_BASE 3420
+#define REC_DDIF_MELDY_BASE  200
+#define REC_DDIF_ACTOR_BASE 2561
+#define REC_DDIF_TRICK_BASE 2194
 
 #define REC_DDIF_1ST_WAIGHT  50
 #define REC_DDIF_2ND_WAIGHT  90
@@ -35,6 +51,8 @@
 #define REC_DDIF_6TH_WAIGHT  50
 #define REC_DDIF_7TH_WAIGHT  25
 #define REC_DDIF_8TH_WAIGHT  10
+
+#endif /* define */
 
 typedef struct ddef_box_2 {
 	int maxdif = 0;
@@ -117,22 +135,58 @@ public:
 	}
 };
 
+class rec_ddif_btn_set_c {
+private:
+
+public:
+	rec_ddif_btn_c z;
+	rec_ddif_btn_c x;
+	rec_ddif_btn_c c;
+	rec_ddif_btn_c u;
+	rec_ddif_btn_c d;
+	rec_ddif_btn_c l;
+	rec_ddif_btn_c r;
+
+	bool operator ==(const rec_ddif_btn_set_c &r) const {
+		if (this->z.CheckPushGroup() != r.z.CheckPushGroup()) { return false; }
+		if (this->z.CheckReleaseGroup() != r.z.CheckReleaseGroup()) { return false; }
+		if (this->x.CheckPushGroup() != r.x.CheckPushGroup()) { return false; }
+		if (this->x.CheckReleaseGroup() != r.x.CheckReleaseGroup()) { return false; }
+		if (this->c.CheckPushGroup() != r.c.CheckPushGroup()) { return false; }
+		if (this->c.CheckReleaseGroup() != r.c.CheckReleaseGroup()) { return false; }
+		if (this->u.CheckPushGroup() != r.u.CheckPushGroup()) { return false; }
+		if (this->u.CheckReleaseGroup() != r.u.CheckReleaseGroup()) { return false; }
+		if (this->d.CheckPushGroup() != r.d.CheckPushGroup()) { return false; }
+		if (this->d.CheckReleaseGroup() != r.d.CheckReleaseGroup()) { return false; }
+		if (this->l.CheckPushGroup() != r.l.CheckPushGroup()) { return false; }
+		if (this->l.CheckReleaseGroup() != r.l.CheckReleaseGroup()) { return false; }
+		if (this->r.CheckPushGroup() != r.r.CheckPushGroup()) { return false; }
+		if (this->r.CheckReleaseGroup() != r.r.CheckReleaseGroup()) { return false; }
+		return true;
+	}
+
+	bool operator !=(const rec_ddif_btn_set_c &r) const {
+		return !(*this == r);
+	}
+};
+
 typedef struct rec_ddif_data_s {
 	DxTime_t time = 0;
 	note_material note[3] = { NOTE_NONE,NOTE_NONE,NOTE_NONE };
 	uint hitN = 0;
 	uint arwN = 0;
-	struct {
-		rec_ddif_btn_c z;
-		rec_ddif_btn_c x;
-		rec_ddif_btn_c c;
-		rec_ddif_btn_c u;
-		rec_ddif_btn_c d;
-		rec_ddif_btn_c l;
-		rec_ddif_btn_c r;
-	} btn;
+	rec_ddif_btn_set_c btn;
 	rec_ddif_pal_t pal;
 } rec_ddif_data_t;
+
+#define qsort_ease(type, mat) qsort((mat), sizeof(mat) / sizeof(type), sizeof(type), qsort_protocol<type>)
+
+template<typename T>
+static int qsort_protocol(const void *n1, const void *n2) {
+	if (*(T *)n1 > *(T *)n2) { return -1; }
+	else if (*(T *)n1 < *(T *)n2) { return 1; }
+	else { return 0; }
+}
 
 #if 1 /* RecDdifGetKey */
 
@@ -165,30 +219,10 @@ static void RecDdifGetKeyHit(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
 }
 
 static void RecDdifGetKeyArrow(rec_ddif_data_t *Nowkey) {
-	if (Nowkey->note[0] == NOTE_UP ||
-		Nowkey->note[1] == NOTE_UP ||
-		Nowkey->note[2] == NOTE_UP)
-	{
-		Nowkey->btn.u.SetPush();
-	}
-	if (Nowkey->note[0] == NOTE_DOWN ||
-		Nowkey->note[1] == NOTE_DOWN ||
-		Nowkey->note[2] == NOTE_DOWN)
-	{
-		Nowkey->btn.d.SetPush();
-	}
-	if (Nowkey->note[0] == NOTE_LEFT ||
-		Nowkey->note[1] == NOTE_LEFT ||
-		Nowkey->note[2] == NOTE_LEFT)
-	{
-		Nowkey->btn.l.SetPush();
-	}
-	if (Nowkey->note[0] == NOTE_RIGHT ||
-		Nowkey->note[1] == NOTE_RIGHT ||
-		Nowkey->note[2] == NOTE_RIGHT)
-	{
-		Nowkey->btn.r.SetPush();
-	}
+	if (IS_NOTE_UP_ANYLANE(Nowkey->note)) { Nowkey->btn.u.SetPush(); }
+	if (IS_NOTE_DOWN_ANYLANE(Nowkey->note)) { Nowkey->btn.d.SetPush(); }
+	if (IS_NOTE_LEFT_ANYLANE(Nowkey->note)) { Nowkey->btn.l.SetPush(); }
+	if (IS_NOTE_RIGHT_ANYLANE(Nowkey->note)) { Nowkey->btn.r.SetPush(); }
 	return;
 }
 
@@ -251,7 +285,7 @@ static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) 
 			if (Nowkey->note[0] == NOTE_BOMB) {
 				Nowkey->btn.d.SetHold();
 			}
-			else  {
+			else {
 				Nowkey->btn.u.SetHold();
 			}
 		}
@@ -315,6 +349,7 @@ static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 	uint divN = 0; // 2連カウント
 	uint chainN = 0; // 縦連カウント
 	Nowkey->pal.chain = 0;
+	if (Nowkey->hitN == 0 && Nowkey->arwN == 0) { return; }
 	if (Nowkey->btn.z.CheckPushGroup() &&
 		Befkey->btn.z.CheckPushGroup())
 	{
@@ -374,6 +409,7 @@ static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
 	uint count = 0; // トリルカウント
 	Nowkey->pal.trill = 0;
+	if (Nowkey->hitN == 0 && Nowkey->arwN == 0) { return; }
 	if (Nowkey->btn.z.CheckPushGroup() &&
 		BBefkey->btn.z.CheckPushGroup() &&
 		Befkey->btn.z.CheckReleaseGroup())
@@ -427,132 +463,8 @@ static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
 	uint count = 0; // 乱打カウント
 	Nowkey->pal.meldy = 0;
-	if (Nowkey->btn.z.CheckPushGroup()) {
-		if (Befkey->btn.z.CheckReleaseGroup() &&
-			BBefkey->btn.z.CheckPushGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 0;
-		}
-		else if (Befkey->btn.z.CheckPushGroup() &&
-			BBefkey->btn.z.CheckReleaseGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 10;
-		}
-	}
-	if (Nowkey->btn.x.CheckPushGroup()) {
-		if (Befkey->btn.x.CheckReleaseGroup() &&
-			BBefkey->btn.x.CheckPushGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 0;
-		}
-		else if (Befkey->btn.x.CheckPushGroup() &&
-			BBefkey->btn.x.CheckReleaseGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 10;
-		}
-	}
-	if (Nowkey->btn.c.CheckPushGroup()) {
-		if (Befkey->btn.c.CheckReleaseGroup() &&
-			BBefkey->btn.c.CheckPushGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 0;
-		}
-		else if (Befkey->btn.c.CheckPushGroup() &&
-			BBefkey->btn.c.CheckReleaseGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 10;
-		}
-	}
-	if (Nowkey->btn.u.CheckPushGroup()) {
-		if (Befkey->btn.u.CheckReleaseGroup() &&
-			BBefkey->btn.u.CheckPushGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 15;
-		}
-		else if (Befkey->btn.u.CheckPushGroup() &&
-			BBefkey->btn.u.CheckReleaseGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 40;
-		}
-	}
-	if (Nowkey->btn.d.CheckPushGroup()) {
-		if (Befkey->btn.d.CheckReleaseGroup() &&
-			BBefkey->btn.d.CheckPushGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 15;
-		}
-		else if (Befkey->btn.d.CheckPushGroup() &&
-			BBefkey->btn.d.CheckReleaseGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 40;
-		}
-	}
-	if (Nowkey->btn.l.CheckPushGroup()) {
-		if (Befkey->btn.l.CheckReleaseGroup() &&
-			BBefkey->btn.l.CheckPushGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 15;
-		}
-		else if (Befkey->btn.l.CheckPushGroup() &&
-			BBefkey->btn.l.CheckReleaseGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 40;
-		}
-	}
-	if (Nowkey->btn.r.CheckPushGroup()) {
-		if (Befkey->btn.r.CheckReleaseGroup() &&
-			BBefkey->btn.r.CheckPushGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 15;
-		}
-		else if (Befkey->btn.r.CheckPushGroup() &&
-			BBefkey->btn.r.CheckReleaseGroup())
-		{
-			count++;
-			Nowkey->pal.meldy += 40;
-		}
-	}
-
-	switch (count) {
-	case 0: /* 0 -> 0 */
-		Nowkey->pal.meldy = 0;
-		break;
-	case 1: /* 1 -> 1.0 */
-		// Nowkey->pal.meldy = Nowkey->pal.meldy * 1;
-		break;
-	case 2: /* 2 -> 1.3 */
-		Nowkey->pal.meldy = Nowkey->pal.meldy * 13 / 20;
-		break;
-	case 3: /* 3 -> 1.5 */
-		Nowkey->pal.meldy = Nowkey->pal.meldy * 15 / 30;
-		break;
-	case 4: /* 4 -> 1.7 */
-		Nowkey->pal.meldy = Nowkey->pal.meldy * 17 / 40;
-		break;
-	case 5: /* 5 -> 1.8 */
-		Nowkey->pal.meldy = Nowkey->pal.meldy * 18 / 50;
-		break;
-	case 6: /* 6 -> 1.9 */
-		Nowkey->pal.meldy = Nowkey->pal.meldy * 19 / 60;
-		break;
-	case 7: /* 7 -> 2.0 */
-		Nowkey->pal.meldy = Nowkey->pal.meldy * 20 / 70;
-		break;
-	}
-
+	if (Nowkey->hitN == 0 && Nowkey->arwN == 0) { return; }
+	if (Nowkey->btn != Befkey->btn && Nowkey->btn != BBefkey->btn) { Nowkey->pal.meldy = 1; }
 	return;
 }
 
@@ -567,25 +479,12 @@ static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 static void RecDdifGetPalActor(rec_ddif_data_t *Nowkey) {
 	uint catchN = 0; // catchの数
 	uint bombN = 0; // bombの数
-	Nowkey->pal.actor = 0;
-	if (Nowkey->note[0] == NOTE_CATCH) {
-		catchN++;
-	}
-	if (Nowkey->note[1] == NOTE_CATCH) {
-		catchN++;
-	}
-	if (Nowkey->note[2] == NOTE_CATCH) {
-		catchN++;
-	}
-	if (Nowkey->note[0] == NOTE_BOMB) {
-		bombN++;
-	}
-	if (Nowkey->note[1] == NOTE_BOMB) {
-		bombN++;
-	}
-	if (Nowkey->note[2] == NOTE_BOMB) {
-		bombN++;
-	}
+	if (Nowkey->note[0] == NOTE_CATCH) { catchN++; }
+	if (Nowkey->note[1] == NOTE_CATCH) { catchN++; }
+	if (Nowkey->note[2] == NOTE_CATCH) { catchN++; }
+	if (Nowkey->note[0] == NOTE_BOMB) { bombN++; }
+	if (Nowkey->note[1] == NOTE_BOMB) { bombN++; }
+	if (Nowkey->note[2] == NOTE_BOMB) { bombN++; }
 	Nowkey->pal.actor = 0;
 	switch (catchN) {
 	case 0:
@@ -625,40 +524,100 @@ static void RecDdifGetPalActor(rec_ddif_data_t *Nowkey) {
 		}
 		break;
 	}
-	return;
-}
-
-static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey) {
-	Nowkey->pal.trick = 0;
+	//arrowひっかけ
 	if (Nowkey->note[0] == NOTE_BOMB) {
 		if (Nowkey->note[1] == NOTE_UP && Nowkey->note[2] == NOTE_BOMB) {
-			Nowkey->pal.trick = 3;
+			Nowkey->pal.actor *= 4;
 		}
 		else if (Nowkey->note[1] == NOTE_UP || Nowkey->note[2] == NOTE_UP) {
-			Nowkey->pal.trick = 1;
+			Nowkey->pal.actor *= 2;
 		}
 	}
 	else if (Nowkey->note[2] == NOTE_BOMB) {
 		if (Nowkey->note[0] == NOTE_BOMB && Nowkey->note[1] == NOTE_DOWN) {
-			Nowkey->pal.trick = 3;
+			Nowkey->pal.actor *= 4;
 		}
 		else if (Nowkey->note[0] == NOTE_DOWN || Nowkey->note[1] == NOTE_DOWN) {
-			Nowkey->pal.trick = 1;
+			Nowkey->pal.actor *= 2;
 		}
+	}
+	return;
+}
+
+/**
+ * 1:1(1.000) -> 0  o...o...o カウントする必要なし
+ * 2:1(2.000) -> 10 o...o.o.o 10の基準
+ * 3:2(1.500) -> 12 o..o..o.o 12の基準
+ * 6:1(6.000) -> 12 o.....ooo
+ * 3:1(3.000) -> 13 o..oo..oo.13の基準
+ * 7:1(7.000) -> 13 o......oo
+ * 4:1(4.000) -> 13 o...oo..o
+ * 4:3(1.333) -> 13 o...o..oo
+ * 5:1(5.000) -> 15 o....oo.o 15の基準
+ * 5:2(2.500) -> 15 o....o.oo 15の基準
+ * 5:3(1.667) -> 15 o....o..o
+ * others -> 18
+ */
+static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+	int FirstTime = Nowkey->time - Befkey->time;
+	int SecondTime = Befkey->time - BBefkey->time;
+	float Gap = 0.0;
+
+	Nowkey->pal.trick = 0;
+
+	if (Nowkey->hitN == 0 && Nowkey->arwN == 0) { return; }
+
+	if (FirstTime < SecondTime) {
+		int temp = FirstTime;
+		FirstTime = SecondTime;
+		SecondTime = temp;
+	}
+
+	Gap = (float)FirstTime / (float)SecondTime;
+
+	if (7 < Gap) {
+		Nowkey->pal.trick = 0;
+	}
+	else if (IS_NEAR_NUM(Gap, 1.000, 0.1)) {
+		Nowkey->pal.trick = 0;
+	}
+	else if (IS_NEAR_NUM(Gap, 2.000, 0.1)) {
+		Nowkey->pal.trick = 10;
+	}
+	else if (IS_NEAR_NUM(Gap, 1.500, 0.1)) {
+		Nowkey->pal.trick = 12;
+	}
+	else if (IS_NEAR_NUM(Gap, 6.000, 0.1)) {
+		Nowkey->pal.trick = 12;
+	}
+	else if (IS_NEAR_NUM(Gap, 3.000, 0.1)) {
+		Nowkey->pal.trick = 13;
+	}
+	else if (IS_NEAR_NUM(Gap, 7.000, 0.1)) {
+		Nowkey->pal.trick = 13;
+	}
+	else if (IS_NEAR_NUM(Gap, 4.000, 0.1)) {
+		Nowkey->pal.trick = 13;
+	}
+	else if (IS_NEAR_NUM(Gap, 1.333, 0.1)) {
+		Nowkey->pal.trick = 13;
+	}
+	else if (IS_NEAR_NUM(Gap, 5.000, 0.1)) {
+		Nowkey->pal.trick = 15;
+	}
+	else if (IS_NEAR_NUM(Gap, 2.500, 0.1)) {
+		Nowkey->pal.trick = 15;
+	}
+	else if (IS_NEAR_NUM(Gap, 1.667, 0.1)) {
+		Nowkey->pal.trick = 15;
+	}
+	else {
+		Nowkey->pal.trick = 18;
 	}
 	return;
 }
 
 #endif /* RecDdifGetPal */
-
-template<typename T>
-static int qsort_protocol(const void *n1, const void *n2) {
-	if (*(T *)n1 > *(T *)n2) { return -1; }
-	else if (*(T *)n1 < *(T *)n2) { return 1; }
-	else { return 0; }
-}
-
-#define qsort_ease(type, mat) qsort((mat), sizeof(mat) / sizeof(type), sizeof(type), qsort_protocol<type>)
 
 static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	TCHAR esc_path[255];
@@ -727,9 +686,9 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		else if (0 <= recfp.mapdata.note[objectN[2]].hittime) { G[0] = 2; }
 		if (G[0] == -1) { break; }
 
-		if (0 <= recfp.mapdata.note[objectN[0]].hittime && recfp.mapdata.note[objectN[0]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 0; }
-		if (0 <= recfp.mapdata.note[objectN[1]].hittime && recfp.mapdata.note[objectN[1]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 1; }
-		if (0 <= recfp.mapdata.note[objectN[2]].hittime && recfp.mapdata.note[objectN[2]].hittime < recfp.mapdata.note[objectN[G[0]]].hittime) { G[0] = 2; }
+		if (IS_BETWEEN_RIGHT_LESS(0, recfp.mapdata.note[objectN[0]].hittime, recfp.mapdata.note[objectN[G[0]]].hittime)) { G[0] = 0; }
+		if (IS_BETWEEN_RIGHT_LESS(0, recfp.mapdata.note[objectN[1]].hittime, recfp.mapdata.note[objectN[G[0]]].hittime)) { G[0] = 1; }
+		if (IS_BETWEEN_RIGHT_LESS(0, recfp.mapdata.note[objectN[2]].hittime, recfp.mapdata.note[objectN[G[0]]].hittime)) { G[0] = 2; }
 		Nowkey->time = recfp.mapdata.note[objectN[G[0]]].hittime;
 
 		//次のノーツ群を取得
@@ -772,7 +731,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		{
 			Nowkey->pal.notes = 1;
 		}
-		
+
 		// 譜面パラメータ各種計算,重み計算,arrow
 		Nowkey->pal.arrow = 0;
 		switch (Nowkey->arwN) {
@@ -796,7 +755,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		RecDdifGetPalTrill(Nowkey, Befkey, BBefkey);
 		RecDdifGetPalMeldy(Nowkey, Befkey, BBefkey);
 		RecDdifGetPalActor(Nowkey);
-		RecDdifGetPalTrick(Nowkey);
+		RecDdifGetPalTrick(Nowkey, Befkey, BBefkey);
 
 		// 時間でかける(2000/前回からの時間)
 		G[0] = 2000 / maxs_2(1, Nowkey->time - Befkey->time);
@@ -890,7 +849,7 @@ void cal_ddif_3(const TCHAR *path) {
 
 	if (cal_ddif_4(&mpal, path) != 0) { return; }
 
-	// 各項目をLv9の基準に合わせる
+	// 各項目をREC_DDIF_BASEの基準に合わせる
 	mpal.notes = mpal.notes * REC_DDIF_BASE / REC_DDIF_NOTES_BASE;
 	mpal.arrow = mpal.arrow * REC_DDIF_BASE / REC_DDIF_ARROW_BASE;
 	mpal.chord = mpal.chord * REC_DDIF_BASE / REC_DDIF_CHORD_BASE;
@@ -900,6 +859,37 @@ void cal_ddif_3(const TCHAR *path) {
 	mpal.actor = mpal.actor * REC_DDIF_BASE / REC_DDIF_ACTOR_BASE;
 	mpal.trick = mpal.trick * REC_DDIF_BASE / REC_DDIF_TRICK_BASE;
 
+	// 平均で持ち上げる
+	{
+		uint pal[8] = {
+			mpal.notes, mpal.trill, mpal.arrow, mpal.chord,
+			mpal.chain, mpal.meldy, mpal.actor, mpal.trick
+		};
+		qsort_ease(uint, pal);
+
+		{
+			float buf =
+				pal[0] * REC_DDIF_1ST_WAIGHT +
+				pal[1] * REC_DDIF_2ND_WAIGHT +
+				pal[2] * REC_DDIF_3RD_WAIGHT +
+				pal[3] * REC_DDIF_4TH_WAIGHT +
+				pal[4] * REC_DDIF_5TH_WAIGHT +
+				pal[5] * REC_DDIF_6TH_WAIGHT +
+				pal[6] * REC_DDIF_7TH_WAIGHT +
+				pal[7] * REC_DDIF_8TH_WAIGHT;
+			buf = lins(0, 0.5, pal[0] * 8, 1.1, buf / 100.0);
+			mpal.notes *= buf;
+			mpal.arrow *= buf;
+			mpal.chord *= buf;
+			mpal.chain *= buf;
+			mpal.trill *= buf;
+			mpal.meldy *= buf;
+			mpal.actor *= buf;
+			mpal.trick *= buf;
+		}
+	}
+
+	// mdifを計算する
 	{
 		uint pal[8] = {
 			mpal.notes, mpal.trill, mpal.arrow, mpal.chord,
@@ -919,7 +909,7 @@ void cal_ddif_3(const TCHAR *path) {
 		mpal.mdif = lins(0, 0, 414885, REC_DDIF_BASE, mpal.mdif); // リスケール
 	}
 
-	// mpal と ddifRate を何らかの方法で保存する
+	// mpalを保存する
 	RecScoreWriteDdif(&mpal, path);
 
 	return;
