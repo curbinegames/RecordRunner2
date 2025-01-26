@@ -1015,9 +1015,11 @@ public:
 		this->ViewDist(userpal->status, &userpal->Dscore, time);
 		RecRescaleDrawGraph(0, 0, this->sbbarimg, TRUE);
 		this->ViewRunStatus(userpal, mapdata->notes, Hscore);
+#if 0
 		if (holdG >= 1) {
 			this->ViewDdif(mapdata->ddif, mapdata->ddifG[1]);
 		}
+#endif
 	}
 };
 
@@ -1451,15 +1453,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバッグ表示
 		if (holdG >= 1) {
-			RecRescaleDrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mdif / 100.0);
-			RecRescaleDrawFormatString(490, 100, Cr, L"ldif:%.2f", recfp.mapdata.ldif / 100.0);
-			RecRescaleDrawFormatString(490, 120, Cr, L"mrat:%.2f", DifRate);
-			RecRescaleDrawFormatString(490, 140, Cr, L"ndif:%.2f",
-				cal_nowdif_p(recfp.mapdata.ddif, &recfp.time) / 100.0);
-			RecRescaleDrawFormatString(490, 160, Cr, L"adif:%.2f",
-				(double)lins(0, 0, 453007, 950, GetAdif()) / 100.0);
-			max_adif = mins(max_adif, GetAdif());
-			RecRescaleDrawFormatString(490, 180, Cr, L"madif:%d", max_adif);
+			RecRescaleDrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mpal.mdif / 100.0);
 #if 0
 			/* エラー表示 */
 			if (recfp.outpoint[1] != 0) {

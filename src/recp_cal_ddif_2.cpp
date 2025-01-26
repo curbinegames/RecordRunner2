@@ -32,12 +32,12 @@
 
 // それぞれ、Lv9以下の楽曲で9.9を上回らないように、うまい具合に設定している
 // Lv10? 振り切れてなんぼよ
-#define REC_DDIF_NOTES_BASE  276
+#define REC_DDIF_NOTES_BASE  354
 #define REC_DDIF_ARROW_BASE 3757
 #define REC_DDIF_CHORD_BASE 3319
 #define REC_DDIF_CHAIN_BASE 2102
 #define REC_DDIF_TRILL_BASE 3420
-#define REC_DDIF_MELDY_BASE  200
+#define REC_DDIF_MELDY_BASE  289
 #define REC_DDIF_ACTOR_BASE 2561
 #define REC_DDIF_TRICK_BASE 2194
 
@@ -723,10 +723,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 
 		// 譜面パラメータ各種計算,重み計算,notes
 		Nowkey->pal.notes = 0;
-		if (Nowkey->note[0] == NOTE_HIT || IS_NOTE_ARROW_GROUP(Nowkey->note[0]) ||
-			Nowkey->note[1] == NOTE_HIT || IS_NOTE_ARROW_GROUP(Nowkey->note[1]) ||
-			Nowkey->note[2] == NOTE_HIT || IS_NOTE_ARROW_GROUP(Nowkey->note[2]))
-		{
+		if (0 < Nowkey->hitN || 0 < Nowkey->arwN) {
 			Nowkey->pal.notes = 1;
 		}
 
@@ -857,36 +854,6 @@ void cal_ddif_3(const TCHAR *path) {
 	mpal.actor = mpal.actor * REC_DDIF_BASE / REC_DDIF_ACTOR_BASE;
 	mpal.trick = mpal.trick * REC_DDIF_BASE / REC_DDIF_TRICK_BASE;
 
-	// 平均で持ち上げる
-	{
-		uint pal[8] = {
-			mpal.notes, mpal.trill, mpal.arrow, mpal.chord,
-			mpal.chain, mpal.meldy, mpal.actor, mpal.trick
-		};
-		qsort_ease(uint, pal);
-
-		{
-			float buf =
-				pal[0] * REC_DDIF_1ST_WAIGHT +
-				pal[1] * REC_DDIF_2ND_WAIGHT +
-				pal[2] * REC_DDIF_3RD_WAIGHT +
-				pal[3] * REC_DDIF_4TH_WAIGHT +
-				pal[4] * REC_DDIF_5TH_WAIGHT +
-				pal[5] * REC_DDIF_6TH_WAIGHT +
-				pal[6] * REC_DDIF_7TH_WAIGHT +
-				pal[7] * REC_DDIF_8TH_WAIGHT;
-			buf = lins(0, 0.5, pal[0] * 8, 1.1, buf / 100.0);
-			mpal.notes *= buf;
-			mpal.arrow *= buf;
-			mpal.chord *= buf;
-			mpal.chain *= buf;
-			mpal.trill *= buf;
-			mpal.meldy *= buf;
-			mpal.actor *= buf;
-			mpal.trick *= buf;
-		}
-	}
-
 	// mdifを計算する
 	{
 		uint pal[8] = {
@@ -906,6 +873,21 @@ void cal_ddif_3(const TCHAR *path) {
 			pal[7] * REC_DDIF_8TH_WAIGHT;
 		mpal.mdif = lins(0, 0, 414885, REC_DDIF_BASE, mpal.mdif); // リスケール
 	}
+
+#if 0
+	// 各項目をmdifで持ち上げる
+	{
+		double sum = lins(0, 0, 10, 3, mpal.mdif);
+		mpal.notes += sum;
+		mpal.arrow += sum;
+		mpal.chord += sum;
+		mpal.chain += sum;
+		mpal.trill += sum;
+		mpal.meldy += sum;
+		mpal.actor += sum;
+		mpal.trick += sum;
+	}
+#endif
 
 	// mpalを保存する
 	RecScoreWriteDdif(&mpal, path);
