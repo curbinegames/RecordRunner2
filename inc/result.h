@@ -30,10 +30,11 @@ typedef enum rec_play_rank_e {
 } rec_play_rank_t;
 
 typedef struct rec_result_mat_s {
-	DxPic_t clearRate;
-	DxPic_t difBer;
-	DxPic_t rank;
-	DxPic_t chara;
+	DxPic_t clearRate = -1;
+	DxPic_t difBer = -1;
+	DxPic_t rank = -1;
+	DxPic_t chara = -1;
+	DxSnd_t BGM = -1;
 	cur_font_cr_t fontNo = CUR_FONT_COLOR_MONO;
 #if VER_1_6 == 1
 	cur_font_cr_t floatfontNo = CUR_FONT_COLOR_MONO;
@@ -82,12 +83,11 @@ char GetCharNo() {
 static now_scene_t ViewResult(rec_result_pal_t *val) {
 	/* typedef */
 	DxPic_t resultimg = LoadGraph(L"picture/result.png");
-	DxSnd_t musicmp3 = LoadSoundMem(L"song/Balloon Art.mp3");
 	/* class */
 	rec_cutin_c cutin;
 
 	InitCurFont();
-	PlaySoundMem(musicmp3, DX_PLAYTYPE_LOOP);
+	PlaySoundMem(val->mat.BGM, DX_PLAYTYPE_LOOP);
 	WaitTimer(10);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	cutin.SetIo(0);
@@ -133,8 +133,7 @@ static now_scene_t ViewResult(rec_result_pal_t *val) {
 			cutin.SetIo(1);
 		}
 		if (cutin.IsEndAnim()) {
-			StopSoundMem(musicmp3);
-			DeleteSoundMem(musicmp3);
+			StopSoundMem(val->mat.BGM);
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
@@ -317,6 +316,19 @@ now_scene_t result(rec_map_detail_t *map_detail, rec_play_userpal_t *userpal,
 		break;
 	default:
 		result_pal.mat.chara = -1;
+		break;
+	}
+
+	/* sound */
+	switch (Clear - 1) {
+	case 1: /* cleared */
+	case 2:
+	case 3:
+	case 4:
+		result_pal.mat.BGM = LoadSoundMem(L"song/Balloon Art.mp3");
+		break;
+	default: /* droped */
+		result_pal.mat.BGM = LoadSoundMem(L"song/Regret.mp3");
 		break;
 	}
 
