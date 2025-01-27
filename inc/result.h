@@ -431,7 +431,7 @@ void SavePlayCount(char drop, const struct judge_box *judge, int dist) {
 	data.mileage += dist;
 
 	(void)_wfopen_s(&fp, L"save/data.dat", L"wb");
-	if (fp == NULL) {
+	if (fp != NULL) {
 		(void)fwrite(&data, sizeof(rec_user_data_t), 1, fp);
 		(void)fclose(fp);
 	}
