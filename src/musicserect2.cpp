@@ -925,7 +925,7 @@ public:
 	}
 
 private:
-	void DrawDifMark(int baseX, int baseY, MUSIC_BOX *songdata, int comdif) {
+	void DrawDifMark(int baseX, int baseY, MUSIC_BOX *songdata, int comdif) const {
 		int posX = 0;
 		int posY = 0;
 
@@ -939,7 +939,7 @@ private:
 		}
 	}
 
-	void DrawDifBar(int baseX, int baseY, int dif) {
+	void DrawDifBar(int baseX, int baseY, int dif) const {
 		int XmoveC = mins(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
 
 		if (this->LR == 1) {
@@ -954,7 +954,7 @@ private:
 		}
 	}
 
-	void DrawDifMpal(int baseX, int baseY, rec_ddif_pal_t *mpal, int dif) {
+	void DrawDifMpal(int baseX, int baseY, rec_ddif_pal_t *mpal, int dif) const {
 		const int thick = 8;
 		const DxColor_t color[8] = {
 			/*        Ô,  —Î,  Â   */
@@ -987,7 +987,7 @@ private:
 		DrawGraphAnchor(baseX, baseY, this->mpalNamePic, DXDRAW_ANCHOR_BOTTOM_RIGHT);
 	}
 
-	void DrawDetail(int baseX, int baseY, MUSIC_BOX *songdata, int dif) {
+	void DrawDetail(int baseX, int baseY, MUSIC_BOX *songdata, int dif) const {
 		const TCHAR starChar[2][2] = { _T("š"),_T("™")};
 		DrawGraphAnchor(baseX, baseY, this->detail, DXDRAW_ANCHOR_BOTTOM_RIGHT);
 		DrawFormatStringToHandleAnchor(baseX - 330, baseY - 170, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"%s", songdata->packName);
@@ -1014,7 +1014,7 @@ public:
 		DeleteGraph(this->difbar[4]);
 		DeleteGraph(this->difbar[5]);
 
-		this->difbar[4] = LoadGraph(this->viewingDifBar);
+		this->difbar[4] = LoadGraph(difpath);
 		if (this->difbar[4] == -1) {
 			DeleteGraph(this->difbar[4]);
 			this->difbar[4] = LoadGraph(L"picture/difanother.png");
@@ -1027,8 +1027,8 @@ public:
 		}
 	}
 
-	void DrawDetailAll(int baseX, int baseY, MUSIC_BOX *songdata, int dif) {
-		this->DrawDifMark(baseX - 100, baseY - 360, songdata, dif);
+	void DrawDetailAll(int baseX, int baseY, MUSIC_BOX *songdata, int dif) const {
+		this->DrawDifMark(baseX - 100, baseY - 365, songdata, dif);
 		this->DrawDifBar(baseX - 15, baseY - 320, dif);
 		this->DrawDifMpal(baseX - 20, baseY - 186, songdata->mpal, dif);
 		this->DrawDetail(baseX, baseY, songdata, dif);
@@ -1126,7 +1126,7 @@ public:
 
 	void DrawUi(int cmd[], songdata_set_t *songdata) {
 		this->backpic.DrawBackPic();
-		this->jacket.DrawJacket(580, 85, 500);
+		this->jacket.DrawJacket(380, 85, 500);
 		this->musicbar.DrawAll(300, cmd, songdata);
 		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
 		this->detail.DrawDetailAll(20, 60, &SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);

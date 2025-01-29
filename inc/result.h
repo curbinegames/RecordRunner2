@@ -181,7 +181,7 @@ now_scene_t result(rec_map_detail_t *map_detail, rec_play_userpal_t *userpal,
 	char rank = CalScoreRank(userpal->score.sum);
 	char CharNo = GetCharNo();
 	int OldRate = GetFullRate();
-	double DifRate = CAL_DIF_RATE(map_detail->mdif, map_detail->Lv) / 100; //•ˆ–Ê’è”
+	double DifRate = CAL_DIF_RATE(map_detail->mpal.mdif, map_detail->Lv) / 100; //•ˆ–Ê’è”
 	double rate = (double)CalPlayRate(userpal->judgeCount, DifRate) / 100.0;
 	rec_result_pal_t result_pal;
 
