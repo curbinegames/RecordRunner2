@@ -491,7 +491,7 @@ static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
 		if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
 		else if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
 		break;
-	case 4:
+	default:
 		if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
 		else if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
 		else if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
@@ -1192,7 +1192,7 @@ static void RecSerectKeyActUD(int cmd[], int vect,
 		RecSerectKeyActLR(cmd, 1, uiClass, songdata);
 	}
 	uiClass->UpdateUD(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], vect);
-	RecSerectFetchDif(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], songdata->sortMode);
+	cmd[1] = RecSerectFetchDif(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], songdata->sortMode);
 
 	return;
 }
