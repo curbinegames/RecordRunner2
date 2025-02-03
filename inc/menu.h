@@ -1,9 +1,8 @@
 
+#include <dxdraw.h>
 #include "option.h"
 #include "recr_cutin.h"
 #include "RecWindowRescale.h"
-
-#define MENU_NUM (sizeof(menu_item) / sizeof(menu_item[0]))
 
 typedef struct rec_menu_data_s {
 	DxPic_t card;
@@ -12,49 +11,86 @@ typedef struct rec_menu_data_s {
 	now_scene_t num;
 } rec_menu_data_t;
 
-static rec_menu_data_t menu_item[] = {
-	{
-		LoadGraph(L"picture/menu/FREE PLAY.png"),
-		LoadGraph(L"picture/menu/FREE PLAY G.png"),
-		LoadGraph(L"picture/backskynoamal.png"),
-		SCENE_SERECT
-	},
-	{
-		LoadGraph(L"picture/menu/COLLECTION.png"),
-		LoadGraph(L"picture/menu/COLLECT G.png"),
-		LoadGraph(L"picture/menu/COLLECT W.png"),
-		SCENE_COLLECTION
-	},
-	{
-		LoadGraph(L"picture/menu/OPTION.png"),
-		LoadGraph(L"picture/menu/OPTION G.png"),
-		LoadGraph(L"picture/menu/OPTION W.png"),
-		SCENE_OPTION
-	},
-	{
-		LoadGraph(L"picture/menu/QUIT.png"),
-		LoadGraph(L"picture/menu/QUIT G.png"),
-		LoadGraph(L"picture/backstar.png"),
-		SCENE_EXIT
-	}
-};
-
 static class rec_manu_dataset_c {
 private:
 	int LR = 1;
 	int Ncmd = 0;
 	int Bcmd = 0;
 	DxTime_t stime = -250;
+	DxSnd_t select = LoadSoundMem(L"sound/arrow.wav");
 
+	rec_menu_data_t menu_item[4] = {
+		{
+			LoadGraph(L"picture/menu/FREE PLAY.png"),
+			LoadGraph(L"picture/menu/FREE PLAY G.png"),
+			LoadGraph(L"picture/backskynoamal.png"),
+			SCENE_SERECT
+		},
+		{
+			LoadGraph(L"picture/menu/COLLECTION.png"),
+			LoadGraph(L"picture/menu/COLLECT G.png"),
+			LoadGraph(L"picture/menu/COLLECT W.png"),
+			SCENE_COLLECTION
+		},
+		{
+			LoadGraph(L"picture/menu/OPTION.png"),
+			LoadGraph(L"picture/menu/OPTION G.png"),
+			LoadGraph(L"picture/menu/OPTION W.png"),
+			SCENE_OPTION
+		},
+		{
+			LoadGraph(L"picture/menu/QUIT.png"),
+			LoadGraph(L"picture/menu/QUIT G.png"),
+			LoadGraph(L"picture/backstar.png"),
+			SCENE_EXIT
+		}
+	};
+
+#define MENU_NUM (sizeof(this->menu_item) / sizeof(this->menu_item[0]))
+
+public:
+#if 0 /* 多分要らなくなる */
+	rec_manu_dataset_c(void) {
+		this->menu_item[0].card = LoadGraph(L"picture/menu/FREE PLAY.png");
+		this->menu_item[0].ground = LoadGraph(L"picture/menu/FREE PLAY G.png");
+		this->menu_item[0].back = LoadGraph(L"picture/backskynoamal.png");
+		this->menu_item[1].card = LoadGraph(L"picture/menu/COLLECTION.png");
+		this->menu_item[1].ground = LoadGraph(L"picture/menu/COLLECT G.png");
+		this->menu_item[1].back = LoadGraph(L"picture/menu/COLLECT W.png");
+		this->menu_item[2].card = LoadGraph(L"picture/menu/OPTION.png");
+		this->menu_item[2].ground = LoadGraph(L"picture/menu/OPTION G.png");
+		this->menu_item[2].back = LoadGraph(L"picture/menu/OPTION W.png");
+		this->menu_item[3].card = LoadGraph(L"picture/menu/QUIT.png");
+		this->menu_item[3].ground = LoadGraph(L"picture/menu/QUIT G.png");
+		this->menu_item[3].back = LoadGraph(L"picture/backstar.png");
+		return;
+	}
+#endif
+
+	~rec_manu_dataset_c(void) {
+		for (int inum = 0; inum < MENU_NUM; inum++) {
+			DeleteGraph(this->menu_item[inum].card);
+			DeleteGraph(this->menu_item[inum].ground);
+			DeleteGraph(this->menu_item[inum].back);
+		}
+		return;
+	}
+
+private:
 	void DrawBack(void) const {
 		int time = GetNowCount() - this->stime;
 		time = betweens(0, time, 250);
-		RecRescaleDrawGraph(0, 0, menu_item[this->Bcmd].back, TRUE);
+		RecRescaleDrawGraph(0, 0, this->menu_item[this->Bcmd].back, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 0, 250, 255, time));
-		RecRescaleDrawGraph(0, 0, menu_item[this->Ncmd].back, TRUE);
+		RecRescaleDrawGraph(0, 0, this->menu_item[this->Ncmd].back, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		RecRescaleDrawGraph(0, pals(250, 240, 0, 0, time), menu_item[this->Bcmd].ground, TRUE);
-		RecRescaleDrawGraph(0, pals(250, 0, 0, 240, time), menu_item[this->Ncmd].ground, TRUE);
+#if 0
+		RecRescaleDrawGraph(0, pals(250, WINDOW_SIZE_Y / 2, 0, 0, time), this->menu_item[this->Bcmd].ground, TRUE);
+		RecRescaleDrawGraph(0, pals(250, 0, 0, WINDOW_SIZE_Y / 2, time), this->menu_item[this->Ncmd].ground, TRUE);
+#else
+		DrawGraphAnchor(0, pals(250, WINDOW_SIZE_Y / 2, 0, 0, time), this->menu_item[this->Bcmd].ground, DXDRAW_ANCHOR_BOTTOM_CENTRE);
+		DrawGraphAnchor(0, pals(250, 0, 0, WINDOW_SIZE_Y / 2, time), this->menu_item[this->Ncmd].ground, DXDRAW_ANCHOR_BOTTOM_CENTRE);
+#endif
 		return;
 	}
 
@@ -69,58 +105,33 @@ private:
 		for (int i = 0; i < 5; i++) {
 			int drawX = pals(250, 420 * i - 680, 0, 420 * i + 420 * this->LR - 680, time);
 			int drawY = pals(250, 100, -250, 0, -time * this->LR + 250 * i + 250 * this->LR - 250);
-			RecRescaleDrawGraph(drawX, drawY, menu_item[num].card, TRUE);
+			RecRescaleDrawGraph(drawX, drawY, this->menu_item[num].card, TRUE);
 			num = (num + 1) % MENU_NUM;
 		}
 		return;
 	}
 
 public:
-	rec_manu_dataset_c(void) {
-		menu_item[0].card = LoadGraph(L"picture/menu/FREE PLAY.png");
-		menu_item[0].ground = LoadGraph(L"picture/menu/FREE PLAY G.png");
-		menu_item[0].back = LoadGraph(L"picture/backskynoamal.png");
-		menu_item[1].card = LoadGraph(L"picture/menu/COLLECTION.png");
-		menu_item[1].ground = LoadGraph(L"picture/menu/COLLECT G.png");
-		menu_item[1].back = LoadGraph(L"picture/menu/COLLECT W.png");
-		menu_item[2].card = LoadGraph(L"picture/menu/OPTION.png");
-		menu_item[2].ground = LoadGraph(L"picture/menu/OPTION G.png");
-		menu_item[2].back = LoadGraph(L"picture/menu/OPTION W.png");
-		menu_item[3].card = LoadGraph(L"picture/menu/QUIT.png");
-		menu_item[3].ground = LoadGraph(L"picture/menu/QUIT G.png");
-		menu_item[3].back = LoadGraph(L"picture/backstar.png");
-		return;
-	}
-
-	~rec_manu_dataset_c(void) {
-		for (int inum = 0; inum < MENU_NUM; inum++) {
-			DeleteGraph(menu_item[inum].card);
-			DeleteGraph(menu_item[inum].ground);
-			DeleteGraph(menu_item[inum].back);
-		}
-		return;
-	}
-
 	void SetLeft(void) {
 		this->Bcmd = this->Ncmd;
-		this->Ncmd--;
-		if (this->Ncmd < 0) { this->Ncmd += MENU_NUM; }
+		this->Ncmd = (this->Ncmd + MENU_NUM - 1) % MENU_NUM;
 		this->LR = -1;
 		this->stime = GetNowCount();
+		PlaySoundMem(this->select, DX_PLAYTYPE_BACK);
 		return;
 	}
 	
 	void SetRight(void) {
 		this->Bcmd = this->Ncmd;
-		this->Ncmd++;
-		if (MENU_NUM <= this->Ncmd) { this->Ncmd -= MENU_NUM; }
+		this->Ncmd = (this->Ncmd + 1) % MENU_NUM;
 		this->LR = 1;
 		this->stime = GetNowCount();
+		PlaySoundMem(this->select, DX_PLAYTYPE_BACK);
 		return;
 	}
 
-	int GetCmd(void) const {
-		return this->Ncmd;
+	now_scene_t GetSerectScene(void) const {
+		return this->menu_item[this->Ncmd].num;
 	}
 
 	void DrawMenu(void) const {
@@ -128,20 +139,16 @@ public:
 		this->DrawCard();
 		return;
 	}
+
+#undef MENU_NUM
+
 };
 
 now_scene_t menu(void) {
-	/* 定数 */
-	int command = 0; //選択したモード
-	DxPic_t select;
-
-	now_scene_t next = SCENE_MENU; //次のモード
 	rec_manu_dataset_c menu_class;
 	rec_helpbar_c help;
 	rec_cutin_c cutin;
 
-	unsigned int Cr = GetColor(255, 255, 255);
-	select = LoadSoundMem(L"sound/arrow.wav");
 	cutin.SetIo(0);
 	AvoidKeyRush();
 
@@ -156,24 +163,16 @@ now_scene_t menu(void) {
 
 		/* キー入力 */
 		if (cutin.IsClosing() == 0) {
-			bool breakFg = false;
 			InputAllKeyHold();
 			switch (GetKeyPushOnce()) {
 			case KEY_INPUT_LEFT:
 				menu_class.SetLeft();
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				break;
 			case KEY_INPUT_RIGHT:
 				menu_class.SetRight();
-				PlaySoundMem(select, DX_PLAYTYPE_BACK);
 				break;
 			case KEY_INPUT_RETURN:
-				command = menu_class.GetCmd();
-				if (menu_item[command].num != SCENE_SERECT) {
-					next = menu_item[command].num;
-					breakFg = true;
-					break;
-				}
+				if (menu_class.GetSerectScene() != SCENE_SERECT) { return menu_class.GetSerectScene(); }
 				cutin.SetCutTipFg(CUTIN_TIPS_ON);
 				cutin.SetTipNo();
 				cutin.SetIo(1);
@@ -181,22 +180,11 @@ now_scene_t menu(void) {
 			default:
 				break;
 			}
-			if (breakFg) { break; }
 		}
 
-		if (GetWindowUserCloseFlag(TRUE)) {
-			//閉じるボタンが押された
-			next = SCENE_EXIT;
-			break;
-		}
-
-		if (cutin.IsEndAnim()) {
-			command = menu_class.GetCmd();
-			next = menu_item[command].num;
-			break;
-		}
+		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
+		if (cutin.IsEndAnim()) { return menu_class.GetSerectScene(); }
 
 		WaitTimer(10);
 	}
-	return next;
 }
