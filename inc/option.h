@@ -5,8 +5,14 @@
 #define LANG_JP 0
 #define LANG_EN 1
 
+typedef enum rec_nowchara_e {
+	REC_CHARA_PICKER = 0,
+	REC_CHARA_MAPGATOR,
+	REC_CHARA_TAYLOR,
+} rec_nowchara_t;
+
 typedef struct rec_option_s {
-	int chara      = 0;
+	int chara      = 0; /* enum‚É‚µ‚½‚¢‚ªA‘€ìƒ‹[ƒv‚ª–Ê“| */
 	int offset     = 0;
 	int SEenable   = 0;
 	int backbright = 2;

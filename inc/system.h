@@ -44,6 +44,17 @@ typedef struct play_rate_s {
 	double num = 0;
 } play_rate_t;
 
+typedef enum rec_play_rank_e {
+	REC_SCORE_RATE_EX = 0,
+	REC_SCORE_RATE_S,
+	REC_SCORE_RATE_A,
+	REC_SCORE_RATE_B,
+	REC_SCORE_RATE_C,
+	REC_SCORE_RATE_D,
+	REC_SCORE_RATE_F,
+	REC_SCORE_RATE_NO_PLAY,
+} rec_score_rate_t;
+
 typedef enum now_scene_e {
 	SCENE_TITLE = 0,
 	SCENE_MENU,
@@ -54,6 +65,26 @@ typedef enum now_scene_e {
 	SCENE_MUSIC,
 	SCENE_RESULT,
 } now_scene_t; /* = next */
+
+/* TODO: rec_clear_rank_eと似た定義が他にないかチェック */
+typedef enum rec_clear_rank_e {
+	REC_CLEAR_RANK_NO_PLAY = 0,
+	REC_CLEAR_RANK_DROPED = 1, /* 実装の都合上1スタート */
+	REC_CLEAR_RANK_CLEARED,
+	REC_CLEAR_RANK_NOMISS,
+	REC_CLEAR_RANK_FULLCOMBO,
+	REC_CLEAR_RANK_PERFECT,
+} rec_clear_rank_t;
+
+/* TODO: rec_dif_eと似た定義が他にないかチェック */
+typedef enum rec_dif_e {
+	REC_DIF_AUTO = 0,
+	REC_DIF_EASY,
+	REC_DIF_NORMAL,
+	REC_DIF_HARD,
+	REC_DIF_ANOTHER,
+	REC_DIF_SECRET,
+} rec_dif_t;
 
 typedef struct rec_user_data_s {
 	int playCount = 0;

@@ -1627,5 +1627,5 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	ret = RecPlayMain(&map_detail, &userpal, &nameset, fileName, packNo, musicNo, difNo, AutoFlag);
 
 	if (ret != SCENE_RESULT) { return ret; }
-	else { return result(&map_detail, &userpal, &nameset, difNo, fileName); }
+	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)difNo, fileName); }
 }
