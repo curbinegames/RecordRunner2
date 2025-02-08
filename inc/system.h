@@ -51,8 +51,8 @@ typedef enum rec_play_rank_e {
 	REC_SCORE_RATE_B,
 	REC_SCORE_RATE_C,
 	REC_SCORE_RATE_D,
-	REC_SCORE_RATE_F,
 	REC_SCORE_RATE_NO_PLAY,
+	REC_SCORE_RATE_F,
 } rec_score_rate_t;
 
 typedef enum now_scene_e {

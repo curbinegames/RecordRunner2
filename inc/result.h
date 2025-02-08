@@ -390,9 +390,10 @@ static void SavePlayCount(const rec_play_userpal_t *userpal) {
 	FILE *fp;
 
 	_wfopen_s(&fp, L"save/data.dat", L"rb");
-	if (fp == NULL) { return; }
-	fread(&data, sizeof(rec_user_data_t), 1, fp);
-	fclose(fp);
+	if (fp != NULL) {
+		fread(&data, sizeof(rec_user_data_t), 1, fp);
+		fclose(fp);
+	}
 
 	data.playCount++;
 	if (userpal->status == REC_PLAY_STATUS_DROPED) { data.dropCount++; }
@@ -419,9 +420,10 @@ static void SaveCharPlayCount(void) {
 	FILE *fp;
 
 	_wfopen_s(&fp, L"save/chap.dat", L"rb");
-	if (fp == NULL) { return; }
-	fread(&chap, sizeof(int), 3, fp);
-	fclose(fp);
+	if (fp != NULL) {
+		fread(&chap, sizeof(int), 3, fp);
+		fclose(fp);
+	}
 
 	chap[optiondata.chara]++;
 
@@ -442,9 +444,10 @@ static void RecUpdateRunnerRate(const rec_map_detail_t *map_detail,
 	FILE *fp;
 
 	_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp == NULL) { return; }
-	fread(&data, sizeof(play_rate_t), RATE_NUM, fp);
-	fclose(fp);
+	if (fp != NULL) {
+		fread(&data, sizeof(play_rate_t), RATE_NUM, fp);
+		fclose(fp);
+	}
 
 	// ìØÇ∂ã»ÅAÇ‹ÇΩÇÕñ¢é˚ò^ÇíTÇ∑
 	for (uint i = 0; i < RATE_NUM; i++) {
@@ -477,7 +480,6 @@ static void RecUpdateRunnerRate(const rec_map_detail_t *map_detail,
 
 #endif /* save */
 
-/* TODO: difÇ™intå^Ç©ÇÁrec_dif_tå^Ç…Ç»ÇËÇ‹ÇµÇΩÅBëŒâûÇµÇÊÇ§ */
 now_scene_t result(const rec_map_detail_t *map_detail, const rec_play_userpal_t *userpal,
 	const rec_play_nameset_t *nameset, rec_dif_t dif, const TCHAR *songN)
 {

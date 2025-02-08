@@ -1,9 +1,4 @@
 
-/* TODO: アイテム表示バグが起こってる!!! */
-/* TODO: ddifがバグってる!!! */
-/* TODO: <全体>cutinを最新にする */
-/* TODO: <全体>L"str"を_T("str")に変える" */
-
 #if 1 /* define group */
 
 /* include */

@@ -210,7 +210,7 @@ void ViewCutIn(int Stime) {
 	int PosY = pals(500, 0, 0, 360, EffTime);
 	int Rot = pals(500, 0, 0, -300, EffTime);
 	int Alpha = lins(500, 255, 0, 0, EffTime);
-	s_cutIoFg = CUT_FRAG_IN; // TODO: ébíËèàíu
+	s_cutIoFg = CUT_FRAG_IN;
 	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
 	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
 	RecRescaleDrawRotaGraph(320 - PosY, 240 - PosY, 1,
@@ -259,7 +259,7 @@ void ViewCutOut(int Stime) {
 	int PosY = pals(0, 0, 500, 360, EffTime);
 	int Rot = pals(0, 0, 500, 300, EffTime);
 	int Alpha = lins(500, 0, 0, 255, EffTime);
-	s_cutIoFg = CUT_FRAG_OUT; // TODO: ébíËèàíu
+	s_cutIoFg = CUT_FRAG_OUT;
 	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
 	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
 	RecRescaleDrawRotaGraph(320 + PosY, 240 - PosY, 1,
