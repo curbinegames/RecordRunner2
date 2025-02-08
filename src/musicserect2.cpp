@@ -30,6 +30,11 @@
 #define REC_SERECT_KEY_RIGHT  6
 #define REC_SERECT_KEY_SORT   7
 
+#define REC_SERECT_VECT_UP    -1
+#define REC_SERECT_VECT_DOWN   1
+#define REC_SERECT_VECT_LEFT   1
+#define REC_SERECT_VECT_RIGHT -1
+
 #define SONGDATA_FROM_MAP(songdata, mapNo) ((songdata)->base[(songdata)->mapping[mapNo]])
 
 typedef TCHAR rec_pack_name_set_t[256];
@@ -479,15 +484,20 @@ static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
 
 	if (strands(songdata->SongName[0], L"NULL") != 1) { ret = 0; }
 	switch (dif) {
-	case 1:
+	case REC_DIF_AUTO:
+		if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
+		else if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
+		else if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
+		break;
+	case REC_DIF_EASY:
 		if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
 		else if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
 		break;
-	case 2:
+	case REC_DIF_NORMAL:
 		if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
 		else if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
 		break;
-	case 3:
+	case REC_DIF_HARD:
 		if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
 		else if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
 		break;
@@ -646,7 +656,7 @@ static class rec_serect_musicbar_c {
 private:
 #define VIEW_COUNT 9
 
-	int UD = 1;
+	int UD = REC_SERECT_VECT_DOWN;
 	int startC = -MUSE_FADTM;
 	DxPic_t bar[2];
 	DxPic_t CRate[5];
@@ -761,7 +771,7 @@ static class rec_serect_disk_c {
 private:
 	int Lv = 1;
 	int rate = 0;
-	int UD = 1;
+	int UD = REC_SERECT_VECT_DOWN;
 	int startC = -MUSE_FADTM;
 	double Nrot = 0.0;
 	DxPic_t disk;
@@ -779,7 +789,7 @@ private:
 		int moveC = 0;
 
 		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
-		if (this->UD == 1) { this->Nrot += pals(0, 2, MUSE_FADTM, -75, moveC) / 100.0; }
+		if (this->UD == REC_SERECT_VECT_DOWN) { this->Nrot += pals(0, 2, MUSE_FADTM, -75, moveC) / 100.0; }
 		else { this->Nrot += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
 		if (this->Nrot > 6.28) { this->Nrot -= 6.28; }
 		else if (this->Nrot < 0) { this->Nrot += 6.28; }
@@ -881,7 +891,7 @@ public:
 
 static class rec_serect_detail_c {
 private:
-	int LR = 1;
+	int LR = REC_SERECT_VECT_LEFT;
 	int XstartC = -MUSE_FADTM;
 	TCHAR viewingDifBar[255] = { L"NULL" };
 	DxPic_t difbar[6];
@@ -942,12 +952,12 @@ private:
 	void DrawDifBar(int baseX, int baseY, int dif) const {
 		int XmoveC = mins(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
 
-		if (this->LR == 1) {
+		if (this->LR == REC_SERECT_VECT_LEFT) {
 			XmoveC = pals(0, 640, MUSE_FADTM, 460, XmoveC);
 			DrawGraphAnchor(baseX, baseY, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
 			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif + 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
 		}
-		else if (this->LR == -1) {
+		else if (this->LR == REC_SERECT_VECT_RIGHT) {
 			XmoveC = pals(0, 460, MUSE_FADTM, 640, XmoveC);
 			DrawGraphAnchor(baseX, baseY, this->difbar[dif - 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
 			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
@@ -1153,19 +1163,23 @@ static void RecSerectDrawAllUi(rec_serect_ui_c *uiClass, int *cmd,
 static void RecSerectKeyActLR(int cmd[], int vect,
 	rec_serect_ui_c *uiClass, songdata_set_t songdata[])
 {
-	if (vect == 1) {
+	switch (vect) {
+	case REC_SERECT_VECT_LEFT:
 		cmd[1]--;
 		if (cmd[1] < 0) {
 			cmd[1] = 0;
 			return;
 		}
-	}
-	else {
+		break;
+	case REC_SERECT_VECT_RIGHT:
 		cmd[1]++;
 		if (cmd[1] > SONGDATA_FROM_MAP(songdata, cmd[0]).limit) {
 			cmd[1] = SONGDATA_FROM_MAP(songdata, cmd[0]).limit;
 			return;
 		}
+		break;
+	default:
+		return;
 	}
 
 	uiClass->UpdateLR(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], vect);
@@ -1179,20 +1193,35 @@ static void RecSerectKeyActLR(int cmd[], int vect,
 static void RecSerectKeyActUD(int cmd[], int vect,
 	rec_serect_ui_c *uiClass, songdata_set_t *songdata)
 {
-	if (vect == -1) {
+	switch (vect) {
+	case REC_SERECT_VECT_UP:
 		cmd[0]--;
 		if (cmd[0] < 0) { cmd[0] = songdata->musicNum - 1; }
-	}
-	else {
+		break;
+	case REC_SERECT_VECT_DOWN:
 		cmd[0]++;
 		if (cmd[0] >= songdata->musicNum) { cmd[0] = 0; }
+		break;
+	default:
+		return;
 	}
 
 	if (cmd[1] > SONGDATA_FROM_MAP(songdata, cmd[0]).limit) {
-		RecSerectKeyActLR(cmd, 1, uiClass, songdata);
+		RecSerectKeyActLR(cmd, REC_SERECT_VECT_LEFT, uiClass, songdata);
 	}
 	uiClass->UpdateUD(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], vect);
-	cmd[1] = RecSerectFetchDif(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], songdata->sortMode);
+
+	{
+		int diffixBuf = RecSerectFetchDif(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], songdata->sortMode);
+		if (diffixBuf < cmd[1]) {
+			cmd[1] = diffixBuf;
+			uiClass->UpdateLR(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], REC_SERECT_VECT_LEFT);
+		}
+		else if (diffixBuf > cmd[1]) {
+			cmd[1] = diffixBuf;
+			uiClass->UpdateLR(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], REC_SERECT_VECT_RIGHT);
+		}
+	}
 
 	return;
 }
@@ -1226,16 +1255,16 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		uiClass->cutin.SetIo(1);
 		break;
 	case 3: /* 曲選択上 */
-		RecSerectKeyActUD(cmd, -1, uiClass, songdata);
+		RecSerectKeyActUD(cmd, REC_SERECT_VECT_UP,    uiClass, songdata);
 		break;
 	case 4: /* 曲選択下 */
-		RecSerectKeyActUD(cmd, 1, uiClass, songdata);
+		RecSerectKeyActUD(cmd, REC_SERECT_VECT_DOWN,  uiClass, songdata);
 		break;
 	case 5: /* 難易度下降 */
-		RecSerectKeyActLR(cmd, 1, uiClass, songdata);
+		RecSerectKeyActLR(cmd, REC_SERECT_VECT_LEFT,  uiClass, songdata);
 		break;
 	case 6: /* 難易度上昇 */
-		RecSerectKeyActLR(cmd, -1, uiClass, songdata);
+		RecSerectKeyActLR(cmd, REC_SERECT_VECT_RIGHT, uiClass, songdata);
 		break;
 	case 7: /* 曲並び替え */
 		ChangeSortMode(&songdata->sortMode);
