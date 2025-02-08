@@ -1424,7 +1424,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			PlayDrawItem(&recfp.mapeff, MovieN, recfp.time.now, Xline[1], item);
 		}
 		// view line
-		if (AutoFlag == 1) {
+		if (holdG >= 1) {
 			PlayShowAllGuideLine(LineMoveN, recfp.time.now, recfp.mapeff.move.y, Xline, Yline);
 		}
 		/* ƒLƒƒƒ‰Žü‚è•\Ž¦ */
@@ -1464,7 +1464,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			fps[61] = recfp.time.now;
 			G[0] = 0;
 			for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
-			RecRescaleDrawFormatString(20, 80, Cr, L"FPS: %.1f", 60000.0 / notzero(G[0]));
+			RecRescaleDrawFormatString(20, 80, Cr, L"FPS: %.1f", DIV_AVOID_ZERO((double)60000, (double)G[0], (double)0));
 			RecRescaleDrawFormatString(20, 100, Cr, L"Autoplay");
 		}
 		RECR_DEBUG(0, RecPlayDebug[0]);
