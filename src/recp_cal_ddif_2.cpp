@@ -3,7 +3,6 @@
 #include <sancur.h>
 #include <playbox.h>
 #include <RecScoreFile.h>
-#include <noteLoad.h>
 
 #if 1 /* define */
 
