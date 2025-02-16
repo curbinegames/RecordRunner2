@@ -136,20 +136,6 @@ static rec_score_rate_t CalScoreRank(int score) {
 	return REC_SCORE_RATE_D;
 }
 
-static int GetFullRate(void) {
-	int ret = 0;
-	play_rate_t data[RATE_NUM];
-	FILE* fp;
-	_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp == NULL) { return 0; }
-	fread(&data, sizeof(play_rate_t), RATE_NUM, fp);
-	fclose(fp);
-	for (int i = 0; i < RATE_NUM; i++) {
-		ret += mins((int)(data[i].num * 100), 0);
-	}
-	return ret * 10 / RATE_NUM;
-}
-
 static int CalPlayRate(const judge_box *judge, const rec_map_detail_t *map_detail) {
 	const double DifRate = CAL_DIF_RATE(map_detail->mpal.mdif, map_detail->Lv) / 100.0;
 
@@ -341,7 +327,7 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 #if VER_1_6 == 1
 	result_pal->floatRank       = GetFloatRank(userpal->score.sum, userpal->judgeCount.miss, noteCount, rank) / 1000;
 #endif
-	result_pal->newRate         = GetFullRate();
+	result_pal->newRate         = RecSaveGetFullRunnerRate() * 100;
 	result_pal->subRate         = result_pal->newRate - result_pal->oldRate; /* oldRateはレート保存前に代入している */
 	result_pal->mat.clearRate   = RecResultLoadClearRateGraph(Clear);
 	result_pal->mat.difBer      = RecResultLoadDifBarGraph(dif, nameset->DifFN);
@@ -360,8 +346,6 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 
 #endif /* RecResultCalParameter */
 
-#if 1 /* save */
-
 static void SaveScore(const rec_play_userpal_t *userpal, const TCHAR *songN, rec_dif_t dif,
 	short noteCount)
 {
@@ -377,59 +361,13 @@ static void SaveScore(const rec_play_userpal_t *userpal, const TCHAR *songN, rec
 	return;
 }
 
-static void RecUpdateRunnerRate(const rec_map_detail_t *map_detail,
-	const struct judge_box *judgeCount, const TCHAR *songN)
-{
-	const double rate = (double)CalPlayRate(judgeCount, map_detail) / 100.0;
-
-	char num = -1;
-	play_rate_t data[RATE_NUM];
-	FILE *fp;
-
-	_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp != NULL) {
-		fread(&data, sizeof(play_rate_t), RATE_NUM, fp);
-		fclose(fp);
-	}
-
-	// 同じ曲、または未収録を探す
-	for (uint i = 0; i < RATE_NUM; i++) {
-		if (strands(songN, data[i].name) ||
-			(data[i].name[0] == L'\0' && data[i].num <= 0))
-		{
-			num = i;
-			break;
-		}
-	}
-
-	// なかったら、一番低いレートを探す
-	if (num == -1) {
-		num = 0;
-		for (uint i = 1; i < RATE_NUM; i++) {
-			if (data[num].num > data[i].num) { num = i; }
-		}
-	}
-
-	if (rate <= data[num].num) { return; }
-
-	// レートを更新する
-	data[num].num = rate;
-	strcopy(songN, data[num].name, 1);
-	_wfopen_s(&fp, RATE_FILE_NAME, L"wb");
-	if (fp == NULL) { return; }
-	fwrite(&data, sizeof(play_rate_t), RATE_NUM, fp);
-	fclose(fp);
-}
-
-#endif /* save */
-
 now_scene_t result(const rec_map_detail_t *map_detail, const rec_play_userpal_t *userpal,
 	const rec_play_nameset_t *nameset, rec_dif_t dif, const TCHAR *songN)
 {
 	rec_result_pal_t result_pal;
 
 	/* セーブ前作業 */
-	result_pal.oldRate = GetFullRate();
+	result_pal.oldRate = RecSaveGetFullRunnerRate() * 100;
 
 	/* セーブ作業 */
 	RecSaveUpdateUserPlay(userpal);

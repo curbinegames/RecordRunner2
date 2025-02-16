@@ -17,6 +17,7 @@
 #include <RecSystem.h>
 #include <recp_cal_ddif_2.h>
 #include <RecWindowRescale.h>
+#include <RecSave.h>
 
 #include <playbox.h>
 #include <PlayBonus.h>
@@ -428,21 +429,10 @@ static int GetRemainNotes(struct judge_box judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
 
-static int GetHighScore(const TCHAR *songName, int dif) {
-	FILE *fp;
-	int buf[7] = { 0,0,0,0,0,0,0 };
-	TCHAR DataFN[255] = _T("score/");
-
-	strcats(DataFN, songName);
-	strcats(DataFN, _T(".dat"));
-
-	_wfopen_s(&fp, DataFN, _T("rb"));
-	if (fp != NULL) {
-		fread(&buf, sizeof(int), 6, fp);
-		fclose(fp);
-	}
-
-	return buf[dif];
+static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
+	rec_save_score_t scoreBuf;
+	RecSaveReadScoreOneDif(&scoreBuf, songName, dif);
+	return scoreBuf.score;
 }
 
 #endif /* sub action */
@@ -1229,7 +1219,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	backpic.ground = LoadGraph(recfp.nameset.ground);
 	backpic.water = LoadGraph(recfp.nameset.water);
 
-	HighScore = GetHighScore(ret_fileN, o);
+	HighScore = GetHighScore(ret_fileN, (rec_dif_t)o);
 
 	for (i[0] = 0; i[0] < 100; i[0]++) {
 		strcopy(dataE, GT1, 1);

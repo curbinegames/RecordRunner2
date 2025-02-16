@@ -46,8 +46,8 @@ typedef struct music_box {
 	int preview[6][2];
 	int Hscore[6];
 	int Hdis[6];
-	int ClearRank[6]; //0=EX, 1=S, 2=A, 3=B, 4=C, 5=D, 6=not play
-	int ClearRate[6]; //0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
+	int ScoreRate[6]; //0=EX, 1=S, 2=A, 3=B, 4=C, 5=D, 6=not play
+	int ClearRank[6]; //0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
 	double Hacc[6];
 	wchar_t difP[256];
 	wchar_t packName[256];
@@ -142,29 +142,16 @@ static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *s
 }
 
 static void RecSerectReadHighscore(MUSIC_BOX *songdata, TCHAR *songName) {
-	TCHAR path[256];
-	FILE *fp;
+	rec_save_score_t score[6];
 
-	for (int j = 0; j < 6; j++) {
-		songdata->Hscore[j] = 0;
-		songdata->Hacc[j] = 0;
-		songdata->Hdis[j] = 0;
-		songdata->ClearRank[j] = 6;
-		songdata->ClearRate[j] = 0;
-	}
+	RecSaveReadScoreAllDif(score, songName);
 
-	strcopy(L"score/", path, 1);
-	strcats(path, songName);
-	strcats(path, L".dat");
-
-	_wfopen_s(&fp, path, L"rb");
-	if (fp != NULL) {
-		fread(&songdata->Hscore, sizeof(int), 6, fp);
-		fread(&songdata->Hacc, sizeof(double), 6, fp);
-		fread(&songdata->Hdis, sizeof(int), 6, fp);
-		fread(&songdata->ClearRank, sizeof(int), 6, fp);
-		fread(&songdata->ClearRate, sizeof(int), 6, fp);
-		fclose(fp);
+	for (uint iDif = 0; iDif < 6; iDif++) {
+		songdata->Hscore[iDif]    = score[iDif].score;
+		songdata->Hacc[iDif]      = score[iDif].acc;
+		songdata->Hdis[iDif]      = score[iDif].dist;
+		songdata->ScoreRate[iDif] = score[iDif].scoreRate;
+		songdata->ClearRank[iDif] = score[iDif].clearRank;
 	}
 
 	return;
@@ -270,25 +257,6 @@ static void ChangeSortMode(int *mode) {
 	if (*mode >= 3) {
 		*mode = 0;
 	}
-}
-
-static int GetRate() {
-	int e;
-	int ans = 0;
-	play_rate_t prate[RATE_NUM];
-	FILE *fp;
-	e = _wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp == NULL) {
-		return 0;
-	}
-	fread(&prate, sizeof(play_rate_t), RATE_NUM, fp);
-	fclose(fp);
-	for (int i = 0; i < RATE_NUM; i++) {
-		if (0 < prate[i].num) {
-			ans += prate[i].num * 100;
-		}
-	}
-	return ans / 2;
 }
 
 static int RecSerectKeyCheck() {
@@ -679,8 +647,8 @@ private:
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1], TRUE);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_BLACK, SmallFontData);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_BLACK, SmallFontData);
-		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata->ClearRate[dif] - 1);
-		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata->ClearRank[dif]);
+		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata->ClearRank[dif] - 1);
+		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata->ScoreRate[dif]);
 		for (int idif = 0; idif < 3; idif++) {
 			DrawFormatStringToHandle(BasePosX - 25 + idif * 70, BasePosY - 97,
 				COLOR_BLACK, SmallFontData, L"%2d", songdata->level[1 + idif]);
@@ -691,8 +659,8 @@ private:
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0], TRUE);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_WHITE, SmallFontData);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_WHITE, SmallFontData);
-		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata->ClearRate[dif] - 1);
-		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata->ClearRank[dif]);
+		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata->ClearRank[dif] - 1);
+		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata->ScoreRate[dif]);
 	}
 
 public:
@@ -771,9 +739,9 @@ public:
 static class rec_serect_disk_c {
 private:
 	int Lv = 1;
-	int rate = 0;
 	int UD = REC_SERECT_VECT_DOWN;
 	int startC = -MUSE_FADTM;
+	intx100_t rate = 0;
 	double Nrot = 0.0;
 	DxPic_t disk;
 	DxPic_t runner;
@@ -828,30 +796,27 @@ private:
 
 public:
 	rec_serect_disk_c() {
-		FILE *fp = NULL;
+		rec_save_charaplay_t buf;
+		RecSaveReadCharaPlay(&buf);
 
-		_wfopen_s(&fp, L"save/chap.dat", L"rb");
-		if (fp != NULL) {
-			int buf[3];
-			fread(buf, sizeof(int), 3, fp);
-			this->Lv = buf[optiondata.chara] + 1;
-			fclose(fp);
-		}
-
-		this->rate = GetRate();
+		this->rate = RecSaveGetFullRunnerRate() * 100.0;
 
 		switch (optiondata.chara) {
 		case 0:
 			this->runner = LoadGraph(L"picture/Mpicker.png");
+			this->Lv = buf.picker;
 			break;
 		case 1:
 			this->runner = LoadGraph(L"picture/Mgator.png");
+			this->Lv = buf.mapgator;
 			break;
 		case 2:
 			this->runner = LoadGraph(L"picture/Mtaylor.png");
+			this->Lv = buf.taylor;
 			break;
 		default:
 			this->runner = -1;
+			this->Lv = 0;
 			break;
 		}
 		if (this->rate < 2500) {

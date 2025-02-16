@@ -48,11 +48,10 @@ void upgrade_rate_f() {
 	double rate[10] = { 0,0,0,0,0,0,0,0,0,0 };
 	FILE* fp;
 	FILE* log;
-	_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp != NULL) {
-		fclose(fp);
-		return;
-	}
+
+	/* ƒtƒ@ƒCƒ‹‚ª‚ ‚Á‚½‚çreturn */
+	if (RecSaveReadRunnerRate(prate)) { return; }
+
 	_wfopen_s(&fp, OLD_RATE_FILE_NAME_S, L"rb");
 	if (fp == NULL) { return; }
 	fread(&name, 255, 10, fp);
@@ -70,10 +69,9 @@ void upgrade_rate_f() {
 			fwprintf(log, L"%f, %s\n", prate[i].num, prate[i].name);
 		}
 	}
-	_wfopen_s(&fp, RATE_FILE_NAME, L"wb");
-	if (fp == NULL) { return; }
-	fwrite(&prate, sizeof(play_rate_t), 10, fp);
-	fclose(fp);
+
+	RecSaveWriteRunnerRate(prate);
+
 	if (log != NULL) { fclose(log); }
 	return;
 }

@@ -10,13 +10,6 @@
 #define OLD_WINDOW_SIZE_X 640                         // 前バージョンのウィンドウの横のサイズ
 #define OLD_WINDOW_SIZE_Y (OLD_WINDOW_SIZE_X * 3 / 4) // 前バージョンのウィンドウの縦のサイズ 480
 
-#define OLD_RATE_NUM 10
-#define OLD_RATE_FILE_NAME_S L"save/rateS.dat" /* 名前 */
-#define OLD_RATE_FILE_NAME_N L"save/rateN.dat" /* 数値 */
-
-#define RATE_NUM 20
-#define RATE_FILE_NAME L"save/Prate.dat" /* 名前+数値 */
-
 #define INIT_PIC() InitGraph(); CutinReadyPic(); InitHelpBar()
 #define INIT_SND() InitSoundMem(); CutinReadySnd()
 #define INIT_MAT() INIT_PIC(); INIT_SND()

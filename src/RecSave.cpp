@@ -279,4 +279,19 @@ int RecSaveUpdateRunnerRate(const TCHAR *songname, double rate) {
 	return RecSaveWriteRunnerRate(data);
 }
 
+double RecSaveGetFullRunnerRate(void) {
+	double ret = 0;
+	play_rate_t data[RATE_NUM];
+
+	RecSaveReadRunnerRate(data);
+
+	for (int i = 0; i < RATE_NUM; i++) {
+		if (0 <= data[i].num && data[i].num <= RATE_NUM) {
+			ret += data[i].num;
+		}
+	}
+
+	return ret;
+}
+
 #endif /* runner rate */

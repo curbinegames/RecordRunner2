@@ -10,35 +10,18 @@
 #if 1 /* C_item */
 
 static void RecClctGetItemOpenFg(bool openFg[]) {
-	double Grate = 0;
-	int	play[7] = { 0,0,0,0,0,0,0 };
-	play_rate_t rate2[RATE_NUM];
-	FILE *fp;
+	const double Grate = RecSaveGetFullRunnerRate();
+	rec_user_data_t userData;
 
-	(void)_wfopen_s(&fp, L"save/data.dat", L"rb");
-	if (fp != NULL) {
-		fread(&play, sizeof(int), 7, fp);
-		fclose(fp);
-	}
+	RecSaveReadUserPlay(&userData);
 
-	(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-	if (fp != NULL) {
-		fread(&rate2[0], sizeof(play_rate_t), RATE_NUM, fp);
-		fclose(fp);
-	}
-	for (int i = 0; i < RATE_NUM; i++) {
-		if (0 <= rate2[i].num && rate2[i].num <= 20) {
-			Grate += rate2[i].num;
-		}
-	}
-
-	openFg[0] = ( 1 <= play[1]);
-	openFg[1] = ( 1 <= play[3]);
-	openFg[2] = ( 1 <= play[4]);
-	openFg[3] = ( 1 <= play[5]);
-	openFg[4] = ( 1 <= play[6]);
-	openFg[5] = ( 1 <= play[0]);
-	openFg[6] = (10 <= play[0]);
+	openFg[0] = ( 1 <= userData.dropCount);
+	openFg[1] = ( 1 <= userData.clearCount);
+	openFg[2] = ( 1 <= userData.NMCount);
+	openFg[3] = ( 1 <= userData.FCCount);
+	openFg[4] = ( 1 <= userData.PFcount);
+	openFg[5] = ( 1 <= userData.playCount);
+	openFg[6] = (10 <= userData.playCount);
 	openFg[7] = (25 <= Grate);
 	openFg[8] = (55 <= Grate);
 	openFg[9] = (90 <= Grate);
@@ -175,13 +158,12 @@ static int C_item(void) {
 
 #if 1 /* C_story */
 
-static void RecClctGetCharaPlayCount(int *charaPlayCount) {
-	FILE *fp;
-	_wfopen_s(&fp, L"save/chap.dat", L"rb");
-	if (fp != NULL) {
-		fread(charaPlayCount, sizeof(int), 3, fp);
-		fclose(fp);
-	}
+static void RecClctGetCharaPlayCount(int charaPlayCount[]) {
+	rec_save_charaplay_t buf;
+	RecSaveReadCharaPlay(&buf);
+	charaPlayCount[0] = buf.picker;
+	charaPlayCount[1] = buf.mapgator;
+	charaPlayCount[2] = buf.taylor;
 	return;
 }
 
@@ -192,67 +174,57 @@ static void RecClctGetSubStoryScore(int subScore[]) {
 	FILE *fp;
 
 	for (int i = 0; i < 4; i++) {
+		rec_save_score_t databuf[6];
 #if 0 /* TODO:旧ファイルを救う。リネームして保存でOK */
 		switch (i) {
 		case 0:
-			_wfopen_s(&fp, L"score/snow town story.dat", L"rb");
+			RecSaveReadScoreAllDif(databuf, L"snow town story");
 			buf[6] = 1;
 			break;
 		case 1:
-			_wfopen_s(&fp, L"score/グラデーション・ワールド.dat", L"rb");
+			RecSaveReadScoreAllDif(databuf, L"グラデーション・ワールド");
 			buf[6] = 1;
 			break;
 		case 2:
-			_wfopen_s(&fp, L"score/What Color Is The Sky？.dat", L"rb");
+			RecSaveReadScoreAllDif(databuf, L"What Color Is The Sky？");
 			buf[6] = 1;
 			break;
 		case 3:
-			_wfopen_s(&fp, L"score/トリノユメ.dat", L"rb");
+			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
 			buf[6] = 2;
 			break;
 		case 4:
-			_wfopen_s(&fp, L"score/トリノユメ.dat", L"rb");
+			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
 			buf[6] = 4;
 			break;
 		case 5:
-			_wfopen_s(&fp, L"score/トリノユメ.dat", L"rb");
+			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
 			buf[6] = 5;
 			break;
 		}
-		if (fp != NULL) {
-			fread(&buf, sizeof(int), 6, fp);
-			fclose(fp);
-			for (j = buf[6]; j <= 5; j++) subScore[i] = mins(subScore[i], buf[j]);
-		}
+		for (j = buf[6]; j <= 5; j++) subScore[i] = mins(subScore[i], databuf[j].score);
 #endif
-
+		subScore[i] = 0;
 		switch (i) {
 		case 0:
-			strcopy_2(_T("score/snow town story.dat"), GT1, 64);
+			RecSaveReadScoreAllDif(databuf, L"snow town story");
 			minDif = 1;
 			break;
 		case 1:
-			strcopy_2(_T("score/Gradation-world.dat"), GT1, 64);
+			RecSaveReadScoreAllDif(databuf, L"Gradation-world");
 			minDif = 1;
 			break;
 		case 2:
-			strcopy_2(_T("score/What Color Is The Sky.dat"), GT1, 64);
+			RecSaveReadScoreAllDif(databuf, L"What Color Is The Sky");
 			minDif = 1;
 			break;
 		case 3:
-			strcopy_2(_T("score/Torinoyume.dat"), GT1, 64);
+			RecSaveReadScoreAllDif(databuf, L"Torinoyume");
 			minDif = 2;
 			break;
 		}
-
-		subScore[i] = 0;
-		_wfopen_s(&fp, GT1, L"rb");
-		if (fp != NULL) {
-			fread(&buf, sizeof(int), 6, fp);
-			fclose(fp);
-			for (uint j = minDif; j <= 5; j++) {
-				subScore[i] = mins(subScore[i], buf[j]);
-			}
+		for (uint j = minDif; j <= 5; j++) {
+			subScore[i] = mins(subScore[i], databuf[j].score);
 		}
 	}
 	return;
@@ -262,24 +234,20 @@ static void RecClctGetExStoryScore(int exScore[]) {
 	int buf[6];
 	TCHAR GT1[64];
 	FILE *fp;
+	rec_save_score_t databuf[6];
 
 	for (int i = 0; i < 2; i++) {
 		switch (i) {
 		case 0:
-			strcopy_2(_T("score/Torinoyume.dat"), GT1, 64);
+			RecSaveReadScoreAllDif(databuf, L"Torinoyume");
 			break;
 		case 1:
-			strcopy_2(_T("score/drop DOWN DOWN.dat"), GT1, 64);
+			RecSaveReadScoreAllDif(databuf, L"drop DOWN DOWN");
 			break;
 		}
 
-		_wfopen_s(&fp, GT1, L"rb");
-		if (fp != NULL) {
-			fread(buf, sizeof(int), 6, fp);
-			fclose(fp);
-			for (uint j = 0; j < 3; j++) {
-				exScore[i * 3 + j] = buf[j + 3];
-			}
+		for (uint j = 0; j < 3; j++) {
+			exScore[i * 3 + j] = databuf[j + 3].score;
 		}
 	}
 	return;
