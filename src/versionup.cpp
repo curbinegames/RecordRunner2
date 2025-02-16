@@ -3,6 +3,8 @@
 
 #include <system.h>
 
+#include <RecSave.h>
+
 static void VerSaveScore(wchar_t const songN[], char dif,
 	int score, double acc, int Dscore, short rank, char Clear) {
 	int	read[7] = { 0,0,0,0,0,0,0 };

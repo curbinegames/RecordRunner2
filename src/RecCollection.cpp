@@ -5,6 +5,7 @@
 #include <system.h>
 #include <collect_seclet.h>
 #include <option.h>
+#include <RecSave.h>
 
 #if 1 /* C_item */
 

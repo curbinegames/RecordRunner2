@@ -12,6 +12,7 @@
 #include <RecWindowRescale.h>
 #include <playbox.h>
 #include <RecScoreFile.h>
+#include <RecSave.h>
 
 #define PackNumLim 8
 #define SongNumLim 64

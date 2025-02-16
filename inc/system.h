@@ -39,11 +39,6 @@
 
 typedef unsigned int uint;
 
-typedef struct play_rate_s {
-	wchar_t name[255] = L"\0";
-	double num = 0;
-} play_rate_t;
-
 typedef enum rec_play_rank_e {
 	REC_SCORE_RATE_EX = 0,
 	REC_SCORE_RATE_S,
@@ -85,17 +80,6 @@ typedef enum rec_dif_e {
 	REC_DIF_ANOTHER,
 	REC_DIF_SECRET,
 } rec_dif_t;
-
-typedef struct rec_user_data_s {
-	int playCount = 0;
-	int dropCount = 0;
-	int a; /* ??? */
-	int clearCount = 0;
-	int NMCount = 0;
-	int FCCount = 0;
-	int PFcount = 0;
-	int mileage = 0;
-} rec_user_data_t;
 
 extern int RecPlayDebug[3];
 

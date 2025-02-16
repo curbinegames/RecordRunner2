@@ -12,7 +12,6 @@
 
 /* TODO: セーブファイル関係をまとめたソースを作っても良いかも。名前はRecSave.cppとか? */
 /* TODO: クリア状況はclearrank、スコア評価はscorerateに改名しよう */
-/* TODO: 曲スコアが保存されない!! */
 
 #define VER_1_6 0
 
@@ -179,7 +178,7 @@ static int CalPlayRate(const judge_box *judge, const rec_map_detail_t *map_detai
 	return (int)(rate * 100);
 }
 
-static rec_clear_rank_t JudgeClearRank(const rec_play_userpal_t *userpal) {
+rec_clear_rank_t JudgeClearRank(const rec_play_userpal_t *userpal) {
 	const judge_box *judge = &userpal->judgeCount;
 	if (userpal->status == REC_PLAY_STATUS_DROPED) { return REC_CLEAR_RANK_DROPED; }
 	if (0 < userpal->judgeCount.miss) { return REC_CLEAR_RANK_CLEARED; }
@@ -363,75 +362,18 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 
 #if 1 /* save */
 
-static void SaveScore(const rec_play_userpal_t *userpal, const TCHAR *songN, int dif,
+static void SaveScore(const rec_play_userpal_t *userpal, const TCHAR *songN, rec_dif_t dif,
 	short noteCount)
 {
-	const rec_clear_rank_t Clear = JudgeClearRank(userpal);
-	const rec_score_rate_t rank  = CalScoreRank(userpal->score.sum);
-	const    int score  = userpal->score.sum;
-	const    int Dscore = userpal->Dscore.point;
-	const double acc    = CAL_ACC(userpal->judgeCount, noteCount);
+	rec_save_score_t buf;
 
-	rec_score_savefile_t buf[6];
+	buf.clearRank = JudgeClearRank(userpal);
+	buf.scoreRate = CalScoreRank(userpal->score.sum);
+	buf.score     = userpal->score.sum;
+	buf.dist      = userpal->Dscore.point;
+	buf.acc       = CAL_ACC(userpal->judgeCount, noteCount);
 
-	RecSaveReadScoreAllDif(buf, songN);
-
-	if (buf[dif].score     < score)  { buf[dif].score     = score; }
-	if (buf[dif].acc       < acc)    { buf[dif].acc       = acc; }
-	if (buf[dif].dist      < Dscore) { buf[dif].dist      = Dscore; }
-	if (buf[dif].clearRank < Clear)  { buf[dif].clearRank = Clear; }
-	if (buf[dif].scoreRate > rank || buf[dif].scoreRate < 0) { buf[dif].scoreRate = rank; } /* ナンバリングの都合上、これだけ他と違う実装になってる */
-
-	RecSaveWriteScoreAllDif(buf, songN);
-	return;
-}
-
-static void SavePlayCount(const rec_play_userpal_t *userpal) {
-	rec_user_data_t data;
-	FILE *fp;
-
-	_wfopen_s(&fp, L"save/data.dat", L"rb");
-	if (fp != NULL) {
-		fread(&data, sizeof(rec_user_data_t), 1, fp);
-		fclose(fp);
-	}
-
-	data.playCount++;
-	if (userpal->status == REC_PLAY_STATUS_DROPED) { data.dropCount++; }
-	else { data.clearCount++; }
-	if (userpal->judgeCount.miss == 0) {
-		data.NMCount++;
-		if (userpal->judgeCount.safe == 0) {
-			data.FCCount++;
-			if (userpal->judgeCount.good == 0) { data.PFcount++; }
-		}
-	}
-	data.mileage += userpal->Dscore.point;
-
-	_wfopen_s(&fp, L"save/data.dat", L"wb");
-	if (fp == NULL) { return; }
-	fwrite(&data, sizeof(rec_user_data_t), 1, fp);
-	fclose(fp);
-
-	return;
-}
-
-static void SaveCharPlayCount(void) {
-	int chap[3] = { 0,0,0 };
-	FILE *fp;
-
-	_wfopen_s(&fp, L"save/chap.dat", L"rb");
-	if (fp != NULL) {
-		fread(&chap, sizeof(int), 3, fp);
-		fclose(fp);
-	}
-
-	chap[optiondata.chara]++;
-
-	_wfopen_s(&fp, L"save/chap.dat", L"wb");
-	if (fp == NULL) { return; }
-	fwrite(&chap, sizeof(int), 3, fp);
-	fclose(fp);
+	RecSaveUpdateScoreOneDif(&buf, songN, dif);
 	return;
 }
 
@@ -453,7 +395,7 @@ static void RecUpdateRunnerRate(const rec_map_detail_t *map_detail,
 	// 同じ曲、または未収録を探す
 	for (uint i = 0; i < RATE_NUM; i++) {
 		if (strands(songN, data[i].name) ||
-			(data[i].name[0] == L'\0' && data[i].num == 0))
+			(data[i].name[0] == L'\0' && data[i].num <= 0))
 		{
 			num = i;
 			break;
@@ -490,10 +432,10 @@ now_scene_t result(const rec_map_detail_t *map_detail, const rec_play_userpal_t 
 	result_pal.oldRate = GetFullRate();
 
 	/* セーブ作業 */
-	SavePlayCount(userpal);
+	RecSaveUpdateUserPlay(userpal);
 	SaveScore(userpal, songN, dif, map_detail->notes);
-	SaveCharPlayCount();
-	RecUpdateRunnerRate(map_detail, &userpal->judgeCount, songN);
+	RecSaveUpdateCharaPlay((rec_nowchara_t)optiondata.chara);
+	RecSaveUpdateRunnerRate(songN, (double)CalPlayRate(&userpal->judgeCount, map_detail) / 100.0);
 
 	/* リザルト表示 */
 	RecResultCalParameter(&result_pal, userpal, nameset, dif, map_detail->notes);
