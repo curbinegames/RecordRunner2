@@ -78,7 +78,7 @@ void ShowTitle1(const int *pic, const int time) {
 				pals(EFF_TIME_1 * (i * 6 + j + 3) / 14,
 					posX[i * 6 + j],
 					EFF_TIME_1 * (i * 6 + j) / 14,
-					posX[i * 6 + j] + 640, maxs(time, EFF_TIME_1 * (i * 6 + j + 3) / 14)),
+					posX[i * 6 + j] + 640, mins_2(time, EFF_TIME_1 * (i * 6 + j + 3) / 14)),
 				posY[i], pic[i * 6 + j], TRUE);
 		}
 	}

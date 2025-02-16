@@ -716,7 +716,7 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 		case OBJ_CODE_SPACE: //空白
 			break;
 		case OBJ_CODE_SPEED: //ノーツの速度変化
-			G[0] = maxs(mins(GT1[6] - 49, 0), 4);
+			G[0] = betweens(0, GT1[6] - 49, 4);
 			strmods(GT1, 8);
 			recfp->mapeff.speedt[G[0]][speedN[G[0]]][1] = strsans2(GT1);
 			strnex(GT1);
@@ -742,7 +742,7 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 		case OBJ_CODE_CHARA: //キャラグラ変化
 			G[0] = GT1[6] - 49;
 			strmods(GT1, 8);
-			recfp->mapeff.chamo[G[0]].gra[recfp->mapeff.chamo[G[0]].num] = maxs(mins(strsans(GT1), 0), 2);
+			recfp->mapeff.chamo[G[0]].gra[recfp->mapeff.chamo[G[0]].num] = betweens(0, strsans(GT1), 2);
 			recfp->mapeff.chamo[G[0]].time[recfp->mapeff.chamo[G[0]].num] = (int)timer[G[0]];
 			recfp->mapeff.chamo[G[0]].num++;
 			break;
@@ -768,7 +768,7 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 				G[3] = 3;
 			}
 			else {
-				G[2] = G[0] = maxs(mins(GT1[8] - 49, 0), 4);
+				G[2] = G[0] = betweens(0, GT1[8] - 49, 4);
 				G[3] = 0;
 			}
 			switch (GT1[5]) {
@@ -827,7 +827,7 @@ static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, co
 				G[3] = 3;
 			}
 			else {
-				G[2] = G[0] = maxs(mins(GT1[8] - 49, 0), 2);
+				G[2] = G[0] = betweens(0, GT1[8] - 49, 2);
 				G[3] = 0;
 			}
 			switch (GT1[5]) {

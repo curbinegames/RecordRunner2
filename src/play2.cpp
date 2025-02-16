@@ -255,7 +255,7 @@ static void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 		break;
 	case 2: // acc
 		for (int i = x1; i <= x2; i++) {
-			end = maxs(i + 10, x2);
+			end = mins_2(i + 10, x2);
 			RecPlayRescaleCurve(i, pals(x1, y1, x2, y2, i),
 				end, pals(x1, y1, x2, y2, end),
 				color, thick);
@@ -263,7 +263,7 @@ static void DrawLineCurve(int x1, int y1, int x2, int y2, char mode,
 		break;
 	case 3: // dec
 		for (int i = x1; i <= x2; i++) {
-			end = maxs(i + 10, x2);
+			end = mins_2(i + 10, x2);
 			RecPlayRescaleCurve(i, pals(x2, y2, x1, y1, i),
 				end, pals(x2, y2, x1, y1, end),
 				color, thick);
@@ -356,31 +356,31 @@ static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 }
 
 static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time, int AutoFg) {
-	userpal->Mcombo = mins(userpal->Mcombo, userpal->Ncombo);
+	userpal->Mcombo = maxs_2(userpal->Mcombo, userpal->Ncombo);
 	//ライフが0未満の時、1毎に減点スコアを20増やす。
 	if (userpal->life < 0) {
-		userpal->score.loss = maxs(userpal->score.loss - userpal->life * 20, userpal->score.normal + userpal->score.combo);
+		userpal->score.loss = mins_2(userpal->score.loss - userpal->life * 20, userpal->score.normal + userpal->score.combo);
 		userpal->life = 0;
 	}
 	//ライフ上限
-	userpal->life = maxs(userpal->life, 500);
+	userpal->life = mins_2(userpal->life, 500);
 	//スコア計算
 	userpal->score = GetScore3(userpal->score, userpal->judgeCount, notes, userpal->Mcombo);
 	//ステータス
 	if (userpal->life <= 0 && userpal->status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
 		userpal->status = REC_PLAY_STATUS_DROPED;
 		userpal->Dscore.add_save = userpal->Dscore.add;
-		userpal->Dscore.dis_save = mins(time->now - time->offset, 0);
+		userpal->Dscore.dis_save = maxs_2(time->now - time->offset, 0);
 	}
 	else if (userpal->status != REC_PLAY_STATUS_DROPED &&
-		mins(time->now - time->offset, 0) > time->end - time->offset)
+		maxs_2(time->now - time->offset, 0) > time->end - time->offset)
 	{ //CLEARED
 		userpal->status = REC_PLAY_STATUS_CLEARED;
 	}
 	//距離計算
 	switch (userpal->status) {
 	case REC_PLAY_STATUS_PLAYING:
-		userpal->Dscore.now_dis = mins(time->now - time->offset, 0);
+		userpal->Dscore.now_dis = maxs_2(time->now - time->offset, 0);
 		userpal->Dscore.add_save = userpal->Dscore.add;
 		break;
 	case REC_PLAY_STATUS_CLEARED:
@@ -1070,13 +1070,13 @@ public:
 			if (keyhold->down == 1) { this->count[4]++; }
 			if (keyhold->left == 1) { this->count[5]++; }
 			if (keyhold->right == 1) { this->count[6]++; }
-			RecRescaleDrawGraph(5, 445, this->KeyViewimg[maxs(keyhold->z, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(40, 445, this->KeyViewimg[maxs(keyhold->x, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(75, 445, this->KeyViewimg[maxs(keyhold->c, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(570, 410, this->KeyViewimg[maxs(keyhold->up, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(570, 445, this->KeyViewimg[maxs(keyhold->down, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(535, 445, this->KeyViewimg[maxs(keyhold->left, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(605, 445, this->KeyViewimg[maxs(keyhold->right, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(5, 445, this->KeyViewimg[mins_2(keyhold->z, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(40, 445, this->KeyViewimg[mins_2(keyhold->x, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(75, 445, this->KeyViewimg[mins_2(keyhold->c, 1)], REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(570, 410, this->KeyViewimg[mins_2(keyhold->up, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(570, 445, this->KeyViewimg[mins_2(keyhold->down, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(535, 445, this->KeyViewimg[mins_2(keyhold->left, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(605, 445, this->KeyViewimg[mins_2(keyhold->right, 1)], REC_RESCALE_BOTTOM_RIGHT);
 			if (this->count[0] == 0) { RecRescaleAnchorDrawString(10, 450, L"Z", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
 			else { RecRescaleAnchorDrawFormatString(10, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[0] % 100); }
 			if (this->count[1] == 0) { RecRescaleAnchorDrawString(45, 450, L"X", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
@@ -1254,7 +1254,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		// number step
 		for (int iLine = 0; iLine < 3; iLine++) {
-			objectNG[iLine] = mins(objectNG[iLine], objectN[iLine]);
+			objectNG[iLine] = maxs_2(objectNG[iLine], objectN[iLine]);
 			while (recfp.mapdata.note[objectNG[iLine]].object == NOTE_GHOST) {
 				objectNG[iLine] = recfp.mapdata.note[objectNG[iLine]].next;
 			}
@@ -1381,8 +1381,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (keyhold.up == 0 && keyhold.down == 0 || keyhold.up > 0 && keyhold.down > 0) { LaneTrack[1] = recfp.time.now; }
 		else if (keyhold.up > 0 && keyhold.down == 0) { LaneTrack[0] = recfp.time.now; }
 		else if (keyhold.up == 0 && keyhold.down > 0) { LaneTrack[2] = recfp.time.now; }
-		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[0]); }
-		else { LaneTrack[1] = mins(LaneTrack[1], LaneTrack[2]); }
+		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[0]); }
+		else { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[2]); }
 		//ヒット
 		if (keyhold.z == 1 || keyhold.x == 1 || keyhold.c == 1) { charahit = GetNowCount(); }
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
@@ -1518,7 +1518,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (StopFrag == 1) {
 			switch (GetKeyPushOnce()) {
 			case KEY_INPUT_LEFT:
-				recfp.time.now = mins(recfp.time.now - 10000, 0);
+				recfp.time.now = maxs_2(recfp.time.now - 10000, 0);
 				RecResetPlayObjectNum(objectN, &recfp);
 				RecResetPlayRecfpMapeffNum(&recfp.mapeff);
 				RecResetPlayPartNum(&itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);

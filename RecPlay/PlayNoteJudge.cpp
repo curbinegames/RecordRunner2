@@ -223,7 +223,7 @@ static uint RecLPlayGetHitKeyPushCount(const key_hold_t *keyhold) {
 static void RecJudgeSetUserpal(userpal_t *userpal, bool setBscore, bool PjustFg,
 	int addLife, int addDscore, int addCombo)
 {
-	if (setBscore) { userpal->score.before = pals(500, userpal->score.sum, 0, userpal->score.before, maxs(s_Ntime - userpal->score.time, 500)); }
+	if (setBscore) { userpal->score.before = pals(500, userpal->score.sum, 0, userpal->score.before, mins_2(s_Ntime - userpal->score.time, 500)); }
 	userpal->score.time = s_Ntime;
 	if (PjustFg) { (userpal->judgeCount.pjust)++; }
 	(userpal->life) += addLife;

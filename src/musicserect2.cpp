@@ -708,7 +708,7 @@ public:
 		int picsong = 0;
 		int moveC = 0;
 
-		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
+		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
 		picsong = (cmd[0] + songdata->musicNum - (VIEW_COUNT / 2)) % songdata->musicNum;
 
 		for (int count = 0; count < VIEW_COUNT; count++) {
@@ -757,7 +757,7 @@ private:
 	void DrawDisk(int baseX, int baseY) {
 		int moveC = 0;
 
-		moveC = mins(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
+		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
 		if (this->UD == REC_SERECT_VECT_DOWN) { this->Nrot += pals(0, 2, MUSE_FADTM, -75, moveC) / 100.0; }
 		else { this->Nrot += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
 		if (this->Nrot > 6.28) { this->Nrot -= 6.28; }
@@ -916,7 +916,7 @@ private:
 	}
 
 	void DrawDifBar(int baseX, int baseY, int dif) const {
-		int XmoveC = mins(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
+		int XmoveC = maxs_2(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
 
 		if (this->LR == REC_SERECT_VECT_LEFT) {
 			XmoveC = pals(0, 640, MUSE_FADTM, 460, XmoveC);

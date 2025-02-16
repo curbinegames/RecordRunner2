@@ -202,7 +202,7 @@ static void RecClctGetSubStoryScore(int subScore[]) {
 			buf[6] = 5;
 			break;
 		}
-		for (j = buf[6]; j <= 5; j++) subScore[i] = mins(subScore[i], databuf[j].score);
+		for (j = buf[6]; j <= 5; j++) subScore[i] = maxs_2(subScore[i], databuf[j].score);
 #endif
 		subScore[i] = 0;
 		switch (i) {
@@ -224,7 +224,7 @@ static void RecClctGetSubStoryScore(int subScore[]) {
 			break;
 		}
 		for (uint j = minDif; j <= 5; j++) {
-			subScore[i] = mins(subScore[i], databuf[j].score);
+			subScore[i] = maxs_2(subScore[i], databuf[j].score);
 		}
 	}
 	return;
@@ -520,7 +520,7 @@ static int story(int a, int b) {
 		else if (GetWindowUserCloseFlag(TRUE)) return 5;
 		//“Á’è‚ÌƒL[‚ª‰Ÿ‚³‚ê‚Ä‚¢‚È‚¢
 		else key = 0;
-		com = mins(maxs(com, 2), 0);
+		com = betweens(0, com, 2);
 	}
 	return 0;
 }

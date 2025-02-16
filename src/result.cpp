@@ -19,7 +19,7 @@
 	DIV_AVOID_ZERO((judge).just * 10000 + (judge).good * 9500 + (judge).safe * 5500, (notes) * 100.0, 0)
 
 #define CAL_DIF_RATE(mdif, Lv)												\
-	((Lv) == 0 ? 0 : maxs((mdif), (Lv) * 100 + 90))
+	((Lv) == 0 ? 0 : mins_2((mdif), (Lv) * 100 + 90))
 
 #define CAL_GAP(all_gap, count) DIV_AVOID_ZERO((all_gap), (count), 0)
 
@@ -145,17 +145,17 @@ static int CalPlayRate(const judge_box *judge, const rec_map_detail_t *map_detai
 	// "•ˆ–Ê’è”" - "miss”" x "•ˆ–Ê’è”" x 0.03 (‰ºŒÀ=0)
 	else if (judge->miss > 0) {
 		rate = DifRate - judge->miss * DifRate * 0.03;
-		rate = mins_D(rate, 0);
+		rate = maxs_2(rate, 0);
 	}
 	// NO MISS,"•ˆ–Ê’è”" + 1 - "safe”" x 0.05 (‰ºŒÀ="•ˆ–Ê’è”")
 	else if (judge->miss == 0 && judge->safe > 0) {
 		rate = DifRate + 1 - judge->safe * 0.05;
-		rate = mins_D(rate, DifRate);
+		rate = maxs_2(rate, DifRate);
 	}
 	// FULL COMBO,"•ˆ–Ê’è”" + 2 - "good”" x 0.01 (‰ºŒÀ="•ˆ–Ê’è”" + 1)
 	else if (judge->miss == 0 && judge->safe == 0 && judge->good > 0) {
 		rate = DifRate + 2 - judge->good * 0.01;
-		rate = mins_D(rate, DifRate + 1);
+		rate = maxs_2(rate, DifRate + 1);
 	}
 	// PERFECT, "•ˆ–Ê’è”" + 2
 	else if (judge->miss == 0 && judge->safe == 0 && judge->good == 0) {

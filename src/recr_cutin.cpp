@@ -206,7 +206,7 @@ static void RecCutDrawSide(int EffTime) {
 
 void ViewCutIn(int Stime) {
 	int Ntime = GetNowCount();
-	int EffTime = maxs(Ntime - Stime, 500);
+	int EffTime = mins_2(Ntime - Stime, 500);
 	int PosY = pals(500, 0, 0, 360, EffTime);
 	int Rot = pals(500, 0, 0, -300, EffTime);
 	int Alpha = lins(500, 255, 0, 0, EffTime);
@@ -306,7 +306,7 @@ void RecViewCut2() {
 }
 
 void RecViewCut3() {
-	int EffTime = maxs(GetNowCount() - s_cutStime, 500);
+	int EffTime = mins_2(GetNowCount() - s_cutStime, 500);
 
 	if (s_cutIoFg == CUT_FRAG_OUT && 500 <= EffTime) {
 		return;

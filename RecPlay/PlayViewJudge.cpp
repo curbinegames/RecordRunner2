@@ -58,7 +58,7 @@ void PlayShowJudge(int charaposX, int charaposY) {
 	}
 	for (int i = 0; i < 4; i++) {
 		if (GetNowCount() - viewjudge[i] < 750) {
-			drawY = BaseDrawY + pals(250, 0, 0, 25, maxs(GetNowCount() - viewjudge[i], 250));
+			drawY = BaseDrawY + pals(250, 0, 0, 25, mins_2(GetNowCount() - viewjudge[i], 250));
 			RecRescaleDrawGraph(BaseDrawX, drawY, JudgePic[i], TRUE);
 		}
 	}

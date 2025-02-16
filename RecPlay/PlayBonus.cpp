@@ -114,7 +114,7 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 				int posX = j * 180 + EffStartTime % (57137 + 29 * i + 67 * j + 127 * k) % 180;
 				int posY = i * 190 + EffStartTime % (62843 + 37 * i + 67 * j + 157 * k) % 190;
 				int alpha = lins(100, 720, 1000, -240, GetNowCount() - EffStartTime);
-				alpha = mins(pals(posY, 255, posY + 240, 0, alpha), 0);
+				alpha = maxs_2(pals(posY, 255, posY + 240, 0, alpha), 0);
 				SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
 				RecRescaleDrawGraph(posX, posY, smalllight, TRUE);
 				SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
@@ -124,7 +124,7 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 	//BigLight
 	if (100 <= GetNowCount() - EffStartTime && GetNowCount() - EffStartTime <= 1000) {
 		for (int i = 0; i < 3 - Bonus; i++) {
-			int alpha = lins(500, 255, 1000, 0, mins(GetNowCount() - EffStartTime, 500));
+			int alpha = lins(500, 255, 1000, 0, maxs_2(GetNowCount() - EffStartTime, 500));
 			double angle = double(GetNowCount() - EffStartTime) / 200.0;
 			angle += 3.14 * (180.0 / (3 - Bonus)) * i / 180.0;
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
@@ -138,7 +138,7 @@ void ShowBonusEff(struct judge_box judge, int EffStartTime) {
 		int UpPos    = lins(100, PIC_Y - 160, 1000, PIC_Y - 240, GetNowCount() - EffStartTime);
 		int RightPos = lins(100, PIC_X + 160, 1000, PIC_X + 240, GetNowCount() - EffStartTime);
 		int DownPos  = lins(100, PIC_Y + 160, 1000, PIC_Y + 240, GetNowCount() - EffStartTime);
-		int alpha    = maxs(lins(700, 255, 1000, 0, GetNowCount() - EffStartTime), 255);
+		int alpha    = mins_2(lins(700, 255, 1000, 0, GetNowCount() - EffStartTime), 255);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
 		RecRescaleDrawExtendGraph(LeftPos, UpPos, RightPos, DownPos, g_bonus_psmat.pic.ring, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
