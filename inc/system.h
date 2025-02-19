@@ -79,4 +79,10 @@ extern int RecPlayDebug[3];
 extern int SmallFontData;
 extern int LargeFontData;
 
-extern int RecGetMusicPath(TCHAR *ret, size_t size, uint packNo, uint songNo);
+extern int RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo);
+extern int RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo);
+extern int RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo);
+extern int RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
+	rec_dif_t difNo);
+extern int RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
+	rec_dif_t difNo);
