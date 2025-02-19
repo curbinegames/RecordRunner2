@@ -268,7 +268,7 @@ void RecTxtWriteAllDdif() {
 			songN[4][0] = L'\0';
 			for (uint iDif = 0; iDif < 5; iDif++) {
 				RecordLoad2(iPack, iSong, iDif);
-				if (RecGetMusicPath(path, 255, iPack, iSong) != 0) { continue; }
+				if (RecGetMusicFolderPath(path, 255, iPack, iSong) != 0) { continue; }
 				stradds_2(path, 255, (TCHAR)((int)L'0' + iDif));
 				strcats_2(path, 255, L".rrs");
 				cal_ddif_3(path);

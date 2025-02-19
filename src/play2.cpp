@@ -1591,7 +1591,7 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	/* rrsデータが無い、または作成の指示があれば作る */
 	if (shift == 0) {
-		RecGetMusicPath(mapPath, 255, packNo, musicNo);
+		RecGetMusicFolderPath(mapPath, 255, packNo, musicNo);
 		stradds_2(mapPath, 255, (TCHAR)((int)L'0' + difNo));
 		strcats_2(mapPath, 255, L".rrs");
 		_wfopen_s(&fp, mapPath, L"rb");
@@ -1599,7 +1599,7 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
-		RecGetMusicPath(mapPath, 255, packNo, musicNo);
+		RecGetMusicFolderPath(mapPath, 255, packNo, musicNo);
 		stradds_2(mapPath, 255, (TCHAR)((int)L'0' + difNo));
 		strcats_2(mapPath, 255, L".rrs");
 		cal_ddif_3(mapPath);

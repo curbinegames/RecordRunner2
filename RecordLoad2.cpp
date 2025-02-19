@@ -594,7 +594,7 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 	return;
 }
 
-static void RecMapLoad_SaveMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath, int o) {
+static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath, int o) {
 	//o: 難易度ナンバー
 	short int i[2] = { 0,0 };
 #if 0 /* fixing... */
@@ -1212,12 +1212,12 @@ void RecordLoad2(int packNo, int songNo, int difNo) {
 
 	rec_score_file_t recfp;
 
-	RecGetMusicPath(folderPath, 255, packNo, songNo);
+	RecGetMusicFolderPath(folderPath, 255, packNo, songNo);
 	strcopy_2(folderPath, mapPath, 255);
 	stradds_2(mapPath, 255, (TCHAR)(_T('0') + difNo)); //"record/<パック名>/<曲名>/<難易度>"
 	strcats_2(mapPath, 255, _T(".txt")); //"record/<パック名>/<曲名>/<難易度>.txt"
 
-	RecMapLoad_SaveMap(&recfp, mapPath, folderPath, difNo);
+	RecMapLoad_EncodeMap(&recfp, mapPath, folderPath, difNo);
 	return;
 }
 
