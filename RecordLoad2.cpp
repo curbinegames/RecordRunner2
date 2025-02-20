@@ -25,6 +25,7 @@ typedef enum rrs_obj_code_e {
 	OBJ_CODE_CARROW,
 	OBJ_CODE_FALL,
 	OBJ_CODE_VIEW,
+	OBJ_CODE_VIEW_LINE,
 	OBJ_CODE_MOVIE,
 	OBJ_CODE_INIT_ITEM_SET,
 	OBJ_CODE_ADD_ITEM_SET,
@@ -475,6 +476,9 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.speedt[3][0][1] = 1;
 	recfp->mapeff.speedt[4][0][0] = 0;
 	recfp->mapeff.speedt[4][0][1] = 1;
+	recfp->mapeff.viewLine.d[0].enable = true;
+	recfp->mapeff.viewLine.d[0].time = 0;
+	recfp->mapeff.viewLine.num = 1;
 	return;
 }
 
@@ -589,6 +593,7 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 	fwrite(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
 	fwrite(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
 	fwrite(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
+	fwrite(&recfp->mapeff.viewLine.d[0], sizeof(rec_viewline_data_t), 99, fp);
 	fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
 	fclose(fp);
 	return;
@@ -964,6 +969,16 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 			recfp->mapeff.viewT[1][viewTN] = strsans(GT1);
 			viewTN++;
 			break;
+		case OBJ_CODE_VIEW_LINE: /* ガイドライン表示, 書式 = #V-LANE:<0,1>/<time> */
+		{
+			const uint nowNo = recfp->mapeff.viewLine.num;
+			strmods(GT1, 8);
+			recfp->mapeff.viewLine.d[nowNo].enable = (GT1[0] == _T('1')) ? true : false;
+			strnex(GT1);
+			recfp->mapeff.viewLine.d[nowNo].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
+			recfp->mapeff.viewLine.num = mins_2(recfp->mapeff.viewLine.num + 1, 98);
+			break;
+		}
 		case OBJ_CODE_MOVIE: //アイテム表示
 			strmods(GT1, 7);
 			recfp->mapeff.Movie[MovieN].ID = strsans(GT1);
@@ -1288,6 +1303,7 @@ rrs_obj_code_t check_obj_code(wchar_t const *const s) {
 	if (strands(s, L"#CARROW")) { return OBJ_CODE_CARROW; }
 	if (strands(s, L"#FALL")) { return OBJ_CODE_FALL; }
 	if (strands(s, L"#VIEW:")) { return OBJ_CODE_VIEW; }
+	if (strands(s, L"#V-LANE:")) { return OBJ_CODE_VIEW_LINE; }
 	if (strands(s, L"#MOVIE:")) { return OBJ_CODE_MOVIE; }
 	if (strands(s, L"#INIT_ITEM_SET:")) { return OBJ_CODE_INIT_ITEM_SET; }
 	if (strands(s, L"#ADD_ITEM_SET:")) { return OBJ_CODE_ADD_ITEM_SET; }

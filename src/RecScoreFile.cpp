@@ -114,6 +114,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	fread(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
 	fread(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
 	fread(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
+	REC_LINE_READ(&recfp->mapeff.viewLine.d[0], sizeof(rec_viewline_data_t), 99, fp);//ラインガイドの表示/非表示
 	fread(&recfp->outpoint, sizeof(int), 2, fp);//エラーデータ
 	REC_LINE_READ(&recfp->mapdata.mpal, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
 
@@ -201,6 +202,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	fwrite(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
 	fwrite(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
 	fwrite(&recfp->mapeff.v_BPM.data[0], sizeof(view_BPM_box), recfp->allnum.v_BPMnum, fp);//見た目のBPMデータ
+	REC_LINE_WRITE(&recfp->mapeff.viewLine.d[0], sizeof(rec_viewline_data_t), 99, fp);//ラインガイドの表示/非表示
 	fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
 	REC_LINE_WRITE(&recfp->mapdata.mpal, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
 
@@ -267,6 +269,7 @@ int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path) {
 	// fseek(fp, sizeof(rec_camera_data_t) * 255, SEEK_CUR);//カメラデータ
 	// fseek(fp, sizeof(rec_scrool_data_t) * 99, SEEK_CUR);//スクロールデータ
 	// fseek(fp, sizeof(view_BPM_box) * recfp->allnum.v_BPMnum, SEEK_CUR);//スクロールデータ
+	// REC_LINE_SEEK(&recfp->mapeff.viewLine.d[0], sizeof(rec_viewline_data_t), 99, fp);//ラインガイドの表示/非表示
 	// fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 
 	fclose(fp);
@@ -355,6 +358,7 @@ int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, sizeof(rec_scrool_data_t) * 99, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(view_BPM_box) * allnum.v_BPMnum, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
+	REC_LINE_SEEK(&recfp->mapeff.viewLine.d[0], sizeof(rec_viewline_data_t), 99, fp);//ラインガイドの表示/非表示
 	REC_LINE_READ(ddif, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
 
 	fclose(fp);
@@ -417,6 +421,7 @@ int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, sizeof(rec_camera_data_t) * 255, SEEK_CUR);//カメラデータ
 	fseek(fp, sizeof(rec_scrool_data_t) * 99, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(view_BPM_box) * allnum.v_BPMnum, SEEK_CUR);//スクロールデータ
+	REC_LINE_SEEK(&recfp->mapeff.viewLine.d[0], sizeof(rec_viewline_data_t), 99, fp);//ラインガイドの表示/非表示
 	fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 	REC_LINE_WRITE(ddif, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
 

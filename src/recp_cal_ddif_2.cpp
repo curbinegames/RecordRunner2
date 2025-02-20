@@ -6,8 +6,6 @@
 
 #if 1 /* define */
 
-#define IS_BETWEEN_RIGHT_LESS(a, b, c) ((a) <= (b) && (b) < (c))
-
 /* num‚ªtarget}gapˆÈ“à‚Å‚ ‚ê‚Îtrue‚ð•Ô‚·define */
 #define IS_NEAR_NUM(num, target, gap) (((target) - (gap)) <= (num) && (num) <= ((target) + (gap)))
 

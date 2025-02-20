@@ -9,8 +9,6 @@
 #include "PlayViewJudge.h"
 #include "PlayHitEff.h"
 
-#define IS_BETWEEN(a, b, c) ((a) <= (b) && (b) <= (c))
-
 #define P_JUST_TIME 15
 #define JUST_TIME 40
 #define GOOD_TIME 70
