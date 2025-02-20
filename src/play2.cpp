@@ -720,10 +720,11 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, short int speedN[], int *Xl
 	/* roundup((Ntime - offset) / (240000 / bpm)) = n */
 	/* roundup((Ntime - offset) * bpm / 240000) = n */
 	pnum = (Ntime - recfp->time.offset) * recfp->mapdata.bpm / 24000;
+	pnum = maxs_2(pnum, 0);
 	if ((pnum % 10) != 0) { pnum = pnum / 10 + 1; }
 	else { pnum = pnum / 10; }
 
-	for (uint iNum = 0; iNum < 5; iNum++) {
+	for (uint iNum = 0; iNum < 7; iNum++) {
 		int posX1 = 0;
 		int posY1 = 0;
 		int posX2 = 0;
@@ -739,6 +740,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, short int speedN[], int *Xl
 			NlineViewNo++;
 		}
 		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { continue; }
+		if (recfp->time.end < Ptime) { return; }
 
 		RecPlayGetTimeLanePos(&posX1, &posY1, &recfp->mapeff, Xline, 0, speedN[0], Ntime, Ptime);
 		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, Xline, 1, speedN[1], Ntime, Ptime);
@@ -784,7 +786,7 @@ int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[
 	while (IS_BETWEEN_LEFT_LESS(0, recfp->mapeff.viewLine.d[NlineViewNo + 1].time, Ymove[Line].d[iDraw].Stime)) {
 		NlineViewNo++;
 	}
-	if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
+	if (recfp->time.end < Ptime) { return 1; }
 
 	// color code
 	switch (Line) {
@@ -806,6 +808,7 @@ int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[
 	length = lins(1.0, 2.5, 1.2, 2.1, recfp->mapeff.speedt[1][NspeedNo][1]);
 
 	if (Ymove[Line].d[iDraw].Stime < 0) {
+		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 1; }
 		drawLeft = (Ymove[Line].d[iDraw - 1].Etime - Ntime) / length + Xline[Line] + 15 + camera.x;
 		drawRight = 640;
 		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + camera.y;
@@ -815,6 +818,7 @@ int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[
 	}
 	// cal Xpos1
 	if (iDraw < 1) {
+		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
 		drawLeft = Xline[Line] + Xline[Line] + 15;
 		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / length + Xline[Line] + 15;
 		drawY1 = Yline[Line] + 15;
@@ -822,6 +826,7 @@ int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[
 		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
 	else if (Ntime < Ymove[Line].d[iDraw].Etime) {
+		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
 		drawLeft = (Ymove[Line].d[iDraw - 1].Etime - Ntime) / length + Xline[Line] + 15;
 		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / length + Xline[Line] + 15;
 		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15;
@@ -836,6 +841,7 @@ int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[
 	drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + camera.y;
 	drawY2 = Ymove[Line].d[iDraw].pos + 15 + camera.y;
 	// wiew
+	if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
 	DrawLineCurve(drawLeft, drawY1, drawRight, drawY2, Ymove[Line].d[iDraw].mode, drawC, 2);
 	return 0;
 }
