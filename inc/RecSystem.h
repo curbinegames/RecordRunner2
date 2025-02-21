@@ -11,3 +11,11 @@ typedef struct rec_system_s {
 } rec_system_t;
 
 extern int recSystenLoad(rec_system_t *sys);
+
+extern void RecSysBgmSetMem(const TCHAR *sndPath, size_t size);
+extern bool RecSysBgmCheckSoundMem(void);
+extern void RecSysBgmPlay(bool force);
+extern void RecSysBgmDelete(void);
+extern void RecSysBgmStop(void);
+extern void RecSysBgmSetCurrentPosition(int val);
+extern void RecSysBgmChangeVolume(int val);

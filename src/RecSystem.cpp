@@ -1,5 +1,11 @@
 #include <stdio.h>
+#include <dxcur.h>
+#include <strcur.h>
+#include <sancur.h>
+
 #include "RecSystem.h"
+
+#define OPTION_BGM_VOLUME 10 /* 0~10 */
 
 int recSystenLoad(rec_system_t *sys) {
 	int ret = 0;
@@ -19,4 +25,54 @@ int recSystenLoad(rec_system_t *sys) {
 		return 1;
 	}
 	return 0;
+}
+
+static DxSnd_t s_bgm = DXLIB_SND_NULL;
+static TCHAR s_bgmName[256] = _T("");
+static int s_totalVolume = OPTION_BGM_VOLUME;
+
+void RecSysBgmSetMem(const TCHAR *sndPath, size_t size) {
+	if (strands_2(sndPath, size, s_bgmName, ARRAY_COUNT(s_bgmName))) { return; }
+
+	strcopy_2(sndPath, s_bgmName, ARRAY_COUNT(s_bgmName));
+	StopSoundMem(s_bgm);
+	DeleteSoundMem(s_bgm);
+	s_bgm = LoadSoundMem(sndPath);
+
+	return;
+}
+
+bool RecSysBgmCheckSoundMem(void) {
+	return CheckSoundMem(s_bgm);
+}
+
+void RecSysBgmPlay(bool force) {
+	if (!(force) && CheckSoundMem(s_bgm) == 1) { return; }
+	if (force) { StopSoundMem(s_bgm); }
+	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
+	PlaySoundMem(s_bgm, DX_PLAYTYPE_BACK);
+	return;
+}
+
+void RecSysBgmDelete(void) {
+	StopSoundMem(s_bgm);
+	DeleteSoundMem(s_bgm);
+	s_bgmName[0] = _T('\0');
+	return;
+}
+
+void RecSysBgmStop(void) {
+	StopSoundMem(s_bgm);
+	return;
+}
+
+void RecSysBgmSetCurrentPosition(int val) {
+	SetCurrentPositionSoundMem(val, s_bgm);
+	return;
+}
+
+void RecSysBgmChangeVolume(int val) {
+	s_totalVolume = val * OPTION_BGM_VOLUME / 10;
+	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
+	return;
 }
