@@ -1338,7 +1338,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int dropimg = LoadGraph(L"picture/drop.png");
 	int filterimg = LoadGraph(L"picture/Black.png");
 	struct note_img noteimg;
-	int musicmp3;
 
 #endif /* num define */
 
@@ -1363,7 +1362,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	/* rrsデータの内容を読み込む */
 	if (rec_score_fread(&recfp, GT1) != 0) { return SCENE_EXIT; }
 
-	musicmp3 = LoadSoundMem(recfp.nameset.mp3FN);
 	backpic.sky = LoadGraph(recfp.nameset.sky);
 	backpic.ground = LoadGraph(recfp.nameset.ground);
 	backpic.water = LoadGraph(recfp.nameset.water);
@@ -1393,7 +1391,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	else if (0 <= GD[0] && GD[0] < 2) { DifRate = recfp.mapdata.Lv + 0.45 * GD[0]; }
 	else { DifRate = recfp.mapdata.mdif / 100.0; }
 	RecResetPlayObjectNum(objectN, &recfp);
-	PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK);
+	RecSysBgmSetMem(recfp.nameset.mp3FN, ARRAY_COUNT(recfp.nameset.mp3FN));
+	RecSysBgmPlay(true);
 	WaitTimer(10);
 	Stime = GetNowCount();
 	cutin.SetIo(0);
@@ -1638,9 +1637,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			ShowBonusEff(userpal.judgeCount, AllNotesHitTime);
 		}
 		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
-		if (cutin.IsClosing() == 0 &&
-			recfp.time.end + 5000 <= recfp.time.now &&
-			(musicmp3 == -1 || CheckSoundMem(musicmp3) == 0)) {
+		if ((cutin.IsClosing() == 0) &&
+			(recfp.time.end + 5000 <= recfp.time.now) &&
+			(RecSysBgmCheckSoundMem() == 0)) {
 			SetCutTipFg(CUTIN_TIPS_NONE);
 			cutin.SetIo(1);
 		}
@@ -1648,8 +1647,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		//カットイン再生から2秒以上たったら抜ける。
 		if (cutin.IsEndAnim()) {
-			StopSoundMem(musicmp3);
-			DeleteSoundMem(musicmp3);
+			RecSysBgmStop();
 			break;
 		}
 
@@ -1659,10 +1657,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			switch (GetKeyPushOnce()) {
 			case KEY_INPUT_SPACE:
 				StopFrag *= -1;
-				if (StopFrag == 1) { StopSoundMem(musicmp3); }
+				if (StopFrag == 1) { RecSysBgmStop(); }
 				else {
-					SetCurrentPositionSoundMem((int)((double)recfp.time.now / 1000.0 * 44100.0), musicmp3);
-					PlaySoundMem(musicmp3, DX_PLAYTYPE_BACK, FALSE);
+					RecSysBgmSetCurrentPosition((int)((double)recfp.time.now / 1000.0 * 44100.0));
+					RecSysBgmPlay(true, false);
 				}
 				break;
 			default:
@@ -1702,8 +1700,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
-			StopSoundMem(musicmp3);
-			DeleteSoundMem(musicmp3);
+			RecSysBgmStop();
 			INIT_PIC();
 			return SCENE_SERECT;
 		}
