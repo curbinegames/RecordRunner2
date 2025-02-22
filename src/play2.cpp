@@ -1380,6 +1380,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		Getxxxwav(&GT2[0], i[0]);
 		strcats(GT1, GT2);
 		Sitem[i[0] - 1] = LoadSoundMem(GT1);
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, Sitem[i[0] - 1]);
 		if (Sitem[i[0] - 1] == -1) { break; }
 	}
 

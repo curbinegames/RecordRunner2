@@ -5,6 +5,8 @@
 #include <dxcur.h>
 #include <sancur.h>
 
+#include <option.h>
+
 #define SE_HIT (1 << 0)
 #define SE_CATCH (1 << 1)
 #define SE_ARROW (1 << 2)
@@ -286,6 +288,11 @@ public:
 		this->arw.SetSound(_T("sound/arrow.wav"));
 		this->bom.SetSound(_T("sound/bomb.wav"));
 		this->swi.SetSound(_T("sound/swing.wav"));
+		this->att.SetVolume(optiondata.SEvolume * 255 / 10);
+		this->cat.SetVolume(optiondata.SEvolume * 255 / 10);
+		this->arw.SetVolume(optiondata.SEvolume * 255 / 10);
+		this->bom.SetVolume(optiondata.SEvolume * 255 / 10);
+		this->swi.SetVolume(optiondata.SEvolume * 255 / 10);
 	}
 
 	~rec_play_sound_c() {}

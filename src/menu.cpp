@@ -7,6 +7,7 @@
 #include <RecWindowRescale.h>
 
 #include <system.h>
+#include <option.h>
 
 typedef struct rec_menu_data_s {
 	DxPic_t card;
@@ -53,23 +54,10 @@ private:
 #define MENU_NUM (sizeof(this->menu_item) / sizeof(this->menu_item[0]))
 
 public:
-#if 0 /* ‘½•ª—v‚ç‚È‚­‚È‚é */
 	rec_manu_dataset_c(void) {
-		this->menu_item[0].card = LoadGraph(L"picture/menu/FREE PLAY.png");
-		this->menu_item[0].ground = LoadGraph(L"picture/menu/FREE PLAY G.png");
-		this->menu_item[0].back = LoadGraph(L"picture/backskynoamal.png");
-		this->menu_item[1].card = LoadGraph(L"picture/menu/COLLECTION.png");
-		this->menu_item[1].ground = LoadGraph(L"picture/menu/COLLECT G.png");
-		this->menu_item[1].back = LoadGraph(L"picture/menu/COLLECT W.png");
-		this->menu_item[2].card = LoadGraph(L"picture/menu/OPTION.png");
-		this->menu_item[2].ground = LoadGraph(L"picture/menu/OPTION G.png");
-		this->menu_item[2].back = LoadGraph(L"picture/menu/OPTION W.png");
-		this->menu_item[3].card = LoadGraph(L"picture/menu/QUIT.png");
-		this->menu_item[3].ground = LoadGraph(L"picture/menu/QUIT G.png");
-		this->menu_item[3].back = LoadGraph(L"picture/backstar.png");
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, select);
 		return;
 	}
-#endif
 
 	~rec_manu_dataset_c(void) {
 		for (int inum = 0; inum < MENU_NUM; inum++) {

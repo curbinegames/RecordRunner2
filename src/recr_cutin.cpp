@@ -4,6 +4,7 @@
 #include <strcur.h>
 #include <recr_cutin.h>
 #include <RecWindowRescale.h>
+#include <option.h>
 
 #define CUT_MES_POSX 75
 
@@ -99,6 +100,8 @@ void CutinReadyPic() {
 void CutinReadySnd() {
 	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
 	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[0]);
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[1]);
 }
 
 void SetCutSong(wchar_t* songName, wchar_t* picName) {
@@ -363,6 +366,8 @@ rec_cutin_c::rec_cutin_c() {
 	pic_cutin[4] = LoadGraph(L"picture/cutin/cutinS.png");
 	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
 	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[0]);
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[1]);
 }
 
 rec_cutin_c::~rec_cutin_c() {

@@ -46,6 +46,8 @@ typedef struct rec_opt_text_s {
 
 rec_option_t optiondata;
 
+DxSnd_t s_sel = DXLIB_SND_NULL;
+
 static const int det_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 20);
 static const int det_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 410);
 
@@ -200,6 +202,12 @@ static void RecOptionBGMVolume(TCHAR *ret, int pal, int lang) {
 	return;
 }
 
+static void RecOptionSEVolume(TCHAR *ret, int pal, int lang) {
+	strnums(ret, pal, 32);
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, s_sel);
+	return;
+}
+
 static rec_opt_text_t optionstr[]{
 	{
 		RecOptionChar,
@@ -248,7 +256,13 @@ static rec_opt_text_t optionstr[]{
 		L"BGMÇÃâπó ", L"BGM Volume",
 		L"BGMÇÃâπó ÇåàÇﬂÇ‹Ç∑ÅB",
 		L"Choose BGM volume.",
-		0, 10, TRUE
+		0, 10, FALSE
+	}, {
+		RecOptionSEVolume,
+		L"SEÇÃâπó ", L"SE Volume",
+		L"SEÇÃâπó ÇåàÇﬂÇ‹Ç∑ÅB",
+		L"Choose SE volume.",
+		0, 10, FALSE
 	}
 };
 
@@ -331,7 +345,6 @@ now_scene_t option(void) {
 		int back = -1;
 		int cursor = -1;
 	} pic;
-	int sel = -1;
 	int exitFg = 0;
 	rec_helpbar_c help;
 
@@ -355,6 +368,7 @@ now_scene_t option(void) {
 	optionstr[5].val_p = &optiondata.keydetail;
 	optionstr[6].val_p = &optiondata.combopos;
 	optionstr[7].val_p = &optiondata.BGMvolume;
+	optionstr[8].val_p = &optiondata.SEvolume;
 
 	for (int i = 0; i < optionstr_count; i++) {
 		if (*optionstr[i].val_p < optionstr[i].min) {
@@ -367,7 +381,7 @@ now_scene_t option(void) {
 
 	pic.back = LoadGraph(L"picture/OPTION back.png");
 	pic.cursor = LoadGraph(L"picture/OC.png");
-	sel = LoadSoundMem(L"sound/select.wav");
+	s_sel = LoadSoundMem(L"sound/select.wav");
 
 	AvoidKeyRush();
 
@@ -376,7 +390,7 @@ now_scene_t option(void) {
 		InputAllKeyHold();
 		switch (GetKeyPushOnce()) {
 		case KEY_INPUT_LEFT:
-			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+			PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
 			(*optionstr[command].val_p)--;
 			if (*optionstr[command].val_p < optionstr[command].min) {
 				if (optionstr[command].loop == FALSE) {
@@ -388,7 +402,7 @@ now_scene_t option(void) {
 			}
 			break;
 		case KEY_INPUT_RIGHT:
-			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+			PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
 			(*optionstr[command].val_p)++;
 			if (optionstr[command].max < *optionstr[command].val_p) {
 				if (optionstr[command].loop == FALSE) {
@@ -400,11 +414,11 @@ now_scene_t option(void) {
 			}
 			break;
 		case KEY_INPUT_UP:
-			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+			PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
 			command = (command + optionstr_count - 1) % optionstr_count;
 			break;
 		case KEY_INPUT_DOWN:
-			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+			PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
 			command = (command + 1) % optionstr_count;
 			break;
 		case KEY_INPUT_BACK:

@@ -103,6 +103,7 @@ static int C_item(void) {
 		LoadGraph(L"picture/item10.png")
 	};
 	DxSnd_t sel = LoadSoundMem(L"sound/select.wav");
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, sel);
 	rec_helpbar_c help;
 
 	RecClctGetItemOpenFg(openFg);
@@ -483,6 +484,7 @@ static int story(int a, int b) {
 	noteimg = LoadGraph(L"picture/Snote.png");
 	pageimg = LoadGraph(L"picture/page.png");
 	sel = LoadSoundMem(L"sound/select.wav");
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, sel);
 	while (1) {
 		ClearDrawScreen();
 		RecRescaleDrawGraph(0, 0, backimg, TRUE);
@@ -528,7 +530,8 @@ static int story(int a, int b) {
 static int C_story(void) {
 	bool openFg = false;
 	int chac[3] = { 0,0,0 }, command[2] = { 0,0 };
-	DxPic_t backimg, noteimg, sel;
+	DxPic_t backimg, noteimg;
+	DxSnd_t sel;
 	int sub1[4];
 	int sub2[6];
 	const int StoryUpper[5] = { 10,10,10,4,2 };
@@ -548,6 +551,7 @@ static int C_story(void) {
 	backimg = LoadGraph(L"picture/COLLECT back.png");
 	noteimg = LoadGraph(L"picture/Cnote.png");
 	sel = LoadSoundMem(L"sound/select.wav");
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, sel);
 	AvoidKeyRush();
 	while (1) {
 		InputAllKeyHold();
@@ -628,6 +632,7 @@ now_scene_t collection(void) {
 		LoadGraph(L"picture/CLS.png")
 	};
 	int sel = LoadSoundMem(L"sound/select.wav");
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, sel);
 	rec_helpbar_c help;
 
 	// AvoidKeyRush();

@@ -31,6 +31,12 @@ static DxSnd_t s_bgm = DXLIB_SND_NULL;
 static TCHAR s_bgmName[256] = _T("");
 static int s_totalVolume = 255;
 
+void RecSysBgmChangeVolume(int val) {
+	s_totalVolume = val * optiondata.BGMvolume / 10;
+	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
+	return;
+}
+
 void RecSysBgmSetMem(const TCHAR *sndPath, size_t size) {
 	if (strands_2(s_bgmName, size, sndPath, ARRAY_COUNT(s_bgmName))) { return; }
 
@@ -38,6 +44,7 @@ void RecSysBgmSetMem(const TCHAR *sndPath, size_t size) {
 	StopSoundMem(s_bgm);
 	DeleteSoundMem(s_bgm);
 	s_bgm = LoadSoundMem(sndPath);
+	RecSysBgmChangeVolume(255);
 
 	return;
 }
@@ -68,11 +75,5 @@ void RecSysBgmStop(void) {
 
 void RecSysBgmSetCurrentPosition(int val) {
 	SetCurrentPositionSoundMem(val, s_bgm);
-	return;
-}
-
-void RecSysBgmChangeVolume(int val) {
-	s_totalVolume = val * optiondata.BGMvolume / 10;
-	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
 	return;
 }

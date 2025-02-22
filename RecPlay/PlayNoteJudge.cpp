@@ -60,6 +60,9 @@ void RecPlayInitMelodySnd() {
 	MelodySnd[21] = LoadSoundMem(L"sound/melody/highD.wav");
 	MelodySnd[22] = LoadSoundMem(L"sound/melody/highD#.wav");
 	MelodySnd[23] = LoadSoundMem(L"sound/melody/highE.wav");
+	for (uint inum = 0; inum < 24; inum++) {
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, MelodySnd[inum]);
+	}
 	return;
 }
 

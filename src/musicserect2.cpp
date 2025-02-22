@@ -1055,6 +1055,7 @@ private:
 public:
 	rec_serect_snd_c() {
 		this->select = LoadSoundMem(L"sound/arrow.wav");
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->select);
 	}
 
 	~rec_serect_snd_c() {
