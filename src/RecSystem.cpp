@@ -46,11 +46,11 @@ bool RecSysBgmCheckSoundMem(void) {
 	return CheckSoundMem(s_bgm);
 }
 
-void RecSysBgmPlay(bool force) {
+void RecSysBgmPlay(bool force, bool top_position) {
 	if (!(force) && CheckSoundMem(s_bgm) == 1) { return; }
 	if (force) { StopSoundMem(s_bgm); }
 	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
-	PlaySoundMem(s_bgm, DX_PLAYTYPE_BACK);
+	PlaySoundMem(s_bgm, DX_PLAYTYPE_BACK, top_position);
 	return;
 }
 

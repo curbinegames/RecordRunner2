@@ -1,18 +1,30 @@
 
+#if 1 /* include */
+
+/* base include */
 #include <DxLib.h>
-#include <helpBar.h>
-#include <recr_cutin.h>
+
+/* curbine code include */
 #include <dxcur.h>
+#include <dxdraw.h>
 #include <sancur.h>
 #include <strcur.h>
-#include <dxdraw.h>
-#include <system.h>
+
+/* rec system include */
+#include <helpBar.h>
 #include <option.h>
-#include <musicserect2.h>
-#include <RecWindowRescale.h>
 #include <playbox.h>
-#include <RecScoreFile.h>
+#include <recr_cutin.h>
 #include <RecSave.h>
+#include <RecScoreFile.h>
+#include <RecSystem.h>
+#include <RecWindowRescale.h>
+#include <system.h>
+
+/* rec sub include */
+#include <musicserect2.h>
+
+#endif /* include */
 
 #define PackNumLim 8
 #define SongNumLim 64
@@ -563,48 +575,44 @@ private:
 	int SongPreSTime = 0;
 	int preTime[2] = { 441000,2646000 };
 	TCHAR playingsong[256] = { L"NULL" };
-	DxSnd_t previewM = LoadSoundMem(L"null.mp3");
 
 public:
 	void StartSnd() {
-		SetCurrentPositionSoundMem(this->preTime[this->SongPrePat], this->previewM);
-		ChangeVolumeSoundMem(0, this->previewM);
-		PlaySoundMem(this->previewM, DX_PLAYTYPE_BACK, FALSE);
+		RecSysBgmSetCurrentPosition(this->preTime[this->SongPrePat]);
+		RecSysBgmChangeVolume(0);
+		RecSysBgmPlay(true, false);
 		WaitTimer(30);
 		this->SongPreSTime = GetNowCount();
 	}
 
 	int UpdateSnd(MUSIC_BOX *songdata, int dif) {
-		if (strands(songdata->SongFileName[dif], L"NULL") == 0 &&
-			strands(this->playingsong, songdata->SongFileName[dif]) == 0)
+		if ((strands(songdata->SongFileName[dif], L"NULL") != 0) ||
+			(strands(this->playingsong, songdata->SongFileName[dif]) != 0))
 		{
-			if (this->previewM != -1) {
-				StopSoundMem(this->previewM);
-				DeleteSoundMem(this->previewM);
-			}
-			strcopy(songdata->SongFileName[dif], this->playingsong, 1);
-			this->previewM = LoadSoundMem(this->playingsong);
-			this->SongPrePat = 0;
-			this->preTime[0] = songdata->preview[dif][0];
-			this->preTime[1] = songdata->preview[dif][1];
-			return 1;
+			return 0;
 		}
-		return 0;
+		RecSysBgmDelete();
+		strcopy(songdata->SongFileName[dif], this->playingsong, 1);
+		RecSysBgmSetMem(this->playingsong, ARRAY_COUNT(this->playingsong));
+		this->SongPrePat = 0;
+		this->preTime[0] = songdata->preview[dif][0];
+		this->preTime[1] = songdata->preview[dif][1];
+		return 1;
 	}
 
 	void CheckTime(MUSIC_BOX *songdata, int dif) {
 		int Ntime = GetNowCount();
 		if (Ntime - this->SongPreSTime < 500) {
-			ChangeVolumeSoundMem(lins(0, 0, 500, 255, Ntime - this->SongPreSTime), this->previewM);
+			RecSysBgmChangeVolume(lins(0, 0, 500, 255, Ntime - this->SongPreSTime));
 		}
-		else if (500 <= Ntime - this->SongPreSTime && Ntime - this->SongPreSTime < 14500) {
-			ChangeVolumeSoundMem(255, this->previewM);
+		else if (IS_BETWEEN_RIGHT_LESS(500, Ntime - this->SongPreSTime, 14500)) {
+			RecSysBgmChangeVolume(255);
 		}
-		else if (14500 <= Ntime - this->SongPreSTime && Ntime - this->SongPreSTime < 15000) {
-			ChangeVolumeSoundMem(lins(14500, 255, 15000, 0, Ntime - this->SongPreSTime), this->previewM);
+		else if (IS_BETWEEN_RIGHT_LESS(14500, Ntime - this->SongPreSTime, 15000)) {
+			RecSysBgmChangeVolume(lins(14500, 255, 15000, 0, Ntime - this->SongPreSTime));
 		}
 		else if (15000 <= Ntime - this->SongPreSTime) {
-			StopSoundMem(this->previewM);
+			RecSysBgmStop();
 			this->SongPrePat = (this->SongPrePat + 1) % 2;
 			this->StartSnd();
 		}
