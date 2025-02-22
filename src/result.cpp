@@ -3,6 +3,7 @@
 #include <strcur.h>
 #include <fontcur.h>
 
+#include <RecSystem.h>
 #include <RecSave.h>
 #include <option.h>
 #include <system.h>
@@ -31,7 +32,6 @@ typedef struct rec_result_mat_s {
 	DxPic_t difBer    = DXLIB_PIC_NULL;
 	DxPic_t rank      = DXLIB_PIC_NULL;
 	DxPic_t chara     = DXLIB_PIC_NULL;
-	DxSnd_t BGM       = DXLIB_SND_NULL;
 	cur_font_cr_t fontNo = CUR_FONT_COLOR_MONO;
 #if VER_1_6 == 1
 	cur_font_cr_t floatfontNo = CUR_FONT_COLOR_MONO;
@@ -63,7 +63,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 	rec_cutin_c cutin;
 
 	InitCurFont();
-	PlaySoundMem(val->mat.BGM, DX_PLAYTYPE_LOOP);
+	RecSysBgmPlay(true);
 	WaitTimer(10);
 	cutin.SetIo(0);
 	while (1) {
@@ -114,7 +114,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 			cutin.SetIo(1);
 		}
 		if (cutin.IsEndAnim()) {
-			StopSoundMem(val->mat.BGM);
+			RecSysBgmStop();
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
@@ -308,6 +308,16 @@ static cur_font_cr_t RecResultGetFlortCurFontColor(rec_score_rate_t rank) {
 }
 #endif
 
+static void RecResultSetBgm(rec_play_status_t status) {
+	if (status == REC_PLAY_STATUS_DROPED) {
+		RecSysBgmSetMem(_T("song/Regret.mp3"), sizeof(_T("song/Regret.mp3")));
+	}
+	else {
+		RecSysBgmSetMem(_T("song/Balloon Art.mp3"), sizeof(_T("song/Balloon Art.mp3")));
+	}
+	return;
+}
+
 /**
  * リザルト表示に必要な情報を取得します。
  */
@@ -337,7 +347,8 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 #if VER_1_6 == 1
 	result_pal->mat.floatfontNo = RecResultGetFlortCurFontColor(rank);
 #endif
-	result_pal->mat.BGM         = (userpal->status == REC_PLAY_STATUS_DROPED) ? LoadSoundMem(L"song/Regret.mp3") : LoadSoundMem(L"song/Balloon Art.mp3");
+
+	RecResultSetBgm(userpal->status);
 
 	strcopy_2(nameset->songN, result_pal->songN, 64);
 
