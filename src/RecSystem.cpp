@@ -3,9 +3,9 @@
 #include <strcur.h>
 #include <sancur.h>
 
-#include "RecSystem.h"
+#include <option.h>
 
-#define OPTION_BGM_VOLUME 10 /* 0~10 */
+#include "RecSystem.h"
 
 int recSystenLoad(rec_system_t *sys) {
 	int ret = 0;
@@ -72,7 +72,7 @@ void RecSysBgmSetCurrentPosition(int val) {
 }
 
 void RecSysBgmChangeVolume(int val) {
-	s_totalVolume = val * OPTION_BGM_VOLUME / 10;
+	s_totalVolume = val * optiondata.BGMvolume / 10;
 	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
 	return;
 }

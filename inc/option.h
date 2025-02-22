@@ -19,6 +19,7 @@ typedef struct rec_option_s {
 	int lang       = 0;
 	int keydetail  = 0;
 	int combopos   = 0;
+	int BGMvolume  = 7; /* 0~10 */
 } rec_option_t;
 
 extern rec_option_t optiondata;

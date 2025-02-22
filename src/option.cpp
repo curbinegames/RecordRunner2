@@ -1,6 +1,4 @@
 
-#define REC_DEBUG 1 // 0or1 1でデバッグ用コードがビルドされる
-
 #include <DxLib.h>
 #include <dxcur.h>
 #include <strcur.h>
@@ -9,6 +7,9 @@
 #include "system.h"
 #include "helpBar.h"
 #include "option.h"
+#include <RecSystem.h>
+
+#define REC_DEBUG 0 // 0or1 1でデバッグ用コードがビルドされる
 
 #if REC_DEBUG == 1
 #include <RecScoreFile.h>
@@ -44,10 +45,6 @@ typedef struct rec_opt_text_s {
 } rec_opt_text_t;
 
 rec_option_t optiondata;
-
-static const int title_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
-static const int title_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50);
-static const int title_txgapy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50);
 
 static const int det_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 20);
 static const int det_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 410);
@@ -197,6 +194,12 @@ static void RecOptionComboPos(TCHAR *ret, int pal, int lang) {
 	return;
 }
 
+static void RecOptionBGMVolume(TCHAR *ret, int pal, int lang) {
+	strnums(ret, pal, 32);
+	RecSysBgmChangeVolume(255);
+	return;
+}
+
 static rec_opt_text_t optionstr[]{
 	{
 		RecOptionChar,
@@ -240,10 +243,16 @@ static rec_opt_text_t optionstr[]{
 		L"判定の表示場所を決めます。",
 		L"Choose judge position.",
 		0, 5, TRUE
+	}, {
+		RecOptionBGMVolume,
+		L"BGMの音量", L"BGM Volume",
+		L"BGMの音量を決めます。",
+		L"Choose BGM volume.",
+		0, 10, TRUE
 	}
 };
 
-static const int optionstr_count = sizeof(optionstr) / sizeof(rec_opt_text_t);
+static const int optionstr_count = ARRAY_COUNT(optionstr);
 
 #endif /* option_data */
 
@@ -345,8 +354,9 @@ now_scene_t option(void) {
 	optionstr[4].val_p = &optiondata.lang;
 	optionstr[5].val_p = &optiondata.keydetail;
 	optionstr[6].val_p = &optiondata.combopos;
+	optionstr[7].val_p = &optiondata.BGMvolume;
 
-	for (int i = 0; i < 7; i++) {
+	for (int i = 0; i < optionstr_count; i++) {
 		if (*optionstr[i].val_p < optionstr[i].min) {
 			*optionstr[i].val_p = 0;
 		}
@@ -439,10 +449,14 @@ now_scene_t option(void) {
 		ClearDrawScreen(); /* 描画エリアスタート */
 
 		RecRescaleDrawGraph(0, 0, pic.back, TRUE); /* 背景 */
-		RecRescaleDrawGraph(40, 45 + command * 50, pic.cursor, TRUE); /* カーソル */
+		RecRescaleDrawGraph(40, 45 + command * 40, pic.cursor, TRUE); /* カーソル */
 
 		/* 項目表示 */
-		for (int i = 0; i < 7; i++) {
+		for (int i = 0; i < optionstr_count; i++) {
+			static const int title_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
+			static const int title_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50);
+			static const int title_txgapy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 40);
+
 			TCHAR buf[32];
 
 			optionstr[i].action(buf, *optionstr[i].val_p, optiondata.lang);
