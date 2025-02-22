@@ -1,88 +1,64 @@
 
+/* base include */
 #include <DxLib.h>
-#include <system.h>
 #include <sancur.h>
-#include <strcur.h>
+
+/* rec system include */
+#include <system.h>
+#include <RecSystem.h>
+
+/* rec sub include */
+#include <versionup.h>
 #include <title.h>
 #include <menu.h>
 #include <musicserect2.h>
 #include <play2.h>
 #include <RecCollection.h>
 #include <option.h>
-#include <editserect.h>
-#include <edit.h>
-#include <recr_cutin.h>
-#include <versionup.h>
-#include <RecWindowRescale.h>
 
 #define DX_MAIN_DEF HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
 
 #define TOOL_NAME L"Record Runner Florting Style" // ツールの名前
 
 static void GameMain() {
-	int now = 0, bgm, mnom[7] = { 0,1,0,1,1,0,0 };
-	int G[5] = { 0,0,0,0,0 };
-	unsigned int Cr = GetColor(255, 255, 255);
 	now_scene_t next = SCENE_TITLE;
 	rec_to_play_set_t ps;
-	bgm = LoadSoundMem(L"song/no.mp3");
 	INIT_MAT();
 	upgrade_rate_f(); // レートのセーブデータ更新(Ver.1.04 -> Ver.1.05)
 	fix10501to10502(); // セーブデータバグのfix(Ver.1.05.1 -> Ver.1.05.2)
 	//ゲーム終了(nextが5のとき)までの間、処理を繰り返す
 	while (next != 5) {
 		INIT_PIC();
-		if (mnom[next] != now) {
-			StopSoundMem(bgm);
-			INIT_SND();
-			now = mnom[next];
-			switch (mnom[next]) {
-			case 0:
-				bgm = LoadSoundMem(L"song/no.mp3");
-				break;
-			case 1:
-				bgm = LoadSoundMem(L"song/Let’s_be_happy.mp3");
-				break;
-			}
-			PlaySoundMem(bgm, DX_PLAYTYPE_LOOP);
-		}
 		//表示する画面を選択する
-		now = mnom[next];
 		switch (next) {
 		case SCENE_TITLE:
+			RecSysBgmDelete();
 			next = title();
 			break;
 		case SCENE_MENU:
+			RecSysBgmSetMem(_T("song/Let’s_be_happy.mp3"), sizeof(_T("song/Let’s_be_happy.mp3")));
+			RecSysBgmPlay(false);
 			next = menu();
 			break;
 		case SCENE_SERECT:
+			RecSysBgmDelete();
 			next = musicserect(&ps);
 			break;
 		case SCENE_COLLECTION:
+			RecSysBgmSetMem(_T("song/Let’s_be_happy.mp3"), sizeof(_T("song/Let’s_be_happy.mp3")));
+			RecSysBgmPlay(false);
 			next = collection();
 			break;
 		case SCENE_OPTION:
+			RecSysBgmSetMem(_T("song/Let’s_be_happy.mp3"), sizeof(_T("song/Let’s_be_happy.mp3")));
+			RecSysBgmPlay(false);
 			next = option();
 			break;
 		case SCENE_MUSIC:
+			RecSysBgmDelete();
 			next = play3(ps.packNo, ps.musicNo, ps.dif, ps.shift, ps.autoFg);
 			break;
-#if 0
-		case 7:
-			next = editserect(&G[0]);
-			break;
-		case 8:
-			next = edit(G[0], G[1], G[2], G[3]);
-			break;
-#endif
 		default:
-#if 0
-			ClearDrawScreen();
-			RecRescaleDrawString(200, 200, L"error:001\n予期されない数値", Cr);
-			ScreenFlip();
-			WaitTimer(100);
-			WaitKey();
-#endif
 			next = SCENE_EXIT;
 			break;
 		}

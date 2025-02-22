@@ -29,10 +29,10 @@ int recSystenLoad(rec_system_t *sys) {
 
 static DxSnd_t s_bgm = DXLIB_SND_NULL;
 static TCHAR s_bgmName[256] = _T("");
-static int s_totalVolume = OPTION_BGM_VOLUME;
+static int s_totalVolume = 255;
 
 void RecSysBgmSetMem(const TCHAR *sndPath, size_t size) {
-	if (strands_2(sndPath, size, s_bgmName, ARRAY_COUNT(s_bgmName))) { return; }
+	if (strands_2(s_bgmName, size, sndPath, ARRAY_COUNT(s_bgmName))) { return; }
 
 	strcopy_2(sndPath, s_bgmName, ARRAY_COUNT(s_bgmName));
 	StopSoundMem(s_bgm);
