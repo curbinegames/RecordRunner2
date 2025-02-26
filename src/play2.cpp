@@ -398,30 +398,8 @@ static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play
 static void RecPlayGetMapFileNames(TCHAR *songPath, TCHAR *songName,
 	int packNo, int musicNo, int LvNo)
 {
-	int fd = -1;
-	TCHAR packName[255];
-	TCHAR buf[255];
-
-	/* パックの名前を取得する */
-	fd = FileRead_open(L"RecordPack.txt");
-	for (int i = 0; i <= packNo; i++) { FileRead_gets(packName, 256, fd); }
-	FileRead_close(fd);
-
-	strcopy_2(L"record/", songPath, 255); /* songPath = record/ */
-	strcats_2(songPath, 255, packName);   /* songPath = record/<パック名> */
-	stradds_2(songPath, 255, L'/');       /* songPath = record/<パック名>/ */
-
-	strcopy_2(songPath, buf, 255);    /* buf = record/<パック名>/ */
-	strcats_2(buf, 255, L"list.txt"); /* buf = record/<パック名>/list.txt */
-
-	/* 曲名を取得する */
-	fd = FileRead_open(buf);
-	for (int i = 0; i <= musicNo; i++) FileRead_gets(songName, 256, fd); /* songName = <曲名> */
-	FileRead_close(fd);
-
-	strcats_2(songPath, 255, songName); /* songPath = record/<パック名>/<曲名> */
-	stradds_2(songPath, 255, L'/');     /* songPath = record/<パック名>/<曲名>/ */
-
+	RecGetMusicFolderPath(songPath, 255, packNo, musicNo);
+	RecGetMusicFolderName(songName, 255, packNo, musicNo);
 	return;
 }
 
@@ -1355,9 +1333,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	if (optiondata.SEenable == 0) { RecPlayInitMelodySnd(); }
 
 	RecPlayGetMapFileNames(dataE, ret_fileN, p, n, o);
-	strcopy_2(dataE, GT1, 255);                  /* GT1 = record/<パック名>/<曲名>/ */
-	stradds_2(GT1, 255, (TCHAR)((int)L'0' + o)); /* GT1 = record/<パック名>/<曲名>/<難易度ナンバー> */
-	strcats_2(GT1, 255, L".rrs");                /* GT1 = record/<パック名>/<曲名>/<難易度ナンバー>.rrs */
+	RecGetMusicMapRrsPath(GT1, 255, p, n, (rec_dif_t)o);
 
 	/* rrsデータの内容を読み込む */
 	if (rec_score_fread(&recfp, GT1) != 0) { return SCENE_EXIT; }
@@ -1743,17 +1719,13 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	/* rrsデータが無い、または作成の指示があれば作る */
 	if (shift == 0) {
-		RecGetMusicFolderPath(mapPath, 255, packNo, musicNo);
-		stradds_2(mapPath, 255, (TCHAR)((int)L'0' + difNo));
-		strcats_2(mapPath, 255, L".rrs");
+		RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
 		_wfopen_s(&fp, mapPath, L"rb");
 	}
 
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
-		RecGetMusicFolderPath(mapPath, 255, packNo, musicNo);
-		stradds_2(mapPath, 255, (TCHAR)((int)L'0' + difNo));
-		strcats_2(mapPath, 255, L".rrs");
+		RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
 		cal_ddif_3(mapPath);
 	}
 	else {

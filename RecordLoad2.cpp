@@ -1228,9 +1228,7 @@ void RecordLoad2(int packNo, int songNo, int difNo) {
 	rec_score_file_t recfp;
 
 	RecGetMusicFolderPath(folderPath, 255, packNo, songNo);
-	strcopy_2(folderPath, mapPath, 255);
-	stradds_2(mapPath, 255, (TCHAR)(_T('0') + difNo)); //"record/<パック名>/<曲名>/<難易度>"
-	strcats_2(mapPath, 255, _T(".txt")); //"record/<パック名>/<曲名>/<難易度>.txt"
+	RecGetMusicMapTxtPath(mapPath, 255, packNo, songNo, (rec_dif_t)difNo);
 
 	RecMapLoad_EncodeMap(&recfp, mapPath, folderPath, difNo);
 	return;
