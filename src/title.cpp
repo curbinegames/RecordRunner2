@@ -7,8 +7,34 @@
 #define EFF_TIME_1 750
 #define EFF_TIME_2 EFF_TIME_1 + 200
 
-void ShowTitle1(const int *pic, const int time);
-void ShowTitle2(const int back, const int string, const int white, const int time);
+static void ShowTitle1(const int *pic, const int time) {
+	int posX[12] = { 29,133,204,277,352,422,130,224,288,353,422,480 };
+	int posY[2] = { 37,120 };
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 6; j++) {
+			RecRescaleDrawGraph(
+				pals(EFF_TIME_1 * (i * 6 + j + 3) / 14,
+					posX[i * 6 + j],
+					EFF_TIME_1 * (i * 6 + j) / 14,
+					posX[i * 6 + j] + 640, mins_2(time, EFF_TIME_1 * (i * 6 + j + 3) / 14)),
+				posY[i], pic[i * 6 + j], TRUE);
+		}
+	}
+	return;
+}
+
+static void ShowTitle2(const int back, const int string, const int white, const int time) {
+	RecRescaleDrawGraph(0, 0, back, TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(-1, 0, 1, 255, sinC((GetNowCount() / 4) % 360)));
+	RecRescaleDrawGraph(0, 0, string, TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	if (EFF_TIME_1 <= time && time < EFF_TIME_2) {
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(EFF_TIME_1, 255, EFF_TIME_2, 0, time));
+		RecRescaleDrawGraph(0, 0, white, TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+	return;
+}
 
 now_scene_t title(void) {
 	now_scene_t next = SCENE_MENU;
@@ -67,33 +93,4 @@ now_scene_t title(void) {
 	}
 	ClearDrawScreen();
 	return next;
-}
-
-void ShowTitle1(const int *pic, const int time) {
-	int posX[12] = { 29,133,204,277,352,422,130,224,288,353,422,480 };
-	int posY[2] = { 37,120 };
-	for (int i = 0; i < 2; i++) {
-		for (int j = 0; j < 6; j++) {
-			RecRescaleDrawGraph(
-				pals(EFF_TIME_1 * (i * 6 + j + 3) / 14,
-					posX[i * 6 + j],
-					EFF_TIME_1 * (i * 6 + j) / 14,
-					posX[i * 6 + j] + 640, mins_2(time, EFF_TIME_1 * (i * 6 + j + 3) / 14)),
-				posY[i], pic[i * 6 + j], TRUE);
-		}
-	}
-	return;
-}
-
-void ShowTitle2(const int back, const int string, const int white, const int time) {
-	RecRescaleDrawGraph(0, 0, back, TRUE);
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(-1, 0, 1, 255, sinC((GetNowCount() / 4) % 360)));
-	RecRescaleDrawGraph(0, 0, string, TRUE);
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-	if (EFF_TIME_1 <= time && time < EFF_TIME_2) {
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(EFF_TIME_1, 255, EFF_TIME_2, 0, time));
-		RecRescaleDrawGraph(0, 0, white, TRUE);
-		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
-	}
-	return;
 }
