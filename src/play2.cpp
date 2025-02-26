@@ -1430,7 +1430,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				speedN[3]++;
 			}
 		}
-		if (AutoFlag == 1) {
+		if (1) {
 			for (i[0] = 0; i[0] < 3; i[0]++) {
 				while ((0 <= recfp.mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Stime &&
 					recfp.mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Etime <= recfp.time.now) ||

@@ -1050,21 +1050,16 @@ public:
 
 static class rec_serect_snd_c {
 private:
-	DxSnd_t select;
+	dxcur_snd_c sound;
 
 public:
 	rec_serect_snd_c() {
-		this->select = LoadSoundMem(L"sound/arrow.wav");
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->select);
-	}
-
-	~rec_serect_snd_c() {
-		StopSoundMem(this->select);
-		DeleteSoundMem(this->select);
+		this->sound.SetSound(_T("sound/arrow.wav"));
+		this->sound.SetVolume(optiondata.SEvolume * 255 / 10);
 	}
 
 	void PlaySnd() {
-		PlaySoundMem(this->select, DX_PLAYTYPE_BACK);
+		this->sound.PlaySound();
 	}
 };
 
