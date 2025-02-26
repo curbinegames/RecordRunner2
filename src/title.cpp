@@ -5,42 +5,12 @@
 #include <RecWindowRescale.h>
 
 #define EFF_TIME_1 750
-#define EFF_TIME_2 EFF_TIME_1 + 200
+#define EFF_TIME_2 200
 
-static void ShowTitle1(const int *pic, const int time) {
-	int posX[12] = { 29,133,204,277,352,422,130,224,288,353,422,480 };
-	int posY[2] = { 37,120 };
-	for (int i = 0; i < 2; i++) {
-		for (int j = 0; j < 6; j++) {
-			RecRescaleDrawGraph(
-				pals(EFF_TIME_1 * (i * 6 + j + 3) / 14,
-					posX[i * 6 + j],
-					EFF_TIME_1 * (i * 6 + j) / 14,
-					posX[i * 6 + j] + 640, mins_2(time, EFF_TIME_1 * (i * 6 + j + 3) / 14)),
-				posY[i], pic[i * 6 + j], TRUE);
-		}
-	}
-	return;
-}
-
-static void ShowTitle2(const int back, const int string, const int white, const int time) {
-	RecRescaleDrawGraph(0, 0, back, TRUE);
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(-1, 0, 1, 255, sinC((GetNowCount() / 4) % 360)));
-	RecRescaleDrawGraph(0, 0, string, TRUE);
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-	if (EFF_TIME_1 <= time && time < EFF_TIME_2) {
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(EFF_TIME_1, 255, EFF_TIME_2, 0, time));
-		RecRescaleDrawGraph(0, 0, white, TRUE);
-		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
-	}
-	return;
-}
-
-now_scene_t title(void) {
-	now_scene_t next = SCENE_MENU;
-	int alpha[2] = { 255,-1 };
-	int StartTime = -1;
-	int TitleChar[12] = {
+class rec_title_cutin_c {
+private:
+	int StartTime = 0;
+	DxPic_t TitleChar[12] = {
 		LoadGraph(L"picture/Title-1.png"),
 		LoadGraph(L"picture/Title-2.png"),
 		LoadGraph(L"picture/Title-3.png"),
@@ -54,28 +24,123 @@ now_scene_t title(void) {
 		LoadGraph(L"picture/Title-11.png"),
 		LoadGraph(L"picture/Title-12.png")
 	};
-	int Title = LoadGraph(L"picture/TitleMain.png");
-	int Push = LoadGraph(L"picture/pushkey.png");
-	int white = LoadGraph(L"picture/White.png");
 
+public:
+	~rec_title_cutin_c() {
+		for (uint inum = 0; inum < 12; inum++) {
+			DeleteGraph(TitleChar[inum]);
+		}
+	}
+
+	bool IsEndAnim(void) const {
+		return (EFF_TIME_1 <= (GetNowCount() - StartTime));
+	}
+
+	void DrawAll(void) const {
+		const int Ntime = GetNowCount() - this->StartTime;
+		int posX[12] = { 29,133,204,277,352,422,130,224,288,353,422,480 };
+		int posY[2] = { 37,120 };
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 6; j++) {
+				int drawX = pals(EFF_TIME_1 * (i * 6 + j + 3) / 14,
+					posX[i * 6 + j],
+					EFF_TIME_1 * (i * 6 + j) / 14,
+					posX[i * 6 + j] + 640,
+					mins_2(Ntime, EFF_TIME_1 * (i * 6 + j + 3) / 14));
+				RecRescaleDrawGraph(drawX, posY[i], this->TitleChar[i * 6 + j], TRUE);
+			}
+		}
+		return;
+	}
+
+	void SetStartTime(void) {
+		this->StartTime = GetNowCount();
+	}
+};
+
+class rec_title_main_c {
+private:
+	int StartTime = 0;
+	DxPic_t Title = LoadGraph(L"picture/TitleMain.png");
+	DxPic_t Push  = LoadGraph(L"picture/pushkey.png");
+	DxPic_t white = LoadGraph(L"picture/White.png");
+
+public:
+	~rec_title_main_c() {
+		DeleteGraph(Title);
+		DeleteGraph(Push);
+		DeleteGraph(white);
+	}
+
+	void DrawAll(void) const {
+		RecRescaleDrawGraph(0, 0, this->Title, TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(-1, 0, 1, 255, sinC((GetNowCount() / 4) % 360)));
+		RecRescaleDrawGraph(0, 0, this->Push, TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		if ((GetNowCount() - this->StartTime) < EFF_TIME_2) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 255, EFF_TIME_2, 0, GetNowCount() - this->StartTime));
+			RecRescaleDrawGraph(0, 0, this->white, TRUE);
+			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+		}
+		return;
+	}
+
+	void SetStartTime(void) {
+		this->StartTime = GetNowCount();
+	}
+};
+
+class rec_title_obnect_c {
+private:
+	rec_title_cutin_c anim1;
+	rec_title_main_c  anim2;
+
+	int state = 0;
+
+public:
+	void DrawObject(void) const {
+		switch (this->state) {
+		case 0:
+			this->anim1.DrawAll();
+			break;
+		case 1:
+			this->anim2.DrawAll();
+			break;
+		}
+	}
+
+	void Start(void) {
+		this->anim1.SetStartTime();
+	}
+
+	void Update(void) {
+		if ((this->state == 0) && (this->anim1.IsEndAnim())) {
+			this->state = 1;
+			this->anim2.SetStartTime();
+		}
+	}
+
+	int GetState(void) const {
+		return this->state;
+	}
+};
+
+now_scene_t title(void) {
 	rec_cutin_c cutin;
+	rec_title_obnect_c TitleObjectClass;
 
-	StartTime = GetNowCount();
+	TitleObjectClass.Start();
 	while (1) {
 		ClearDrawScreen(); /* 描画エリアここから */
 
-		if (GetNowCount() - StartTime < EFF_TIME_1) {
-			ShowTitle1(TitleChar, GetNowCount() - StartTime);
-		}
-		else if (EFF_TIME_1 <= GetNowCount() - StartTime) {
-			ShowTitle2(Title, Push, white, GetNowCount() - StartTime);
-		}
+		TitleObjectClass.Update();
+		TitleObjectClass.DrawObject();
 
 		cutin.DrawCut();
 
 		ScreenFlip(); /* 描画エリアここまで */
 
-		if (CheckHitKeyAll() && 1000 <= GetNowCount() - StartTime && cutin.IsClosing() == 0) {
+		if (CheckHitKeyAll() && (TitleObjectClass.GetState() == 1) && (cutin.IsClosing() == 0)) {
 			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
 			cutin.SetIo(1);
 		}
@@ -86,11 +151,10 @@ now_scene_t title(void) {
 		}
 
 		if (GetWindowUserCloseFlag(TRUE)) {
-			next = SCENE_EXIT;
-			break;
+			return SCENE_EXIT;
 		}
 		WaitTimer(10);
 	}
 	ClearDrawScreen();
-	return next;
+	return SCENE_MENU;
 }
