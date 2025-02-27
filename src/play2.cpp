@@ -163,12 +163,15 @@ static void Getxxxwav(wchar_t *str, int num) {
 /* (ret / 100) */
 static void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, int cam) {
 	const double scrool = mapeff->scrool.data[mapeff->scrool.num].speed;
+	rec_mapeff_speedt_dataset_t *p_speedt = mapeff->speedt;
+	double speed3 = p_speedt[3].d[p_speedt[3].num].speed;
+	double speed4 = p_speedt[4].d[p_speedt[4].num].speed;
 
-	xpos[0] -= (int)(100 * mapeff->speedt[3].d[mapeff->speedt[3].num].speed * scrool);
+	xpos[0] -= (int)(100 * speed3 * scrool);
 	while (xpos[0] + 100 * cam / 5 > 0)      { xpos[0] -= 64000; }
 	while (xpos[0] + 100 * cam / 5 < -64000) { xpos[0] += 64000; }
 
-	xpos[1] -= (int)(500 * mapeff->speedt[4].d[mapeff->speedt[4].num].speed * scrool);
+	xpos[1] -= (int)(500 * speed4 * scrool);
 	while (xpos[1] + 100 * cam > 0)      { xpos[1] -= 64000; }
 	while (xpos[1] + 100 * cam < -64000) { xpos[1] += 64000; }
 
@@ -447,8 +450,9 @@ static int StepNoDrawNote(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *
 	note_box_2_t *note, rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
 	int Ntime)
 {
+	rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
+
 	int ret = 0;
-	double sppedt_temp[99];
 	ret = StepViewNoDrawNote(note->hittime, mapeff, viewTN, viewTadd, Ntime);
 	if (ret == 1) { return 1; }
 	else if (ret == 2) { return 2; }
@@ -462,11 +466,7 @@ static int StepNoDrawNote(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *
 		(*YLockNoAdd)++;
 	}
 	// スピードナンバーを進める
-	for (int i = 0; i < 99; i++) {
-		sppedt_temp[i] = mapeff->speedt[iLine].d[i].time;
-	}
-	while (note->hittime >= sppedt_temp[mapeff->speedt[iLine].num + *SpeedNoAdd + 1] &&
-		sppedt_temp[mapeff->speedt[iLine].num + *SpeedNoAdd + 1] >= 0) {
+	while (IS_BETWEEN(0, p_speedt->d[p_speedt->num + *SpeedNoAdd + 1].time, note->hittime)) {
 		(*SpeedNoAdd)++;
 	}
 	return 0;
@@ -643,14 +643,9 @@ static int RecMapGetPosFromMove(rec_move_set_t move[], int time, int lane) {
 }
 
 static int RecPlayStepSpeedNum(rec_map_eff_data_t *mapeff, int iLine, int Ptime) {
+	rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
 	int SpeedNoAdd = 0;
-	double sppedt_temp[99];
-
-	for (int i = 0; i < 99; i++) {
-		sppedt_temp[i] = mapeff->speedt[iLine].d[i].time;
-	}
-	while (Ptime >= sppedt_temp[mapeff->speedt[iLine].num + SpeedNoAdd + 1] &&
-		sppedt_temp[mapeff->speedt[iLine].num + SpeedNoAdd + 1] >= 0) {
+	while (IS_BETWEEN(0, p_speedt->d[p_speedt->num + SpeedNoAdd + 1].time, Ptime)) {
 		SpeedNoAdd++;
 	}
 	return SpeedNoAdd;
