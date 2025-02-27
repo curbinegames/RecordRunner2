@@ -741,19 +741,24 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 				speedN[inum] = recfp->mapeff.speedt[inum].num;
 			}
 
+		{
 			G[0] = betweens(0, GT1[6] - 49, 4);
+			int *num = &recfp->mapeff.speedt[G[0]].num;
+			rec_mapeff_speedt_data_t *dest = &recfp->mapeff.speedt[G[0]].d[*num];
+
 			strmods(GT1, 8);
-			dest[G[0]].d[speedN[G[0]]].speed = strsans2(GT1);
+			dest->speed = strsans2(GT1);
 			strnex(GT1);
 			if (GT1[0] >= L'0' && GT1[0] <= L'9' || GT1[0] == L'-') {
-				dest[G[0]].d[speedN[G[0]]].time = timer[G[0]] + 240000 * (dest[G[0]].d[speedN[G[0]]].speed - 1) / (bpmG * 16) - 10;
-				dest[G[0]].d[speedN[G[0]]].speed = strsans2(GT1);
+				dest->time = timer[G[0]] + 240000 * (dest->speed - 1) / (bpmG * 16) - 10;
+				dest->speed = strsans2(GT1);
 			}
 			else {
-				dest[G[0]].d[speedN[G[0]]].time = timer[G[0]] - 10;
+				dest->time = timer[G[0]] - 10;
 			}
-			recfp->mapeff.speedt[G[0]].num++;
+			(*num)++;
 			break;
+		}
 		}
 		case OBJ_CODE_BPM: //ƒf[ƒ^ˆ—‚ÌBPM•Ï‰»
 			bpmG = SETbpm(GT1);
