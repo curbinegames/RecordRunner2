@@ -112,6 +112,16 @@ typedef struct rec_viewline_dataset_s {
 	uint num = 0;
 } rec_viewline_dataset_t;
 
+typedef struct rec_mapeff_speedt_data_s {
+	int time = -1;
+	double speed = 1.0;
+} rec_mapeff_speedt_data_t;
+
+typedef struct rec_mapeff_speedt_dataset_s {
+	rec_mapeff_speedt_data_t d[99];
+	int num = 0;
+} rec_mapeff_speedt_dataset_t;
+
 typedef struct rec_map_eff_data_s {
 	rec_camera_set_t camera;
 	rec_scrool_set_t scrool;
@@ -124,7 +134,7 @@ typedef struct rec_map_eff_data_s {
 	rec_chara_gra_data_t chamo;
 	rec_fall_data_t fall;
 	rec_viewline_dataset_t viewLine;
-	double speedt[5][99][2]; //[ã, ’†, ‰º, (’n–Ê), (…’†)]ƒŒ[ƒ“‚Ì[0:Ø‚è‘Ö‚¦ŠÔ,1:‘¬“x]
+	rec_mapeff_speedt_dataset_t speedt[5];
 } rec_map_eff_data_t;
 
 #endif /* rec_map_eff_data_t */

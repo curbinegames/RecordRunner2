@@ -52,7 +52,16 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 			recfp->mapeff.fall.d[i].No   = buf[i][1];
 		}
 	}
-	fread(&recfp->mapeff.speedt, sizeof(double), 990, fp);//レーン速度
+	{
+		double buf[5][99][2];
+		fread(&buf, sizeof(double), 990, fp);//レーン速度
+		for (int iLane = 0; iLane < 5; iLane++) {
+			for (int inum = 0; inum < 99; inum++) {
+				recfp->mapeff.speedt[iLane].d[inum].time  = buf[iLane][inum][0];
+				recfp->mapeff.speedt[iLane].d[inum].speed = buf[iLane][inum][1];
+			}
+		}
+	}
 	{
 		int buf[3][99][2];
 		fread(buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
@@ -154,7 +163,16 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 		}
 		fwrite(&buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 	}
-	fwrite(&recfp->mapeff.speedt, sizeof(double), 990, fp);//レーン速度
+	{
+		double buf[5][99][2];
+		for (int iLane = 0; iLane < 5; iLane++) {
+			for (int inum = 0; inum < 99; inum++) {
+				buf[iLane][inum][0] = recfp->mapeff.speedt[iLane].d[inum].time;
+				buf[iLane][inum][1] = recfp->mapeff.speedt[iLane].d[inum].speed;
+			}
+		}
+		fwrite(&buf, sizeof(double), 990, fp);//レーン速度
+	}
 	{
 		int buf[3][99][2];
 		for (int ilane = 0; ilane < 3; ilane++) {

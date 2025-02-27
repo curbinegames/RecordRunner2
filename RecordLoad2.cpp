@@ -466,16 +466,21 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.chamo[2].time[0] = 0;
 	recfp->mapeff.chamo[2].num = 1;
 	recfp->mapeff.fall.num = 1;
-	recfp->mapeff.speedt[0][0][0] = 0;
-	recfp->mapeff.speedt[0][0][1] = 1;
-	recfp->mapeff.speedt[1][0][0] = 0;
-	recfp->mapeff.speedt[1][0][1] = 1;
-	recfp->mapeff.speedt[2][0][0] = 0;
-	recfp->mapeff.speedt[2][0][1] = 1;
-	recfp->mapeff.speedt[3][0][0] = 0;
-	recfp->mapeff.speedt[3][0][1] = 1;
-	recfp->mapeff.speedt[4][0][0] = 0;
-	recfp->mapeff.speedt[4][0][1] = 1;
+	recfp->mapeff.speedt[0].d[0].time = 0;
+	recfp->mapeff.speedt[0].d[0].speed = 1.0;
+	recfp->mapeff.speedt[0].num = 1;
+	recfp->mapeff.speedt[1].d[0].time = 0;
+	recfp->mapeff.speedt[1].d[0].speed = 1.0;
+	recfp->mapeff.speedt[1].num = 1;
+	recfp->mapeff.speedt[2].d[0].time = 0;
+	recfp->mapeff.speedt[2].d[0].speed = 1.0;
+	recfp->mapeff.speedt[2].num = 1;
+	recfp->mapeff.speedt[3].d[0].time = 0;
+	recfp->mapeff.speedt[3].d[0].speed = 1.0;
+	recfp->mapeff.speedt[3].num = 1;
+	recfp->mapeff.speedt[4].d[0].time = 0;
+	recfp->mapeff.speedt[4].d[0].speed = 1.0;
+	recfp->mapeff.speedt[4].num = 1;
 	recfp->mapeff.viewLine.d[0].enable = true;
 	recfp->mapeff.viewLine.d[0].time = 0;
 	recfp->mapeff.viewLine.num = 1;
@@ -545,7 +550,16 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 		}
 		fwrite(&buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
 	}
-	fwrite(&recfp->mapeff.speedt, sizeof(double), 990, fp);//レーン速度
+	{
+		double buf[5][99][2];
+		for (int iLane = 0; iLane < 5; iLane++) {
+			for (int inum = 0; inum < 99; inum++) {
+				buf[iLane][inum][0] = recfp->mapeff.speedt[iLane].d[inum].time;
+				buf[iLane][inum][1] = recfp->mapeff.speedt[iLane].d[inum].speed;
+			}
+		}
+		fwrite(&buf, sizeof(double), 990, fp);//レーン速度
+	}
 	{
 		int buf[3][99][2];
 		for (int ilane = 0; ilane < 3; ilane++) {
@@ -632,7 +646,6 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 	ddef_box ddif2;
 	double bpmG = 120;
 	double timer[3] = { 0,0,0 }; //[上, 中, 下]レーンの時間
-	short int speedN[5] = { 1,1,1,1,1 }; //↑の番号
 	TCHAR RRS[255]; //PC用譜面データの保存場所
 	TCHAR GT1[255];
 	DxFile_t songdata = 0;
@@ -721,19 +734,27 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		case OBJ_CODE_SPACE: //空白
 			break;
 		case OBJ_CODE_SPEED: //ノーツの速度変化
+		{
+			rec_mapeff_speedt_dataset_t *dest = recfp->mapeff.speedt;
+			short int speedN[5];
+			for (uint inum = 0; inum < 5; inum++) {
+				speedN[inum] = recfp->mapeff.speedt[inum].num;
+			}
+
 			G[0] = betweens(0, GT1[6] - 49, 4);
 			strmods(GT1, 8);
-			recfp->mapeff.speedt[G[0]][speedN[G[0]]][1] = strsans2(GT1);
+			dest[G[0]].d[speedN[G[0]]].speed = strsans2(GT1);
 			strnex(GT1);
 			if (GT1[0] >= L'0' && GT1[0] <= L'9' || GT1[0] == L'-') {
-				recfp->mapeff.speedt[G[0]][speedN[G[0]]][0] = timer[G[0]] + 240000 * (recfp->mapeff.speedt[G[0]][speedN[G[0]]][1] - 1) / (bpmG * 16) - 10;
-				recfp->mapeff.speedt[G[0]][speedN[G[0]]][1] = strsans2(GT1);
+				dest[G[0]].d[speedN[G[0]]].time = timer[G[0]] + 240000 * (dest[G[0]].d[speedN[G[0]]].speed - 1) / (bpmG * 16) - 10;
+				dest[G[0]].d[speedN[G[0]]].speed = strsans2(GT1);
 			}
 			else {
-				recfp->mapeff.speedt[G[0]][speedN[G[0]]][0] = timer[G[0]] - 10;
+				dest[G[0]].d[speedN[G[0]]].time = timer[G[0]] - 10;
 			}
-			speedN[G[0]]++;
+			recfp->mapeff.speedt[G[0]].num++;
 			break;
+		}
 		case OBJ_CODE_BPM: //データ処理のBPM変化
 			bpmG = SETbpm(GT1);
 			break;

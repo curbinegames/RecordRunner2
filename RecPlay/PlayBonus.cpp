@@ -60,6 +60,9 @@ void ReadyBonusPsmat() {
 	g_bonus_psmat.snd.perfect = LoadSoundMem(L"sound/a-perfect.mp3");
 	g_bonus_psmat.snd.fullcombo = LoadSoundMem(L"sound/a-fullcombo.mp3");
 	g_bonus_psmat.snd.nomiss = LoadSoundMem(L"sound/a-nomiss.mp3");
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, g_bonus_psmat.snd.perfect);
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, g_bonus_psmat.snd.fullcombo);
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, g_bonus_psmat.snd.nomiss);
 	return;
 }
 

@@ -164,11 +164,11 @@ static void Getxxxwav(wchar_t *str, int num) {
 static void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, short int speedN[], int cam) {
 	const double scrool = mapeff->scrool.data[mapeff->scrool.num].speed;
 
-	xpos[0] -= (int)(100 * mapeff->speedt[3][speedN[3]][1] * scrool);
+	xpos[0] -= (int)(100 * mapeff->speedt[3].d[mapeff->speedt[3].num].speed * scrool);
 	while (xpos[0] + 100 * cam / 5 > 0)      { xpos[0] -= 64000; }
 	while (xpos[0] + 100 * cam / 5 < -64000) { xpos[0] += 64000; }
 
-	xpos[1] -= (int)(500 * mapeff->speedt[4][speedN[4]][1] * scrool);
+	xpos[1] -= (int)(500 * mapeff->speedt[4].d[mapeff->speedt[4].num].speed * scrool);
 	while (xpos[1] + 100 * cam > 0)      { xpos[1] -= 64000; }
 	while (xpos[1] + 100 * cam < -64000) { xpos[1] += 64000; }
 
@@ -463,10 +463,10 @@ static int StepNoDrawNote(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *
 	}
 	// スピードナンバーを進める
 	for (int i = 0; i < 99; i++) {
-		sppedt_temp[i] = mapeff->speedt[iLine][0][i * 2];
+		sppedt_temp[i] = mapeff->speedt[iLine].d[i].time;
 	}
-	while (note->hittime >= sppedt_temp[speedN + *SpeedNoAdd + 1] &&
-		sppedt_temp[speedN + *SpeedNoAdd + 1] >= 0) {
+	while (note->hittime >= sppedt_temp[mapeff->speedt[iLine].num + *SpeedNoAdd + 1] &&
+		sppedt_temp[mapeff->speedt[iLine].num + *SpeedNoAdd + 1] >= 0) {
 		(*SpeedNoAdd)++;
 	}
 	return 0;
@@ -506,7 +506,7 @@ static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *Spe
 	else if (ret == 2) { return 2; }
 	CalPalCrawNote(&DrawX, &DrawY, &DrawC, mapeff->lock[0][0][lockN[0] + *XLockNoAdd],
 		mapeff->lock[1][0][lockN[1] + *YLockNoAdd], note, Xline, Yline,
-		mapeff->speedt[iLine][0][(speedN + *SpeedNoAdd) * 2 + 1], &mapeff->scrool, Ntime);
+		mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + *SpeedNoAdd].speed, &mapeff->scrool, Ntime);
 	switch (note->object) {
 	case 1:
 	case 3:
@@ -563,7 +563,7 @@ static void RecPlayDrawNoteAll(short int objectN[], note_box_2_t note[],
 		SpeedNoAdd = 0;
 		for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
 			ret = DrawNoteOne(&viewTadd, &XLockNoAdd, &YLockNoAdd, &SpeedNoAdd,
-				&note[iNote], mapeff, viewTN, lockN, iLine, speedN[iLine],
+				&note[iNote], mapeff, viewTN, lockN, iLine, mapeff->speedt[iLine].num,
 				Ntime, Xline[iLine], Yline[iLine], noteimg);
 			if (ret == 1) { continue; }
 			else if (ret == 2) { break; }
@@ -648,10 +648,10 @@ static int RecPlayStepSpeedNum(rec_map_eff_data_t *mapeff, int iLine, short spee
 	double sppedt_temp[99];
 
 	for (int i = 0; i < 99; i++) {
-		sppedt_temp[i] = mapeff->speedt[iLine][0][i * 2];
+		sppedt_temp[i] = mapeff->speedt[iLine].d[i].time;
 	}
-	while (Ptime >= sppedt_temp[speedN + SpeedNoAdd + 1] &&
-		sppedt_temp[speedN + SpeedNoAdd + 1] >= 0) {
+	while (Ptime >= sppedt_temp[mapeff->speedt[iLine].num + SpeedNoAdd + 1] &&
+		sppedt_temp[mapeff->speedt[iLine].num + SpeedNoAdd + 1] >= 0) {
 		SpeedNoAdd++;
 	}
 	return SpeedNoAdd;
@@ -677,7 +677,7 @@ static void RecPlayGetTimeLanePos(int *retX, int *retY, rec_map_eff_data_t *mape
 	int SpeedNoAdd = RecPlayStepSpeedNum(mapeff, iLine, speedN, Ptime);
 
 	RecPlayGetTimeLanePosBase(retX, retY, &mapeff->move, Xline,
-		mapeff->speedt[iLine][0][(speedN + SpeedNoAdd) * 2 + 1], &mapeff->scrool, Ntime, Ptime,
+		mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + SpeedNoAdd].speed, &mapeff->scrool, Ntime, Ptime,
 		iLine);
 	return;
 }
@@ -720,9 +720,9 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, short int speedN[], int *Xl
 		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { continue; }
 		if (recfp->time.end < Ptime) { return; }
 
-		RecPlayGetTimeLanePos(&posX1, &posY1, &recfp->mapeff, Xline, 0, speedN[0], Ntime, Ptime);
-		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, Xline, 1, speedN[1], Ntime, Ptime);
-		RecPlayGetTimeLanePos(&posX3, &posY3, &recfp->mapeff, Xline, 2, speedN[2], Ntime, Ptime);
+		RecPlayGetTimeLanePos(&posX1, &posY1, &recfp->mapeff, Xline, 0, recfp->mapeff.speedt[0].num, Ntime, Ptime);
+		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, Xline, 1, recfp->mapeff.speedt[1].num, Ntime, Ptime);
+		RecPlayGetTimeLanePos(&posX3, &posY3, &recfp->mapeff, Xline, 2, recfp->mapeff.speedt[2].num, Ntime, Ptime);
 
 		for (uint idraw = 0; idraw < 10; idraw++) {
 			int drawX  = lins( 0, posX1,  10, posX2, idraw);
@@ -779,11 +779,11 @@ int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[
 		break;
 	}
 
-	uint NspeedNo = speedN[1];
-	while (IS_BETWEEN_LEFT_LESS(0, recfp->mapeff.speedt[1][NspeedNo + 1][0], Ymove[Line].d[iDraw].Stime)) {
+	uint NspeedNo = recfp->mapeff.speedt[1].num;
+	while (IS_BETWEEN_LEFT_LESS(0, recfp->mapeff.speedt[1].d[NspeedNo + 1].time, Ymove[Line].d[iDraw].Stime)) {
 		NspeedNo++;
 	}
-	length = lins(1.0, 2.5, 1.2, 2.1, recfp->mapeff.speedt[1][NspeedNo][1]);
+	length = lins(1.0, 2.5, 1.2, 2.1, recfp->mapeff.speedt[1].d[NspeedNo].speed);
 
 	if (Ymove[Line].d[iDraw].Stime < 0) {
 		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 1; }
@@ -1387,9 +1387,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				recfp.mapeff.chamo[iLine].time[recfp.mapeff.chamo[iLine].num + 1] <= recfp.time.now) {
 				recfp.mapeff.chamo[iLine].num++;
 			}
-			while (0 <= recfp.mapeff.speedt[iLine][speedN[iLine] + 1][0] &&
-				recfp.mapeff.speedt[iLine][speedN[iLine] + 1][0] <= recfp.time.now) {
-				speedN[iLine]++;
+			while (0 <= recfp.mapeff.speedt[iLine].d[recfp.mapeff.speedt[iLine].num + 1].time &&
+				recfp.mapeff.speedt[iLine].d[recfp.mapeff.speedt[iLine].num + 1].time <= recfp.time.now) {
+				recfp.mapeff.speedt[iLine].num++;
 			}
 		}
 		while (-1000 < recfp.mapeff.v_BPM.data[recfp.mapeff.v_BPM.num + 1].time &&
@@ -1424,10 +1424,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			{
 				recfp.mapeff.fall.num++;
 			}
-			if (recfp.mapeff.speedt[3][speedN[3] + 1][0] < recfp.time.now &&
-				recfp.mapeff.speedt[3][speedN[3] + 1][0] >= 0)
-			{
-				speedN[3]++;
+			while (0 <= recfp.mapeff.speedt[3].d[recfp.mapeff.speedt[3].num + 1].time &&
+				recfp.mapeff.speedt[3].d[recfp.mapeff.speedt[3].num + 1].time <= recfp.time.now) {
+				recfp.mapeff.speedt[3].num++;
 			}
 		}
 		if (1) {
