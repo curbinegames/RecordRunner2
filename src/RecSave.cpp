@@ -291,7 +291,7 @@ double RecSaveGetFullRunnerRate(void) {
 		}
 	}
 
-	return ret;
+	return ret * 10 / RATE_NUM;
 }
 
 #endif /* runner rate */
