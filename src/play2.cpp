@@ -180,12 +180,17 @@ static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
 {
 	int ans = CHARA_POS_MID;
+	// push up
+	if (1 <= keyhold->up && 0 == keyhold->down) { return CHARA_POS_UP; }
+	// push down
+	else if (0 == keyhold->up && 1 <= keyhold->down) { return CHARA_POS_DOWN; }
+	// push up and down
+	else if (1 <= keyhold->up && 1 <= keyhold->down) { return CHARA_POS_MID; }
 	// near catch/bomb
 	for (int i = 0; i < 3; i++) {
 		if (note[No[i]].hittime <= time + 40 &&
 			(note[No[i]].object == NOTE_CATCH ||
-				note[No[i]].object == NOTE_BOMB) &&
-			keyhold->up == 0 && keyhold->down == 0)
+				note[No[i]].object == NOTE_BOMB))
 		{
 			return CHARA_POS_MID;
 		}
@@ -196,15 +201,7 @@ static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	{
 		return hitatk->pos;
 	}
-	// push up
-	if (1 <= keyhold->up && 0 == keyhold->down) { ans = CHARA_POS_UP; }
-	// push down
-	else if (0 == keyhold->up && 1 <= keyhold->down) { ans = CHARA_POS_DOWN; }
-	// push up and down
-	else if (1 <= keyhold->up && 1 <= keyhold->down) { ans = CHARA_POS_MID; }
-	// not hit
-	else { ans = CHARA_POS_MID; }
-	return ans;
+	return CHARA_POS_MID;
 }
 
 static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
