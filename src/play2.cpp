@@ -756,7 +756,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, short int speedN[], int *Xl
 			int drawY  = lins( 0, posY2, divColor    , posY3, idraw);
 			int drawX2 = lins(-1, posX2, divColor - 1, posX3, idraw);
 			int drawY2 = lins(-1, posY2, divColor - 1, posY3, idraw);
-			int hueP   = lins( 0,    96, divColor - 1,   176, idraw);
+			int hueP   = lins( 0,    96, divColor - 1,   192, idraw);
 			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), 3);
 		}
 	}
