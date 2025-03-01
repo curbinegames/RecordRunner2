@@ -683,6 +683,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, short int speedN[], int *Xl
 	int Ptime = 0;
 	int pnum  = 0;
 	DxTime_t Ntime = recfp->time.now;
+	static const uint divColor = 20;
 
 	/* Ntime以上のPスポットを計算したい */
 	/* Pスポットとなりえる配列は[offset, offset + 60000 / (bpm / 4), offset + 2 * 60000 / (bpm / 4), ...] */
@@ -721,20 +722,29 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, short int speedN[], int *Xl
 		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, Xline, 1, speedN[1], Ntime, Ptime);
 		RecPlayGetTimeLanePos(&posX3, &posY3, &recfp->mapeff, Xline, 2, speedN[2], Ntime, Ptime);
 
-		for (uint idraw = 0; idraw < 10; idraw++) {
-			int drawX  = lins( 0, posX1,  10, posX2, idraw);
-			int drawY  = lins( 0, posY1,  10, posY2, idraw);
-			int drawX2 = lins(-1, posX1,   9, posX2, idraw);
-			int drawY2 = lins(-1, posY1,   9, posY2, idraw);
-			int hueP   = lins( 0,     0,   9,    96, idraw);
+		if (abss(posY1, posY2) < 25) {
+			posY1 = posY2 - 20;
+			posX1 = posX2;
+		}
+		if (abss(posY3, posY2) < 25) {
+			posY3 = posY2 + 25;
+			posX3 = posX2;
+		}
+
+		for (uint idraw = 0; idraw < divColor; idraw++) {
+			int drawX  = lins( 0, posX1, divColor    , posX2, idraw);
+			int drawY  = lins( 0, posY1, divColor    , posY2, idraw);
+			int drawX2 = lins(-1, posX1, divColor - 1, posX2, idraw);
+			int drawY2 = lins(-1, posY1, divColor - 1, posY2, idraw);
+			int hueP   = lins( 0,     0, divColor - 1,    96, idraw);
 			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), 3);
 		}
-		for (uint idraw = 0; idraw < 10; idraw++) {
-			int drawX  = lins(  0, posX2,  10, posX3, idraw);
-			int drawY  = lins(  0, posY2,  10, posY3, idraw);
-			int drawX2 = lins( -1, posX2,   9, posX3, idraw);
-			int drawY2 = lins( -1, posY2,   9, posY3, idraw);
-			int hueP   = lins(  0,    96,   9,   176, idraw);
+		for (uint idraw = 0; idraw < divColor; idraw++) {
+			int drawX  = lins( 0, posX2, divColor    , posX3, idraw);
+			int drawY  = lins( 0, posY2, divColor    , posY3, idraw);
+			int drawX2 = lins(-1, posX2, divColor - 1, posX3, idraw);
+			int drawY2 = lins(-1, posY2, divColor - 1, posY3, idraw);
+			int hueP   = lins( 0,    96, divColor - 1,   176, idraw);
 			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), 3);
 		}
 	}
