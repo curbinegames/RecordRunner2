@@ -410,6 +410,18 @@ static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 	return scoreBuf.score;
 }
 
+static void RacPlayDrawFieldGrid(void) {
+	int cameraX = 0;
+	int cameraY = 0;
+	RecPlayGetCameraPos(&cameraX, &cameraY);
+	for (int inum = -5; inum < 10; inum++) {
+		TCHAR str[5];
+		_stprintf_s(str, _T("%d"), inum);
+		DrawStringRecField(30, 50 * inum + 8 + 100, str, COLOR_WHITE);
+	}
+	return;
+}
+
 #endif /* sub action */
 
 #if 1 /* Notes Picture */
@@ -1576,6 +1588,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//デバッグ表示
 		if (holdG >= 1) {
 			RecRescaleDrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mpal.mdif / 100.0);
+			RacPlayDrawFieldGrid();
 #if 0
 			/* エラー表示 */
 			if (recfp.outpoint[1] != 0) {
