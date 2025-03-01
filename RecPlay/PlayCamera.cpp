@@ -40,6 +40,21 @@ void RecPlayGetCameraPos(int *retX, int *retY) {
 	return;
 }
 
+void DrawStringRecField(int xpos, int ypos, TCHAR *str, DxColor_t cr) {
+	int drawX = 0;
+	int drawY = 0;
+
+	/* Xpos */
+	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos + camera_pos.x);
+
+	/* Ypos */
+	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos + camera_pos.y);
+
+	/* draw */
+	DrawString(drawX, drawY, str, cr);
+	return;
+}
+
 void DrawGraphRecField(int xpos, int ypos, int pic) {
 	int drawX = 0;
 	int drawY = 0;

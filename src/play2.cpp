@@ -183,12 +183,17 @@ static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
 {
 	int ans = CHARA_POS_MID;
+	// push up
+	if (1 <= keyhold->up && 0 == keyhold->down) { return CHARA_POS_UP; }
+	// push down
+	else if (0 == keyhold->up && 1 <= keyhold->down) { return CHARA_POS_DOWN; }
+	// push up and down
+	else if (1 <= keyhold->up && 1 <= keyhold->down) { return CHARA_POS_MID; }
 	// near catch/bomb
 	for (int i = 0; i < 3; i++) {
 		if (note[No[i]].hittime <= time + 40 &&
 			(note[No[i]].object == NOTE_CATCH ||
-				note[No[i]].object == NOTE_BOMB) &&
-			keyhold->up == 0 && keyhold->down == 0)
+				note[No[i]].object == NOTE_BOMB))
 		{
 			return CHARA_POS_MID;
 		}
@@ -199,15 +204,7 @@ static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 	{
 		return hitatk->pos;
 	}
-	// push up
-	if (1 <= keyhold->up && 0 == keyhold->down) { ans = CHARA_POS_UP; }
-	// push down
-	else if (0 == keyhold->up && 1 <= keyhold->down) { ans = CHARA_POS_DOWN; }
-	// push up and down
-	else if (1 <= keyhold->up && 1 <= keyhold->down) { ans = CHARA_POS_MID; }
-	// not hit
-	else { ans = CHARA_POS_MID; }
-	return ans;
+	return CHARA_POS_MID;
 }
 
 static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
@@ -414,6 +411,18 @@ static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 	rec_save_score_t scoreBuf;
 	RecSaveReadScoreOneDif(&scoreBuf, songName, dif);
 	return scoreBuf.score;
+}
+
+static void RacPlayDrawFieldGrid(void) {
+	int cameraX = 0;
+	int cameraY = 0;
+	RecPlayGetCameraPos(&cameraX, &cameraY);
+	for (int inum = -5; inum < 10; inum++) {
+		TCHAR str[5];
+		_stprintf_s(str, _T("%d"), inum);
+		DrawStringRecField(30, 50 * inum + 8 + 100, str, COLOR_WHITE);
+	}
+	return;
 }
 
 #endif /* sub action */
@@ -680,6 +689,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, int *Xline) {
 	int Ptime = 0;
 	int pnum  = 0;
 	DxTime_t Ntime = recfp->time.now;
+	static const uint divColor = 20;
 
 	/* Ntime以上のPスポットを計算したい */
 	/* Pスポットとなりえる配列は[offset, offset + 60000 / (bpm / 4), offset + 2 * 60000 / (bpm / 4), ...] */
@@ -718,20 +728,29 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, int *Xline) {
 		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, Xline, 1, Ntime, Ptime);
 		RecPlayGetTimeLanePos(&posX3, &posY3, &recfp->mapeff, Xline, 2, Ntime, Ptime);
 
-		for (uint idraw = 0; idraw < 10; idraw++) {
-			int drawX  = lins( 0, posX1,  10, posX2, idraw);
-			int drawY  = lins( 0, posY1,  10, posY2, idraw);
-			int drawX2 = lins(-1, posX1,   9, posX2, idraw);
-			int drawY2 = lins(-1, posY1,   9, posY2, idraw);
-			int hueP   = lins( 0,     0,   9,    96, idraw);
+		if (abss(posY1, posY2) < 25) {
+			posY1 = posY2 - 20;
+			posX1 = posX2;
+		}
+		if (abss(posY3, posY2) < 25) {
+			posY3 = posY2 + 25;
+			posX3 = posX2;
+		}
+
+		for (uint idraw = 0; idraw < divColor; idraw++) {
+			int drawX  = lins( 0, posX1, divColor    , posX2, idraw);
+			int drawY  = lins( 0, posY1, divColor    , posY2, idraw);
+			int drawX2 = lins(-1, posX1, divColor - 1, posX2, idraw);
+			int drawY2 = lins(-1, posY1, divColor - 1, posY2, idraw);
+			int hueP   = lins( 0,     0, divColor - 1,    96, idraw);
 			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), 3);
 		}
-		for (uint idraw = 0; idraw < 10; idraw++) {
-			int drawX  = lins(  0, posX2,  10, posX3, idraw);
-			int drawY  = lins(  0, posY2,  10, posY3, idraw);
-			int drawX2 = lins( -1, posX2,   9, posX3, idraw);
-			int drawY2 = lins( -1, posY2,   9, posY3, idraw);
-			int hueP   = lins(  0,    96,   9,   176, idraw);
+		for (uint idraw = 0; idraw < divColor; idraw++) {
+			int drawX  = lins( 0, posX2, divColor    , posX3, idraw);
+			int drawY  = lins( 0, posY2, divColor    , posY3, idraw);
+			int drawX2 = lins(-1, posX2, divColor - 1, posX3, idraw);
+			int drawY2 = lins(-1, posY2, divColor - 1, posY3, idraw);
+			int hueP   = lins( 0,    96, divColor - 1,   176, idraw);
 			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), 3);
 		}
 	}
@@ -1557,6 +1576,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//デバッグ表示
 		if (holdG >= 1) {
 			RecRescaleDrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mpal.mdif / 100.0);
+			RacPlayDrawFieldGrid();
 #if 0
 			/* エラー表示 */
 			if (recfp.outpoint[1] != 0) {
