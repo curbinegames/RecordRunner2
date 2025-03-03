@@ -65,6 +65,22 @@ typedef struct rec_map_move_pal_s {
 	double MovePos = 0;
 } rec_map_move_pal_t;
 
+typedef struct rec_mapenc_data_s {
+	double bpmG = 120.0;
+	double timer[3] = { 0,0,0 };
+	short lockN[2] = { 1,1 };
+	short MovieN = 0;
+	item_set_box item_set[99];
+	struct custom_note_box customnote[9];
+	int objectN = 0;
+	int noteLaneNo[3] = { 5999,5999,5999 };
+	short YmoveN2[3] = { 0,0,0 };
+	short XmoveN2[3] = { 0,0,0 };
+	DxFile_t songdata = 0;
+} rec_mapenc_data_t;
+
+typedef void (*rec_mapenc_noteact_f)(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str);
+
 #endif /* typedef */
 
 #if 1 /* proto */
@@ -392,6 +408,645 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 
 #endif /* sub action 2 */
 
+#if 1 /* rec_mapenc_noteact_f */
+
+static void RecMapencSetSpeed(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	uint lane = betweens(0, GT1[6] - 49, 4);
+	int *num = &recfp->mapeff.speedt[lane].num;
+	rec_mapeff_speedt_data_t *dest = &recfp->mapeff.speedt[lane].d[*num];
+
+	strmods(GT1, 8);
+	dest->speed = strsans2(GT1);
+	strnex(GT1);
+	if (GT1[0] >= L'0' && GT1[0] <= L'9' || GT1[0] == L'-') {
+		dest->time = mapenc->timer[lane] + 240000 * (dest->speed - 1) / (mapenc->bpmG * 16) - 10;
+		dest->speed = strsans2(GT1);
+	}
+	else {
+		dest->time = mapenc->timer[lane] - 10;
+	}
+	(*num)++;
+	return;
+}
+
+static void RecMapencSetBpm(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	strmods(GT1, 5);
+	mapenc->bpmG = strsans2(GT1);
+	return;
+}
+
+static void RecMapencSetVBpm(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	uint *num = &recfp->allnum.v_BPMnum;
+	view_BPM_box *dest = &recfp->mapeff.v_BPM.data[*num];
+
+	strmods(GT1, 7);
+	dest->time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	strnex(GT1);
+	dest->BPM = strsans(GT1);
+	(*num)++;
+	return;
+}
+
+static void RecMapencSetChara(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	uint lane = GT1[6] - 49;
+	int *num = &recfp->mapeff.chamo[lane].num;
+
+	strmods(GT1, 8);
+	recfp->mapeff.chamo[lane].gra[*num] = betweens(0, strsans(GT1), 2);
+	recfp->mapeff.chamo[lane].time[*num] = (int)mapenc->timer[lane];
+	(*num)++;
+	return;
+}
+
+static void RecMapencSetMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	uint   Slane = 0;
+	uint   Elane = 0;
+	uint   Gap   = 0;
+	uint   mode  = 1;
+	double Stime = 1.0;
+	double Etime = 1.0;
+	double pos   = 5.0;
+
+	if (GT1[8] == L'A') {
+		Slane = 0;
+		Elane = 2;
+		Gap   = 0;
+	}
+	else if (GT1[8] == L'B') {
+		Slane = 0;
+		Elane = 2;
+		Gap   = 1;
+	}
+	else if (GT1[8] == L'C') {
+		Slane = 0;
+		Elane = 2;
+		Gap   = 2;
+	}
+	else if (GT1[8] == L'D') {
+		Slane = 0;
+		Elane = 2;
+		Gap   = 3;
+	}
+	else {
+		Elane = Slane = betweens(0, GT1[8] - 49, 4);
+		Gap = 0;
+	}
+	switch (GT1[5]) {
+	case('l'):
+		mode = 1;
+		break;
+	case('a'):
+		mode = 2;
+		break;
+	case('d'):
+		mode = 3;
+		break;
+	case('m'):
+		mode = 4;
+		break;
+	case('s'):
+		mode = 5;
+		break;
+	case('p'):
+		mode = 6;
+		break;
+	case('e'):
+		mode = 7;
+		break;
+	}
+	strmods(GT1, 10);
+	Stime = strsans2(GT1);
+	strnex(GT1);
+	pos = strsans2(GT1);
+	strnex(GT1);
+	Etime = strsans2(GT1);
+	for (uint iLane = Slane; iLane <= Elane; iLane++) {
+		RecMapLoadSetMove(&recfp->mapeff.move.y[iLane], recfp->allnum.Ymovenum, iLane, Stime,
+			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
+	}
+	return;
+}
+
+static void RecMapencSetXMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	uint   Slane = 0;
+	uint   Elane = 0;
+	uint   Gap   = 0;
+	uint   mode  = 1;
+	double Stime = 1.0;
+	double Etime = 1.0;
+	double pos   = 5.0;
+
+	if (GT1[8] == L'A') {
+		Slane = 0;
+		Elane = 2;
+		Gap   = 0;
+	}
+	else if (GT1[8] == L'B') {
+		Slane = 0;
+		Elane = 2;
+		Gap   = 1;
+	}
+	else if (GT1[8] == L'C') {
+		Slane = 0;
+		Elane = 2;
+		Gap   = 2;
+	}
+	else if (GT1[8] == L'D') {
+		Slane = 0;
+		Elane = 2;
+		Gap   = 3;
+	}
+	else {
+		Elane = Slane = betweens(0, GT1[8] - 49, 2);
+		Gap = 0;
+	}
+	switch (GT1[5]) {
+	case('l'):
+		mode = 1;
+		break;
+	case('a'):
+		mode = 2;
+		break;
+	case('d'):
+		mode = 3;
+		break;
+	case('m'):
+		mode = 4;
+		break;
+	case('s'):
+		mode = 5;
+		break;
+	case('p'):
+		mode = 6;
+		break;
+	case('e'):
+		mode = 7;
+		break;
+	}
+	strmods(GT1, 10);
+	Stime = strsans2(GT1);
+	strnex(GT1);
+	pos = strsans2(GT1);
+	strnex(GT1);
+	Etime = strsans2(GT1);
+	for (uint iLane = Slane; iLane <= Elane; iLane++) {
+		RecMapLoadSetMove(&recfp->mapeff.move.x[iLane], recfp->allnum.Xmovenum, iLane, Stime,
+			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
+	}
+	return;
+}
+
+static void RecMapencSetDiv(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	bool   Yflag   = false;
+	uint   lane    = betweens(0, GT1[5] - L'1', 2);
+	double Stime   = 1.0;
+	double Onetime = 1.0;
+	double pos     = 5.0;
+	double count   = 1.0;
+	if (GT1[4] == L'Y') { Yflag = true; }
+
+	strmods(GT1, 7);
+	Stime = strsans2(GT1);//開始時間
+	strnex(GT1);
+	pos = strsans2(GT1);//振動位置
+	strnex(GT1);
+	Onetime = strsans2(GT1) / 2.0;//往復時間
+	strnex(GT1);
+	count = strsans2(GT1);//往復回数
+	if (Yflag) {
+		for (uint inum = 0; inum < count; inum++) {
+			SETMove(&recfp->mapeff.move.y[lane].d[recfp->mapeff.move.y[lane].num], Stime,
+				pos, Stime + Onetime, 1, mapenc->bpmG, mapenc->timer[0]);
+			SETMove(&recfp->mapeff.move.y[lane].d[recfp->mapeff.move.y[lane].num + 1], Stime + Onetime,
+				(recfp->mapeff.move.y[lane].d[recfp->mapeff.move.y[lane].num - 1].pos - 100.0) / 50.0,
+				Stime + Onetime * 2, 1, mapenc->bpmG, mapenc->timer[0]);
+			Stime += Onetime * 2;
+			recfp->mapeff.move.y[lane].num += 2;
+			recfp->allnum.Ymovenum[lane] += 2;
+		}
+	}
+	else {
+		for (uint inum = 0; inum < count; inum++) {
+			SETMove(&recfp->mapeff.move.x[lane].d[recfp->mapeff.move.x[lane].num], Stime,
+				pos, Stime + Onetime, 1, mapenc->bpmG, mapenc->timer[0]);
+			SETMove(&recfp->mapeff.move.x[lane].d[recfp->mapeff.move.x[lane].num] + 1, Stime + Onetime,
+				(recfp->mapeff.move.x[lane].d[recfp->mapeff.move.x[lane].num - 1].pos - 100.0) / 50.0,
+				Stime + Onetime * 2, 1, mapenc->bpmG, mapenc->timer[0]);
+			Stime += Onetime * 2;
+			recfp->mapeff.move.x[lane].num += 2;
+			recfp->allnum.Xmovenum[lane] += 2;
+		}
+	}
+	return;
+}
+
+static void RecMapencSetGMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	uint   mode  = 1;
+	double Stime = 1.0;
+	double Etime = 1.0;
+	double pos   = 5.0;
+
+	switch (GT1[6]) {
+	case('l'):
+		mode = 1;
+		break;
+	case('a'):
+		mode = 2;
+		break;
+	case('d'):
+		mode = 3;
+		break;
+	case('m'):
+		mode = 4;
+		break;
+	case('s'):
+		mode = 5;
+		break;
+	case('p'):
+		mode = 6;
+		break;
+	}
+	strmods(GT1, 10);
+	Stime = strsans2(GT1);
+	strnex(GT1);
+	pos = strsans2(GT1);
+	strnex(GT1);
+	Etime = strsans2(GT1);
+	RecMapLoadSetMove(&recfp->mapeff.move.y[3], recfp->allnum.Ymovenum, 3,
+		Stime, pos, Etime, mode, mapenc->bpmG, mapenc->timer);
+	return;
+}
+
+static void RecMapencSetXLock(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	strmods(GT1, 7);
+	recfp->mapeff.lock[0][0][mapenc->lockN[0]] = recfp->mapeff.lock[0][0][mapenc->lockN[0] - 1] * -1;
+	recfp->mapeff.lock[0][1][mapenc->lockN[0]] = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	mapenc->lockN[0]++;
+	return;
+}
+
+static void RecMapencSetYLock(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	strmods(GT1, 7);
+	recfp->mapeff.lock[1][0][mapenc->lockN[1]] = recfp->mapeff.lock[1][0][mapenc->lockN[1] - 1] * -1;
+	recfp->mapeff.lock[1][1][mapenc->lockN[1]] = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	mapenc->lockN[1]++;
+	return;
+}
+
+static void RecMapencSetCArrow(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	strmods(GT1, 8);
+	recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].data = recfp->mapeff.carrow.d[recfp->mapeff.carrow.num - 1].data * -1;
+	recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.carrow.num++;
+	return;
+}
+
+static void RecMapencSetFall(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	strmods(GT1, 6);
+	recfp->mapeff.fall.d[recfp->mapeff.fall.num].No = strsans(GT1);
+	strnex(GT1);
+	recfp->mapeff.fall.d[recfp->mapeff.fall.num].time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.fall.num++;
+	return;
+}
+
+static void RecMapencSetView(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	const uint nowNo = recfp->mapeff.viewLine.num;
+	strmods(GT1, 8);
+	recfp->mapeff.viewLine.d[nowNo].enable = (GT1[0] == _T('1')) ? true : false;
+	strnex(GT1);
+	recfp->mapeff.viewLine.d[nowNo].time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.viewLine.num = mins_2(recfp->mapeff.viewLine.num + 1, 98);
+	return;
+}
+
+static void RecMapencSetVLane(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	const uint nowNo = recfp->mapeff.viewLine.num;
+	strmods(GT1, 8);
+	recfp->mapeff.viewLine.d[nowNo].enable = (GT1[0] == _T('1')) ? true : false;
+	strnex(GT1);
+	recfp->mapeff.viewLine.d[nowNo].time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.viewLine.num = mins_2(recfp->mapeff.viewLine.num + 1, 98);
+	return;
+}
+
+static void RecMapencSetMovie(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	strmods(GT1, 7);
+	recfp->mapeff.Movie[mapenc->MovieN].ID = strsans(GT1);
+	strnex(GT1);
+	switch (GT1[0]) {
+	case L'l':
+		recfp->mapeff.Movie[mapenc->MovieN].movemode = 1;
+		break;
+	case L'a':
+		recfp->mapeff.Movie[mapenc->MovieN].movemode = 2;
+		break;
+	case L'd':
+		recfp->mapeff.Movie[mapenc->MovieN].movemode = 3;
+		break;
+	}
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].starttime = shifttime(strsans2(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].endtime = shifttime(strsans2(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].startXpos = (int)(strsans2(GT1) * 50 + 115);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].endXpos = (int)(strsans2(GT1) * 50 + 115);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].startYpos = (int)(strsans2(GT1) * 50 + 115);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].endYpos = (int)(strsans2(GT1) * 50 + 115);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].startsize = (int)(strsans2(GT1) * 100);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].endsize = (int)(strsans2(GT1) * 100);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].startrot = strsans(GT1);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].endrot = strsans(GT1);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].startalpha = (int)(strsans2(GT1) * 255.0);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].endalpha = (int)(strsans2(GT1) * 255.0);
+	strnex(GT1);
+	recfp->mapeff.Movie[mapenc->MovieN].eff = set_pic_mat(GT1);
+	(mapenc->MovieN)++;
+	recfp->allnum.movienum++;
+	return;
+}
+
+static void RecMapencInitItemSet(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	strmods(GT1, 15);
+	mapenc->item_set[strsans(GT1)].num = 0;
+	return;
+}
+
+static void RecMapencAddItemSet(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	strmods(GT1, 14);
+	uint No = strsans(GT1);
+
+	if (10 < mapenc->item_set[No].num) { return; }
+
+	strnex(GT1);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].picID = strsans(GT1);
+	strnex(GT1);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].Xpos = (int)(strsans2(GT1) * 50);
+	strnex(GT1);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].Ypos = (int)(strsans2(GT1) * 50);
+	strnex(GT1);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].size = (int)(strsans2(GT1) * 100);
+	strnex(GT1);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].rot = strsans(GT1);
+	strnex(GT1);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].alpha = (int)(strsans2(GT1) * 255);
+	strnex(GT1);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].eff = set_pic_mat(GT1);
+	mapenc->item_set[No].num++;
+	return;
+}
+
+static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+#if 0 /* fixing... */
+	set_item_set(&recfp->mapeff.Movie[MovieN], &MovieN, &recfp->allnum, &GT1[0], mapenc->item_set, mapenc->bpmG, mapenc->timer[0]);
+#else
+	int G[15];
+	uint itemNo = 0;
+	uint mode   = 1;
+
+	strmods(GT1, 10);
+	itemNo = strsans(GT1);
+	strnex(GT1);
+	switch (GT1[0]) {
+	case L'l':
+		mode = 1;
+		break;
+	case L'a':
+		mode = 2;
+		break;
+	case L'd':
+		mode = 3;
+		break;
+	}
+
+	strnex(GT1);
+	G[2] = shifttime(strsans2(GT1), mapenc->bpmG, (int)mapenc->timer[0]); /* stime */
+	strnex(GT1);
+	G[3] = shifttime(strsans2(GT1), mapenc->bpmG, (int)mapenc->timer[0]); /* etime */
+	strnex(GT1);
+	G[4] = (int)(strsans2(GT1) * 50 + 115); /* sx */
+	strnex(GT1);
+	G[5] = strsans2(GT1) * 50 + 115; /* ex */
+	strnex(GT1);
+	G[6] = strsans2(GT1) * 50 + 115; /* sy */
+	strnex(GT1);
+	G[7] = strsans2(GT1) * 50 + 115; /* ey */
+	strnex(GT1);
+	G[8] = strsans2(GT1) * 100; /* ss */
+	strnex(GT1);
+	G[9] = strsans2(GT1) * 100; /* es */
+	strnex(GT1);
+	G[10] = strsans(GT1); /* sr */
+	strnex(GT1);
+	G[11] = strsans(GT1); /* er */
+	strnex(GT1);
+	G[12] = strsans2(GT1) * 255.0; /* sa */
+	strnex(GT1);
+	G[13] = strsans2(GT1) * 255.0; /* ea */
+	for (uint inum = 0; inum < mapenc->item_set[itemNo].num; inum++) {
+		recfp->mapeff.Movie[mapenc->MovieN].ID = mapenc->item_set[itemNo].picID[inum].picID;
+		recfp->mapeff.Movie[mapenc->MovieN].movemode = mode;
+		recfp->mapeff.Movie[mapenc->MovieN].eff = mapenc->item_set[itemNo].picID[inum].eff;
+		recfp->mapeff.Movie[mapenc->MovieN].starttime = G[2];
+		recfp->mapeff.Movie[mapenc->MovieN].endtime = G[3];
+		recfp->mapeff.Movie[mapenc->MovieN].startXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[8] / 100;
+		recfp->mapeff.Movie[mapenc->MovieN].endXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[9] / 100;
+		recfp->mapeff.Movie[mapenc->MovieN].startYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[8] / 100;
+		recfp->mapeff.Movie[mapenc->MovieN].endYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[9] / 100;
+		rot_xy_pos(G[10], &recfp->mapeff.Movie[mapenc->MovieN].startXpos, &recfp->mapeff.Movie[mapenc->MovieN].startYpos);
+		rot_xy_pos(G[10], &recfp->mapeff.Movie[mapenc->MovieN].endXpos, &recfp->mapeff.Movie[mapenc->MovieN].endYpos);
+		recfp->mapeff.Movie[mapenc->MovieN].startXpos += G[4];
+		recfp->mapeff.Movie[mapenc->MovieN].endXpos += G[5];
+		recfp->mapeff.Movie[mapenc->MovieN].startYpos += G[6];
+		recfp->mapeff.Movie[mapenc->MovieN].endYpos += G[7];
+		recfp->mapeff.Movie[mapenc->MovieN].startsize = G[8] * mapenc->item_set[itemNo].picID[inum].size / 100;
+		recfp->mapeff.Movie[mapenc->MovieN].endsize = G[9] * mapenc->item_set[itemNo].picID[inum].size / 100;
+		recfp->mapeff.Movie[mapenc->MovieN].startrot = G[10] + mapenc->item_set[itemNo].picID[inum].rot;
+		recfp->mapeff.Movie[mapenc->MovieN].endrot = G[11] + mapenc->item_set[itemNo].picID[inum].rot;
+		recfp->mapeff.Movie[mapenc->MovieN].startalpha = G[12] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+		recfp->mapeff.Movie[mapenc->MovieN].endalpha = G[13] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+		mapenc->MovieN++;
+		recfp->allnum.movienum++;
+	}
+#endif
+	return;
+}
+
+static void RecMapencSetCamera(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	const uint numC = recfp->mapeff.camera.num;
+	strmods(GT1, 8);
+	recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	strnex(GT1);
+	recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	strnex(GT1);
+	recfp->mapeff.camera.data[numC].xpos = strsans2(GT1) * 50;
+	strnex(GT1);
+	recfp->mapeff.camera.data[numC].ypos = strsans2(GT1) * 50;
+	strnex(GT1);
+	recfp->mapeff.camera.data[numC].zoom = strsans2(GT1);
+	strnex(GT1);
+	recfp->mapeff.camera.data[numC].rot = strsans2(GT1);
+	strnex(GT1);
+	switch (GT1[0]) {
+	case L'a':
+		recfp->mapeff.camera.data[numC].mode = 2;
+		break;
+	case L'd':
+		recfp->mapeff.camera.data[numC].mode = 3;
+		break;
+	default:
+		recfp->mapeff.camera.data[numC].mode = 1;
+		break;
+	}
+	recfp->mapeff.camera.num++;
+	return;
+}
+
+static void RecMapencSetCamMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	const uint numC = recfp->mapeff.camera.num;
+	if (strands(GT1, L"#CMOV:")) { strmods(GT1, 6); }
+	if (strands(GT1, L"#CAMMOVE:")) { strmods(GT1, 9); }
+	recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	strnex(GT1);
+	recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	strnex(GT1);
+	recfp->mapeff.camera.data[numC].xpos = strsans2(GT1) * 50;
+	strnex(GT1);
+	recfp->mapeff.camera.data[numC].ypos = strsans2(GT1) * 50;
+	strnex(GT1);
+	switch (GT1[0]) {
+	case L'a':
+		recfp->mapeff.camera.data[numC].mode = 2;
+		break;
+	case L'd':
+		recfp->mapeff.camera.data[numC].mode = 3;
+		break;
+	default:
+		recfp->mapeff.camera.data[numC].mode = 1;
+		break;
+	}
+	recfp->mapeff.camera.num++;
+	return;
+}
+
+static void RecMapencSetScrool(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	int temp = 0;
+
+	const uint numS = recfp->mapeff.scrool.num;
+	strmods(GT1, 8);
+	recfp->mapeff.scrool.data[numS].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	strnex(GT1);
+	recfp->mapeff.scrool.data[numS].speed = strsans2(GT1);
+	temp = recfp->mapeff.scrool.data[numS - 1].speed *
+		recfp->mapeff.scrool.data[numS].starttime + recfp->mapeff.scrool.data[numS - 1].basetime;
+	recfp->mapeff.scrool.data[numS].basetime = temp - recfp->mapeff.scrool.data[numS].speed *
+		recfp->mapeff.scrool.data[numS].starttime;
+	recfp->mapeff.scrool.num++;
+	return;
+}
+
+static void RecMapencSetCustomNote(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	RecMapLoad_ComCustomNote(GT1, mapenc->customnote);
+	return;
+}
+
+static void RecMapencSetNotes(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
+	TCHAR GT1[255];
+	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
+
+	for (int iLine = 0; iLine < 3; iLine++) {
+		int BlockNoteNum = 0;
+		while (GT1[BlockNoteNum] != L'\0' && GT1[BlockNoteNum] != L',') { BlockNoteNum++; }
+		for (int istr = 0; istr < BlockNoteNum; istr++) {
+			RecMapLoadGetc(GT1[istr], istr, recfp->mapdata.note, &mapenc->objectN, iLine, mapenc->timer,
+				mapenc->noteLaneNo, mapenc->bpmG, BlockNoteNum, mapenc->customnote, &recfp->mapeff.scrool,
+				&recfp->mapeff.move, mapenc->YmoveN2, mapenc->XmoveN2, &recfp->mapdata.notes,
+				&recfp->allnum);
+		}
+		if (iLine <= 1) { FileRead_gets(GT1, 256, mapenc->songdata); }
+	}
+	mapenc->timer[0] = mapenc->timer[1] = mapenc->timer[2] += 240000.0 / mapenc->bpmG;
+	return;
+}
+
+#endif /* rec_mapenc_noteact_f */
+
 #if 1 /* sub action */
 
 static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
@@ -615,7 +1270,7 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 
 static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath, int o) {
 	//o: 難易度ナンバー
-	short int i[2] = { 0,0 };
+	short i[2] = { 0,0 };
 #if 0 /* fixing... */
 	int G[4] = { 0,0,0,0 };
 #else
@@ -625,39 +1280,19 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 	int Etime = 0; //譜面の終わりの時間
 	int waningLv = 2;
 	double GD[5] = { 0,0,0,0,0 };
-	//int item[99]; //アイテムのアドレス、DrawGraphで呼べる。
-	//short int itemN = 0; //↑の番号
-	short int YmoveN2[3] = { 0,0,0 };
-	short int XmoveN2[3] = { 0,0,0 };
-	short int lockN[2] = { 1,1 }; //↑の番号
-	short int viewTN = 1;
-	item_set_box item_set[99];
-	short int MovieN = 0;
-	struct custom_note_box customnote[9];
-	int objectN = 0; //↑の番号
-	int noteLaneNo[3] = { -1,-1,-1 };
-	int difkey[50][4];//難易度計算に使う[番号][入力キー,時間,難易度点,[0]個数上限:[1]今の番号:[2]1個前の番号:[3]2個前の番号:[4]最高点:[5]データ個数:[6]最後50個の合計:[7]計算から除外する時間]
-	difkey[0][2] = 0;
-	difkey[1][2] = 0;
-	difkey[1][3] = 0;
-	difkey[2][3] = -1;
-	difkey[3][3] = -2;
-	difkey[4][3] = 0;
-	ddef_box ddif2;
-	double bpmG = 120;
-	double timer[3] = { 0,0,0 }; //[上, 中, 下]レーンの時間
+	short viewTN = 1;
 	TCHAR RRS[255]; //PC用譜面データの保存場所
 	TCHAR GT1[255];
-	DxFile_t songdata = 0;
-	FILE *fp;
+
+	rec_mapenc_data_t mapenc;
 
 	RecMapLoad_SetInitRecfp(recfp);
-	songdata = FileRead_open(mapPath);
-	if (songdata == 0) { return; }
+	mapenc.songdata = FileRead_open(mapPath);
+	if (mapenc.songdata == 0) { return; }
 
 	//テキストデータを読む
-	while (FileRead_eof(songdata) == 0) {
-		FileRead_gets(GT1, 256, songdata);
+	while (FileRead_eof(mapenc.songdata) == 0) {
+		FileRead_gets(GT1, 256, mapenc.songdata);
 		//音楽ファイルを読み込む
 		if (strands(GT1, L"#MUSIC:")) {
 			strmods(GT1, 7);
@@ -666,13 +1301,13 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		}
 		//BPMを読み込む
 		else if (strands(GT1, L"#BPM:")) {
-			bpmG = recfp->mapdata.bpm = SETbpm(GT1);
+			mapenc.bpmG = recfp->mapdata.bpm = SETbpm(GT1);
 			recfp->mapeff.v_BPM.data[0].time = recfp->time.offset;
 			recfp->mapeff.v_BPM.data[0].BPM = (unsigned short)recfp->mapdata.bpm;
 		}
 		//ノートのオフセットを読み込む
 		else if (strands(GT1, L"#NOTEOFFSET:")) {
-			timer[0] = timer[1] = timer[2] = recfp->time.offset = SEToffset(GT1);
+			mapenc.timer[0] = mapenc.timer[1] = mapenc.timer[2] = recfp->time.offset = SEToffset(GT1);
 		}
 		//空の背景を読み込む
 		else if (strands(GT1, L"#SKY:")) {
@@ -727,519 +1362,88 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		}
 	}
 
-	FileRead_gets(GT1, 256, songdata);
-	while (FileRead_eof(songdata) == 0 && strands(GT1, L"#END") == 0) {
-		switch (check_obj_code(GT1)) {
+	FileRead_gets(GT1, 256, mapenc.songdata);
+	while (FileRead_eof(mapenc.songdata) == 0 && strands(GT1, L"#END") == 0) {
+		switch (check_obj_code(GT1)) { /* TODO: コマンドテーブル作って管理したい。 */
 		case OBJ_CODE_MEMO: //コメント
 		case OBJ_CODE_SPACE: //空白
+			/* この行は何も処理しない、スキップ */
 			break;
 		case OBJ_CODE_SPEED: //ノーツの速度変化
-		{
-			rec_mapeff_speedt_dataset_t *dest = recfp->mapeff.speedt;
-			short int speedN[5];
-			for (uint inum = 0; inum < 5; inum++) {
-				speedN[inum] = recfp->mapeff.speedt[inum].num;
-			}
-
-		{
-			G[0] = betweens(0, GT1[6] - 49, 4);
-			int *num = &recfp->mapeff.speedt[G[0]].num;
-			rec_mapeff_speedt_data_t *dest = &recfp->mapeff.speedt[G[0]].d[*num];
-
-			strmods(GT1, 8);
-			dest->speed = strsans2(GT1);
-			strnex(GT1);
-			if (GT1[0] >= L'0' && GT1[0] <= L'9' || GT1[0] == L'-') {
-				dest->time = timer[G[0]] + 240000 * (dest->speed - 1) / (bpmG * 16) - 10;
-				dest->speed = strsans2(GT1);
-			}
-			else {
-				dest->time = timer[G[0]] - 10;
-			}
-			(*num)++;
+			RecMapencSetSpeed(recfp, &mapenc, GT1);
 			break;
-		}
-		}
 		case OBJ_CODE_BPM: //データ処理のBPM変化
-			bpmG = SETbpm(GT1);
+			RecMapencSetBpm(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_VBPM: //見た目のBPM変化
-			strmods(GT1, 7);
-			recfp->mapeff.v_BPM.data[recfp->allnum.v_BPMnum].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
-			strnex(GT1);
-			recfp->mapeff.v_BPM.data[recfp->allnum.v_BPMnum].BPM = strsans(GT1);
-			recfp->allnum.v_BPMnum++;
+			RecMapencSetVBpm(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_CHARA: //キャラグラ変化
-			G[0] = GT1[6] - 49;
-			strmods(GT1, 8);
-			recfp->mapeff.chamo[G[0]].gra[recfp->mapeff.chamo[G[0]].num] = betweens(0, strsans(GT1), 2);
-			recfp->mapeff.chamo[G[0]].time[recfp->mapeff.chamo[G[0]].num] = (int)timer[G[0]];
-			recfp->mapeff.chamo[G[0]].num++;
+			RecMapencSetChara(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_MOVE: //縦移動
-			if (GT1[8] == L'A') {
-				G[0] = 0;
-				G[2] = 2;
-				G[3] = 0;
-			}
-			else if (GT1[8] == L'B') {
-				G[0] = 0;
-				G[2] = 2;
-				G[3] = 1;
-			}
-			else if (GT1[8] == L'C') {
-				G[0] = 0;
-				G[2] = 2;
-				G[3] = 2;
-			}
-			else if (GT1[8] == L'D') {
-				G[0] = 0;
-				G[2] = 2;
-				G[3] = 3;
-			}
-			else {
-				G[2] = G[0] = betweens(0, GT1[8] - 49, 4);
-				G[3] = 0;
-			}
-			switch (GT1[5]) {
-			case('l'):
-				G[1] = 1;
-				break;
-			case('a'):
-				G[1] = 2;
-				break;
-			case('d'):
-				G[1] = 3;
-				break;
-			case('m'):
-				G[1] = 4;
-				break;
-			case('s'):
-				G[1] = 5;
-				break;
-			case('p'):
-				G[1] = 6;
-				break;
-			case('e'):
-				G[1] = 7;
-				break;
-			}
-			strmods(GT1, 10);
-			GD[0] = strsans2(GT1);
-			strnex(GT1);
-			GD[1] = strsans2(GT1);
-			strnex(GT1);
-			GD[2] = strsans2(GT1);
-			for (i[0] = G[0]; i[0] <= G[2]; i[0]++) {
-				RecMapLoadSetMove(&recfp->mapeff.move.y[i[0]], recfp->allnum.Ymovenum, i[0], GD[0],
-					GD[1] + G[3] * i[0] - G[3], GD[2], G[1], bpmG, timer);
-			}
+			RecMapencSetMove(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_XMOV: //横移動
-			if (GT1[8] == L'A') {
-				G[0] = 0;
-				G[2] = 2;
-				G[3] = 0;
-			}
-			else if (GT1[8] == L'B') {
-				G[0] = 0;
-				G[2] = 2;
-				G[3] = 1;
-			}
-			else if (GT1[8] == L'C') {
-				G[0] = 0;
-				G[2] = 2;
-				G[3] = 2;
-			}
-			else if (GT1[8] == L'D') {
-				G[0] = 0;
-				G[2] = 2;
-				G[3] = 3;
-			}
-			else {
-				G[2] = G[0] = betweens(0, GT1[8] - 49, 2);
-				G[3] = 0;
-			}
-			switch (GT1[5]) {
-			case('l'):
-				G[1] = 1;
-				break;
-			case('a'):
-				G[1] = 2;
-				break;
-			case('d'):
-				G[1] = 3;
-				break;
-			case('m'):
-				G[1] = 4;
-				break;
-			case('s'):
-				G[1] = 5;
-				break;
-			case('p'):
-				G[1] = 6;
-				break;
-			case('e'):
-				G[1] = 7;
-				break;
-			}
-			strmods(GT1, 10);
-			GD[0] = strsans2(GT1);
-			strnex(GT1);
-			GD[1] = strsans2(GT1);
-			strnex(GT1);
-			GD[2] = strsans2(GT1);
-			for (i[0] = G[0]; i[0] <= G[2]; i[0]++) {
-				RecMapLoadSetMove(&recfp->mapeff.move.x[i[0]], recfp->allnum.Xmovenum, i[0], GD[0],
-					GD[1] + G[3] * i[0] - G[3], GD[2], G[1], bpmG, timer);
-			}
+			RecMapencSetXMove(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_DIV: //振動
-			G[0] = betweens(0, GT1[5] - L'1', 2);
-			G[1] = 0;
-			if (GT1[4] == L'Y') { G[1] = 1; }
-			strmods(GT1, 7);
-			GD[0] = strsans2(GT1);//開始時間
-			strnex(GT1);
-			GD[1] = strsans2(GT1);//振動位置
-			strnex(GT1);
-			GD[2] = strsans2(GT1) / 2.0;//往復時間
-			strnex(GT1);
-			GD[3] = strsans2(GT1);//往復回数
-			if (G[1] == 1) {
-				for (i[0] = 0; i[0] < GD[3]; i[0]++) {
-					SETMove(&recfp->mapeff.move.y[G[0]].d[recfp->mapeff.move.y[G[0]].num], GD[0],
-						GD[1], GD[0] + GD[2], 1, bpmG, timer[0]);
-					SETMove(&recfp->mapeff.move.y[G[0]].d[recfp->mapeff.move.y[G[0]].num + 1], GD[0] + GD[2],
-						(recfp->mapeff.move.y[G[0]].d[recfp->mapeff.move.y[G[0]].num - 1].pos - 100.0) / 50.0,
-						GD[0] + GD[2] * 2, 1, bpmG, timer[0]);
-					GD[0] += GD[2] * 2;
-					recfp->mapeff.move.y[G[0]].num += 2;
-					recfp->allnum.Ymovenum[G[0]] += 2;
-				}
-			}
-			else {
-				for (i[0] = 0; i[0] < GD[3]; i[0]++) {
-					SETMove(&recfp->mapeff.move.x[G[0]].d[recfp->mapeff.move.x[G[0]].num], GD[0],
-						GD[1], GD[0] + GD[2], 1, bpmG, timer[0]);
-					SETMove(&recfp->mapeff.move.x[G[0]].d[recfp->mapeff.move.x[G[0]].num] + 1, GD[0] + GD[2],
-						(recfp->mapeff.move.x[G[0]].d[recfp->mapeff.move.x[G[0]].num - 1].pos - 100.0) / 50.0,
-						GD[0] + GD[2] * 2, 1, bpmG, timer[0]);
-					GD[0] += GD[2] * 2;
-					recfp->mapeff.move.x[G[0]].num += 2;
-					recfp->allnum.Xmovenum[G[0]] += 2;
-				}
-			}
+			RecMapencSetDiv(recfp, &mapenc, GT1);
 			break;
-		case OBJ_CODE_GMOVE: //GMOVE
-			G[0] = 3;
-			switch (GT1[6]) {
-			case('l'):
-				G[1] = 1;
-				break;
-			case('a'):
-				G[1] = 2;
-				break;
-			case('d'):
-				G[1] = 3;
-				break;
-			case('m'):
-				G[1] = 4;
-				break;
-			case('s'):
-				G[1] = 5;
-				break;
-			case('p'):
-				G[1] = 6;
-				break;
-			}
-			strmods(GT1, 10);
-			GD[0] = strsans2(GT1);
-			strnex(GT1);
-			GD[1] = strsans2(GT1);
-			strnex(GT1);
-			GD[2] = strsans2(GT1);
-			RecMapLoadSetMove(&recfp->mapeff.move.y[3], recfp->allnum.Ymovenum, 3,
-				GD[0], GD[1], GD[2], G[1], bpmG, timer);
+		case OBJ_CODE_GMOVE: //GMOVE 廃止済みコマンド
+			RecMapencSetGMove(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_XLOCK: //横ロック
-			strmods(GT1, 7);
-			recfp->mapeff.lock[0][0][lockN[0]] = recfp->mapeff.lock[0][0][lockN[0] - 1] * -1;
-			recfp->mapeff.lock[0][1][lockN[0]] = shifttime(strsans(GT1), bpmG, (int)timer[0]);
-			lockN[0]++;
+			RecMapencSetXLock(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_YLOCK: //縦ロック
-			strmods(GT1, 7);
-			recfp->mapeff.lock[1][0][lockN[1]] = recfp->mapeff.lock[1][0][lockN[1] - 1] * -1;
-			recfp->mapeff.lock[1][1][lockN[1]] = shifttime(strsans(GT1), bpmG, (int)timer[0]);
-			lockN[1]++;
+			RecMapencSetYLock(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_CARROW: //キャラ向き変化
-			strmods(GT1, 8);
-			recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].data = recfp->mapeff.carrow.d[recfp->mapeff.carrow.num - 1].data * -1;
-			recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
-			recfp->mapeff.carrow.num++;
+			RecMapencSetCArrow(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_FALL: //落ち物背景切り替え
-			strmods(GT1, 6);
-			recfp->mapeff.fall.d[recfp->mapeff.fall.num].No = strsans(GT1);
-			strnex(GT1);
-			recfp->mapeff.fall.d[recfp->mapeff.fall.num].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
-			recfp->mapeff.fall.num++;
+			RecMapencSetFall(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_VIEW: //音符表示時間
-			strmods(GT1, 6);
-			recfp->mapeff.viewT[0][viewTN] = shifttime(strsans(GT1), bpmG, (int)timer[0]);
-			strnex(GT1);
-			recfp->mapeff.viewT[1][viewTN] = strsans(GT1);
-			viewTN++;
+			RecMapencSetView(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_VIEW_LINE: /* ガイドライン表示, 書式 = #V-LANE:<0,1>/<time> */
-		{
-			const uint nowNo = recfp->mapeff.viewLine.num;
-			strmods(GT1, 8);
-			recfp->mapeff.viewLine.d[nowNo].enable = (GT1[0] == _T('1')) ? true : false;
-			strnex(GT1);
-			recfp->mapeff.viewLine.d[nowNo].time = shifttime(strsans(GT1), bpmG, (int)timer[0]);
-			recfp->mapeff.viewLine.num = mins_2(recfp->mapeff.viewLine.num + 1, 98);
+			RecMapencSetVLane(recfp, &mapenc, GT1);
 			break;
-		}
 		case OBJ_CODE_MOVIE: //アイテム表示
-			strmods(GT1, 7);
-			recfp->mapeff.Movie[MovieN].ID = strsans(GT1);
-			strnex(GT1);
-			switch (GT1[0]) {
-			case L'l':
-				recfp->mapeff.Movie[MovieN].movemode = 1;
-				break;
-			case L'a':
-				recfp->mapeff.Movie[MovieN].movemode = 2;
-				break;
-			case L'd':
-				recfp->mapeff.Movie[MovieN].movemode = 3;
-				break;
-			}
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].starttime = shifttime(strsans2(GT1), bpmG, (int)timer[0]);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].endtime = shifttime(strsans2(GT1), bpmG, (int)timer[0]);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].startXpos = (int)(strsans2(GT1) * 50 + 115);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].endXpos = (int)(strsans2(GT1) * 50 + 115);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].startYpos = (int)(strsans2(GT1) * 50 + 115);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].endYpos = (int)(strsans2(GT1) * 50 + 115);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].startsize = (int)(strsans2(GT1) * 100);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].endsize = (int)(strsans2(GT1) * 100);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].startrot = strsans(GT1);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].endrot = strsans(GT1);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].startalpha = (int)(strsans2(GT1) * 255.0);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].endalpha = (int)(strsans2(GT1) * 255.0);
-			strnex(GT1);
-			recfp->mapeff.Movie[MovieN].eff = set_pic_mat(GT1);
-			MovieN++;
-			recfp->allnum.movienum++;
+			RecMapencSetMovie(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_INIT_ITEM_SET: //アイテムセット初期化
-			strmods(GT1, 15);
-			G[0] = strsans(GT1);
-			item_set[G[0]].num = 0;
+			RecMapencInitItemSet(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_ADD_ITEM_SET: //アイテムセット追加
-			if (item_set[G[0]].num <= 10) {
-				strmods(GT1, 14);
-				G[0] = strsans(GT1); /* G[0] = item setの番号 */
-				strnex(GT1);
-				item_set[G[0]].picID[item_set[G[0]].num].picID = strsans(GT1);
-				strnex(GT1);
-				item_set[G[0]].picID[item_set[G[0]].num].Xpos = (int)(strsans2(GT1) * 50);
-				strnex(GT1);
-				item_set[G[0]].picID[item_set[G[0]].num].Ypos = (int)(strsans2(GT1) * 50);
-				strnex(GT1);
-				item_set[G[0]].picID[item_set[G[0]].num].size = (int)(strsans2(GT1) * 100);
-				strnex(GT1);
-				item_set[G[0]].picID[item_set[G[0]].num].rot = strsans(GT1);
-				strnex(GT1);
-				item_set[G[0]].picID[item_set[G[0]].num].alpha = (int)(strsans2(GT1) * 255);
-				strnex(GT1);
-				item_set[G[0]].picID[item_set[G[0]].num].eff = set_pic_mat(GT1);
-				item_set[G[0]].num++;
-			}
+			RecMapencAddItemSet(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_ITEM_SET: //アイテムセット表示
-#if 0 /* fixing... */
-			set_item_set(&recfp->mapeff.Movie[MovieN], &MovieN, &recfp->allnum, &GT1[0], item_set, bpmG, timer[0]);
-#else
-			strmods(GT1, 10);
-			G[0] = strsans(GT1); /* G[0] = item boxの番号 */
-			strnex(GT1);
-			switch (GT1[0]) {
-			case L'l':
-				G[1] = 1;
-				break;
-			case L'a':
-				G[1] = 2;
-				break;
-			case L'd':
-				G[1] = 3;
-				break;
-			} /* G[1] = 移動モード */
-			strnex(GT1);
-			G[2] = shifttime(strsans2(GT1), bpmG, (int)timer[0]); /* stime */
-			strnex(GT1);
-			G[3] = shifttime(strsans2(GT1), bpmG, (int)timer[0]); /* etime */
-			strnex(GT1);
-			G[4] = (int)(strsans2(GT1) * 50 + 115); /* sx */
-			strnex(GT1);
-			G[5] = strsans2(GT1) * 50 + 115; /* ex */
-			strnex(GT1);
-			G[6] = strsans2(GT1) * 50 + 115; /* sy */
-			strnex(GT1);
-			G[7] = strsans2(GT1) * 50 + 115; /* ey */
-			strnex(GT1);
-			G[8] = strsans2(GT1) * 100; /* ss */
-			strnex(GT1);
-			G[9] = strsans2(GT1) * 100; /* es */
-			strnex(GT1);
-			G[10] = strsans(GT1); /* sr */
-			strnex(GT1);
-			G[11] = strsans(GT1); /* er */
-			strnex(GT1);
-			G[12] = strsans2(GT1) * 255.0; /* sa */
-			strnex(GT1);
-			G[13] = strsans2(GT1) * 255.0; /* ea */
-			for (i[0] = 0; i[0] < item_set[G[0]].num; i[0]++) {
-				recfp->mapeff.Movie[MovieN].ID = item_set[G[0]].picID[i[0]].picID;
-				recfp->mapeff.Movie[MovieN].movemode = G[1];
-				recfp->mapeff.Movie[MovieN].eff = item_set[G[0]].picID[i[0]].eff;
-				recfp->mapeff.Movie[MovieN].starttime = G[2];
-				recfp->mapeff.Movie[MovieN].endtime = G[3];
-				recfp->mapeff.Movie[MovieN].startXpos = item_set[G[0]].picID[i[0]].Xpos * G[8] / 100;
-				recfp->mapeff.Movie[MovieN].endXpos = item_set[G[0]].picID[i[0]].Xpos * G[9] / 100;
-				recfp->mapeff.Movie[MovieN].startYpos = item_set[G[0]].picID[i[0]].Ypos * G[8] / 100;
-				recfp->mapeff.Movie[MovieN].endYpos = item_set[G[0]].picID[i[0]].Ypos * G[9] / 100;
-				rot_xy_pos(G[10], &recfp->mapeff.Movie[MovieN].startXpos, &recfp->mapeff.Movie[MovieN].startYpos);
-				rot_xy_pos(G[10], &recfp->mapeff.Movie[MovieN].endXpos, &recfp->mapeff.Movie[MovieN].endYpos);
-				recfp->mapeff.Movie[MovieN].startXpos += G[4];
-				recfp->mapeff.Movie[MovieN].endXpos += G[5];
-				recfp->mapeff.Movie[MovieN].startYpos += G[6];
-				recfp->mapeff.Movie[MovieN].endYpos += G[7];
-				recfp->mapeff.Movie[MovieN].startsize = G[8] * item_set[G[0]].picID[i[0]].size / 100;
-				recfp->mapeff.Movie[MovieN].endsize = G[9] * item_set[G[0]].picID[i[0]].size / 100;
-				recfp->mapeff.Movie[MovieN].startrot = G[10] + item_set[G[0]].picID[i[0]].rot;
-				recfp->mapeff.Movie[MovieN].endrot = G[11] + item_set[G[0]].picID[i[0]].rot;
-				recfp->mapeff.Movie[MovieN].startalpha = G[12] * item_set[G[0]].picID[i[0]].alpha / 255;
-				recfp->mapeff.Movie[MovieN].endalpha = G[13] * item_set[G[0]].picID[i[0]].alpha / 255;
-				MovieN++;
-				recfp->allnum.movienum++;
-			}
-#endif
+			RecMapencSetItemGroup(recfp, &mapenc, GT1);
 			break;
 		case OBJ_CODE_CAMERA: //カメラ移動+ズーム+角度(未実装)
-		{
-			const uint numC = recfp->mapeff.camera.num;
-			strmods(GT1, 8);
-			recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
-			strnex(GT1);
-			recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
-			strnex(GT1);
-			recfp->mapeff.camera.data[numC].xpos = strsans2(GT1) * 50;
-			strnex(GT1);
-			recfp->mapeff.camera.data[numC].ypos = strsans2(GT1) * 50;
-			strnex(GT1);
-			recfp->mapeff.camera.data[numC].zoom = strsans2(GT1);
-			strnex(GT1);
-			recfp->mapeff.camera.data[numC].rot = strsans2(GT1);
-			strnex(GT1);
-			switch (GT1[0]) {
-			case L'a':
-				recfp->mapeff.camera.data[numC].mode = 2;
-				break;
-			case L'd':
-				recfp->mapeff.camera.data[numC].mode = 3;
-				break;
-			default:
-				recfp->mapeff.camera.data[numC].mode = 1;
-				break;
-			}
-			recfp->mapeff.camera.num++;
+			RecMapencSetCamera(recfp, &mapenc, GT1);
 			break;
-		}
 		case OBJ_CODE_CAMMOVE: //カメラ移動
-		{
-			const uint numC = recfp->mapeff.camera.num;
-			if (strands(GT1, L"#CMOV:")) { strmods(GT1, 6); }
-			if (strands(GT1, L"#CAMMOVE:")) { strmods(GT1, 9); }
-			recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
-			strnex(GT1);
-			recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), bpmG, timer[0]);
-			strnex(GT1);
-			recfp->mapeff.camera.data[numC].xpos = strsans2(GT1) * 50;
-			strnex(GT1);
-			recfp->mapeff.camera.data[numC].ypos = strsans2(GT1) * 50;
-			strnex(GT1);
-			switch (GT1[0]) {
-			case L'a':
-				recfp->mapeff.camera.data[numC].mode = 2;
-				break;
-			case L'd':
-				recfp->mapeff.camera.data[numC].mode = 3;
-				break;
-			default:
-				recfp->mapeff.camera.data[numC].mode = 1;
-				break;
-			}
-			recfp->mapeff.camera.num++;
+			RecMapencSetCamMove(recfp, &mapenc, GT1);
 			break;
-		}
 		case OBJ_CODE_SCROOL: //スクロール
-		{
-			const uint numS = recfp->mapeff.scrool.num;
-			strmods(GT1, 8);
-			recfp->mapeff.scrool.data[numS].starttime = shifttime(strsans2(GT1), bpmG, timer[0]);
-			strnex(GT1);
-			recfp->mapeff.scrool.data[numS].speed = strsans2(GT1);
-			G[0] = recfp->mapeff.scrool.data[numS - 1].speed *
-				recfp->mapeff.scrool.data[numS].starttime + recfp->mapeff.scrool.data[numS - 1].basetime;
-			recfp->mapeff.scrool.data[numS].basetime = G[0] - recfp->mapeff.scrool.data[numS].speed *
-				recfp->mapeff.scrool.data[numS].starttime;
-			recfp->mapeff.scrool.num++;
+			RecMapencSetScrool(recfp, &mapenc, GT1);
 			break;
-		}
 		case OBJ_CODE_CUSTOM: //カスタムノーツセット
-			RecMapLoad_ComCustomNote(GT1, customnote);
+			RecMapencSetCustomNote(recfp, &mapenc, GT1);
 			break;
 		default:
-			//これ以外
-			for (int iLine = 0; iLine <= 2; iLine++) {
-				int BlockNoteNum = 0;
-				G[0] = 0;
-				while (GT1[BlockNoteNum] != L'\0' && GT1[BlockNoteNum] != L',') { BlockNoteNum++; }
-				for (int istr = 0; istr < BlockNoteNum; istr++) {
-					RecMapLoadGetc(GT1[istr], istr, recfp->mapdata.note, &objectN, iLine, timer,
-						noteLaneNo, bpmG, BlockNoteNum, customnote, &recfp->mapeff.scrool,
-						&recfp->mapeff.move, YmoveN2, XmoveN2, &recfp->mapdata.notes,
-						&recfp->allnum);
-				}
-				if (iLine <= 1) { FileRead_gets(GT1, 256, songdata); }
-			}
-			timer[0] = timer[1] = timer[2] += 240000.0 / bpmG;
+			RecMapencSetNotes(recfp, &mapenc, GT1);
 			break;
 		}
-		FileRead_gets(GT1, 256, songdata);
+		FileRead_gets(GT1, 256, mapenc.songdata);
 	}
 
-	FileRead_close(songdata);
-	RecMapLoad_SetEndRecfp(recfp, timer, (uint *)&objectN, lockN[0], lockN[1]);
+	FileRead_close(mapenc.songdata);
+	RecMapLoad_SetEndRecfp(recfp, mapenc.timer, (uint *)&mapenc.objectN, mapenc.lockN[0], mapenc.lockN[1]);
 	RecMapLoad_SaveMap(folderPath, recfp, o);
 	return;
 }
