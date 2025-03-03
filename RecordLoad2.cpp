@@ -9,35 +9,6 @@
 
 #if 1 /* typedef */
 
-typedef enum rrs_obj_code_e {
-	OBJ_CODE_NONE = -1,
-	OBJ_CODE_MEMO = 0,
-	OBJ_CODE_SPEED,
-	OBJ_CODE_BPM,
-	OBJ_CODE_VBPM,
-	OBJ_CODE_CHARA,
-	OBJ_CODE_MOVE,
-	OBJ_CODE_XMOV,
-	OBJ_CODE_DIV,
-	OBJ_CODE_GMOVE,
-	OBJ_CODE_XLOCK,
-	OBJ_CODE_YLOCK,
-	OBJ_CODE_CARROW,
-	OBJ_CODE_FALL,
-	OBJ_CODE_VIEW,
-	OBJ_CODE_VIEW_LINE,
-	OBJ_CODE_MOVIE,
-	OBJ_CODE_INIT_ITEM_SET,
-	OBJ_CODE_ADD_ITEM_SET,
-	OBJ_CODE_ITEM_SET,
-	OBJ_CODE_CAMERA,
-	OBJ_CODE_CAMMOVE,
-	OBJ_CODE_SCROOL,
-	OBJ_CODE_CUSTOM,
-	OBJ_CODE_END,
-	OBJ_CODE_SPACE,
-} rrs_obj_code_t;
-
 typedef enum rec_map_move_code_e {
 	REC_MAP_MOVE_CODE_LIN = 1,
 	REC_MAP_MOVE_CODE_ACC,
@@ -47,23 +18,6 @@ typedef enum rec_map_move_code_e {
 	REC_MAP_MOVE_CODE_PAL,
 	REC_MAP_MOVE_CODE_EDG,
 } rec_map_move_code_t;
-
-typedef struct ddef_box {
-	int maxdif = 0;
-	int lastdif = 0;
-	int nowdifsection = 1;
-	int datanum = -1;
-} ddef_box;
-
-typedef struct rec_map_move_pal_s {
-	int StartLine = 0;
-	int EndLine = 0;
-	int AllGap = 0;
-	int MoveMode = 0;
-	double StartTime = 0;
-	double EndTime = 0;
-	double MovePos = 0;
-} rec_map_move_pal_t;
 
 typedef struct rec_mapenc_data_s {
 	double bpmG = 120.0;
@@ -86,14 +40,10 @@ typedef void (*rec_mapenc_noteact_f)(rec_score_file_t *recfp, rec_mapenc_data_t 
 #if 1 /* proto */
 
 int IsNoteCode(wchar_t c);
-int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime);
-int cal_nowdif_m(int *difkey, int num, int now, int voidtime);
-rrs_obj_code_t check_obj_code(wchar_t const *const s);
 void set_item_set(item_box *const Movie, short *const MovieN,
 	playnum_box *allnum, wchar_t *const s, item_set_box const *const item_set,
 	double bpmG, double timer);
 item_eff_box set_pic_mat(wchar_t *s);
-int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl);
 
 #endif /* proto */
 
@@ -159,6 +109,7 @@ static void CalNoteViewTime(note_box_2_t *note, rec_scrool_set_t *scrool) {
 	return;
 }
 
+/* çƒãAä÷êîÇ…Ç»Ç¡ÇƒÇ¢ÇÈÅAç≈ëÂ2âÒåƒÇŒÇÍÇÈ */
 void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 	double StartTime, double MovePos, double EndTime, int MoveMode, double bpmG,
 	double timer[])
@@ -200,35 +151,32 @@ void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 	return;
 }
 
-static int RecMapLoadGetc(TCHAR c, int istr, note_box_2_t note[], int *objectN, int iLine,
-	double timer[], int noteLaneNo[], double bpmG, int BlockNoteNum,
-	struct custom_note_box customnote[], rec_scrool_set_t *scrool, rec_move_all_set_t *move,
-	short int YmoveN2[], short int XmoveN2[], short int *notes, playnum_box *allnum)
+static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
+	int iLine, int BlockNoteNum)
 {
+	int objectN = mapenc->objectN;
+	note_box_2_t *notedata = &recfp->mapdata.note[objectN];
+
 	TCHAR strcode = L'0';
 	if (IsNoteCode(c) == 0) { return -1; }
-	if (0 <= noteLaneNo[iLine]) {
-		note[noteLaneNo[iLine]].next = *objectN;
+	if (0 <= mapenc->noteLaneNo[iLine]) {
+		recfp->mapdata.note[mapenc->noteLaneNo[iLine]].next = objectN;
 	}
-	noteLaneNo[iLine] = *objectN;
+	mapenc->noteLaneNo[iLine] = objectN;
 	switch (iLine) {
 	case 0:
-		note[*objectN].lane = NOTE_LANE_UP;
+		notedata->lane = NOTE_LANE_UP;
 		break;
 	case 1:
-		note[*objectN].lane = NOTE_LANE_MID;
+		notedata->lane = NOTE_LANE_MID;
 		break;
 	case 2:
-		note[*objectN].lane = NOTE_LANE_LOW;
+		notedata->lane = NOTE_LANE_LOW;
 		break;
 	}
-	note[*objectN].hittime = timer[iLine] + 240000 * istr / (bpmG * BlockNoteNum);
-	if (L'1' <= c && c <= L'9') {
-		strcode = customnote[c - L'1'].note;
-	}
-	else {
-		strcode = c;
-	}
+	notedata->hittime = mapenc->timer[iLine] + 240000 * istr / (mapenc->bpmG * BlockNoteNum);
+	if (L'1' <= c && c <= L'9') { strcode = mapenc->customnote[c - L'1'].note; }
+	else { strcode = c; }
 	if (strcode == L'?') {
 		switch (GetRand(4)) {
 		case 0:
@@ -276,65 +224,55 @@ static int RecMapLoadGetc(TCHAR c, int istr, note_box_2_t note[], int *objectN, 
 			break;
 		}
 	}
-	note[*objectN].object = GetNoteObjMat(strcode);
+	notedata->object = GetNoteObjMat(strcode);
 	//viewtimeÇåvéZÇ∑ÇÈ
-	CalNoteViewTime(&note[*objectN], scrool);
-	note[*objectN].ypos = 50 * iLine + 300;
-	note[*objectN].xpos = 150;
-	//ècà íuÇåvéZÇ∑ÇÈ
-	while (move->y[iLine].d[YmoveN2[iLine]].Etime <= note[*objectN].hittime &&
-		move->y[iLine].d[YmoveN2[iLine]].Etime >= 0) {
-		YmoveN2[iLine]++;
+	CalNoteViewTime(notedata, &recfp->mapeff.scrool);
+	notedata->ypos = 50 * iLine + 300;
+	notedata->xpos = 150;
+	/* ècà íuÇåvéZÇ∑ÇÈ */ {
+		short *YmoveN = &mapenc->YmoveN2[iLine];
+		while (IS_BETWEEN(0, recfp->mapeff.move.y[iLine].d[*YmoveN].Etime, notedata->hittime)) {
+			(*YmoveN)++;
+		}
 	}
-	if (move->y[iLine].d[YmoveN2[iLine]].Stime >= 0 &&
-		move->y[iLine].d[YmoveN2[iLine]].Stime <= note[*objectN].hittime &&
-		move->y[iLine].d[YmoveN2[iLine]].Etime > note[*objectN].hittime) {
-		note[*objectN].ypos = movecal(move->y[iLine].d[YmoveN2[iLine]].mode,
-			move->y[iLine].d[YmoveN2[iLine]].Stime,
-			move->y[iLine].d[YmoveN2[iLine] - 1].pos,
-			move->y[iLine].d[YmoveN2[iLine]].Etime, move->y[iLine].d[YmoveN2[iLine]].pos,
-			note[*objectN].hittime);
+	{
+		short YmoveN = mapenc->YmoveN2[iLine];
+		rec_move_data_t *Ymove = &recfp->mapeff.move.y[iLine].d[YmoveN];
+		if (IS_BETWEEN(0, Ymove[0].Stime, notedata->hittime) && Ymove[0].Etime > notedata->hittime)
+		{
+			notedata->ypos = movecal(Ymove[0].mode, Ymove[0].Stime, Ymove[-1].pos, Ymove[0].Etime,
+				Ymove[0].pos, notedata->hittime);
+		}
+		else { notedata->ypos = Ymove[-1].pos; }
 	}
-	else {
-		note[*objectN].ypos = move->y[iLine].d[YmoveN2[iLine] - 1].pos;
+	/* â°à íuÇåvéZÇ∑ÇÈ */ {
+		short *XmoveN = &mapenc->XmoveN2[iLine];
+		while (IS_BETWEEN(0, recfp->mapeff.move.x[iLine].d[*XmoveN].Etime, notedata->hittime)) {
+			(*XmoveN)++;
+		}
 	}
-	//â°à íuÇåvéZÇ∑ÇÈ
-	while (move->x[iLine].d[XmoveN2[iLine]].Etime <= note[*objectN].hittime &&
-		move->x[iLine].d[XmoveN2[iLine]].Etime >= 0) {
-		XmoveN2[iLine]++;
-	}
-	if (move->x[iLine].d[XmoveN2[iLine]].Stime >= 0 &&
-		move->x[iLine].d[XmoveN2[iLine]].Stime <= note[*objectN].hittime &&
-		move->x[iLine].d[XmoveN2[iLine]].Etime > note[*objectN].hittime) {
-		note[*objectN].xpos = movecal(move->x[iLine].d[XmoveN2[iLine]].mode,
-			move->x[iLine].d[XmoveN2[iLine]].Stime,
-			move->x[iLine].d[XmoveN2[iLine] - 1].pos,
-			move->x[iLine].d[XmoveN2[iLine]].Etime, move->x[iLine].d[XmoveN2[iLine]].pos,
-			note[*objectN].hittime);
-	}
-	else {
-		note[*objectN].xpos = move->x[iLine].d[XmoveN2[iLine] - 1].pos;
+	{
+		short XmoveN = mapenc->XmoveN2[iLine];
+		rec_move_data_t *Xmove = &recfp->mapeff.move.x[iLine].d[XmoveN];
+		if (IS_BETWEEN(0, Xmove[0].Stime, notedata->hittime) && Xmove[0].Etime > notedata->hittime)
+		{
+			notedata->xpos = movecal(Xmove[0].mode, Xmove[0].Stime, Xmove[-1].pos, Xmove[0].Etime,
+				Xmove[0].pos, notedata->hittime);
+		}
+		else { notedata->xpos = Xmove[-1].pos; }
 	}
 	//å¯â âπÇê›íËÇ∑ÇÈ
 	if (L'1' <= c && c <= L'9') {
-		note[*objectN].sound = customnote[c - L'1'].sound;
-		note[*objectN].melody = customnote[c - L'1'].melody;
+		notedata->sound  = mapenc->customnote[c - L'1'].sound;
+		notedata->melody = mapenc->customnote[c - L'1'].melody;
 	}
-	else {
-		note[*objectN].sound = 0;
-	}
+	else { notedata->sound = 0; }
 	//êFÇê›íËÇ∑ÇÈ
-	if (L'1' <= c && c <= L'9') {
-		note[*objectN].color = customnote[c - L'1'].color;
-	}
-	else {
-		note[*objectN].color = 0;
-	}
-	if (note[*objectN].object != 8) {
-		(*notes)++;
-	}
-	(*objectN)++;
-	allnum->notenum[iLine]++;
+	if (L'1' <= c && c <= L'9') { notedata->color = mapenc->customnote[c - L'1'].color; }
+	else { notedata->color = 0; }
+	if (notedata->object != 8) { (recfp->mapdata.notes)++; }
+	mapenc->objectN++;
+	recfp->allnum.notenum[iLine]++;
 	return 0;
 }
 
@@ -862,11 +800,13 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 #if 0 /* fixing... */
-	set_item_set(&recfp->mapeff.Movie[MovieN], &MovieN, &recfp->allnum, &GT1[0], mapenc->item_set, mapenc->bpmG, mapenc->timer[0]);
+	set_item_set(&mapeff->Movie[MovieN], &MovieN, &recfp->allnum, &GT1[0], mapenc->item_set, mapenc->bpmG, mapenc->timer[0]);
 #else
 	int G[15];
 	uint itemNo = 0;
 	uint mode   = 1;
+
+	rec_map_eff_data_t *mapeff = &recfp->mapeff;
 
 	strmods(GT1, 10);
 	itemNo = strsans(GT1);
@@ -908,27 +848,27 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 	strnex(GT1);
 	G[13] = strsans2(GT1) * 255.0; /* ea */
 	for (uint inum = 0; inum < mapenc->item_set[itemNo].num; inum++) {
-		recfp->mapeff.Movie[mapenc->MovieN].ID = mapenc->item_set[itemNo].picID[inum].picID;
-		recfp->mapeff.Movie[mapenc->MovieN].movemode = mode;
-		recfp->mapeff.Movie[mapenc->MovieN].eff = mapenc->item_set[itemNo].picID[inum].eff;
-		recfp->mapeff.Movie[mapenc->MovieN].starttime = G[2];
-		recfp->mapeff.Movie[mapenc->MovieN].endtime = G[3];
-		recfp->mapeff.Movie[mapenc->MovieN].startXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[8] / 100;
-		recfp->mapeff.Movie[mapenc->MovieN].endXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[9] / 100;
-		recfp->mapeff.Movie[mapenc->MovieN].startYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[8] / 100;
-		recfp->mapeff.Movie[mapenc->MovieN].endYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[9] / 100;
-		rot_xy_pos(G[10], &recfp->mapeff.Movie[mapenc->MovieN].startXpos, &recfp->mapeff.Movie[mapenc->MovieN].startYpos);
-		rot_xy_pos(G[10], &recfp->mapeff.Movie[mapenc->MovieN].endXpos, &recfp->mapeff.Movie[mapenc->MovieN].endYpos);
-		recfp->mapeff.Movie[mapenc->MovieN].startXpos += G[4];
-		recfp->mapeff.Movie[mapenc->MovieN].endXpos += G[5];
-		recfp->mapeff.Movie[mapenc->MovieN].startYpos += G[6];
-		recfp->mapeff.Movie[mapenc->MovieN].endYpos += G[7];
-		recfp->mapeff.Movie[mapenc->MovieN].startsize = G[8] * mapenc->item_set[itemNo].picID[inum].size / 100;
-		recfp->mapeff.Movie[mapenc->MovieN].endsize = G[9] * mapenc->item_set[itemNo].picID[inum].size / 100;
-		recfp->mapeff.Movie[mapenc->MovieN].startrot = G[10] + mapenc->item_set[itemNo].picID[inum].rot;
-		recfp->mapeff.Movie[mapenc->MovieN].endrot = G[11] + mapenc->item_set[itemNo].picID[inum].rot;
-		recfp->mapeff.Movie[mapenc->MovieN].startalpha = G[12] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
-		recfp->mapeff.Movie[mapenc->MovieN].endalpha = G[13] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+		mapeff->Movie[mapenc->MovieN].ID = mapenc->item_set[itemNo].picID[inum].picID;
+		mapeff->Movie[mapenc->MovieN].movemode = mode;
+		mapeff->Movie[mapenc->MovieN].eff = mapenc->item_set[itemNo].picID[inum].eff;
+		mapeff->Movie[mapenc->MovieN].starttime = G[2];
+		mapeff->Movie[mapenc->MovieN].endtime = G[3];
+		mapeff->Movie[mapenc->MovieN].startXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[8] / 100;
+		mapeff->Movie[mapenc->MovieN].endXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[9] / 100;
+		mapeff->Movie[mapenc->MovieN].startYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[8] / 100;
+		mapeff->Movie[mapenc->MovieN].endYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[9] / 100;
+		rot_xy_pos(G[10], &mapeff->Movie[mapenc->MovieN].startXpos, &mapeff->Movie[mapenc->MovieN].startYpos);
+		rot_xy_pos(G[10], &mapeff->Movie[mapenc->MovieN].endXpos, &mapeff->Movie[mapenc->MovieN].endYpos);
+		mapeff->Movie[mapenc->MovieN].startXpos += G[4];
+		mapeff->Movie[mapenc->MovieN].endXpos += G[5];
+		mapeff->Movie[mapenc->MovieN].startYpos += G[6];
+		mapeff->Movie[mapenc->MovieN].endYpos += G[7];
+		mapeff->Movie[mapenc->MovieN].startsize = G[8] * mapenc->item_set[itemNo].picID[inum].size / 100;
+		mapeff->Movie[mapenc->MovieN].endsize = G[9] * mapenc->item_set[itemNo].picID[inum].size / 100;
+		mapeff->Movie[mapenc->MovieN].startrot = G[10] + mapenc->item_set[itemNo].picID[inum].rot;
+		mapeff->Movie[mapenc->MovieN].endrot = G[11] + mapenc->item_set[itemNo].picID[inum].rot;
+		mapeff->Movie[mapenc->MovieN].startalpha = G[12] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+		mapeff->Movie[mapenc->MovieN].endalpha = G[13] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
 		mapenc->MovieN++;
 		recfp->allnum.movienum++;
 	}
@@ -1034,10 +974,7 @@ static void RecMapencSetNotes(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 		int BlockNoteNum = 0;
 		while (GT1[BlockNoteNum] != L'\0' && GT1[BlockNoteNum] != L',') { BlockNoteNum++; }
 		for (int istr = 0; istr < BlockNoteNum; istr++) {
-			RecMapLoadGetc(GT1[istr], istr, recfp->mapdata.note, &mapenc->objectN, iLine, mapenc->timer,
-				mapenc->noteLaneNo, mapenc->bpmG, BlockNoteNum, mapenc->customnote, &recfp->mapeff.scrool,
-				&recfp->mapeff.move, mapenc->YmoveN2, mapenc->XmoveN2, &recfp->mapdata.notes,
-				&recfp->allnum);
+			RecMapLoadGetc(GT1[istr], istr, recfp, mapenc, iLine, BlockNoteNum);
 		}
 		if (iLine <= 1) { FileRead_gets(GT1, 256, mapenc->songdata); }
 	}
@@ -1142,28 +1079,26 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	return;
 }
 
-static void RecMapLoad_SetEndRecfp(rec_score_file_t *recfp, double *timer, uint objectN[],
-	uint lockN0, uint lockN1)
-{
+static void RecMapLoad_SetEndRecfp(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc) {
 	//ïàñ ÇÃç≈å„Ç…goustÇíuÇ≠
 #if SWITCH_NOTE_BOX_2 == 1
-	recfp->mapdata.note[*objectN].lane = NOTE_LANE_MID;
-	recfp->mapdata.note[*objectN].hittime = timer[0];
-	recfp->mapdata.note[*objectN + 1].hittime = -1;
-	recfp->mapdata.note[*objectN].object = NOTE_GHOST;
-	recfp->mapdata.note[*objectN].ypos = 1000;
+	recfp->mapdata.note[mapenc->objectN].lane = NOTE_LANE_MID;
+	recfp->mapdata.note[mapenc->objectN].hittime = mapenc->timer[0];
+	recfp->mapdata.note[mapenc->objectN + 1].hittime = -1;
+	recfp->mapdata.note[mapenc->objectN].object = NOTE_GHOST;
+	recfp->mapdata.note[mapenc->objectN].ypos = 1000;
 #else
 	for (uint iLane = 0; iLane < 3; iLane++) {
-		recfp->mapdata.note[iLane][objectN[iLine]].hittime = timer[iLane];
-		recfp->mapdata.note[iLane][objectN[iLine] + 1].hittime = -1;
-		recfp->mapdata.note[iLane][objectN[iLine]].object = NOTE_GHOST;
-		recfp->mapdata.note[iLane][objectN[iLine]].ypos = 1000;
+		recfp->mapdata.note[iLane][mapenc->objectN[iLine]].hittime = mapenc->timer[iLane];
+		recfp->mapdata.note[iLane][mapenc->objectN[iLine] + 1].hittime = -1;
+		recfp->mapdata.note[iLane][mapenc->objectN[iLine]].object = NOTE_GHOST;
+		recfp->mapdata.note[iLane][mapenc->objectN[iLine]].ypos = 1000;
 	}
 #endif
-	recfp->mapeff.lock[0][0][lockN0] = 1;
-	recfp->mapeff.lock[0][1][lockN0] = -1;
-	recfp->mapeff.lock[1][0][lockN1] = -1;
-	recfp->mapeff.lock[1][1][lockN1] = -1;
+	recfp->mapeff.lock[0][0][mapenc->lockN[0]] = 1;
+	recfp->mapeff.lock[0][1][mapenc->lockN[0]] = -1;
+	recfp->mapeff.lock[1][0][mapenc->lockN[1]] = -1;
+	recfp->mapeff.lock[1][1][mapenc->lockN[1]] = -1;
 #if SWITCH_NOTE_BOX_2 == 1
 	recfp->allnum.notenum[1]++;
 #else
@@ -1171,7 +1106,7 @@ static void RecMapLoad_SetEndRecfp(rec_score_file_t *recfp, double *timer, uint 
 	recfp->allnum.notenum[1]++;
 	recfp->allnum.notenum[2]++;
 #endif
-	recfp->time.end = timer[0];
+	recfp->time.end = mapenc->timer[0];
 	return;
 }
 
@@ -1414,7 +1349,7 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 	}
 
 	FileRead_close(mapenc.songdata);
-	RecMapLoad_SetEndRecfp(recfp, mapenc.timer, (uint *)&mapenc.objectN, mapenc.lockN[0], mapenc.lockN[1]);
+	RecMapLoad_SetEndRecfp(recfp, &mapenc);
 	RecMapLoad_SaveMap(folderPath, recfp, o);
 	return;
 }
@@ -1443,77 +1378,6 @@ int IsNoteCode(wchar_t c) {
 		return 1;
 	}
 	return 0;
-}
-
-int cal_ddif(int num, int const *difkey, int Etime, int noteoff, int difsec, int voidtime) {
-	int ret = 0;
-	int count = 0;
-	if (num >= 50) {
-		num = 49;
-	}
-	for (int i = 0; i < num; i++) {
-		if (difkey[i * 4 + 1] > (Etime - noteoff) / 25 *
-			difsec - voidtime + noteoff) {
-			count++;
-			ret += difkey[i * 4 + 2];
-		}
-	}
-	if (count == 0) {
-		return 0;
-	}
-	else {
-		return ret * 50 / count;
-	}
-}
-
-int cal_nowdif_m(int *difkey, int num, int now, int voidtime) {
-	int ret = 0;
-	int count = 0;
-	for (int i = 0; i <= num; i++) {
-		if (difkey[i * 4 + 2] < 0) {
-			break;
-		}
-		if (difkey[i * 4 + 1] > difkey[now * 4 + 1] - voidtime) {
-			ret += difkey[i * 4 + 2];
-			count++;
-		}
-	}
-	if (count == 0) {
-		return 0;
-	}
-	else {
-		return ret * 50 / count;
-	}
-}
-
-rrs_obj_code_t check_obj_code(wchar_t const *const s) {
-	if (s[0] == L';') { return OBJ_CODE_MEMO; }
-	if (strands(s, L"#SPEED")) { return OBJ_CODE_SPEED; }
-	if (strands(s, L"#BPM:")) { return OBJ_CODE_BPM; }
-	if (strands(s, L"#V-BPM:")) { return OBJ_CODE_VBPM; }
-	if (strands(s, L"#CHARA")) { return OBJ_CODE_CHARA; }
-	if (strands(s, L"#MOVE")) { return OBJ_CODE_MOVE; }
-	if (strands(s, L"#XMOV")) { return OBJ_CODE_XMOV; }
-	if (strands(s, L"#CMOV:")) { return OBJ_CODE_CAMMOVE; }
-	if (strands(s, L"#DIV")) { return OBJ_CODE_DIV; }
-	if (strands(s, L"#GMOVE")) { return OBJ_CODE_GMOVE; }
-	if (strands(s, L"#XLOCK")) { return OBJ_CODE_XLOCK; }
-	if (strands(s, L"#YLOCK")) { return OBJ_CODE_YLOCK; }
-	if (strands(s, L"#CARROW")) { return OBJ_CODE_CARROW; }
-	if (strands(s, L"#FALL")) { return OBJ_CODE_FALL; }
-	if (strands(s, L"#VIEW:")) { return OBJ_CODE_VIEW; }
-	if (strands(s, L"#V-LANE:")) { return OBJ_CODE_VIEW_LINE; }
-	if (strands(s, L"#MOVIE:")) { return OBJ_CODE_MOVIE; }
-	if (strands(s, L"#INIT_ITEM_SET:")) { return OBJ_CODE_INIT_ITEM_SET; }
-	if (strands(s, L"#ADD_ITEM_SET:")) { return OBJ_CODE_ADD_ITEM_SET; }
-	if (strands(s, L"#ITEM_SET:")) { return OBJ_CODE_ITEM_SET; }
-	if (strands(s, L"#CAMERA:")) { return OBJ_CODE_CAMERA; }
-	if (strands(s, L"#CAMMOVE:")) { return OBJ_CODE_CAMMOVE; }
-	if (strands(s, L"#SCROOL:")) { return OBJ_CODE_SCROOL; }
-	if (strands(s, L"#CUSTOM:")) { return OBJ_CODE_CUSTOM; }
-	if (strands(s, L"#END")) { return OBJ_CODE_END; }
-	if (s[0] == L'\0') { return OBJ_CODE_SPACE; }
-	return OBJ_CODE_NONE;
 }
 
 void set_item_set(item_box *const Movie, short *const MovieN,
@@ -1623,46 +1487,6 @@ item_eff_box set_pic_mat(wchar_t *s) {
 		strnex(s);
 	}
 	return eff;
-}
-
-int MapErrorCheck(int nownote, int nowtime, int befnote, int beftime, int dif, int wl) {
-	if (nowtime <= 0 || beftime <= 0) {
-		return 0;
-	}
-	switch (dif * 10 + wl) {
-	case 11:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 1200) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 12:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 600) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 13:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 300) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 21:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 600) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 22:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 300) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	case 23:
-		if (nownote == 1 && befnote == 1 && nowtime - beftime <= 150) {
-			return HITNOTETOONEAR;
-		}
-		break;
-	default: break;
-	}
-	return 0;
 }
 
 #endif /* under */
