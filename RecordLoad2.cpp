@@ -1269,6 +1269,36 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 }
 
 static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath, int o) {
+	const static struct {
+		TCHAR cmd[32];
+		rec_mapenc_noteact_f func;
+	} noteact_table[] = {
+		{ _T(";"),               NULL },
+		{ _T("#SPEED"),          RecMapencSetSpeed      },
+		{ _T("#BPM:"),           RecMapencSetBpm        },
+		{ _T("#V-BPM:"),         RecMapencSetVBpm       },
+		{ _T("#CHARA"),          RecMapencSetChara      },
+		{ _T("#MOVE"),           RecMapencSetMove       },
+		{ _T("#XMOV"),           RecMapencSetXMove      },
+		{ _T("#DIV"),            RecMapencSetDiv        },
+		{ _T("#GMOVE"),          RecMapencSetGMove      },
+		{ _T("#XLOCK"),          RecMapencSetXLock      },
+		{ _T("#YLOCK"),          RecMapencSetYLock      },
+		{ _T("#CARROW"),         RecMapencSetCArrow     },
+		{ _T("#FALL"),           RecMapencSetFall       },
+		{ _T("#VIEW:"),          RecMapencSetView       },
+		{ _T("#V-LANE:"),        RecMapencSetVLane      },
+		{ _T("#MOVIE:"),         RecMapencSetMovie      },
+		{ _T("#INIT_ITEM_SET:"), RecMapencInitItemSet   },
+		{ _T("#ADD_ITEM_SET:"),  RecMapencAddItemSet    },
+		{ _T("#ITEM_SET:"),      RecMapencSetItemGroup  },
+		{ _T("#CAMERA:"),        RecMapencSetCamera     },
+		{ _T("#CMOV"),           RecMapencSetCamMove    },
+		{ _T("#CAMMOVE:"),       RecMapencSetCamMove    },
+		{ _T("#SCROOL:"),        RecMapencSetScrool     },
+		{ _T("#CUSTOM:"),        RecMapencSetCustomNote }
+	};
+
 	//o: 難易度ナンバー
 	short i[2] = { 0,0 };
 #if 0 /* fixing... */
@@ -1362,84 +1392,25 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		}
 	}
 
-	FileRead_gets(GT1, 256, mapenc.songdata);
-	while (FileRead_eof(mapenc.songdata) == 0 && strands(GT1, L"#END") == 0) {
-		switch (check_obj_code(GT1)) { /* TODO: コマンドテーブル作って管理したい。 */
-		case OBJ_CODE_MEMO: //コメント
-		case OBJ_CODE_SPACE: //空白
-			/* この行は何も処理しない、スキップ */
-			break;
-		case OBJ_CODE_SPEED: //ノーツの速度変化
-			RecMapencSetSpeed(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_BPM: //データ処理のBPM変化
-			RecMapencSetBpm(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_VBPM: //見た目のBPM変化
-			RecMapencSetVBpm(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_CHARA: //キャラグラ変化
-			RecMapencSetChara(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_MOVE: //縦移動
-			RecMapencSetMove(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_XMOV: //横移動
-			RecMapencSetXMove(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_DIV: //振動
-			RecMapencSetDiv(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_GMOVE: //GMOVE 廃止済みコマンド
-			RecMapencSetGMove(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_XLOCK: //横ロック
-			RecMapencSetXLock(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_YLOCK: //縦ロック
-			RecMapencSetYLock(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_CARROW: //キャラ向き変化
-			RecMapencSetCArrow(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_FALL: //落ち物背景切り替え
-			RecMapencSetFall(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_VIEW: //音符表示時間
-			RecMapencSetView(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_VIEW_LINE: /* ガイドライン表示, 書式 = #V-LANE:<0,1>/<time> */
-			RecMapencSetVLane(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_MOVIE: //アイテム表示
-			RecMapencSetMovie(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_INIT_ITEM_SET: //アイテムセット初期化
-			RecMapencInitItemSet(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_ADD_ITEM_SET: //アイテムセット追加
-			RecMapencAddItemSet(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_ITEM_SET: //アイテムセット表示
-			RecMapencSetItemGroup(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_CAMERA: //カメラ移動+ズーム+角度(未実装)
-			RecMapencSetCamera(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_CAMMOVE: //カメラ移動
-			RecMapencSetCamMove(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_SCROOL: //スクロール
-			RecMapencSetScrool(recfp, &mapenc, GT1);
-			break;
-		case OBJ_CODE_CUSTOM: //カスタムノーツセット
-			RecMapencSetCustomNote(recfp, &mapenc, GT1);
-			break;
-		default:
-			RecMapencSetNotes(recfp, &mapenc, GT1);
-			break;
-		}
+	while (1) {
 		FileRead_gets(GT1, 256, mapenc.songdata);
+		if (FileRead_eof(mapenc.songdata) != 0 || strands(GT1, L"#END") != 0) { break; }
+
+		int hitnum = -1;
+		for (uint inum = 0; inum < ARRAY_COUNT(noteact_table); inum++) {
+			if (GT1[0] == _T('\0')) { break; }
+			if (strands_2(GT1, ARRAY_COUNT(GT1), noteact_table[inum].cmd, ARRAY_COUNT(noteact_table[inum].cmd))) {
+				hitnum = inum;
+				break;
+			}
+		}
+
+		if (hitnum != -1) {
+			if (noteact_table[hitnum].func != NULL) { noteact_table[hitnum].func(recfp, &mapenc, GT1); }
+		}
+		else {
+			RecMapencSetNotes(recfp, &mapenc, GT1);
+		}
 	}
 
 	FileRead_close(mapenc.songdata);
