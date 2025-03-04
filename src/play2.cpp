@@ -798,46 +798,34 @@ int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[
 		break;
 	}
 
-	uint NspeedNo = speedN[1];
-	while (IS_BETWEEN_LEFT_LESS(0, recfp->mapeff.speedt[1][NspeedNo + 1][0], Ymove[Line].d[iDraw].Stime)) {
-		NspeedNo++;
-	}
-	length = lins(1.0, 2.5, 1.2, 2.1, recfp->mapeff.speedt[1][NspeedNo][1]);
-
 	if (Ymove[Line].d[iDraw].Stime < 0) {
 		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 1; }
-		drawLeft = (Ymove[Line].d[iDraw - 1].Etime - Ntime) / length + Xline[Line] + 15 + camera.x;
-		drawRight = 640;
-		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + camera.y;
-		drawY2 = Ymove[Line].d[iDraw - 1].pos + 15 + camera.y;
-		RecRescaleDrawLine(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
+		RecPlayGetTimeLanePos(&drawLeft, &drawY1, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw - 1].Etime);
+		drawRight = 1280 + camera.x;
+		drawY2    = drawY1;
+		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 		return 1;
 	}
-	// cal Xpos1
 	if (iDraw < 1) {
 		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
-		drawLeft = Xline[Line] + Xline[Line] + 15;
-		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / length + Xline[Line] + 15;
-		drawY1 = Yline[Line] + 15;
-		drawY2 = Yline[Line] + 15;
+		RecPlayGetTimeLanePos(&drawRight, &drawY2, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[0].Stime);
+		drawLeft = 0 - camera.x;
+		drawY1   = drawY2;
 		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
 	else if (Ntime < Ymove[Line].d[iDraw].Etime) {
 		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
-		drawLeft = (Ymove[Line].d[iDraw - 1].Etime - Ntime) / length + Xline[Line] + 15;
-		drawRight = (Ymove[Line].d[iDraw].Stime - Ntime) / length + Xline[Line] + 15;
-		drawY1 = Ymove[Line].d[iDraw - 1].pos + 15;
-		drawY2 = Ymove[Line].d[iDraw - 1].pos + 15;
+		RecPlayGetTimeLanePos(&drawLeft,  &drawY1, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw - 1].Etime);
+		RecPlayGetTimeLanePos(&drawRight, &drawY2, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw].Stime);
 		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
-	drawLeft = (Ymove[Line].d[iDraw].Stime - Ntime) / length + Xline[Line] + 15 + camera.x;
-	if (960 < drawLeft) {
-		return 1;
-	}
-	drawRight = (Ymove[Line].d[iDraw].Etime - Ntime) / length + Xline[Line] + 15 + camera.x;
-	drawY1 = Ymove[Line].d[iDraw - 1].pos + 15 + camera.y;
-	drawY2 = Ymove[Line].d[iDraw].pos + 15 + camera.y;
-	// wiew
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw].Etime);
+	drawLeft += camera.x;
+	drawRight += camera.x;
+	drawY1 += camera.y;
+	drawY2 += camera.y;
+	if (960 < drawLeft) { return 1; }
 	if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
 	DrawLineCurve(drawLeft, drawY1, drawRight, drawY2, Ymove[Line].d[iDraw].mode, drawC, 2);
 	return 0;
