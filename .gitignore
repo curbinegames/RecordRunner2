@@ -31,5 +31,6 @@ StartDXProgram.vcxproj.user
 *.xcf
 
 .vs/
+.vscode/
 Debug/
 Release/
