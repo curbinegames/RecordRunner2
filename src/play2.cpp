@@ -763,27 +763,27 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, short int speedN[], int *Xl
 	return;
 }
 
-int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[], int iDraw,
+static int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[], int iDraw,
 	short speedN[])
 {
 	int Ntime = recfp->time.now;
-	rec_move_set_t *Ymove = recfp->mapeff.move.y;
-	int Ptime = 0;
+	rec_move_data_t *Ymove = recfp->mapeff.move.y[Line].d;
+	rec_map_eff_data_t *mapeff = &recfp->mapeff;
 
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
 	int drawC = 0;
-	double length = 2.5;
 	rec_play_xy_set_t camera;
 	RecPlayGetCameraPos(&camera.x, &camera.y);
 
 	uint NlineViewNo = recfp->mapeff.viewLine.num;
-	while (IS_BETWEEN_LEFT_LESS(0, recfp->mapeff.viewLine.d[NlineViewNo + 1].time, Ymove[Line].d[iDraw].Stime)) {
+	while (IS_BETWEEN_LEFT_LESS(0, recfp->mapeff.viewLine.d[NlineViewNo + 1].time, Ymove[iDraw].Stime)) {
 		NlineViewNo++;
 	}
-	if (recfp->time.end < Ptime) { return 1; }
+
+	const bool viewEn = recfp->mapeff.viewLine.d[NlineViewNo].enable;
 
 	// color code
 	switch (Line) {
@@ -798,36 +798,36 @@ int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int Yline[
 		break;
 	}
 
-	if (Ymove[Line].d[iDraw].Stime < 0) {
-		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 1; }
-		RecPlayGetTimeLanePos(&drawLeft, &drawY1, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw - 1].Etime);
+	if (Ymove[iDraw].Stime < 0) {
+		if (!viewEn) { return 1; }
+		RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, Xline, Line, speedN[Line], Ntime, Ymove[iDraw - 1].Etime);
 		drawRight = 1280 + camera.x;
 		drawY2    = drawY1;
 		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 		return 1;
 	}
 	if (iDraw < 1) {
-		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
-		RecPlayGetTimeLanePos(&drawRight, &drawY2, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[0].Stime);
+		if (!viewEn) { return 0; }
+		RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, Xline, Line, speedN[Line], Ntime, Ymove[0].Stime);
 		drawLeft = 0 - camera.x;
 		drawY1   = drawY2;
 		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
-	else if (Ntime < Ymove[Line].d[iDraw].Etime) {
-		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
-		RecPlayGetTimeLanePos(&drawLeft,  &drawY1, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw - 1].Etime);
-		RecPlayGetTimeLanePos(&drawRight, &drawY2, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw].Stime);
+	else if (Ntime < Ymove[iDraw].Etime) {
+		if (!viewEn) { return 0; }
+		RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, Xline, Line, speedN[Line], Ntime, Ymove[iDraw - 1].Etime);
+		RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, Xline, Line, speedN[Line], Ntime, Ymove[iDraw].Stime);
 		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 	}
-	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw].Stime);
-	RecPlayGetTimeLanePos(&drawRight, &drawY2, &recfp->mapeff, Xline, Line, speedN[Line], Ntime, Ymove[Line].d[iDraw].Etime);
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, Xline, Line, speedN[Line], Ntime, Ymove[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, Xline, Line, speedN[Line], Ntime, Ymove[iDraw].Etime);
 	drawLeft += camera.x;
 	drawRight += camera.x;
 	drawY1 += camera.y;
 	drawY2 += camera.y;
 	if (960 < drawLeft) { return 1; }
-	if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { return 0; }
-	DrawLineCurve(drawLeft, drawY1, drawRight, drawY2, Ymove[Line].d[iDraw].mode, drawC, 2);
+	if (!viewEn) { return 0; }
+	DrawLineCurve(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, 2);
 	return 0;
 }
 
