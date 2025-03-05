@@ -1,7 +1,12 @@
 
+/* base include */
 #include <stdio.h>
-#include "system.h"
-#include "RecScoreFile.h"
+
+/* rec system include */
+#include <system.h>
+
+/* own include */
+#include <RecScoreFile.h>
 
 #define REC_LINE_READ(pointer, size, count, fp)  fread((pointer), (size), (count), (fp))
 #define REC_LINE_WRITE(pointer, size, count, fp) fwrite((pointer), (size), (count), (fp))

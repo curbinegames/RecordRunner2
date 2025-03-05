@@ -1,9 +1,14 @@
 
-#include "DxLib.h"
+/* base include */
+#include <DxLib.h>
+
+/* rec system include */
+#include <playbox.h>
+#include <PlayCamera.h>
 #include <system.h>
-#include "playbox.h"
-#include "PlayHitEff.h"
-#include "PlayCamera.h"
+
+/* own include */
+#include <PlayHitEff.h>
 
 typedef struct rec_play_hit_effect_picture_s {
 	int hit[5];

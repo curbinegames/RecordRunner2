@@ -1,10 +1,17 @@
 
+/* base include */
 #include <DxLib.h>
-#include <sancur.h>
-#include <strcur.h>
+
+/* curbine code include */
 #include <dxdraw.h>
 #include <fontcur.h>
+#include <sancur.h>
+#include <strcur.h>
+
+/* rec system include */
 #include <system.h>
+
+/* own include */
 #include <RecWindowRescale.h>
 
 void RecRescaleDrawLine(int x1, int y1, int x2, int y2, uint cr, int thick) {

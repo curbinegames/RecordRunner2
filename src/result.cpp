@@ -1,15 +1,20 @@
 
-#include <dxcur.h>
-#include <strcur.h>
-#include <fontcur.h>
+/* base include */
+#include <DxLib.h>
 
-#include <RecSystem.h>
-#include <RecSave.h>
+/* curbine code include */
+#include <dxcur.h>
+#include <fontcur.h>
+#include <strcur.h>
+
+/* rec system include */
 #include <option.h>
-#include <system.h>
 #include <playbox.h>
-#include <RecWindowRescale.h>
+#include <RecSave.h>
 #include <RecScoreFile.h>
+#include <RecSystem.h>
+#include <RecWindowRescale.h>
+#include <system.h>
 
 /* TODO: セーブファイル関係をまとめたソースを作っても良いかも。名前はRecSave.cppとか? */
 /* TODO: クリア状況はclearrank、スコア評価はscorerateに改名しよう */

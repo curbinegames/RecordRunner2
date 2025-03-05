@@ -1,11 +1,16 @@
 
+/* base include */
 #include <stdio.h>
+
+/* curbine code include */
 #include <strcur.h>
-#include <system.h>
+
+/* rec system include */
+#include <option.h>
 #include <playbox.h>
 #include <RecSave.h>
 #include <result.h>
-#include <option.h>
+#include <system.h>
 
 #if 1 /* play score */
 

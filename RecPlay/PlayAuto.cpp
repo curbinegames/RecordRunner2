@@ -1,4 +1,5 @@
 
+/* rec system include */
 #include <playbox.h>
 
 /* w’è‚Ìƒm[ƒc‚ªgap[ms]ˆÈ“à‚É‚ ‚Á‚½‚çtrue */

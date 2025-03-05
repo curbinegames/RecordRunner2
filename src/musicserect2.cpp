@@ -21,7 +21,7 @@
 #include <RecWindowRescale.h>
 #include <system.h>
 
-/* rec sub include */
+/* own include */
 #include <musicserect2.h>
 
 #endif /* include */

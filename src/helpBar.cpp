@@ -1,10 +1,17 @@
 
-#include "DxLib.h"
-#include "dxcur.h"
-#include "helpBar.h"
-#include "system.h"
-#include "option.h"
-#include "RecWindowRescale.h"
+/* base include */
+#include <DxLib.h>
+
+/* curbine code include */
+#include <dxcur.h>
+
+/* rec system include */
+#include <option.h>
+#include <RecWindowRescale.h>
+#include <system.h>
+
+/* own include */
+#include <helpBar.h>
 
 #define REC_HELP_DRAW_X 5
 #define REC_HELP_DRAW_Y 460

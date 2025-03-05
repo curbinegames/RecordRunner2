@@ -1,9 +1,16 @@
 
+/* base include */
 #include <DxLib.h>
+
+/* curbine code include */
 #include <sancur.h>
+
+/* rec system include */
 #include <RecScoreFile.h>
-#include "PlayCamera.h"
 #include <RecWindowRescale.h>
+
+/* own include */
+#include <PlayCamera.h>
 
 static rec_play_xy_set_t camera_pos;
 

@@ -1,13 +1,16 @@
 
+/* base include */
 #include <DxLib.h>
+
+/* curbine code include */
 #include <dxcur.h>
-#include <sancur.h>
 #include <dxdraw.h>
+#include <sancur.h>
 
-#include <RecWindowRescale.h>
-
-#include <system.h>
+/* rec system include */
 #include <option.h>
+#include <RecWindowRescale.h>
+#include <system.h>
 
 typedef struct rec_menu_data_s {
 	DxPic_t card;

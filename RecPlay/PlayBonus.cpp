@@ -1,6 +1,12 @@
+
+/* base include */
 #include <DxLib.h>
+
+/* curbine code include */
 #include <sancur.h>
-#include "playbox.h"
+
+/* rec system include */
+#include <playbox.h>
 #include <RecWindowRescale.h>
 
 /* define */

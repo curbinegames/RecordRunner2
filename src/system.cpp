@@ -1,8 +1,13 @@
 
+/* base include */
 #include <DxLib.h>
+
+/* curbine code include */
+#include <dxcur.h>
 #include <sancur.h>
 #include <strcur.h>
-#include <dxcur.h>
+
+/* rec system include */
 #include <system.h>
 
 int SmallFontData = 0;

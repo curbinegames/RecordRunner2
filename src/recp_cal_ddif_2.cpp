@@ -1,6 +1,9 @@
 
-#include <strcur.h>
+/* curbine code include */
 #include <sancur.h>
+#include <strcur.h>
+
+/* rec system include */
 #include <playbox.h>
 #include <RecScoreFile.h>
 

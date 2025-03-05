@@ -1,8 +1,13 @@
+
+/* base include */
 #include <DxLib.h>
+
+/* curbine code include */
 #include <sancur.h>
 
-#include <system.h>
+/* rec system include */
 #include <RecWindowRescale.h>
+#include <system.h>
 
 #define EFF_TIME_1 750
 #define EFF_TIME_2 200

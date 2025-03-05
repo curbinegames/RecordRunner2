@@ -1,10 +1,15 @@
 
+/* base include */
 #include <DxLib.h>
+
+/* curbine code include */
 #include <sancur.h>
+
+/* rec system include */
 #include <option.h>
+#include <playbox.h>
+#include <PlayCamera.h>
 #include <RecWindowRescale.h>
-#include "playbox.h"
-#include "PlayCamera.h"
 
 static int JudgePic[4];
 static int viewjudge[4] = { 0,0,0,0 };

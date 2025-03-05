@@ -1,13 +1,20 @@
 
+/* base include */
 #include <DxLib.h>
+
+/* curbine code include */
 #include <dxcur.h>
-#include <strcur.h>
 #include <sancur.h>
-#include "RecWindowRescale.h"
-#include "system.h"
-#include "helpBar.h"
-#include "option.h"
+#include <strcur.h>
+
+/* rec system include */
+#include <helpBar.h>
 #include <RecSystem.h>
+#include <RecWindowRescale.h>
+#include <system.h>
+
+/* own include */
+#include <option.h>
 
 #define REC_DEBUG 0 // 0or1 1でデバッグ用コードがビルドされる
 

@@ -3,22 +3,26 @@
 
 /* include */
 
+/* base include */
+#include <DxLib.h>
+
+/* curbine code include */
+#include <dxcur.h>
+#include <dxdraw.h>
+#include <dxlibcur.h>
 #include <sancur.h>
 #include <strcur.h>
-#include <dxdraw.h>
-#include <dxcur.h>
+
+/* rec system include */
 #include <option.h>
 #include <system.h>
-#include <RecScoreFile.h>
-#include <RecordLoad2.h>
-#include <result.h>
 #include <recr_cutin.h>
-#include <dxlibcur.h>
-#include <RecSystem.h>
-#include <recp_cal_ddif_2.h>
-#include <RecWindowRescale.h>
 #include <RecSave.h>
+#include <RecScoreFile.h>
+#include <RecSystem.h>
+#include <RecWindowRescale.h>
 
+/* rec play include */
 #include <playbox.h>
 #include <PlayBonus.h>
 #include <PlayAuto.h>
@@ -26,6 +30,11 @@
 #include <PlayHitEff.h>
 #include <PlayNoteJudge.h>
 #include <PlayViewJudge.h>
+
+/* rec sub include */
+#include <RecordLoad2.h>
+#include <recp_cal_ddif_2.h>
+#include <result.h>
 
 /* define */
 

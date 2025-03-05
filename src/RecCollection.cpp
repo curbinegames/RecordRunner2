@@ -1,11 +1,19 @@
 
+/* base include */
+#include <DxLib.h>
+
+/* curbine code include */
 #include <sancur.h>
 #include <strcur.h>
-#include <RecWindowRescale.h>
-#include <system.h>
-#include <collect_seclet.h>
+
+/* rec system include */
 #include <option.h>
 #include <RecSave.h>
+#include <RecWindowRescale.h>
+#include <system.h>
+
+/* rec sub include */
+#include <collect_seclet.h>
 
 #if 1 /* C_item */
 

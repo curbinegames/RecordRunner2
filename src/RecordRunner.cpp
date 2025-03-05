@@ -1,20 +1,22 @@
 
 /* base include */
 #include <DxLib.h>
+
+/* curbine code include */
 #include <sancur.h>
 
 /* rec system include */
-#include <system.h>
 #include <RecSystem.h>
+#include <system.h>
 
 /* rec sub include */
-#include <versionup.h>
-#include <title.h>
 #include <menu.h>
 #include <musicserect2.h>
+#include <option.h>
 #include <play2.h>
 #include <RecCollection.h>
-#include <option.h>
+#include <title.h>
+#include <versionup.h>
 
 #define DX_MAIN_DEF HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
 

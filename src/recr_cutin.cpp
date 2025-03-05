@@ -1,10 +1,17 @@
 
+/* base include */
 #include <DxLib.h>
+
+/* curbine code include */
 #include <sancur.h>
 #include <strcur.h>
-#include <recr_cutin.h>
-#include <RecWindowRescale.h>
+
+/* rec system include */
 #include <option.h>
+#include <RecWindowRescale.h>
+
+/* own include */
+#include <recr_cutin.h>
 
 #define CUT_MES_POSX 75
 

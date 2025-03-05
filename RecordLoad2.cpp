@@ -1,11 +1,16 @@
 
+/* base include */
 #include <DxLib.h>
-#include <strcur.h>
+
+/* curbine code include */
 #include <sancur.h>
-#include <system.h>
-#include <RecScoreFile.h>
+#include <strcur.h>
+
+/* rec system include */
 #include <playbox.h>
+#include <RecScoreFile.h>
 #include <recp_cal_ddif_2.h>
+#include <system.h>
 
 #if 1 /* typedef */
 

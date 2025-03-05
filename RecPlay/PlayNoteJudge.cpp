@@ -1,13 +1,20 @@
 
+/* base include */
 #include <DxLib.h>
-#include <sancur.h>
+
+/* curbine code include */
 #include <dxcur.h>
+#include <sancur.h>
 #include <system.h>
+
+/* rec system include */
 #include <option.h>
-#include "PlayNoteJudge.h"
-#include "playbox.h"
-#include "PlayViewJudge.h"
-#include "PlayHitEff.h"
+#include <playbox.h>
+#include <PlayHitEff.h>
+#include <PlayViewJudge.h>
+
+/* own include */
+#include <PlayNoteJudge.h>
 
 #define P_JUST_TIME 15
 #define JUST_TIME 40

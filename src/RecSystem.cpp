@@ -1,11 +1,17 @@
-#include <stdio.h>
-#include <dxcur.h>
-#include <strcur.h>
-#include <sancur.h>
 
+/* base include */
+#include <stdio.h>
+
+/* curbine code include */
+#include <dxcur.h>
+#include <sancur.h>
+#include <strcur.h>
+
+/* rec system include */
 #include <option.h>
 
-#include "RecSystem.h"
+/* own include */
+#include <RecSystem.h>
 
 int recSystenLoad(rec_system_t *sys) {
 	int ret = 0;
