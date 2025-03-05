@@ -73,7 +73,7 @@ void SETMove(rec_move_data_t *Buff, double StartTime, double MovePoint,
 {
 	Buff->Stime = shifttime(StartTime, bpm, (int)NowTime);
 	Buff->pos = (int)(MovePoint * 50.0 + 100.0);
-	Buff->Etime = shifttime(EndTime, bpm, (int)NowTime) - 5;
+	Buff->Etime = maxs_2(shifttime(EndTime, bpm, (int)NowTime) - 5, Buff->Stime);
 	Buff->mode = (int)MoveType;
 }
 
