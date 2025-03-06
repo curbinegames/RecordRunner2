@@ -122,6 +122,21 @@ void DrawLineRecField(int posx1, int posy1, int posx2, int posy2, unsigned int c
 	return;
 }
 
+void DrawLineCurveRecField(int posx1, int posy1, int posx2, int posy2, int mode, unsigned int color, int thick) {
+	int drawX = 0;
+	int drawY = 0;
+	int drawX2 = 0;
+	int drawY2 = 0;
+
+	drawX  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posx1 + camera_pos.x);
+	drawY  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posy1 + camera_pos.y);
+	drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posx2 + camera_pos.x);
+	drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posy2 + camera_pos.y);
+
+	DrawLineCurve(drawX, drawY, drawX2, drawY2, mode, color, thick);
+	return;
+}
+
 void DrawGraphRecBackField(int xpos, int ypos, int pic) {
 	int drawX = 0;
 	int drawY = 0;
