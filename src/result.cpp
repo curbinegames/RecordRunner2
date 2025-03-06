@@ -16,10 +16,7 @@
 #include <RecWindowRescale.h>
 #include <system.h>
 
-/* TODO: セーブファイル関係をまとめたソースを作っても良いかも。名前はRecSave.cppとか? */
 /* TODO: クリア状況はclearrank、スコア評価はscorerateに改名しよう */
-
-#define VER_1_6 0
 
 #define CAL_ACC(judge, notes)												\
 	DIV_AVOID_ZERO((judge).just * 10000 + (judge).good * 9500 + (judge).safe * 5500, (notes) * 100.0, 0)
@@ -38,9 +35,7 @@ typedef struct rec_result_mat_s {
 	DxPic_t rank      = DXLIB_PIC_NULL;
 	DxPic_t chara     = DXLIB_PIC_NULL;
 	cur_font_cr_t fontNo = CUR_FONT_COLOR_MONO;
-#if VER_1_6 == 1
 	cur_font_cr_t floatfontNo = CUR_FONT_COLOR_MONO;
-#endif
 } rec_result_mat_t;
 
 typedef struct rec_result_pal_s {
@@ -50,9 +45,7 @@ typedef struct rec_result_pal_s {
 	int noteCount = 0;
 	int score = 0;
 	double acc = 0;
-#if VER_1_6 == 1
 	double floatRank = 0;
-#endif
 	intx100_t newRate = 0;
 	intx100_t oldRate = 0;
 	intx100_t subRate = 0;
@@ -104,9 +97,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		RecRescaleDrawGraph(140, 260, val->mat.rank,      TRUE);
 		RecRescaleDrawGraph(5,   420, val->mat.clearRate, TRUE);
 		RecRescaleDrawGraph(336, 252, val->mat.chara,     TRUE);
-#if VER_1_6 == 1
 		RecRescaleDrawCurFont(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, 0);
-#endif
 
 		cutin.DrawCut();
 
@@ -178,7 +169,6 @@ rec_clear_rank_t JudgeClearRank(const rec_play_userpal_t *userpal) {
 	return REC_CLEAR_RANK_PERFECT;
 }
 
-#if VER_1_6 == 1
 double GetFloatRank(int score, int miss, int notes, char rank) {
 	switch (rank) {
 	case REC_SCORE_RATE_EX:
@@ -206,7 +196,6 @@ double GetFloatRank(int score, int miss, int notes, char rank) {
 	}
 	return 0;
 }
-#endif
 
 static DxPic_t RecResultLoadClearRateGraph(rec_clear_rank_t Clear) {
 	switch (Clear) {
@@ -293,7 +282,6 @@ static cur_font_cr_t RecResultGetCurFontColor(rec_score_rate_t rank) {
 	}
 }
 
-#if VER_1_6 == 1
 static cur_font_cr_t RecResultGetFlortCurFontColor(rec_score_rate_t rank) {
 	switch (rank) {
 	case REC_SCORE_RATE_EX:
@@ -311,7 +299,6 @@ static cur_font_cr_t RecResultGetFlortCurFontColor(rec_score_rate_t rank) {
 		return CUR_FONT_COLOR_RED;
 	}
 }
-#endif
 
 static void RecResultSetBgm(rec_play_status_t status) {
 	if (status == REC_PLAY_STATUS_DROPED) {
@@ -339,9 +326,7 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 	result_pal->judge           = userpal->judgeCount;
 	result_pal->Mcombo          = userpal->Mcombo;
 	result_pal->noteCount       = noteCount;
-#if VER_1_6 == 1
 	result_pal->floatRank       = GetFloatRank(userpal->score.sum, userpal->judgeCount.miss, noteCount, rank) / 1000;
-#endif
 	result_pal->newRate         = RecSaveGetFullRunnerRate() * 100;
 	result_pal->subRate         = result_pal->newRate - result_pal->oldRate; /* oldRateはレート保存前に代入している */
 	result_pal->mat.clearRate   = RecResultLoadClearRateGraph(Clear);
@@ -349,9 +334,7 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 	result_pal->mat.rank        = RecResultLoadClearRankGraph(rank);
 	result_pal->mat.chara       = RecResultLoadCharaGraph();
 	result_pal->mat.fontNo      = RecResultGetCurFontColor(rank);
-#if VER_1_6 == 1
 	result_pal->mat.floatfontNo = RecResultGetFlortCurFontColor(rank);
-#endif
 
 	RecResultSetBgm(userpal->status);
 
