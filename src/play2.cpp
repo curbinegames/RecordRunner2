@@ -55,6 +55,35 @@ typedef struct rec_play_back_pic_s {
 	int water = 0;
 } rec_play_back_pic_t;
 
+typedef struct play_key_stat_s {
+	char z = 0;
+	char x = 0;
+	char c = 0;
+	char up = 0;
+	char down = 0;
+	char left = 0;
+	char right = 0;
+} play_key_stat_t;
+
+struct note_img {
+	int notebase = LoadGraph(L"picture/hit.png");
+	int hitcircle[6] = {
+		LoadGraph(L"picture/hitc-G.png"),
+		LoadGraph(L"picture/hitc-R.png"),
+		LoadGraph(L"picture/hitc-B.png"),
+		LoadGraph(L"picture/hitc-Y.png"),
+		LoadGraph(L"picture/hitc-X.png"),
+		LoadGraph(L"picture/hitc-W.png"),
+	};
+	int catchi = LoadGraph(L"picture/catch.png");
+	int up = LoadGraph(L"picture/up.png");
+	int down = LoadGraph(L"picture/down.png");
+	int left = LoadGraph(L"picture/left.png");
+	int right = LoadGraph(L"picture/right.png");
+	int bomb = LoadGraph(L"picture/bomb.png");
+	int goust = LoadGraph(L"picture/goust.png");
+};
+
 #endif /* typedef group */
 
 #if 1 /* sub action */

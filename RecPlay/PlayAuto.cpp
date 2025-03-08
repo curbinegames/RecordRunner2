@@ -1,6 +1,7 @@
 
 /* rec system include */
 #include <playbox.h>
+#include <RecScoreFile.h>
 
 /* w’è‚Ìƒm[ƒc‚ªgap[ms]ˆÈ“à‚É‚ ‚Á‚½‚çtrue */
 #define IS_NEAR_NOTE(notedata, mat, Ntime, gap)                             \

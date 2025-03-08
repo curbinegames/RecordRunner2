@@ -5,6 +5,7 @@
 #include <dxcur.h>
 #include <sancur.h>
 
+#include <RecScoreFile.h>
 #include <option.h>
 
 #define SE_HIT (1 << 0)
@@ -13,14 +14,6 @@
 #define SE_BOMB (1 << 3)
 #define SE_GHOST (1 << 4)
 #define SE_SWING (1 << 5)
-
-typedef enum note_lane_num_e {
-	NOTE_LANE_UP = 0,
-	NOTE_LANE_MID,
-	NOTE_LANE_LOW,
-	NOTE_LANE_UM,
-	NOTE_LANE_ML,
-} note_lane_num_t;
 
 typedef enum note_judge {
 	NOTE_JUDGE_NONE = -1,
@@ -31,59 +24,11 @@ typedef enum note_judge {
 	NOTE_JUDGE_PJUST
 } note_judge;
 
-typedef enum note_material {
-	NOTE_NONE = -1,
-	NOTE_HIT = 1,
-	NOTE_CATCH,
-	NOTE_UP,
-	NOTE_DOWN,
-	NOTE_LEFT,
-	NOTE_RIGHT,
-	NOTE_BOMB,
-	NOTE_GHOST
-} note_material;
-#define IS_NOTE_ARROW_GROUP(mat) ((mat) == NOTE_UP || (mat) == NOTE_DOWN || (mat) == NOTE_LEFT || (mat) == NOTE_RIGHT)
-
-enum melodysound {
-	MELODYSOUND_NONE = -1,
-	LOW_F,
-	LOW_Fs,
-	LOW_G,
-	LOW_Gs,
-	LOW_A,
-	LOW_As,
-	LOW_B,
-	LOW_C,
-	LOW_Cs,
-	LOW_D,
-	LOW_Ds,
-	LOW_E,
-	HIGH_F,
-	HIGH_Fs,
-	HIGH_G,
-	HIGH_Gs,
-	HIGH_A,
-	HIGH_As,
-	HIGH_B,
-	HIGH_C,
-	HIGH_Cs,
-	HIGH_D,
-	HIGH_Ds,
-	HIGH_E
-};
-
 typedef enum rec_play_status_e {
 	REC_PLAY_STATUS_PLAYING = 0,
 	REC_PLAY_STATUS_CLEARED,
 	REC_PLAY_STATUS_DROPED,
 } rec_play_status_t;
-
-struct custom_note_box {
-	wchar_t note = L'\0';
-	int color = 0;/*(only hit note)0=green, 1=red, 2=blue, 3=yellow, 4=black, 5=white*/
-	int sound = 0;
-	enum melodysound melody = MELODYSOUND_NONE;
-};
 
 struct judge_box {
 	int pjust = 0;
@@ -93,125 +38,6 @@ struct judge_box {
 	int miss = 0;
 };
 
-struct note_img {
-	int notebase = LoadGraph(L"picture/hit.png");
-	int hitcircle[6] = {
-		LoadGraph(L"picture/hitc-G.png"),
-		LoadGraph(L"picture/hitc-R.png"),
-		LoadGraph(L"picture/hitc-B.png"),
-		LoadGraph(L"picture/hitc-Y.png"),
-		LoadGraph(L"picture/hitc-X.png"),
-		LoadGraph(L"picture/hitc-W.png"),
-	};
-	int catchi = LoadGraph(L"picture/catch.png");
-	int up = LoadGraph(L"picture/up.png");
-	int down = LoadGraph(L"picture/down.png");
-	int left = LoadGraph(L"picture/left.png");
-	int right = LoadGraph(L"picture/right.png");
-	int bomb = LoadGraph(L"picture/bomb.png");
-	int goust = LoadGraph(L"picture/goust.png");
-};
-
-typedef struct note_box {
-	int hittime = -1;
-	int viewtime = -1;
-	note_material object = NOTE_NONE;
-	int xpos = -1;
-	int ypos = -1;
-	int sound = 0;
-	enum melodysound melody = MELODYSOUND_NONE;
-	int color = 0;
-} note_box_t;
-
-typedef struct note_box_2_s {
-	int hittime = -1;
-	int viewtime = -1;
-	note_material object = NOTE_NONE;
-	note_lane_num_t lane = NOTE_LANE_MID;
-	int xpos = -1;
-	int ypos = -1;
-	int sound = 0;
-	enum melodysound melody = MELODYSOUND_NONE;
-	int color = 0;
-	int next = 5999;
-} note_box_2_t;
-
-typedef struct note_lane_s {
-	note_box_t up[2000];
-	note_box_t mid[2000];
-	note_box_t low[2000];
-} note_lane_t;
-
-typedef struct play_key_stat_s {
-	char z = 0;
-	char x = 0;
-	char c = 0;
-	char up = 0;
-	char down = 0;
-	char left = 0;
-	char right = 0;
-} play_key_stat_t;
-typedef struct playnum_box {
-	unsigned int notenum[3] = { 0,0,0 };
-	unsigned int Ymovenum[5] = { 1,1,1,1,1 };
-	unsigned int Xmovenum[3] = { 1,1,1 };
-	unsigned int movienum = 0;
-	unsigned int v_BPMnum = 1;
-} playnum_box;
-typedef struct item_eff_box {
-	unsigned char bpm_alphr = 0;
-	unsigned char bpm_size = 0;
-	unsigned char edge_size = 0;
-	unsigned char lock = 0;
-	unsigned char chara_alphr = 0;
-} item_eff_box;
-typedef struct item_box {
-	short ID = -1;
-	char movemode = 0;
-	item_eff_box eff;
-	int starttime = -1000;
-	int endtime = -1000;
-	int startXpos = 0;
-	int endXpos = 0;
-	int startYpos = 0;
-	int endYpos = 0;
-	int startsize = 100;
-	int endsize = 100;
-	int startrot = 0;
-	int endrot = 0;
-	int startalpha = 255;
-	int endalpha = 255;
-} item_box;
-typedef struct item_set_ID {
-	short picID = -1;
-	item_eff_box eff;
-	int Xpos = 0;
-	int Ypos = 0;
-	int size = 100;
-	int rot = 0;
-	int alpha = 255;
-} item_set_ID;
-typedef struct item_set_box {
-	item_set_ID picID[10];
-	unsigned char num = 0;
-	char movemode = 0;
-	int starttime = -1000;
-	int endtime = -1000;
-	int startXpos = 0;
-	int endXpos = 0;
-	int startYpos = 0;
-	int endYpos = 0;
-	int startsize = 100;
-	int endsize = 100;
-	int startrot = 0;
-	int endrot = 0;
-	int startalpha = 255;
-	int endalpha = 255;
-} item_set_box;
-typedef struct view_BPM_box {
-	int time = -1000;
-	unsigned short BPM = 1;
-} view_BPM_box;
 typedef struct gap_box_t {
 	int view[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	int sum = 0;
@@ -318,15 +144,3 @@ public:
 		this->swi.PlaySound();
 	}
 };
-
-typedef struct rec_ddif_pal_s {
-	uint notes = 0; //HIT,ARROWの密度     青
-	uint arrow = 0; //ARROWの密度         赤
-	uint chord = 0; //同時押しの密度      緑
-	uint chain = 0; //縦連密度            紫
-	uint trill = 0; //トリルの密度        黄色
-	uint meldy = 0; //乱打密度            ピンク
-	uint actor = 0; //CATCH,BOMBの密度    オレンジ
-	uint trick = 0; //ARROWひっかけの密度 茶色
-	intx100_t mdif = 0; //全体の難易度
-} rec_ddif_pal_t;

@@ -24,6 +24,41 @@ typedef enum rec_map_move_code_e {
 	REC_MAP_MOVE_CODE_EDG,
 } rec_map_move_code_t;
 
+typedef struct item_set_ID {
+	short picID = -1;
+	item_eff_box eff;
+	int Xpos = 0;
+	int Ypos = 0;
+	int size = 100;
+	int rot = 0;
+	int alpha = 255;
+} item_set_ID;
+
+typedef struct item_set_box {
+	item_set_ID picID[10];
+	unsigned char num = 0;
+	char movemode = 0;
+	int starttime = -1000;
+	int endtime = -1000;
+	int startXpos = 0;
+	int endXpos = 0;
+	int startYpos = 0;
+	int endYpos = 0;
+	int startsize = 100;
+	int endsize = 100;
+	int startrot = 0;
+	int endrot = 0;
+	int startalpha = 255;
+	int endalpha = 255;
+} item_set_box;
+
+struct custom_note_box {
+	wchar_t note = L'\0';
+	int color = 0;/*(only hit note)0=green, 1=red, 2=blue, 3=yellow, 4=black, 5=white*/
+	int sound = 0;
+	enum melodysound melody = MELODYSOUND_NONE;
+};
+
 typedef struct rec_mapenc_data_s {
 	double bpmG = 120.0;
 	double timer[3] = { 0,0,0 };
