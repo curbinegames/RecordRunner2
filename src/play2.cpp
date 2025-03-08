@@ -635,6 +635,10 @@ static int RecMapGetPosFromMove(rec_move_set_t move[], int time, int lane) {
 		offset++;
 	}
 
+	if (move[lane].d[offset].Stime < 0) {
+		return move[lane].d[offset - 1].pos;
+	}
+
 	if (move[lane].d[offset].Etime <= move[lane].d[offset].Stime) {
 		if (time < move[lane].d[offset].Stime) {
 			return move[lane].d[offset - 1].pos;
@@ -818,7 +822,7 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int
 	if (Ymove[iDraw].Stime < 0) {
 		if (!viewEn) { return 1; }
 		RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, Xline, Yline, Line, YlockN, speedN[Line], Ntime, Ymove[iDraw - 1].Etime);
-		drawRight = 1280 + camera.x;
+		drawRight = 1280 - camera.x;
 		drawY2    = drawY1;
 		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
 		return 1;

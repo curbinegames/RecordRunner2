@@ -476,7 +476,7 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.speedt[3][0][1] = 1;
 	recfp->mapeff.speedt[4][0][0] = 0;
 	recfp->mapeff.speedt[4][0][1] = 1;
-	recfp->mapeff.viewLine.d[0].enable = true;
+	recfp->mapeff.viewLine.d[0].enable = false;
 	recfp->mapeff.viewLine.d[0].time = 0;
 	recfp->mapeff.viewLine.num = 1;
 	return;
