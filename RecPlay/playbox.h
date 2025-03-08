@@ -44,9 +44,6 @@ typedef enum note_material {
 } note_material;
 #define IS_NOTE_ARROW_GROUP(mat) ((mat) == NOTE_UP || (mat) == NOTE_DOWN || (mat) == NOTE_LEFT || (mat) == NOTE_RIGHT)
 
-enum maperror_enum {
-	HITNOTETOONEAR = 1,
-};
 enum melodysound {
 	MELODYSOUND_NONE = -1,
 	LOW_F,
@@ -321,17 +318,6 @@ public:
 		this->swi.PlaySound();
 	}
 };
-
-typedef struct judge_action_box_t {
-	int *combo;
-	int *soundEnFg;
-	gap_box *gap;
-	struct judge_box *judge;
-	int *life;
-	int *melody_snd;
-	rec_play_sound_c *p_sound;
-	struct score_box *score;
-} judge_action_box;
 
 typedef struct rec_ddif_pal_s {
 	uint notes = 0; //HIT,ARROWÇÃñßìx     ê¬
