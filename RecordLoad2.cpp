@@ -633,10 +633,8 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 	double bpmG = 120;
 	double timer[3] = { 0,0,0 }; //[上, 中, 下]レーンの時間
 	short int speedN[5] = { 1,1,1,1,1 }; //↑の番号
-	TCHAR RRS[255]; //PC用譜面データの保存場所
 	TCHAR GT1[255];
 	DxFile_t songdata = 0;
-	FILE *fp;
 
 	RecMapLoad_SetInitRecfp(recfp);
 	songdata = FileRead_open(mapPath);

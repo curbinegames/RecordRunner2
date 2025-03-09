@@ -169,10 +169,7 @@ static void RecClctGetCharaPlayCount(int charaPlayCount[]) {
 }
 
 static void RecClctGetSubStoryScore(int subScore[]) {
-	int buf[6];
 	uint minDif = 1;
-	TCHAR GT1[64];
-	FILE *fp;
 
 	for (int i = 0; i < 4; i++) {
 		rec_save_score_t databuf[6];
@@ -232,9 +229,6 @@ static void RecClctGetSubStoryScore(int subScore[]) {
 }
 
 static void RecClctGetExStoryScore(int exScore[]) {
-	int buf[6];
-	TCHAR GT1[64];
-	FILE *fp;
 	rec_save_score_t databuf[6];
 
 	for (int i = 0; i < 2; i++) {
@@ -540,7 +534,6 @@ static int C_story(void) {
 	TCHAR GT1[256] = _T("");
 	unsigned int Cr;
 	rec_helpbar_c help;
-	FILE *fp;
 
 	// ストーリー解禁に関わるパラメータの読み込み
 	RecClctGetCharaPlayCount(chac);

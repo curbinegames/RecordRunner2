@@ -1,4 +1,7 @@
 
+/* TODO: release版、空背景が動かない */
+/* TODO: release版、途中からノーツが表示されない、初期化関係? */
+
 #if 1 /* define group */
 
 /* include */
