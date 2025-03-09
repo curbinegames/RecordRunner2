@@ -249,9 +249,9 @@ typedef struct rec_map_eff_data_s {
 #endif /* rec_map_eff_data_t */
 
 typedef struct rec_paly_time_set_s {
-	int now;
-	int end;
-	int offset;
+	int now = 0;
+	int end = 0;
+	int offset = 0;
 } rec_play_time_set_t;
 
 typedef struct rec_score_file_s {

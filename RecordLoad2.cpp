@@ -1286,7 +1286,6 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 	int waningLv = 2;
 	double GD[5] = { 0,0,0,0,0 };
 	short viewTN = 1;
-	TCHAR RRS[255]; //PC用譜面データの保存場所
 	TCHAR GT1[255];
 
 	rec_mapenc_data_t mapenc;
