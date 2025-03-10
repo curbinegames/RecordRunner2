@@ -83,8 +83,9 @@ typedef enum rec_play_status_e {
 
 struct custom_note_box {
 	wchar_t note = L'\0';
-	int color = 0;/*(only hit note)0=green, 1=red, 2=blue, 3=yellow, 4=black, 5=white*/
+	int color = 0; /*(only hit note)0=green, 1=red, 2=blue, 3=yellow, 4=black, 5=white*/
 	int sound = 0;
+	int rand  = 0; /* bit: 8:0, 7:H, 6:C, 5:U, 4:D, 3:L, 2:R, 1:B, 0:G */
 	enum melodysound melody = MELODYSOUND_NONE;
 };
 
