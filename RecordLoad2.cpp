@@ -54,8 +54,9 @@ typedef struct item_set_box {
 
 struct custom_note_box {
 	wchar_t note = L'\0';
-	int color = 0;/*(only hit note)0=green, 1=red, 2=blue, 3=yellow, 4=black, 5=white*/
+	int color = 0; /*(only hit note)0=green, 1=red, 2=blue, 3=yellow, 4=black, 5=white*/
 	int sound = 0;
+	int rand  = 0; /* bit: 8:0, 7:H, 6:C, 5:U, 4:D, 3:L, 2:R, 1:B, 0:G */
 	enum melodysound melody = MELODYSOUND_NONE;
 };
 
@@ -191,32 +192,52 @@ void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 	return;
 }
 
-static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
-	int iLine, int BlockNoteNum)
-{
-	int objectN = mapenc->objectN;
-	note_box_2_t *notedata = &recfp->mapdata.note[objectN];
+static TCHAR RecEncNoteGetStrcode(TCHAR c, struct custom_note_box customnote[]) {
+	TCHAR strcode = _T('0');
 
-	TCHAR strcode = L'0';
-	if (IsNoteCode(c) == 0) { return -1; }
-	if (0 <= mapenc->noteLaneNo[iLine]) {
-		recfp->mapdata.note[mapenc->noteLaneNo[iLine]].next = objectN;
+	if (L'1' <= c && c <= L'9') {
+		if (customnote[c - L'1'].rand == 0) {
+			strcode = customnote[c - L'1'].note;
+		}
+		else {
+			uint ret = GetRand(8);
+			while ((customnote[c - L'1'].rand & (1 << ret)) == 0) {
+				ret = GetRand(8);
+			}
+			switch (ret) {
+			case 8:
+				strcode = L'0';
+				break;
+			case 7:
+				strcode = L'H';
+				break;
+			case 6:
+				strcode = L'C';
+				break;
+			case 5:
+				strcode = L'U';
+				break;
+			case 4:
+				strcode = L'D';
+				break;
+			case 3:
+				strcode = L'L';
+				break;
+			case 2:
+				strcode = L'R';
+				break;
+			case 1:
+				strcode = L'B';
+				break;
+			case 0:
+				strcode = L'G';
+				break;
+			}
+		}
 	}
-	mapenc->noteLaneNo[iLine] = objectN;
-	switch (iLine) {
-	case 0:
-		notedata->lane = NOTE_LANE_UP;
-		break;
-	case 1:
-		notedata->lane = NOTE_LANE_MID;
-		break;
-	case 2:
-		notedata->lane = NOTE_LANE_LOW;
-		break;
+	else {
+		strcode = c;
 	}
-	notedata->hittime = mapenc->timer[iLine] + 240000 * istr / (mapenc->bpmG * BlockNoteNum);
-	if (L'1' <= c && c <= L'9') { strcode = mapenc->customnote[c - L'1'].note; }
-	else { strcode = c; }
 	if (strcode == L'?') {
 		switch (GetRand(4)) {
 		case 0:
@@ -264,6 +285,34 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 			break;
 		}
 	}
+	return strcode;
+}
+
+static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
+	int iLine, int BlockNoteNum)
+{
+	int objectN = mapenc->objectN;
+	note_box_2_t *notedata = &recfp->mapdata.note[objectN];
+
+	TCHAR strcode = L'0';
+	if (IsNoteCode(c) == 0) { return -1; }
+	if (0 <= mapenc->noteLaneNo[iLine]) {
+		recfp->mapdata.note[mapenc->noteLaneNo[iLine]].next = objectN;
+	}
+	mapenc->noteLaneNo[iLine] = objectN;
+	switch (iLine) {
+	case 0:
+		notedata->lane = NOTE_LANE_UP;
+		break;
+	case 1:
+		notedata->lane = NOTE_LANE_MID;
+		break;
+	case 2:
+		notedata->lane = NOTE_LANE_LOW;
+		break;
+	}
+	notedata->hittime = mapenc->timer[iLine] + 240000 * istr / (mapenc->bpmG * BlockNoteNum);
+	strcode = RecEncNoteGetStrcode(c, mapenc->customnote);
 	notedata->object = GetNoteObjMat(strcode);
 	//viewtime‚ðŒvŽZ‚·‚é
 	CalNoteViewTime(notedata, &recfp->mapeff.scrool);
@@ -347,6 +396,55 @@ enum melodysound RecMapLoad_GetMelSnd(TCHAR str[]) {
 	return ret;
 }
 
+static void RecEncCustomSetNoteMat(struct custom_note_box *ret, TCHAR str[]) {
+	ret->rand = 0;
+
+	if (strands(str, L"RAND(")) {
+		strmods(str, 5);
+		int i = 0;
+		bool loopFg = true;
+		while (loopFg) {
+			switch (str[i]) {
+			case _T('0'):
+				ret->rand |= (1 << 8);
+				break;
+			case _T('H'):
+				ret->rand |= (1 << 7);
+				break;
+			case _T('C'):
+				ret->rand |= (1 << 6);
+				break;
+			case _T('U'):
+				ret->rand |= (1 << 5);
+				break;
+			case _T('D'):
+				ret->rand |= (1 << 4);
+				break;
+			case _T('L'):
+				ret->rand |= (1 << 3);
+				break;
+			case _T('R'):
+				ret->rand |= (1 << 2);
+				break;
+			case _T('B'):
+				ret->rand |= (1 << 1);
+				break;
+			case _T('G'):
+				ret->rand |= (1 << 0);
+				break;
+			default:
+				loopFg = false;
+				break;
+			}
+			i++;
+		}
+		return;
+	}
+
+	ret->note = str[0];
+	return ;
+}
+
 void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) {
 	int No = 0;
 	struct custom_note_box *ptr;
@@ -361,7 +459,7 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 	while (str[0] != L'\0') {
 		if (strands(str, L"NOTE=")) {
 			strmods(str, 5);
-			ptr->note = str[0];
+			RecEncCustomSetNoteMat(ptr, str);
 		}
 		else if (strands(str, L"SOUND=")) {
 			strmods(str, 6);

@@ -39,7 +39,7 @@
 #define REC_DDIF_TRILL_BASE 3420
 #define REC_DDIF_MELDY_BASE  289
 #define REC_DDIF_ACTOR_BASE 2561
-#define REC_DDIF_TRICK_BASE 2194
+#define REC_DDIF_TRICK_BASE  500
 
 #define REC_DDIF_1ST_WAIGHT  50
 #define REC_DDIF_2ND_WAIGHT  90
@@ -761,7 +761,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		Nowkey->pal.chain *= G[0];
 		Nowkey->pal.meldy *= G[0];
 		Nowkey->pal.actor *= G[0];
-		Nowkey->pal.trick *= G[0];
+		/* trickは密度を見ないパラメータなので除外 */
 
 		// maxの計算
 		{
