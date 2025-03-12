@@ -33,14 +33,14 @@ void RecPlaySetCamera(rec_camera_set_t *camera, int Ntime) {
 	const      int  moveM = camera->data[num].mode;
 	const      int  nposX = camera->data[num].xpos;
 	const      int  nposY = camera->data[num].ypos;
-	const      int  nZoom = camera->data[num].zoom;
+	const   double  nZoom = camera->data[num].zoom * 100;
 	const      int  bposX = (num == 0) ? 0 : camera->data[num - 1].xpos;
 	const      int  bposY = (num == 0) ? 0 : camera->data[num - 1].ypos;
-	const      int  bZoom = (num == 0) ? 0 : camera->data[num - 1].zoom;
+	const   double  bZoom = (num == 0) ? 1 : camera->data[num - 1].zoom * 100;
 
 	if (startT <= Ntime && Ntime <= endT) {
-		camera_pos.x    = (int)movecal(moveM, startT, bposX, endT, nposX, Ntime);
-		camera_pos.y    = (int)movecal(moveM, startT, bposY, endT, nposY, Ntime);
+		camera_pos.x    = (int)movecal(moveM, startT, bposX,       endT, nposX, Ntime);
+		camera_pos.y    = (int)movecal(moveM, startT, bposY,       endT, nposY, Ntime);
 		camera_pos.zoom = (int)movecal(moveM, startT, bZoom, endT, nZoom, Ntime);
 	}
 	else {
