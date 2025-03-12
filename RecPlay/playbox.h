@@ -92,6 +92,7 @@ typedef struct rec_play_userpal_s {
 	int Mcombo = 0;
 	struct judge_box judgeCount;
 	int life = 500;
+	int Exlife = 500;
 	gap_box gap;
 } rec_play_userpal_t;
 

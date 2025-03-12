@@ -124,14 +124,31 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 #if 1 /* RecResultCalParameter */
 
 static rec_score_rate_t CalScoreRank(int score) {
+	/* TODO: Fランク作る */
 	if (score >= 98000) { return REC_SCORE_RATE_EX; }
 	if (score >= 95000) { return REC_SCORE_RATE_S; }
 	if (score >= 90000) { return REC_SCORE_RATE_A; }
 	if (score >= 85000) { return REC_SCORE_RATE_B; }
 	if (score >= 80000) { return REC_SCORE_RATE_C; }
+	/* if (score > 0) { return REC_SCORE_RATE_D; } */
+	/* return REC_SCORE_RATE_F; */
 	return REC_SCORE_RATE_D;
 }
 
+/**
+ * レート計算の考え
+ * FULL PERFECTで [譜面定数] + 3くらい
+ * PERFECTで      [譜面定数] + 2くらい
+ * FULL COMBOで   [譜面定数] + 1くらい
+ * NO MISSで      [譜面定数] + 0くらい
+ * それ以外       [譜面定数]未満
+ * 
+ * レート = ([譜面定数] + [good以下ボーナス] + [safe以下ボーナス]) * [miss数ボーナス] + [PERFECTボーナス]
+ * PERFECTボーナス  = [PJUSTの加点分(0to100)] / 100
+ * good以下ボーナス = min(1 - [good以下率(0to1)] * 10  0)
+ * safe以下ボーナス = min(1 - [safe以下率(0to1)] * 10  0)
+ * miss数ボーナス   = min((50 - [miss数]) / 50, 0)
+ */
 static int CalPlayRate(const judge_box *judge, const rec_map_detail_t *map_detail) {
 	const double DifRate = CAL_DIF_RATE(map_detail->mpal.mdif, map_detail->Lv) / 100.0;
 
@@ -162,10 +179,17 @@ static int CalPlayRate(const judge_box *judge, const rec_map_detail_t *map_detai
 
 rec_clear_rank_t JudgeClearRank(const rec_play_userpal_t *userpal) {
 	const judge_box *judge = &userpal->judgeCount;
+	/* TODO: LOSTED, LIGHTCLEAR, MISSLESS, FULLPERFECTを作る  */
+	/* if (userpal->status == REC_PLAY_STATUS_LOSTED) { return REC_CLEAR_RANK_LOSTED; } */
 	if (userpal->status == REC_PLAY_STATUS_DROPED) { return REC_CLEAR_RANK_DROPED; }
+	/* if (userpal->Exlife < 0) { return REC_CLEAR_RANK_CLEARED; } */
+	/* if (5 < userpal->judgeCount.miss) { return REC_CLEAR_RANK_LIGHTCLEAR; } */
+	/* if (0 < userpal->judgeCount.miss) { return REC_CLEAR_RANK_MISSLESS; } */
 	if (0 < userpal->judgeCount.miss) { return REC_CLEAR_RANK_CLEARED; }
 	if (0 < userpal->judgeCount.safe) { return REC_CLEAR_RANK_NOMISS; }
 	if (0 < userpal->judgeCount.good) { return REC_CLEAR_RANK_FULLCOMBO; }
+	/* if (userpal->score.sum < 100100) { return REC_CLEAR_RANK_PERFECT; } */
+	/* return REC_CLEAR_RANK_FULLPERFECT; */
 	return REC_CLEAR_RANK_PERFECT;
 }
 

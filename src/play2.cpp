@@ -364,6 +364,7 @@ static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play
 	}
 	//ライフ上限
 	userpal->life = mins_2(userpal->life, 500);
+	userpal->Exlife = mins_2(userpal->Exlife, 500);
 	//スコア計算
 	userpal->score = GetScore3(userpal->score, userpal->judgeCount, notes, userpal->Mcombo);
 	//ステータス
@@ -1075,6 +1076,11 @@ private:
 		RecRescaleDrawFormatString(440, 10, COLOR_WHITE, L"%3d", life);
 	}
 
+	void ViewExLife(int Exlife) const {
+		int DrawX = lins(0, -114, 500, 177, Exlife);
+		RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red, TRUE); /* TODO: blueを用意する */
+	}
+
 	void ViewDist(rec_play_status_t status, const distance_score_t *Dscore, const rec_play_time_set_t *time) {
 		int DrawX = 0;
 		int DrawNo = 0;
@@ -1143,6 +1149,7 @@ public:
 		RecRescaleDrawGraph(0, 0, this->baseImg, TRUE);
 		this->ViewScore(userpal->score, Hscore, time->now);
 		this->ViewLife(userpal->life);
+		this->ViewExLife(userpal->Exlife); /* TODO: lifeの値がfxlifeで隠れている */
 		this->ViewDist(userpal->status, &userpal->Dscore, time);
 		RecRescaleDrawGraph(0, 0, this->sbbarimg, TRUE);
 		this->ViewRunStatus(userpal, mapdata->notes, Hscore);

@@ -235,6 +235,10 @@ static void RecJudgeSetUserpal(userpal_t *userpal, bool setBscore, bool PjustFg,
 	userpal->score.time = s_Ntime;
 	if (PjustFg) { (userpal->judgeCount.pjust)++; }
 	(userpal->life) += addLife;
+	if (0 < userpal->Exlife) {
+		if (0 <= addLife) { (userpal->Exlife) += addLife; }
+		else { (userpal->Exlife) += addLife * 5; }
+	}
 	(userpal->Dscore.add) += addDscore;
 	if (addCombo < 0) { userpal->Ncombo = 0; }
 	else { (userpal->Ncombo) += addCombo; }
