@@ -113,11 +113,11 @@ typedef struct rec_map_detail_s {
 typedef struct rec_camera_data_s {
 	int starttime = -1;
 	int endtime = -1;
-	int xpos = -1;
-	int ypos = -1;
-	double zoom = -1;
-	int rot = -1;
-	int mode = -1;
+	int xpos = 0;
+	int ypos = 0;
+	double zoom = 1.0;
+	int rot = 0;
+	int mode = 0;
 } rec_camera_data_t;
 
 typedef struct rec_camera_set_s {
