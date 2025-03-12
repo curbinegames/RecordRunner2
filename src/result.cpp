@@ -11,7 +11,6 @@
 #include <RecWindowRescale.h>
 #include <RecScoreFile.h>
 
-/* TODO: セーブファイル関係をまとめたソースを作っても良いかも。名前はRecSave.cppとか? */
 /* TODO: クリア状況はclearrank、スコア評価はscorerateに改名しよう */
 
 #define VER_1_6 0

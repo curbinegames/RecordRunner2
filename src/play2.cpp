@@ -1,7 +1,4 @@
 
-/* TODO: release版、空背景が動かない */
-/* TODO: release版、途中からノーツが表示されない、初期化関係? */
-
 #if 1 /* define group */
 
 /* include */
@@ -1765,7 +1762,6 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 		fclose(fp);
 	}
 
-	/* TODO: RecPlayMain の返り値を int に変える */
 	ret = RecPlayMain(&map_detail, &userpal, &nameset, fileName, packNo, musicNo, difNo, AutoFlag);
 
 	if (ret != SCENE_RESULT) { return ret; }
