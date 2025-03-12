@@ -1137,11 +1137,21 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.scrool.data[0].basetime = 0;
 	recfp->mapeff.scrool.data[0].speed = 1;
 	recfp->mapeff.scrool.num = 1;
+	for (int i = 0; i < 99; i++) {
+		recfp->mapeff.viewT[0][i] = -1000;
+		recfp->mapeff.viewT[1][i] = -1000;
+	}
 	recfp->mapeff.viewT[0][0] = 0;
 	recfp->mapeff.viewT[1][0] = 3000;
 	recfp->mapeff.carrow.d[0].data = 1;
 	recfp->mapeff.carrow.d[0].time = 0;
 	recfp->mapeff.carrow.num = 1;
+	for (int i = 0; i < 99; i++) {
+		recfp->mapeff.lock[0][0][i] = -1000;
+		recfp->mapeff.lock[0][1][i] = -1000;
+		recfp->mapeff.lock[1][0][i] = -1000;
+		recfp->mapeff.lock[1][1][i] = -1000;
+	}
 	recfp->mapeff.lock[0][0][0] = -1;
 	recfp->mapeff.lock[0][1][0] = 0;
 	recfp->mapeff.lock[1][0][0] = 1;
@@ -1186,6 +1196,14 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.move.x[2].d[0].Etime = 0;
 	recfp->mapeff.move.x[2].d[0].mode = 1;
 	recfp->mapeff.move.x[2].num = 1;
+	for (int inum = 0; inum < 99; inum++) {
+		recfp->mapeff.chamo[0].gra[inum] = -1000;
+		recfp->mapeff.chamo[0].time[inum] = -1000;
+		recfp->mapeff.chamo[1].gra[inum] = -1000;
+		recfp->mapeff.chamo[1].time[inum] = -1000;
+		recfp->mapeff.chamo[2].gra[inum] = -1000;
+		recfp->mapeff.chamo[2].time[inum] = -1000;
+	}
 	recfp->mapeff.chamo[0].gra[0] = 0;
 	recfp->mapeff.chamo[0].time[0] = 0;
 	recfp->mapeff.chamo[0].num = 1;

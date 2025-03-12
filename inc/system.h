@@ -54,7 +54,6 @@ typedef enum now_scene_e {
 	SCENE_RESULT,
 } now_scene_t; /* = next */
 
-/* TODO: rec_clear_rank_eと似た定義が他にないかチェック */
 typedef enum rec_clear_rank_e {
 	REC_CLEAR_RANK_NO_PLAY = 0,
 	REC_CLEAR_RANK_DROPED = 1, /* 実装の都合上1スタート */
@@ -64,7 +63,6 @@ typedef enum rec_clear_rank_e {
 	REC_CLEAR_RANK_PERFECT,
 } rec_clear_rank_t;
 
-/* TODO: rec_dif_eと似た定義が他にないかチェック */
 typedef enum rec_dif_e {
 	REC_DIF_AUTO = 0,
 	REC_DIF_EASY,
