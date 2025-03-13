@@ -112,8 +112,8 @@ void CutinReadySnd() {
 }
 
 void SetCutSong(wchar_t* songName, wchar_t* picName) {
-	strcopy(songName, CutSongName, 1);
-	strcopy(picName, SongJucketName, 1);
+	strcopy_2(songName, CutSongName, 255);
+	strcopy_2(picName, SongJucketName, 255);
 	pic_cutin[3] = LoadGraph(picName);
 }
 
@@ -388,8 +388,8 @@ rec_cutin_c::~rec_cutin_c() {
 }
 
 void rec_cutin_c::SetCutSong(TCHAR *songName, TCHAR *picName) {
-	strcopy(songName, CutSongName, 1);
-	strcopy(picName, SongJucketName, 1);
+	strcopy_2(songName, CutSongName, 255);
+	strcopy_2(picName, SongJucketName, 255);
 	pic_cutin[3] = LoadGraph(picName);
 	return;
 }

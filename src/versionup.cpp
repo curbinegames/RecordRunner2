@@ -67,7 +67,7 @@ void upgrade_rate_f() {
 	_wfopen_s(&log, L"reclog.txt", L"w");
 	for (int i = 0; i < 10; i++) {
 		if (rate[i] == 0) { break; }
-		strcopy(name[i], prate[i].name, 1);
+		strcopy_2(name[i], prate[i].name, 255);
 		prate[i].num = rate[i];
 		if (log != NULL) {
 			fwprintf(log, L"%f, %s\n", prate[i].num, prate[i].name);

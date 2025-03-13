@@ -95,28 +95,28 @@ static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *s
 		if (strands(buf, L"#TITLE:") &&
 			(lang == 0 || strands(songdata->SongName[dif], L"NULL"))) {
 			strmods(buf, 7);
-			strcopy(buf, songdata->SongName[dif], 1);
+			strcopy_2(buf, songdata->SongName[dif], 255);
 		}
 		if (strands(buf, L"#E.TITLE:") &&
 			(lang == 1 || strands(songdata->SongName[dif], L"NULL"))) {
 			strmods(buf, 9);
-			strcopy(buf, songdata->SongName[dif], 1);
+			strcopy_2(buf, songdata->SongName[dif], 255);
 		}
 		//作曲者を読み込む
 		if (strands(buf, L"#ARTIST:") &&
 			(lang == 0 || strands(songdata->artist[dif], L"NULL"))) {
 			strmods(buf, 8);
-			strcopy(buf, songdata->artist[dif], 1);
+			strcopy_2(buf, songdata->artist[dif], 255);
 		}
 		if (strands(buf, L"#E.ARTIST:") &&
 			(lang == 1 || strands(songdata->artist[dif], L"NULL"))) {
 			strmods(buf, 10);
-			strcopy(buf, songdata->artist[dif], 1);
+			strcopy_2(buf, songdata->artist[dif], 255);
 		}
 		//曲ファイル名を読み込む
 		if (strands(buf, L"#MUSIC:")) {
 			strmods(buf, 7);
-			strcopy(subpath, songdata->SongFileName[dif], 1);
+			strcopy_2(subpath, songdata->SongFileName[dif], 255);
 			strcats(songdata->SongFileName[dif], buf);
 		}
 		//難易度を読み込む
@@ -136,13 +136,13 @@ static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *s
 		//ジャケット写真を読み込む
 		if (strands(buf, L"#JACKET:")) {
 			strmods(buf, 8);
-			strcopy(subpath, songdata->jacketP[dif], 1);
+			strcopy_2(subpath, songdata->jacketP[dif], 255);
 			strcats(songdata->jacketP[dif], buf);
 		}
 		//差し替えAnotherバーを読み込む
 		if (strands(buf, L"#DIFBAR:")) {
 			strmods(buf, 8);
-			strcopy(subpath, songdata->difP, 1);
+			strcopy_2(subpath, songdata->difP, 255);
 			strcats(songdata->difP, buf);
 		}
 		//マップに入ったら抜ける
@@ -175,25 +175,25 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
 	TCHAR rrsPath[256];
 
 	songdata->limit = 3;
-	strcopy(L"NULL", songdata->difP, 1);
+	strcopy_2(L"NULL", songdata->difP, 255);
 
 	for (int iDif = 0; iDif < 6; iDif++) {
-		strcopy(L"record/", path, 1); //"record/"
+		strcopy_2(L"record/", path, 255); //"record/"
 		strcats(path, packName); //"record/<パック名>"
 		stradds(path, L'/'); //"record/<パック名>/"
 		strcats(path, songName); //"record/<パック名>/<曲名>"
 		stradds(path, L'/'); //"record/<パック名>/<曲名>/"
-		strcopy(path, subPath, 1); //subPathにコピー
+		strcopy_2(path, subPath, 255); //subPathにコピー
 		stradds(path, (TCHAR)((int)_T('0') + iDif)); //"record/<パック名>/<曲名>/<難易度番号>"
-		strcopy(path, rrsPath, 1); //rrsPathにコピー
+		strcopy_2(path, rrsPath, 255); //rrsPathにコピー
 		strcats(path, _T(".txt")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 		strcats(rrsPath, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 		//初期値定義(ファイルがなくても代入する)
-		strcopy(L"NULL", songdata->SongName[iDif], 1);
-		strcopy(L"NULL", songdata->artist[iDif], 1);
-		strcopy(L"NULL", songdata->SongFileName[iDif], 1);
-		strcopy(L"picture/NULL jucket.png", songdata->jacketP[iDif], 1);
-		strcopy(packName, songdata->packName, 1);
+		strcopy_2(L"NULL", songdata->SongName[iDif], 255);
+		strcopy_2(L"NULL", songdata->artist[iDif], 255);
+		strcopy_2(L"NULL", songdata->SongFileName[iDif], 255);
+		strcopy_2(L"picture/NULL jucket.png", songdata->jacketP[iDif], 255);
+		strcopy_2(packName, songdata->packName, 255);
 		songdata->level[iDif] = -1;
 		songdata->preview[iDif][0] = 441000;
 		songdata->preview[iDif][1] = 2646000;
@@ -211,8 +211,8 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
 		songdata->limit = 4;
 	}
 	if (songdata->limit == 3) {
-		strcopy(L"NULL", songdata->SongName[4], 1);
-		strcopy(L"NULL", songdata->artist[4], 1);
+		strcopy_2(L"NULL", songdata->SongName[4], 255);
+		strcopy_2(L"NULL", songdata->artist[4], 255);
 	}
 
 	return;
@@ -234,14 +234,14 @@ static void RecSerectReadMapData(songdata_set_t *songdata, int PackFirstNum[]) {
 	fd = FileRead_open(L"RecordPack.txt");
 	while (FileRead_eof(fd) == 0) {
 		FileRead_gets(songName, 256, fd);
-		strcopy(songName, PackName[packNum], 1);
+		strcopy_2(songName, PackName[packNum], 255);
 		packNum++;
 	}
 	FileRead_close(fd);
 
 	songCount = 0;
 	for (int i = 0; i < packNum; i++) {
-		strcopy(L"record/", songName, 1); //"record/"
+		strcopy_2(L"record/", songName, 255); //"record/"
 		strcats(songName, PackName[i]); //"record/<パック名>"
 		strcats(songName, L"/list.txt"); //"record/<パック名>/list.txt"
 		fd = FileRead_open(songName);
@@ -592,7 +592,7 @@ public:
 			return 0;
 		}
 		RecSysBgmDelete();
-		strcopy(songdata->SongFileName[dif], this->playingsong, 1);
+		strcopy_2(songdata->SongFileName[dif], this->playingsong, 255);
 		RecSysBgmSetMem(this->playingsong, ARRAY_COUNT(this->playingsong));
 		this->SongPrePat = 0;
 		this->preTime[0] = songdata->preview[dif][0];
@@ -1005,11 +1005,11 @@ public:
 			DeleteGraph(this->difbar[4]);
 			this->difbar[4] = LoadGraph(L"picture/difanother.png");
 			this->difbar[5] = this->difbar[4];
-			strcopy(L"NULL", this->viewingDifBar, 1);
+			strcopy_2(L"NULL", this->viewingDifBar, 255);
 		}
 		else {
 			this->difbar[5] = this->difbar[4];
-			strcopy(difpath, this->viewingDifBar, 1);
+			strcopy_2(difpath, this->viewingDifBar, 255);
 		}
 	}
 
@@ -1038,7 +1038,7 @@ public:
 	void UpdateJacket(TCHAR *jacketName) {
 		if (strands(this->viewingjacket, jacketName) == 0) {
 			DeleteGraph(this->jacketpic);
-			strcopy(jacketName, this->viewingjacket, 1);
+			strcopy_2(jacketName, this->viewingjacket, 255);
 			this->jacketpic = LoadGraph(this->viewingjacket);
 		}
 	}

@@ -1272,7 +1272,7 @@ static void RecMapLoad_SaveMap(const TCHAR *dataE, rec_score_file_t *recfp, int 
 	FILE *fp;
 
 	//ここからPC用譜面データのファイルの作成(セーブ作業)
-	strcopy(dataE, RRS, 1); //"record/<パック名>/<曲名>/"
+	strcopy_2(dataE, RRS, 255); //"record/<パック名>/<曲名>/"
 	stradds_2(RRS, 255, (TCHAR)(_T('0') + difNo)); //"record/<パック名>/<曲名>/<難易度>"
 	strcats_2(RRS, 255, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度>.rrs"
 
@@ -1416,7 +1416,7 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		//音楽ファイルを読み込む
 		if (strands(GT1, L"#MUSIC:")) {
 			strmods(GT1, 7);
-			strcopy(folderPath, recfp->nameset.mp3FN, 1);
+			strcopy_2(folderPath, recfp->nameset.mp3FN, 255);
 			strcats(recfp->nameset.mp3FN, GT1);
 		}
 		//BPMを読み込む
@@ -1431,37 +1431,37 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		}
 		//空の背景を読み込む
 		else if (strands(GT1, L"#SKY:")) {
-			strcopy(L"picture/", recfp->nameset.sky, 1);
+			strcopy_2(L"picture/", recfp->nameset.sky, 255);
 			strmods(GT1, 5);
 			strcats(recfp->nameset.sky, GT1);
 		}
 		//地面の画像を読み込む
 		else if (strands(GT1, L"#FIELD:")) {
-			strcopy(L"picture/", recfp->nameset.ground, 1);
+			strcopy_2(L"picture/", recfp->nameset.ground, 255);
 			strmods(GT1, 7);
 			strcats(recfp->nameset.ground, GT1);
 		}
 		//水中の画像を読み込む
 		else if (strands(GT1, L"#WATER:")) {
-			strcopy(L"picture/", recfp->nameset.water, 1);
+			strcopy_2(L"picture/", recfp->nameset.water, 255);
 			strmods(GT1, 7);
 			strcats(recfp->nameset.water, GT1);
 		}
 		//難易度バー(another)を読み込む
 		else if (strands(GT1, L"#DIFBAR:")) {
-			strcopy(folderPath, recfp->nameset.DifFN, 1);
+			strcopy_2(folderPath, recfp->nameset.DifFN, 255);
 			strmods(GT1, 8);
 			strcats(recfp->nameset.DifFN, GT1);
 		}
 		//曲名を読み込む
 		else if (strands(GT1, L"#TITLE:")) {
 			strmods(GT1, 7);
-			strcopy(GT1, recfp->nameset.songN, 1);
+			strcopy_2(GT1, recfp->nameset.songN, 255);
 		}
 		//英語
 		else if (strands(GT1, L"#E.TITLE:")) {
 			strmods(GT1, 7);
-			strcopy(GT1, recfp->nameset.songNE, 1);
+			strcopy_2(GT1, recfp->nameset.songNE, 255);
 		}
 		//レベルを読み込む
 		else if (strands(GT1, L"#LEVEL:")) recfp->mapdata.Lv = SETLv(GT1);

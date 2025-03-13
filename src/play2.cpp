@@ -1367,14 +1367,14 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	HighScore = GetHighScore(ret_fileN, (rec_dif_t)o);
 
 	for (i[0] = 0; i[0] < 100; i[0]++) {
-		strcopy(dataE, GT1, 1);
+		strcopy_2(dataE, GT1, 255);
 		Getxxxpng(&GT2[0], i[0]);
 		strcats(GT1, GT2);
 		item[i[0]] = LoadGraph(GT1);
 		if (item[i[0]] == -1) { break; }
 	}
 	for (i[0] = 1; i[0] < 100; i[0]++) {
-		strcopy(dataE, GT1, 1);
+		strcopy_2(dataE, GT1, 255);
 		Getxxxwav(&GT2[0], i[0]);
 		strcats(GT1, GT2);
 		Sitem[i[0] - 1] = LoadSoundMem(GT1);
