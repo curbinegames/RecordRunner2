@@ -18,7 +18,7 @@
 
 #define DX_MAIN_DEF HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
 
-#define TOOL_NAME L"Record Runner Florting Style" // ÉcÅ[ÉãÇÃñºëO
+#define TOOL_NAME L"Record Runner 1.5.3" // ÉcÅ[ÉãÇÃñºëO
 
 static void GameMain() {
 	now_scene_t next = SCENE_TITLE;
@@ -38,7 +38,7 @@ static void GameMain() {
 			break;
 		case SCENE_MENU:
 			RecSysBgmSetMem(_T("song/LetÅfs_be_happy.mp3"), sizeof(_T("song/LetÅfs_be_happy.mp3")));
-			RecSysBgmPlay(false);
+			RecSysBgmPlay(false, true, true);
 			next = menu();
 			break;
 		case SCENE_SERECT:
@@ -47,12 +47,12 @@ static void GameMain() {
 			break;
 		case SCENE_COLLECTION:
 			RecSysBgmSetMem(_T("song/LetÅfs_be_happy.mp3"), sizeof(_T("song/LetÅfs_be_happy.mp3")));
-			RecSysBgmPlay(false);
+			RecSysBgmPlay(false, true, true);
 			next = collection();
 			break;
 		case SCENE_OPTION:
 			RecSysBgmSetMem(_T("song/LetÅfs_be_happy.mp3"), sizeof(_T("song/LetÅfs_be_happy.mp3")));
-			RecSysBgmPlay(false);
+			RecSysBgmPlay(false, true, true);
 			next = option();
 			break;
 		case SCENE_MUSIC:

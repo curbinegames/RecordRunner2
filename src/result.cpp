@@ -62,7 +62,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 	rec_cutin_c cutin;
 
 	InitCurFont();
-	RecSysBgmPlay(true);
+	RecSysBgmPlay(true, true, true);
 	WaitTimer(10);
 	cutin.SetIo(0);
 	while (1) {

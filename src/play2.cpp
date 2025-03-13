@@ -1398,7 +1398,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	else { DifRate = recfp.mapdata.mdif / 100.0; }
 	RecResetPlayObjectNum(objectN, &recfp);
 	RecSysBgmSetMem(recfp.nameset.mp3FN, ARRAY_COUNT(recfp.nameset.mp3FN));
-	RecSysBgmPlay(true);
+	RecSysBgmPlay(true, false, true);
 	WaitTimer(10);
 	Stime = GetNowCount();
 	cutin.SetIo(0);
@@ -1667,7 +1667,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				if (StopFrag == 1) { RecSysBgmStop(); }
 				else {
 					RecSysBgmSetCurrentPosition((int)((double)recfp.time.now / 1000.0 * 44100.0));
-					RecSysBgmPlay(true, false);
+					RecSysBgmPlay(true, false, false);
 				}
 				break;
 			default:

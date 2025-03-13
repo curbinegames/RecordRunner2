@@ -15,7 +15,7 @@ extern int recSystenLoad(rec_system_t *sys);
 extern void RecSysBgmChangeVolume(int val);
 extern void RecSysBgmSetMem(const TCHAR *sndPath, size_t size);
 extern bool RecSysBgmCheckSoundMem(void);
-extern void RecSysBgmPlay(bool force, bool top_position = true);
+extern void RecSysBgmPlay(bool force, bool loop, bool top_position);
 extern void RecSysBgmDelete(void);
 extern void RecSysBgmStop(void);
 extern void RecSysBgmSetCurrentPosition(int val);
