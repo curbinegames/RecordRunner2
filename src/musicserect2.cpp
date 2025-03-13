@@ -580,7 +580,7 @@ public:
 	void StartSnd() {
 		RecSysBgmSetCurrentPosition(this->preTime[this->SongPrePat]);
 		RecSysBgmChangeVolume(0);
-		RecSysBgmPlay(true, false);
+		RecSysBgmPlay(true, false, false);
 		WaitTimer(30);
 		this->SongPreSTime = GetNowCount();
 	}
