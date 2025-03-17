@@ -9,8 +9,6 @@
 #include "option.h"
 #include <RecSystem.h>
 
-#define REC_DEBUG 0 // 0or1 1でデバッグ用コードがビルドされる
-
 #if REC_DEBUG == 1
 #include <RecScoreFile.h>
 #include <playbox.h>
