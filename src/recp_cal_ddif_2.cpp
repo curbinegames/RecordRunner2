@@ -34,12 +34,12 @@
 // Lv10? 振り切れてなんぼよ
 #define REC_DDIF_NOTES_BASE  354
 #define REC_DDIF_ARROW_BASE 3757
-#define REC_DDIF_CHORD_BASE 3319
+#define REC_DDIF_CHORD_BASE 3911
 #define REC_DDIF_CHAIN_BASE 2102
 #define REC_DDIF_TRILL_BASE 3420
 #define REC_DDIF_MELDY_BASE  289
-#define REC_DDIF_ACTOR_BASE 2561
-#define REC_DDIF_TRICK_BASE  500
+#define REC_DDIF_ACTOR_BASE 2012
+#define REC_DDIF_TRICK_BASE 3842
 
 #define REC_DDIF_1ST_WAIGHT  50
 #define REC_DDIF_2ND_WAIGHT  90
@@ -542,20 +542,6 @@ static void RecDdifGetPalActor(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
-/**
- * 1:1(1.000) -> 0  o...o...o カウントする必要なし
- * 2:1(2.000) -> 10 o...o.o.o 10の基準
- * 3:2(1.500) -> 12 o..o..o.o 12の基準
- * 6:1(6.000) -> 12 o.....ooo
- * 3:1(3.000) -> 13 o..oo..oo.13の基準
- * 7:1(7.000) -> 13 o......oo
- * 4:1(4.000) -> 13 o...oo..o
- * 4:3(1.333) -> 13 o...o..oo
- * 5:1(5.000) -> 15 o....oo.o 15の基準
- * 5:2(2.500) -> 15 o....o.oo 15の基準
- * 5:3(1.667) -> 15 o....o..o
- * others -> 18
- */
 static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
 	int FirstTime = Nowkey->time - Befkey->time;
 	int SecondTime = Befkey->time - BBefkey->time;
@@ -573,6 +559,20 @@ static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 
 	Gap = (float)FirstTime / (float)SecondTime;
 
+	/**
+	* 1:1(1.000) -> 0  o...o...o カウントする必要なし
+	* 2:1(2.000) -> 10 o...o.o.o
+	* 3:2(1.500) -> 13 o..o..o.o
+	* 6:1(6.000) -> 14 o.....ooo
+	* 3:1(3.000) -> 15 o..oo..oo
+	* 7:1(7.000) -> 17 o......oo
+	* 4:1(4.000) -> 19 o...oo..o
+	* 4:3(1.333) -> 19 o...o..oo
+	* 5:1(5.000) -> 23 o....oo.o
+	* 5:2(2.500) -> 23 o....o.oo
+	* 5:3(1.667) -> 27 o....o..o
+	* others -> 30
+	*/
 	if (7 < Gap) {
 		Nowkey->pal.trick = 0;
 	}
@@ -583,34 +583,34 @@ static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 		Nowkey->pal.trick = 10;
 	}
 	else if (IS_NEAR_NUM(Gap, 1.500, 0.1)) {
-		Nowkey->pal.trick = 12;
+		Nowkey->pal.trick = 13;
 	}
 	else if (IS_NEAR_NUM(Gap, 6.000, 0.1)) {
-		Nowkey->pal.trick = 12;
+		Nowkey->pal.trick = 14;
 	}
 	else if (IS_NEAR_NUM(Gap, 3.000, 0.1)) {
-		Nowkey->pal.trick = 13;
+		Nowkey->pal.trick = 15;
 	}
 	else if (IS_NEAR_NUM(Gap, 7.000, 0.1)) {
-		Nowkey->pal.trick = 13;
+		Nowkey->pal.trick = 17;
 	}
 	else if (IS_NEAR_NUM(Gap, 4.000, 0.1)) {
-		Nowkey->pal.trick = 13;
+		Nowkey->pal.trick = 19;
 	}
 	else if (IS_NEAR_NUM(Gap, 1.333, 0.1)) {
-		Nowkey->pal.trick = 13;
+		Nowkey->pal.trick = 19;
 	}
 	else if (IS_NEAR_NUM(Gap, 5.000, 0.1)) {
-		Nowkey->pal.trick = 15;
+		Nowkey->pal.trick = 23;
 	}
 	else if (IS_NEAR_NUM(Gap, 2.500, 0.1)) {
-		Nowkey->pal.trick = 15;
+		Nowkey->pal.trick = 23;
 	}
 	else if (IS_NEAR_NUM(Gap, 1.667, 0.1)) {
-		Nowkey->pal.trick = 15;
+		Nowkey->pal.trick = 27;
 	}
 	else {
-		Nowkey->pal.trick = 18;
+		Nowkey->pal.trick = 30;
 	}
 	return;
 }
@@ -761,7 +761,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		Nowkey->pal.chain *= G[0];
 		Nowkey->pal.meldy *= G[0];
 		Nowkey->pal.actor *= G[0];
-		/* trickは密度を見ないパラメータなので除外 */
+		Nowkey->pal.trick *= G[0];
 
 		// maxの計算
 		{

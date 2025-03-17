@@ -4,6 +4,8 @@
 #include "recr_cutin.h"
 #include "helpBar.h"
 
+#define REC_DEBUG 0 // 0or1 1でデバッグ用コードがビルドされる
+
 #define WINDOW_SIZE_X 1280                     // ウィンドウの横のサイズ
 #define WINDOW_SIZE_Y (WINDOW_SIZE_X * 9 / 16) // ウィンドウの縦のサイズ 720
 
