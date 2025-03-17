@@ -90,6 +90,17 @@ item_eff_box set_pic_mat(wchar_t *s);
 
 #if 1 /* sub action 2 */
 
+static int strrans(const TCHAR *p1) {
+	int a, b;
+	TCHAR buf[16];
+	strcopy_2(p1, buf, 16);
+	strmods(buf, 2);
+	a = strsans(buf);
+	strnex_EX(buf, _T(','));
+	b = maxs_2(strsans(buf), a);
+	return GetRand(b - a) + a;
+}
+
 double SETbpm(wchar_t *p1) {
 	strmods(p1, 5);
 	return strsans2(p1);
@@ -608,7 +619,8 @@ static void RecMapencSetMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 	strmods(GT1, 10);
 	Stime = strsans2(GT1);
 	strnex(GT1);
-	pos = strsans2(GT1);
+	if (GT1[0] == _T('R')) { pos = strrans(GT1); }
+	else { pos = strsans2(GT1); }
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
@@ -680,7 +692,8 @@ static void RecMapencSetXMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	strmods(GT1, 10);
 	Stime = strsans2(GT1);
 	strnex(GT1);
-	pos = strsans2(GT1);
+	if (GT1[0] == _T('R')) { pos = strrans(GT1); }
+	else { pos = strsans2(GT1); }
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
@@ -769,7 +782,8 @@ static void RecMapencSetGMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	strmods(GT1, 10);
 	Stime = strsans2(GT1);
 	strnex(GT1);
-	pos = strsans2(GT1);
+	if (GT1[0] == _T('R')) { pos = strrans(GT1); }
+	else { pos = strsans2(GT1); }
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	RecMapLoadSetMove(&recfp->mapeff.move.y[3], recfp->allnum.Ymovenum, 3,
