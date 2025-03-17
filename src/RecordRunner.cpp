@@ -20,7 +20,7 @@
 
 #define DX_MAIN_DEF HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
 
-#define TOOL_NAME L"Record Runner 1.5.3" // ツールの名前
+#define TOOL_NAME L"Record Runner floating style" // ツールの名前
 
 static void GameMain() {
 	now_scene_t next = SCENE_TITLE;

@@ -65,7 +65,7 @@ typedef struct play_key_stat_s {
 	char right = 0;
 } play_key_stat_t;
 
-struct note_img {
+typedef struct note_img {
 	int notebase = LoadGraph(L"picture/hit.png");
 	int hitcircle[6] = {
 		LoadGraph(L"picture/hitc-G.png"),
@@ -82,7 +82,7 @@ struct note_img {
 	int right = LoadGraph(L"picture/right.png");
 	int bomb = LoadGraph(L"picture/bomb.png");
 	int goust = LoadGraph(L"picture/goust.png");
-};
+} rec_play_notepic_t;
 
 #endif /* typedef group */
 
@@ -500,7 +500,7 @@ static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, int lock0, int lo
  */
 static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *SpeedNoAdd,
 	note_box_2_t *note, rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
-	int Ntime, int Xline, int Yline, struct note_img *noteimg)
+	int Ntime, int Xline, int Yline, rec_play_notepic_t *noteimg)
 {
 	int ret = 0;
 	int DrawX = 0;
@@ -555,7 +555,7 @@ static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *Spe
 
 static void RecPlayDrawNoteAll(short int objectN[], note_box_2_t note[],
 	rec_map_eff_data_t *mapeff, short int viewTN, short int *lockN,
-	int Ntime, int Xline[], int Yline[], struct note_img *noteimg)
+	int Ntime, int Xline[], int Yline[], rec_play_notepic_t *noteimg)
 {
 	int ret = 0;
 	int viewTadd = 0;
@@ -1337,7 +1337,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int dangerimg = LoadGraph(L"picture/danger.png");
 	int dropimg = LoadGraph(L"picture/drop.png");
 	int filterimg = LoadGraph(L"picture/Black.png");
-	struct note_img noteimg;
+	rec_play_notepic_t noteimg;
 
 #endif /* num define */
 
