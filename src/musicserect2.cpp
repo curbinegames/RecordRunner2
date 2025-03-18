@@ -92,40 +92,40 @@ static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *s
 	while (FileRead_eof(fd) == 0) {
 		FileRead_gets(buf, 256, fd);
 		//曲名を読み込む
-		if (strands(buf, L"#TITLE:") &&
-			(lang == 0 || strands(songdata->SongName[dif], L"NULL"))) {
+		if (strands_direct(buf, L"#TITLE:") &&
+			(lang == 0 || strands_direct(songdata->SongName[dif], L"NULL"))) {
 			strmods(buf, 7);
 			strcopy_2(buf, songdata->SongName[dif], 255);
 		}
-		if (strands(buf, L"#E.TITLE:") &&
-			(lang == 1 || strands(songdata->SongName[dif], L"NULL"))) {
+		if (strands_direct(buf, L"#E.TITLE:") &&
+			(lang == 1 || strands_direct(songdata->SongName[dif], L"NULL"))) {
 			strmods(buf, 9);
 			strcopy_2(buf, songdata->SongName[dif], 255);
 		}
 		//作曲者を読み込む
-		if (strands(buf, L"#ARTIST:") &&
-			(lang == 0 || strands(songdata->artist[dif], L"NULL"))) {
+		if (strands_direct(buf, L"#ARTIST:") &&
+			(lang == 0 || strands_direct(songdata->artist[dif], L"NULL"))) {
 			strmods(buf, 8);
 			strcopy_2(buf, songdata->artist[dif], 255);
 		}
-		if (strands(buf, L"#E.ARTIST:") &&
-			(lang == 1 || strands(songdata->artist[dif], L"NULL"))) {
+		if (strands_direct(buf, L"#E.ARTIST:") &&
+			(lang == 1 || strands_direct(songdata->artist[dif], L"NULL"))) {
 			strmods(buf, 10);
 			strcopy_2(buf, songdata->artist[dif], 255);
 		}
 		//曲ファイル名を読み込む
-		if (strands(buf, L"#MUSIC:")) {
+		if (strands_direct(buf, L"#MUSIC:")) {
 			strmods(buf, 7);
 			strcopy_2(subpath, songdata->SongFileName[dif], 255);
 			strcats(songdata->SongFileName[dif], buf);
 		}
 		//難易度を読み込む
-		if (strands(buf, L"#LEVEL:")) {
+		if (strands_direct(buf, L"#LEVEL:")) {
 			strmods(buf, 7);
 			songdata->level[dif] = strsans(buf);
 		}
 		//プレビュー時間を読み込む
-		if (strands(buf, L"#PREVIEW:")) {
+		if (strands_direct(buf, L"#PREVIEW:")) {
 			strmods(buf, 9);
 			songdata->preview[dif][0] = (int)((double)strsans(buf) / 1000.0 * 44100.0);
 			strnex(buf);
@@ -134,19 +134,19 @@ static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *s
 			}
 		}
 		//ジャケット写真を読み込む
-		if (strands(buf, L"#JACKET:")) {
+		if (strands_direct(buf, L"#JACKET:")) {
 			strmods(buf, 8);
 			strcopy_2(subpath, songdata->jacketP[dif], 255);
 			strcats(songdata->jacketP[dif], buf);
 		}
 		//差し替えAnotherバーを読み込む
-		if (strands(buf, L"#DIFBAR:")) {
+		if (strands_direct(buf, L"#DIFBAR:")) {
 			strmods(buf, 8);
 			strcopy_2(subpath, songdata->difP, 255);
 			strcats(songdata->difP, buf);
 		}
 		//マップに入ったら抜ける
-		if (strands(buf, L"#MAP:")) { break; }
+		if (strands_direct(buf, L"#MAP:")) { break; }
 	}
 	FileRead_close(fd);
 
@@ -204,8 +204,8 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
 	RecSerectReadHighscore(songdata, songName);
 
 	//難易度リミットの処理
-	if (strands(songdata->SongName[4], L"NULL") == 0 &&
-		(strands(songdata->SongName[5], L"NULL") ||
+	if (strands_direct(songdata->SongName[4], L"NULL") == 0 &&
+		(strands_direct(songdata->SongName[5], L"NULL") ||
 			songdata->Hscore[5] >= 1))
 	{
 		songdata->limit = 4;
@@ -358,7 +358,7 @@ static int RecSerectTrySecret(int Hscore) {
 static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
 	if (AutoFlag == 0 && dif == 3 &&
 		songdata->Hscore[3] >= 90000 &&
-		strands(songdata->SongFileName[5], L"NULL") == 0 &&
+		strands_direct(songdata->SongFileName[5], L"NULL") == 0 &&
 		songdata->Hscore[5] <= 0)
 	{
 		if (RecSerectTrySecret(songdata->Hscore[3]) == 1) {
@@ -463,31 +463,31 @@ static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
 	int ret = dif;
 
 	if (SortMode != REC_SORT_DEFAULT) { return ret; }
-	if (strands(songdata->SongName[dif], L"NULL") == 0) { return ret; }
+	if (strands_direct(songdata->SongName[dif], L"NULL") == 0) { return ret; }
 
-	if (strands(songdata->SongName[0], L"NULL") != 1) { ret = 0; }
+	if (strands_direct(songdata->SongName[0], L"NULL") != 1) { ret = 0; }
 	switch (dif) {
 	case REC_DIF_AUTO:
-		if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
-		else if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
-		else if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
+		if (strands_direct(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
+		else if (strands_direct(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
+		else if (strands_direct(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
 		break;
 	case REC_DIF_EASY:
-		if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
-		else if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
+		if (strands_direct(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
+		else if (strands_direct(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
 		break;
 	case REC_DIF_NORMAL:
-		if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
-		else if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
+		if (strands_direct(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
+		else if (strands_direct(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
 		break;
 	case REC_DIF_HARD:
-		if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
-		else if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
+		if (strands_direct(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
+		else if (strands_direct(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
 		break;
 	default:
-		if (strands(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
-		else if (strands(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
-		else if (strands(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
+		if (strands_direct(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
+		else if (strands_direct(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
+		else if (strands_direct(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
 		break;
 	}
 
@@ -586,7 +586,7 @@ public:
 	}
 
 	int UpdateSnd(MUSIC_BOX *songdata, int dif) {
-		if ((strands(songdata->SongFileName[dif], L"NULL") != 0) ||
+		if ((strands_direct(songdata->SongFileName[dif], L"NULL") != 0) ||
 			(strands(this->playingsong, songdata->SongFileName[dif]) != 0))
 		{
 			return 0;
@@ -919,7 +919,7 @@ private:
 			posY = 0;
 			if (comdif == i) { posY = 1; }
 			if (comdif <= i) { posX = 1; }
-			if (strands(songdata->SongFileName[i], L"NULL") == 0 && i <= songdata->limit) {
+			if (strands_direct(songdata->SongFileName[i], L"NULL") == 0 && i <= songdata->limit) {
 				DrawGraphAnchor(baseX + 11 * posX + 16 * i, baseY, this->difC[i * 2 + posY], DXDRAW_ANCHOR_BOTTOM_RIGHT);
 			}
 		}

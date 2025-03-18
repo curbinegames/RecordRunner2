@@ -468,11 +468,11 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 	ptr->sound = 0;
 	strnex(str);
 	while (str[0] != L'\0') {
-		if (strands(str, L"NOTE=")) {
+		if (strands_direct(str, L"NOTE=")) {
 			strmods(str, 5);
 			RecEncCustomSetNoteMat(ptr, str);
 		}
-		else if (strands(str, L"SOUND=")) {
+		else if (strands_direct(str, L"SOUND=")) {
 			strmods(str, 6);
 			if (str[0] == L'L' || str[0] == L'H') {
 				ptr->melody = RecMapLoad_GetMelSnd(str);
@@ -481,7 +481,7 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 				ptr->sound = strsans2(str);
 			}
 		}
-		else if (strands(str, L"COLOR=")) {
+		else if (strands_direct(str, L"COLOR=")) {
 			strmods(str, 6);
 			ptr->color = strsans2(str);
 		}
@@ -1066,8 +1066,8 @@ static void RecMapencSetCamMove(rec_score_file_t *recfp, rec_mapenc_data_t *mape
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	const uint numC = recfp->mapeff.camera.num;
-	if (strands(GT1, L"#CMOV:")) { strmods(GT1, 6); }
-	if (strands(GT1, L"#CAMMOVE:")) { strmods(GT1, 9); }
+	if (strands_direct(GT1, L"#CMOV:")) { strmods(GT1, 6); }
+	if (strands_direct(GT1, L"#CAMMOVE:")) { strmods(GT1, 9); }
 	recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
 	recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
@@ -1335,77 +1335,77 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 	while (FileRead_eof(mapenc.songdata) == 0) {
 		FileRead_gets(GT1, 256, mapenc.songdata);
 		//音楽ファイルを読み込む
-		if (strands(GT1, L"#MUSIC:")) {
+		if (strands_direct(GT1, L"#MUSIC:")) {
 			strmods(GT1, 7);
 			strcopy_2(folderPath, recfp->nameset.mp3FN, 255);
 			strcats(recfp->nameset.mp3FN, GT1);
 		}
 		//BPMを読み込む
-		else if (strands(GT1, L"#BPM:")) {
+		else if (strands_direct(GT1, L"#BPM:")) {
 			mapenc.bpmG = recfp->mapdata.bpm = SETbpm(GT1);
 			recfp->mapeff.v_BPM.data[0].time = recfp->time.offset;
 			recfp->mapeff.v_BPM.data[0].BPM = (unsigned short)recfp->mapdata.bpm;
 		}
 		//ノートのオフセットを読み込む
-		else if (strands(GT1, L"#NOTEOFFSET:")) {
+		else if (strands_direct(GT1, L"#NOTEOFFSET:")) {
 			mapenc.timer[0] = mapenc.timer[1] = mapenc.timer[2] = recfp->time.offset = SEToffset(GT1);
 		}
 		//空の背景を読み込む
-		else if (strands(GT1, L"#SKY:")) {
+		else if (strands_direct(GT1, L"#SKY:")) {
 			strcopy_2(L"picture/", recfp->nameset.sky, 255);
 			strmods(GT1, 5);
 			strcats(recfp->nameset.sky, GT1);
 		}
 		//地面の画像を読み込む
-		else if (strands(GT1, L"#FIELD:")) {
+		else if (strands_direct(GT1, L"#FIELD:")) {
 			strcopy_2(L"picture/", recfp->nameset.ground, 255);
 			strmods(GT1, 7);
 			strcats(recfp->nameset.ground, GT1);
 		}
 		//水中の画像を読み込む
-		else if (strands(GT1, L"#WATER:")) {
+		else if (strands_direct(GT1, L"#WATER:")) {
 			strcopy_2(L"picture/", recfp->nameset.water, 255);
 			strmods(GT1, 7);
 			strcats(recfp->nameset.water, GT1);
 		}
 		//難易度バー(another)を読み込む
-		else if (strands(GT1, L"#DIFBAR:")) {
+		else if (strands_direct(GT1, L"#DIFBAR:")) {
 			strcopy_2(folderPath, recfp->nameset.DifFN, 255);
 			strmods(GT1, 8);
 			strcats(recfp->nameset.DifFN, GT1);
 		}
 		//曲名を読み込む
-		else if (strands(GT1, L"#TITLE:")) {
+		else if (strands_direct(GT1, L"#TITLE:")) {
 			strmods(GT1, 7);
 			strcopy_2(GT1, recfp->nameset.songN, 255);
 		}
 		//英語
-		else if (strands(GT1, L"#E.TITLE:")) {
+		else if (strands_direct(GT1, L"#E.TITLE:")) {
 			strmods(GT1, 7);
 			strcopy_2(GT1, recfp->nameset.songNE, 255);
 		}
 		//レベルを読み込む
-		else if (strands(GT1, L"#LEVEL:")) recfp->mapdata.Lv = SETLv(GT1);
+		else if (strands_direct(GT1, L"#LEVEL:")) recfp->mapdata.Lv = SETLv(GT1);
 		//落ち物背景指定
-		else if (strands(GT1, L"#FALL:")) {
+		else if (strands_direct(GT1, L"#FALL:")) {
 			strmods(GT1, 6);
 			recfp->mapeff.fall.d[0].No = strsans(GT1);
 			recfp->mapeff.fall.d[0].time = 0;
 		}
 		//譜面難易度フィルタのレベル
-		else if (strands(GT1, L"#WANING:")) {
+		else if (strands_direct(GT1, L"#WANING:")) {
 			strmods(GT1, 8);
 			waningLv = strsans(GT1);
 		}
 		//譜面を読み込む
-		else if (strands(GT1, L"#MAP:")) {
+		else if (strands_direct(GT1, L"#MAP:")) {
 			break;
 		}
 	}
 
 	while (1) {
 		FileRead_gets(GT1, 256, mapenc.songdata);
-		if (FileRead_eof(mapenc.songdata) != 0 || strands(GT1, L"#END") != 0) { break; }
+		if (FileRead_eof(mapenc.songdata) != 0 || strands_direct(GT1, L"#END") != 0) { break; }
 
 		int hitnum = -1;
 		for (uint inum = 0; inum < ARRAY_COUNT(noteact_table); inum++) {
@@ -1543,19 +1543,19 @@ void set_item_set(item_box *const Movie, short *const MovieN,
 item_eff_box set_pic_mat(wchar_t *s) {
 	item_eff_box eff;
 	while (s[0] != L'\0' && s[0] != L'\n') {
-		if (strands(s, L"bpm_a")) {
+		if (strands_direct(s, L"bpm_a")) {
 			eff.bpm_alphr = 1;
 		}
-		else if (strands(s, L"bpm_s")) {
+		else if (strands_direct(s, L"bpm_s")) {
 			eff.bpm_size = 1;
 		}
-		else if (strands(s, L"lock")) {
+		else if (strands_direct(s, L"lock")) {
 			eff.lock = 1;
 		}
-		else if (strands(s, L"cha_a")) {
+		else if (strands_direct(s, L"cha_a")) {
 			eff.chara_alphr = 1;
 		}
-		else if (strands(s, L"edge_s")) {
+		else if (strands_direct(s, L"edge_s")) {
 			eff.edge_size = 1;
 		}
 		else {

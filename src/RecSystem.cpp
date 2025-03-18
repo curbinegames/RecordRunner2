@@ -1,3 +1,4 @@
+/* TODO: ddifが更新されない!! (ver1.5.3では更新できてる、おそらくmasterブランチの不具合) */
 
 /* base include */
 #include <stdio.h>
