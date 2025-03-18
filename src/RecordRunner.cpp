@@ -72,6 +72,7 @@ int WINAPI WinMain(DX_MAIN_DEF) {
 	(void)hPrevInstance;
 	(void)lpCmdLine;
 	(void)nCmdShow;
+	SetOutApplicationLogValidFlag(FALSE); // Log.txtを作らない
 	ChangeWindowMode(TRUE); // ウィンドウモードにする
 	SetGraphMode(WINDOW_SIZE_X, WINDOW_SIZE_Y, 32); // ウィンドウサイズの変更
 	SetAlwaysRunFlag(TRUE); // 非アクティブでも動くようにする
