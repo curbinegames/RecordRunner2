@@ -146,7 +146,7 @@ static void RecResetPlayObjectNum(short int objectN[], const rec_score_file_t *r
 }
 
 static struct score_box GetScore3(struct score_box score,
-	struct judge_box judge, const int notes, const int MaxCombo)
+	rec_play_judge_t judge, const int notes, const int MaxCombo)
 {
 	score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
 	score.combo = MaxCombo * 10000 / notes;
@@ -401,7 +401,7 @@ static void RecPlayGetMapFileNames(TCHAR *songPath, TCHAR *songName,
 	return;
 }
 
-static int GetRemainNotes(struct judge_box judge, int Notes) {
+static int GetRemainNotes(rec_play_judge_t judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
 
@@ -1010,7 +1010,7 @@ private:
 		return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
 	}
 
-	void RunningStats(struct judge_box judge, int PosScore, int HighScore) {
+	void RunningStats(rec_play_judge_t judge, int PosScore, int HighScore) {
 		int x1 = 6;
 		int y1 = 6;
 		int x2 = 188;

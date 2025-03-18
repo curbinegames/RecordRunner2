@@ -30,13 +30,13 @@ typedef enum rec_play_status_e {
 	REC_PLAY_STATUS_DROPED,
 } rec_play_status_t;
 
-struct judge_box {
+typedef struct judge_box {
 	int pjust = 0;
 	int just = 0;
 	int good = 0;
 	int safe = 0;
 	int miss = 0;
-};
+} rec_play_judge_t;
 
 typedef struct gap_box_t {
 	int view[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
@@ -90,7 +90,7 @@ typedef struct rec_play_userpal_s {
 	rec_play_status_t status = REC_PLAY_STATUS_PLAYING;
 	int Ncombo = 0;
 	int Mcombo = 0;
-	struct judge_box judgeCount;
+	rec_play_judge_t judgeCount;
 	int life = 500;
 	int Exlife = 500;
 	gap_box gap;

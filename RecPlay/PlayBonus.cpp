@@ -73,7 +73,8 @@ void ReadyBonusPsmat() {
 }
 
 /* action */
-void ShowBonusEff(struct judge_box judge, int EffStartTime) {
+/* TODO: judge‚Íƒ|ƒCƒ“ƒ^‚Å“n‚»‚¤‚Ë */
+void ShowBonusEff(rec_play_judge_t judge, int EffStartTime) {
 	int pic = 0;
 	int Snd = 0;
 	int smalllight = 0;

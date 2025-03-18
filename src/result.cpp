@@ -40,7 +40,7 @@ typedef struct rec_result_mat_s {
 
 typedef struct rec_result_pal_s {
 	TCHAR songN[64];
-	struct judge_box judge;
+	rec_play_judge_t judge;
 	int Mcombo = 0;
 	int noteCount = 0;
 	int score = 0;
@@ -149,7 +149,7 @@ static rec_score_rate_t CalScoreRank(int score) {
  * safe以下ボーナス = min(1 - [safe以下率(0to1)] * 10  0)
  * miss数ボーナス   = min((50 - [miss数]) / 50, 0)
  */
-static int CalPlayRate(const judge_box *judge, const rec_map_detail_t *map_detail) {
+static int CalPlayRate(rec_play_judge_t *judge, const rec_map_detail_t *map_detail) {
 	const double DifRate = CAL_DIF_RATE(map_detail->mpal.mdif, map_detail->Lv) / 100.0;
 
 	double rate = 0;
@@ -178,7 +178,7 @@ static int CalPlayRate(const judge_box *judge, const rec_map_detail_t *map_detai
 }
 
 rec_clear_rank_t JudgeClearRank(const rec_play_userpal_t *userpal) {
-	const judge_box *judge = &userpal->judgeCount;
+	const rec_play_judge_t *judge = &userpal->judgeCount;
 	/* TODO: LOSTED, LIGHTCLEAR, MISSLESS, FULLPERFECTを作る  */
 	/* if (userpal->status == REC_PLAY_STATUS_LOSTED) { return REC_CLEAR_RANK_LOSTED; } */
 	if (userpal->status == REC_PLAY_STATUS_DROPED) { return REC_CLEAR_RANK_DROPED; }

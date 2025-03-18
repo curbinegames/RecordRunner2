@@ -1,3 +1,3 @@
 #pragma once
 extern void ReadyBonusPsmat();
-extern void ShowBonusEff(struct judge_box judge, int EffStartTime);
+extern void ShowBonusEff(rec_play_judge_t judge, int EffStartTime);
