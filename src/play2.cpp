@@ -907,8 +907,12 @@ private:
 	DxPic_t charaguideimg;
 	DxPic_t judghimg;
 
+public:
+	int pos = 1; //キャラの今の位置[0で上,1で中,2で下]
+
+private:
 	void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[], int Yline[],
-		short int charaput, int Ntime, rec_map_eff_data_t *mapeff)
+		int Ntime, rec_map_eff_data_t *mapeff)
 	{
 		static int hitpose = 0;
 		int drawX = 0;
@@ -921,17 +925,17 @@ private:
 		if (key->c == 1) { hitpose = (hitpose + 1) % 2; }
 		if (GetNowCount() - charahit > 250) { hitoffset = 0; }
 		else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
-		drawY = Yline[charaput] - 75;
+		drawY = Yline[this->pos] - 75;
 		if (charahit > 0) {
-			drawX = Xline[charaput] + hitoffset;
+			drawX = Xline[this->pos] + hitoffset;
 			picID = betweens(24 + hitpose * 6,
 				(GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
 		}
 		else {
-			drawX = Xline[charaput];
+			drawX = Xline[this->pos];
 
 			picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
-				20000 % 6 + mapeff->chamo[charaput].gra[mapeff->chamo[charaput].num] * 6;
+				20000 % 6 + mapeff->chamo[this->pos].gra[mapeff->chamo[this->pos].num] * 6;
 		}
 		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
 			DrawGraphRecField(drawX - 160, drawY, this->charaimg[picID]);
@@ -970,21 +974,21 @@ public:
 	}
 
 	void ViewRunner(rec_map_eff_data_t *mapeff, rec_play_key_hold_t *keyhold,
-		int charaput, int charahit, int Xline[], int Yline[], int Ntime)
+		int charahit, int Xline[], int Yline[], int Ntime)
 	{
 		// view chara pos guide
 		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
-			DrawGraphRecField(Xline[charaput] - 4, Yline[charaput] - 4, this->charaguideimg);
+			DrawGraphRecField(Xline[this->pos] - 4, Yline[this->pos] - 4, this->charaguideimg);
 		}
 		else {
-			DrawTurnGraphRecField(Xline[charaput] - 56, Yline[charaput] - 4, this->charaguideimg);
+			DrawTurnGraphRecField(Xline[this->pos] - 56, Yline[this->pos] - 4, this->charaguideimg);
 		}
 		//判定マーカーの表示
 		for (int i = 0; i < 3; i++) {
 			DrawGraphRecField(Xline[i], Yline[i], this->judghimg);
 		}
 		/* キャラ表示 */
-		this->PlayDrawChara(keyhold, charahit, Xline, Yline, charaput, Ntime, mapeff);
+		this->PlayDrawChara(keyhold, charahit, Xline, Yline, Ntime, mapeff);
 	}
 
 #undef DIV_X
@@ -1272,7 +1276,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	/* short */
 	short int i[3];
-	short int charaput = 1; //キャラの今の位置[0で上,1で中,2で下]
 
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
@@ -1517,7 +1520,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		else {
 			recSetLine(Yline, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
-		charaput = GetCharaPos3(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
+		runnerClass.pos = GetCharaPos3(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
 			(keyhold.up == 1 || keyhold.down == 1 ||
 			keyhold.left == 1 || keyhold.right == 1))
@@ -1529,7 +1532,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			hitatk.time = -1000;
 		}
 		//キャッチ判定に使う数値を計算
-		LaneTrack[charaput] = recfp.time.now;
+		LaneTrack[runnerClass.pos] = recfp.time.now;
 		if (keyhold.up == 0 && keyhold.down == 0 || keyhold.up > 0 && keyhold.down > 0) { LaneTrack[1] = recfp.time.now; }
 		else if (keyhold.up > 0 && keyhold.down == 0) { LaneTrack[0] = recfp.time.now; }
 		else if (keyhold.up == 0 && keyhold.down > 0) { LaneTrack[2] = recfp.time.now; }
@@ -1540,7 +1543,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */
 		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
-			&keyhold, &hitatk, LaneTrack, &charahit, charaput, &userpal, &p_sound);
+			&keyhold, &hitatk, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound);
 		RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
 
 		ClearDrawScreen(); /* 描画エリアここから */
@@ -1569,11 +1572,11 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowAllGuideLine(&recfp, LineMoveN, Xline, Yline, lockN[1]);
 		RecPlayDrawGuideBorder(&recfp, Xline, Yline, lockN[1]);
 		/* キャラ周り表示 */
-		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, charaput, charahit, Xline, Yline, recfp.time.now);
+		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, charahit, Xline, Yline, recfp.time.now);
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
-		PlayShowJudge(Xline[charaput], Yline[charaput]);
+		PlayShowJudge(Xline[runnerClass.pos], Yline[runnerClass.pos]);
 		/* 音符表示 */
 		RecPlayDrawNoteAll(objectN, recfp.mapdata.note, &recfp.mapeff, viewTN,
 			lockN, recfp.time.now, Xline, Yline, &noteimg);
