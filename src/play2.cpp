@@ -1292,8 +1292,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	short int lockN[2] = { 0,0 }; //↑の番号
 	short int viewTN = 0;
-	int Yline[5] = { 300,350,400,350,600 };//[上,中,下,地面,水中]レーンの縦位置
-	int Xline[3] = { 150,150,150 };//[上,中,下]レーンの横位置
+	rec_play_lanepos_t lanePos;
 	unsigned int Cr = GetColor(255, 255, 255);
 	unsigned int Crb = GetColor(0, 0, 0);
 	unsigned int CrR = GetColor(255, 0, 0);
@@ -1511,14 +1510,14 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		//カメラ移動
 		RecPlaySetCamera(&recfp.mapeff.camera, recfp.time.now);
-		//Xline(横位置)の計算
-		recSetLine(Xline, recfp.mapeff.move.x, recfp.time.now, 3);
-		//Yline(縦位置)の計算
+		//lanePos.x(横位置)の計算
+		recSetLine(lanePos.x, recfp.mapeff.move.x, recfp.time.now, 3);
+		//lanePos.y(縦位置)の計算
 		if (optiondata.backbright == 0) {
-			recSetLine(Yline, recfp.mapeff.move.y, recfp.time.now, 3);
+			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 3);
 		}
 		else {
-			recSetLine(Yline, recfp.mapeff.move.y, recfp.time.now, 5);
+			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
 		runnerClass.pos = GetCharaPos3(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
@@ -1549,7 +1548,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示
 		if (optiondata.backbright != 0) {
-			PlayDrawBackGround(&recfp.mapeff, Yline, &backpic, item);
+			PlayDrawBackGround(&recfp.mapeff, lanePos.y, &backpic, item);
 		}
 		//フィルター表示
 		switch (optiondata.backbright) {
@@ -1566,22 +1565,22 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 		//アイテム表示
 		if (optiondata.backbright != 0) {
-			PlayDrawItem(&recfp.mapeff, MovieN, recfp.time.now, Xline[1], item);
+			PlayDrawItem(&recfp.mapeff, MovieN, recfp.time.now, lanePos.x[1], item);
 		}
 		// view line
-		PlayShowAllGuideLine(&recfp, LineMoveN, Xline, Yline, lockN[1]);
-		RecPlayDrawGuideBorder(&recfp, Xline, Yline, lockN[1]);
+		PlayShowAllGuideLine(&recfp, LineMoveN, lanePos.x, lanePos.y, lockN[1]);
+		RecPlayDrawGuideBorder(&recfp, lanePos.x, lanePos.y, lockN[1]);
 		/* キャラ周り表示 */
-		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, charahit, Xline, Yline, recfp.time.now);
+		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, charahit, lanePos.x, lanePos.y, recfp.time.now);
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
-		PlayShowJudge(Xline[runnerClass.pos], Yline[runnerClass.pos]);
+		PlayShowJudge(lanePos.x[runnerClass.pos], lanePos.y[runnerClass.pos]);
 		/* 音符表示 */
 		RecPlayDrawNoteAll(objectN, recfp.mapdata.note, &recfp.mapeff, viewTN,
-			lockN, recfp.time.now, Xline, Yline, &noteimg);
+			lockN, recfp.time.now, lanePos.x, lanePos.y, &noteimg);
 		//ヒットエフェクト表示
-		PlayShowHitEffect(Xline, Yline);
+		PlayShowHitEffect(lanePos.x, lanePos.y);
 		PlayCheckHitEffect();
 		//スコアバー表示
 		sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighScore, holdG);

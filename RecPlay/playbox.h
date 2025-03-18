@@ -145,3 +145,8 @@ public:
 		this->swi.PlaySound();
 	}
 };
+
+typedef struct rec_play_lanepos_s {
+	int x[3] = { 150,150,150 };
+	int y[5] = { 300,350,400,350,600 };
+} rec_play_lanepos_t;

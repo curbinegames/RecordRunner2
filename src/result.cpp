@@ -149,7 +149,7 @@ static rec_score_rate_t CalScoreRank(int score) {
  * safe以下ボーナス = min(1 - [safe以下率(0to1)] * 10  0)
  * miss数ボーナス   = min((50 - [miss数]) / 50, 0)
  */
-static int CalPlayRate(rec_play_judge_t *judge, const rec_map_detail_t *map_detail) {
+static int CalPlayRate(const rec_play_judge_t *judge, const rec_map_detail_t *map_detail) {
 	const double DifRate = CAL_DIF_RATE(map_detail->mpal.mdif, map_detail->Lv) / 100.0;
 
 	double rate = 0;
