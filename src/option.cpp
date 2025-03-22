@@ -1,5 +1,6 @@
 
 /* base include */
+#include <stdio.h>
 #include <DxLib.h>
 
 /* curbine code include */
@@ -26,12 +27,12 @@
 /**
  * TODO: 追加したいオプション
  * 　文字の大きさ
- * 　BGM音量
- * 　SE音量
  * 　PLAYINGバーカスタマイズ
+ *   ガイドレーンの色
+ *   ガイドレーンの太さ
  */
 
-typedef void (*rec_opt_action_t)(TCHAR *ret, int pal, int lang);
+typedef void (*rec_opt_action_t)(TCHAR *ret, int pal);
 
 typedef struct rec_opt_text_s {
 	const rec_opt_action_t action;
@@ -55,6 +56,9 @@ DxSnd_t s_sel = DXLIB_SND_NULL;
 
 static const int det_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 20);
 static const int det_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 410);
+
+/* TODO: よそでも使えるマクロなのでRecSystemに持っていきたい */
+#define REC_STR_LANG(jp, en) ( (optiondata.lang == LANG_JP) ? (jp) : (en) )
 
 #if 1 /* option_file */
 
@@ -130,84 +134,68 @@ void RecOpenOptionFileSystem() {
 
 #if 1 /* option_data */
 
-static void RecOptionChar(TCHAR *ret, int pal, int lang) {
+static void RecOptionChar(TCHAR *ret, int pal) {
 	const TCHAR jp[3][20] = {
 		L"ピッカー", L"マップゲーター", L"テイラー"
 	};
-
 	const TCHAR en[3][10] = {
 		L"Picker", L"MapGator", L"Taylor"
 	};
-
-	if (lang == LANG_JP) { strcopy_2(jp[pal], ret, 32); }
-	else if (lang == LANG_EN) { strcopy_2(en[pal], ret, 32); }
-
+	strcopy_2(REC_STR_LANG(jp[pal], en[pal]), ret, 32);
 	return;
 }
 
-static void RecOptionOffset(TCHAR *ret, int pal, int lang) {
+static void RecOptionOffset(TCHAR *ret, int pal) {
 	strnums(ret, pal * 5, 32);
 	return;
 }
 
-static void RecOptionSE(TCHAR *ret, int pal, int lang) {
+static void RecOptionSE(TCHAR *ret, int pal) {
 	if (pal == 0) { strcopy_2(L"on", ret, 32); }
 	else if (pal == 1) { strcopy_2(L"off", ret, 32); }
-
 	return;
 }
 
-static void RecOptionBackBright(TCHAR *ret, int pal, int lang) {
+static void RecOptionBackBright(TCHAR *ret, int pal) {
 	wchar_t jp[4][10] = {
 		L"真っ黒", L"暗い", L"中間", L"明るい"
 	};
-
 	wchar_t en[4][10] = {
 		L"Black", L"Dark", L"Middle", L"Bright"
 	};
-
-	if (lang == LANG_JP) { strcopy_2(jp[pal], ret, 32); }
-	else if (lang == LANG_EN) { strcopy_2(en[pal], ret, 32); }
-
+	strcopy_2(REC_STR_LANG(jp[pal], en[pal]), ret, 32);
 	return;
 }
 
-static void RecOptionLang(TCHAR *ret, int pal, int lang) {
-	if (pal == 0) { strcopy_2(L"日本語", ret, 32); }
-	else if (pal == 1) { strcopy_2(L"English", ret, 32); }
-
+static void RecOptionLang(TCHAR *ret, int pal) {
+	strcopy_2(REC_STR_LANG(_T("日本語"), _T("English")), ret, 32);
 	return;
 }
 
-static void RecOptionButtonDet(TCHAR *ret, int pal, int lang) {
+static void RecOptionButtonDet(TCHAR *ret, int pal) {
 	if (pal == 0) { strcopy_2(L"off", ret, 32); }
 	else if (pal == 1) { strcopy_2(L"on", ret, 32); }
-
 	return;
 }
 
-static void RecOptionComboPos(TCHAR *ret, int pal, int lang) {
+static void RecOptionComboPos(TCHAR *ret, int pal) {
 	wchar_t jp[6][10] = {
 		L"中央の上", L"左上", L"右上", L"中央", L"キャラの上", L"表示しない"
 	};
-
 	wchar_t en[6][12] = {
 		L"top centre", L"top left", L"top right", L"centre", L"near chara", L"nope"
 	};
-
-	if (lang == LANG_JP) { strcopy_2(jp[pal], ret, 32); }
-	else if (lang == LANG_EN) { strcopy_2(en[pal], ret, 32); }
-
+	strcopy_2(REC_STR_LANG(jp[pal], en[pal]), ret, 32);
 	return;
 }
 
-static void RecOptionBGMVolume(TCHAR *ret, int pal, int lang) {
+static void RecOptionBGMVolume(TCHAR *ret, int pal) {
 	strnums(ret, pal, 32);
 	RecSysBgmChangeVolume(255);
 	return;
 }
 
-static void RecOptionSEVolume(TCHAR *ret, int pal, int lang) {
+static void RecOptionSEVolume(TCHAR *ret, int pal) {
 	strnums(ret, pal, 32);
 	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, s_sel);
 	return;
@@ -476,23 +464,14 @@ now_scene_t option(void) {
 
 			TCHAR buf[32];
 
-			optionstr[i].action(buf, *optionstr[i].val_p, optiondata.lang);
-
-			if (optiondata.lang == LANG_JP) {
-				DrawFormatString(title_txposx, title_txposy + title_txgapy * i, COLOR_WHITE, L"%s: %s", optionstr[i].title.jp, buf);
-			}
-			else if (optiondata.lang == LANG_EN) {
-				DrawFormatString(title_txposx, title_txposy + title_txgapy * i, COLOR_WHITE, L"%s: %s", optionstr[i].title.en, buf);
-			}
+			optionstr[i].action(buf, *optionstr[i].val_p);
+			DrawFormatString(title_txposx, title_txposy + title_txgapy * i, COLOR_WHITE, L"%s: %s",
+				REC_STR_LANG(optionstr[i].title.jp, optionstr[i].title.en), buf);
 		}
 
 		/* 説明 */
-		if (optiondata.lang == LANG_JP) {
-			DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s", optionstr[command].detail.jp);
-		}
-		else if (optiondata.lang == LANG_EN) {
-			DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s", optionstr[command].detail.en);
-		}
+		DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s",
+			REC_STR_LANG(optionstr[command].detail.jp, optionstr[command].detail.en));
 
 		help.DrawHelp(HELP_MAT_OPTION); /* 操作方法 */
 
