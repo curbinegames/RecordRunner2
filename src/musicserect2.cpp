@@ -26,7 +26,7 @@
 
 #endif /* include */
 
-#define PackNumLim 8
+#define PackNumLim 9
 #define SongNumLim 64
 #define REC_SORT_DEFAULT 0
 #define SORT_LEVEL 1

@@ -761,7 +761,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, int *Xline, int *Yline, sho
 			int drawX2 = lins(-1, posX1, divColor - 1, posX2, idraw);
 			int drawY2 = lins(-1, posY1, divColor - 1, posY2, idraw);
 			int hueP   = lins( 0,     0, divColor - 1,    96, idraw);
-			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), 3);
+			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), optiondata.barThick);
 		}
 		for (uint idraw = 0; idraw < divColor; idraw++) {
 			int drawX  = lins( 0, posX2, divColor    , posX3, idraw);
@@ -769,7 +769,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, int *Xline, int *Yline, sho
 			int drawX2 = lins(-1, posX2, divColor - 1, posX3, idraw);
 			int drawY2 = lins(-1, posY2, divColor - 1, posY3, idraw);
 			int hueP   = lins( 0,    96, divColor - 1,   192, idraw);
-			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), 3);
+			DrawLineRecField(drawX, drawY, drawX2, drawY2, GetColorCurRainbow(hueP, 100, 100), optiondata.barThick);
 		}
 	}
 	return;
@@ -816,7 +816,7 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int
 		RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, Xline, Yline, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
 		drawRight = 1280 - camera.x;
 		drawY2    = drawY1;
-		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
+		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.barThick);
 		return 1;
 	}
 	if (iDraw < 1) {
@@ -824,20 +824,20 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, int Line, int Xline[], int
 		RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, Xline, Yline, Line, YlockN, Ntime, Ymove[0].Stime);
 		drawLeft = 0 - camera.x;
 		drawY1   = drawY2;
-		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
+		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.barThick);
 	}
 	else if (Ntime < Ymove[iDraw].Etime) {
 		if (!viewEn) { return 0; }
 		RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, Xline, Yline, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
 		RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, Xline, Yline, Line, YlockN, Ntime, Ymove[iDraw].Stime);
 		drawY2 = drawY1;
-		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, 2);
+		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.barThick);
 	}
 	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, Xline, Yline, Line, YlockN, Ntime, Ymove[iDraw].Stime);
 	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, Xline, Yline, Line, YlockN, Ntime, Ymove[iDraw].Etime);
 	if (960 < drawLeft) { return 1; }
 	if (!viewEn) { return 0; }
-	DrawLineCurveRecField(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, 2);
+	DrawLineCurveRecField(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, optiondata.barThick);
 	return 0;
 }
 

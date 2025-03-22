@@ -21,6 +21,8 @@ typedef struct rec_option_s {
 	int combopos   = 0;
 	int BGMvolume  = 7; /* 0~10 */
 	int SEvolume   = 7; /* 0~10 */
+	int lineThick  = 3;
+	int barThick   = 3;
 } rec_option_t;
 
 extern rec_option_t optiondata;

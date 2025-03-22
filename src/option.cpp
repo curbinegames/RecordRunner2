@@ -201,6 +201,16 @@ static void RecOptionSEVolume(TCHAR *ret, int pal) {
 	return;
 }
 
+static void RecOptionLaneGuideThick(TCHAR *ret, int pal) {
+	strnums(ret, pal, 32);
+	return;
+}
+
+static void RecOptionLaneMeasureThick(TCHAR *ret, int pal) {
+	strnums(ret, pal, 32);
+	return;
+}
+
 static rec_opt_text_t optionstr[]{
 	{
 		RecOptionChar,
@@ -256,6 +266,18 @@ static rec_opt_text_t optionstr[]{
 		L"SEの音量を決めます。",
 		L"Choose SE volume.",
 		0, 10, FALSE
+	}, {
+		RecOptionLaneGuideThick,
+		L"レーンガイドの太さ", L"Lane Guide Line Thickness",
+		L"レーンガイドの太さを決めます。",
+		L"Choose lane guide line thickness.",
+		0, 30, FALSE
+	}, {
+		RecOptionLaneMeasureThick,
+		L"小節線の太さ", L"Measure Line Thickness",
+		L"小節線の太さを決めます。",
+		L"Choose measure line thickness.",
+		0, 30, FALSE
 	}
 };
 
@@ -360,6 +382,8 @@ now_scene_t option(void) {
 	optionstr[6].val_p = &optiondata.combopos;
 	optionstr[7].val_p = &optiondata.BGMvolume;
 	optionstr[8].val_p = &optiondata.SEvolume;
+	optionstr[9].val_p = &optiondata.lineThick;
+	optionstr[10].val_p = &optiondata.barThick;
 
 	for (int i = 0; i < optionstr_count; i++) {
 		if (*optionstr[i].val_p < optionstr[i].min) {
