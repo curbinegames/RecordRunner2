@@ -423,6 +423,17 @@ static void RacPlayDrawFieldGrid(void) {
 	return;
 }
 
+/* キャッチ判定に使う数値を計算 */
+static void RecPlayCalLaneTrack(int LaneTrack[], const rec_play_key_hold_t *keyhold, int charaput, int Ntime) {
+	LaneTrack[charaput] = Ntime;
+	if (keyhold->up == 0 && keyhold->down == 0 || keyhold->up > 0 && keyhold->down > 0) { LaneTrack[1] = Ntime; }
+	else if (keyhold->up > 0 && keyhold->down == 0) { LaneTrack[0] = Ntime; }
+	else if (keyhold->up == 0 && keyhold->down > 0) { LaneTrack[2] = Ntime; }
+	if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[0]); }
+	else { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[2]); } 
+	return;
+}
+
 #endif /* sub action */
 
 #if 1 /* Notes Picture */
@@ -1277,8 +1288,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20];
 	int holdG = 0;
-	int key2 = 1;
-	int key3 = 1;
 	int AllNotesHitTime = -1;
 	int LaneTrack[3] = { -150,-150,-150 };
 	int StopFrag = -1;
@@ -1527,12 +1536,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			hitatk.time = -1000;
 		}
 		//キャッチ判定に使う数値を計算
-		LaneTrack[runnerClass.pos] = recfp.time.now;
-		if (keyhold.up == 0 && keyhold.down == 0 || keyhold.up > 0 && keyhold.down > 0) { LaneTrack[1] = recfp.time.now; }
-		else if (keyhold.up > 0 && keyhold.down == 0) { LaneTrack[0] = recfp.time.now; }
-		else if (keyhold.up == 0 && keyhold.down > 0) { LaneTrack[2] = recfp.time.now; }
-		if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[0]); }
-		else { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[2]); }
+		RecPlayCalLaneTrack(LaneTrack, &keyhold, runnerClass.pos, recfp.time.now);
 		//ヒット
 		if (keyhold.z == 1 || keyhold.x == 1 || keyhold.c == 1) { charahit = GetNowCount(); }
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }

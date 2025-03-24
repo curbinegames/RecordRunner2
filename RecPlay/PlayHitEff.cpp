@@ -45,9 +45,6 @@ void PlaySetHitEffect(note_judge judge, note_material notemat, int LineNo) {
 	EffState[LineNo].time = GetNowCount();
 	EffState[LineNo].judge = judge;
 	EffState[LineNo].note = notemat;
-	RecPlayDebug[0] = EffState[0].time;
-	RecPlayDebug[1] = EffState[0].judge;
-	RecPlayDebug[2] = EffState[0].note;
 	return;
 }
 
