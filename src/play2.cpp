@@ -411,6 +411,113 @@ static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 	return scoreBuf.score;
 }
 
+static void RecPlayStepObjectNG(short objectNG[], const note_box_2_t note[], const short objectN[]) {
+	for (int iLine = 0; iLine < 3; iLine++) {
+		objectNG[iLine] = maxs_2(objectNG[iLine], objectN[iLine]);
+		while (note[objectNG[iLine]].object == NOTE_GHOST) {
+			objectNG[iLine] = note[objectNG[iLine]].next;
+		}
+	}
+	return;
+}
+
+static void RecPlayStepCharaMotionNum(rec_chara_gra_data_t chamo, DxTime_t Ntime) {
+	for (int iLine = 0; iLine < 3; iLine++) {
+		while (IS_BETWEEN(0, chamo[iLine].time[chamo[iLine].num + 1], Ntime)) {
+			chamo[iLine].num++;
+		}
+	}
+	return;
+}
+
+static void RecPlayStepSpeedtNum(rec_mapeff_speedt_dataset_t speedt[], DxTime_t Ntime) {
+	for (int iLine = 0; iLine < 3; iLine++) {
+		while (IS_BETWEEN(0, speedt[iLine].d[speedt[iLine].num + 1].time, Ntime)) {
+			speedt[iLine].num++;
+		}
+	}
+	if (optiondata.backbright == 0) { return; }
+	while (IS_BETWEEN(0, speedt[3].d[speedt[3].num + 1].time, Ntime)) {
+		speedt[3].num++;
+	}
+	return;
+}
+
+static void RecPlayStepViewBpmNum(rec_view_bpm_set_t *v_BPM, DxTime_t Ntime) {
+	while (IS_BETWEEN_LEFT_LESS(-1000, v_BPM->data[v_BPM->num + 1].time, Ntime)) {
+		v_BPM->num++;
+	}
+	return;
+}
+
+static void RecPlayStepCameraNum(rec_camera_set_t *camera, DxTime_t Ntime) {
+	while (IS_BETWEEN_RIGHT_LESS(0, camera->data[camera->num].endtime, Ntime)) {
+		camera->num++;
+	}
+	return;
+}
+
+static void RecPlayStepScroolNum(rec_scrool_set_t *scrool, DxTime_t Ntime) {
+	while (IS_BETWEEN(0, scrool->data[scrool->num + 1].starttime, Ntime)) {
+		scrool->num++;
+	}
+	return;
+}
+
+static void RecPlayStepMovieNum(const item_box movie[], short *movieN, DxTime_t Ntime) {
+	if (optiondata.backbright == 0) { return; }
+	while (IS_BETWEEN_LESS(-500, movie[*movieN].endtime, Ntime)) { (*movieN)++;}
+	return;
+}
+
+static void RecPlayStepFallNum(rec_fall_data_t *fall, DxTime_t Ntime) {
+	if (optiondata.backbright == 0) { return; }
+	while (IS_BETWEEN(0, fall->d[fall->num + 1].time, Ntime)) { fall->num++; }
+	return;
+}
+
+static void RecPlayStepGuideLineNum(short guideN[], const rec_move_set_t ymove[], DxTime_t Ntime) {
+	for (int iLane = 0; iLane < 3; iLane++) {
+		while ((ymove[iLane].d[guideN[iLane]].Stime >= 0 &&
+			ymove[iLane].d[guideN[iLane]].Etime <= Ntime) ||
+			ymove[iLane].d[guideN[iLane]].mode == 4)
+		{
+			guideN[iLane]++;
+		}
+	}
+	return;
+}
+
+static void RecPlayStepCharaArrowNum(rec_chara_arrow_t *carrow, DxTime_t Ntime) {
+	while (IS_BETWEEN_RIGHT_LESS(0, carrow->d[carrow->num + 1].time, Ntime)) {
+		carrow->num++;
+	}
+	return;
+}
+
+static void RecPlayStepLockNum(short lockN[], const rec_map_eff_data_t *mapeff, DxTime_t Ntime) {
+	for (int iVect = 0; iVect < 2; iVect++) {
+		while (IS_BETWEEN(0, mapeff->lock[iVect][1][lockN[iVect] + 1], Ntime)) {
+			lockN[iVect]++;
+		}
+	}
+	return;
+}
+
+static void RecPlayStepViewTimeNum(short *viewTN, const rec_map_eff_data_t *mapeff,
+	DxTime_t Ntime)
+{
+	while (IS_BETWEEN(0, mapeff->viewT[0][*viewTN + 1], Ntime)) { (*viewTN)++; }
+	return;
+}
+
+static void RecPlayStepViewLineNum(rec_viewline_dataset_t *viewLine, DxTime_t Ntime) {
+	while (IS_BETWEEN_LEFT_LESS(0, viewLine->d[viewLine->num + 1].time, Ntime)) {
+		viewLine->num++;
+	}
+	return;
+}
+
 static void RacPlayDrawFieldGrid(void) {
 	int cameraX = 0;
 	int cameraY = 0;
@@ -1407,86 +1514,19 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
 		// number step
-		for (int iLine = 0; iLine < 3; iLine++) {
-			objectNG[iLine] = maxs_2(objectNG[iLine], objectN[iLine]);
-			while (recfp.mapdata.note[objectNG[iLine]].object == NOTE_GHOST) {
-				objectNG[iLine] = recfp.mapdata.note[objectNG[iLine]].next;
-			}
-			while (0 <= recfp.mapeff.chamo[iLine].time[recfp.mapeff.chamo[iLine].num + 1] &&
-				recfp.mapeff.chamo[iLine].time[recfp.mapeff.chamo[iLine].num + 1] <= recfp.time.now) {
-				recfp.mapeff.chamo[iLine].num++;
-			}
-			while (0 <= recfp.mapeff.speedt[iLine].d[recfp.mapeff.speedt[iLine].num + 1].time &&
-				recfp.mapeff.speedt[iLine].d[recfp.mapeff.speedt[iLine].num + 1].time <= recfp.time.now) {
-				recfp.mapeff.speedt[iLine].num++;
-			}
-		}
-		while (-1000 < recfp.mapeff.v_BPM.data[recfp.mapeff.v_BPM.num + 1].time &&
-			recfp.mapeff.v_BPM.data[recfp.mapeff.v_BPM.num + 1].time <= recfp.time.now) {
-			recfp.mapeff.v_BPM.num++;
-		}
-		{
-			uint *numC = &recfp.mapeff.camera.num;
-			while (
-				recfp.mapeff.camera.data[*numC].endtime >= 0 &&
-				recfp.mapeff.camera.data[*numC].endtime < recfp.time.now)
-			{
-				(*numC)++;
-			}
-
-			numC = &recfp.mapeff.scrool.num;
-			while (
-				recfp.mapeff.scrool.data[*numC + 1].starttime >= 0 &&
-				recfp.mapeff.scrool.data[*numC + 1].starttime <= recfp.time.now)
-			{
-				(*numC)++;
-			}
-		}
-		if (optiondata.backbright != 0) {
-			while (recfp.mapeff.Movie[MovieN].endtime < recfp.time.now &&
-				recfp.mapeff.Movie[MovieN].endtime > -500)
-			{
-				MovieN++;
-			}
-			while (recfp.mapeff.fall.d[recfp.mapeff.fall.num + 1].time <= recfp.time.now &&
-				recfp.mapeff.fall.d[recfp.mapeff.fall.num + 1].time >= 0)
-			{
-				recfp.mapeff.fall.num++;
-			}
-			while (0 <= recfp.mapeff.speedt[3].d[recfp.mapeff.speedt[3].num + 1].time &&
-				recfp.mapeff.speedt[3].d[recfp.mapeff.speedt[3].num + 1].time <= recfp.time.now) {
-				recfp.mapeff.speedt[3].num++;
-			}
-		}
-		if (1) {
-			for (i[0] = 0; i[0] < 3; i[0]++) {
-				while ((0 <= recfp.mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Stime &&
-					recfp.mapeff.move.y[i[0]].d[LineMoveN[i[0]]].Etime <= recfp.time.now) ||
-					recfp.mapeff.move.y[i[0]].d[LineMoveN[i[0]]].mode == 4) {
-					LineMoveN[i[0]]++;
-				}
-			}
-		}
-		while (0 <= recfp.mapeff.carrow.d[recfp.mapeff.carrow.num + 1].time &&
-			recfp.mapeff.carrow.d[recfp.mapeff.carrow.num + 1].time < recfp.time.now) {
-			recfp.mapeff.carrow.num++;
-		}
-		for (i[0] = 0; i[0] < 2; i[0]++) {
-			while (0 <= recfp.mapeff.lock[i[0]][1][lockN[i[0]] + 1] &&
-				recfp.mapeff.lock[i[0]][1][lockN[i[0]] + 1] <= recfp.time.now) {
-				lockN[i[0]]++;
-			}
-		}
-		while (0 <= recfp.mapeff.viewT[0][viewTN + 1] &&
-			recfp.mapeff.viewT[0][viewTN + 1] <= recfp.time.now) {
-			viewTN++;
-		}
-		{
-			uint *numC = &recfp.mapeff.viewLine.num;
-			while (IS_BETWEEN_LEFT_LESS(0, recfp.mapeff.viewLine.d[*numC + 1].time, recfp.time.now)) {
-				recfp.mapeff.viewLine.num++;
-			}
-		}
+		RecPlayStepObjectNG(objectNG, recfp.mapdata.note, objectN);
+		RecPlayStepCharaMotionNum(recfp.mapeff.chamo, recfp.time.now);
+		RecPlayStepSpeedtNum(recfp.mapeff.speedt, recfp.time.now);
+		RecPlayStepViewBpmNum(&recfp.mapeff.v_BPM, recfp.time.now);
+		RecPlayStepCameraNum(&recfp.mapeff.camera, recfp.time.now);
+		RecPlayStepScroolNum(&recfp.mapeff.scrool, recfp.time.now);
+		RecPlayStepMovieNum(recfp.mapeff.Movie, &MovieN, recfp.time.now);
+		RecPlayStepFallNum(&recfp.mapeff.fall, recfp.time.now);
+		RecPlayStepGuideLineNum(LineMoveN, recfp.mapeff.move.y, recfp.time.now);
+		RecPlayStepCharaArrowNum(&recfp.mapeff.carrow, recfp.time.now);
+		RecPlayStepLockNum(lockN, &recfp.mapeff, recfp.time.now);
+		RecPlayStepViewTimeNum(&viewTN, &recfp.mapeff, recfp.time.now);
+		RecPlayStepViewLineNum(&recfp.mapeff.viewLine, recfp.time.now);
 
 		//ƒL[Ý’è
 		GetHitKeyStateAll(key);
