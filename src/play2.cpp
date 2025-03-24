@@ -247,9 +247,7 @@ static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 
 static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	for (int iLine = 0; iLine < loop; iLine++) {
-		if (move[iLine].d[move[iLine].num].Stime <= Ntime &&
-			move[iLine].d[move[iLine].num].Stime >= 0)
-		{
+		if (IS_BETWEEN(0, move[iLine].d[move[iLine].num].Stime, Ntime)) {
 			line[iLine] =
 				(int)movecal(
 					move[iLine].d[move[iLine].num].mode,
@@ -258,6 +256,7 @@ static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 					move[iLine].d[move[iLine].num].Etime,
 					move[iLine].d[move[iLine].num].pos, Ntime);
 		}
+		/* TODO: Ç±ÇÃwhileï∂ÇÃíÜÇÕÇ±ÇÃä÷êîì‡Ç≈Ç‚ÇÈÇ±Ç∆Ç≈ÇÕÇ»Ç¢ÇÊÇ§Ç»... */
 		while (
 			move[iLine].d[move[iLine].num].Etime <= Ntime &&
 			move[iLine].d[move[iLine].num].Stime >= 0 ||
@@ -405,6 +404,7 @@ static int GetRemainNotes(rec_play_judge_t judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
 
+/* TODO: Ç±ÇÃä÷êîóvÇÁÇ»Ç¢ */
 static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 	rec_save_score_t scoreBuf;
 	RecSaveReadScoreOneDif(&scoreBuf, songName, dif);
@@ -628,9 +628,7 @@ static int RecMapGetPosFromMove(rec_move_set_t move[], int time, int lane) {
 	int ret = 0;
 	int offset = 1;
 
-	while (move[lane].d[offset].Etime <= time && move[lane].d[offset].Etime >= 0) {
-		offset++;
-	}
+	while (IS_BETWEEN(0, move[lane].d[offset].Etime, time)) { offset++; }
 
 	if (move[lane].d[offset].Stime < 0) {
 		return move[lane].d[offset - 1].pos;
@@ -645,10 +643,7 @@ static int RecMapGetPosFromMove(rec_move_set_t move[], int time, int lane) {
 		}
 	}
 
-	if (move[lane].d[offset].Stime >= 0 &&
-		move[lane].d[offset].Stime <= time &&
-		move[lane].d[offset].Etime > time)
-	{
+	if (IS_BETWEEN(0, move[lane].d[offset].Stime, time) && move[lane].d[offset].Etime > time) {
 		ret = movecal(move[lane].d[offset].mode,
 			move[lane].d[offset].Stime,
 			move[lane].d[offset - 1].pos,
@@ -674,6 +669,7 @@ static int RecPlayStepSpeedNum(rec_map_eff_data_t *mapeff, int iLine, int Ptime)
 static void RecPlayGetTimeLanePosBase(int *DrawX, int *DrawY, rec_move_all_set_t *move,
 	int Xline[], int Yline[], double speedt, int Ylock, rec_scrool_set_t *scrool, int Ntime, int Ptime, int lane)
 {
+	/* TODO: ç°å„égÇ§Ç©ÇÁè¡Ç∑Ç» */
 	const double scroolSpeed = scrool->data[scrool->num].speed;
 	const double scroolBaseTime = scrool->data[scrool->num].basetime;
 
