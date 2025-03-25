@@ -5,7 +5,7 @@
 /* rec system include */
 #include <playbox.h>
 #include <PlayCamera.h>
-#include <system.h>
+#include <RecSystem.h>
 
 /* own include */
 #include <PlayHitEff.h>

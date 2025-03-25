@@ -7,7 +7,7 @@
 
 /* rec system include */
 #include <RecSave.h>
-#include <system.h>
+#include <RecSystem.h>
 
 static void VerSaveScore(wchar_t const songN[], char dif,
 	int score, double acc, int Dscore, short rank, char Clear) {

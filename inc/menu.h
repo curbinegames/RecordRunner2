@@ -1,5 +1,5 @@
 #pragma once
 
-#include <system.h>
+#include <RecSystem.h>
 
 extern now_scene_t menu(void);

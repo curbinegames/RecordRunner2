@@ -8,7 +8,7 @@
 #include <strcur.h>
 
 /* rec system include */
-#include <system.h>
+#include <RecSystem.h>
 
 int SmallFontData = 0;
 int LargeFontData = 0;

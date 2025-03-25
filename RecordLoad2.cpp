@@ -10,7 +10,7 @@
 #include <playbox.h>
 #include <RecScoreFile.h>
 #include <recp_cal_ddif_2.h>
-#include <system.h>
+#include <RecSystem.h>
 
 #if 1 /* typedef */
 

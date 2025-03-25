@@ -7,7 +7,7 @@
 
 /* rec system include */
 #include <RecWindowRescale.h>
-#include <system.h>
+#include <RecSystem.h>
 
 #define EFF_TIME_1 750
 #define EFF_TIME_2 200

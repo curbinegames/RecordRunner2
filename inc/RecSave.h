@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <strcur.h>
-#include <system.h>
+#include <RecSystem.h>
 #include <playbox.h>
 #include <option.h>
 

@@ -10,7 +10,7 @@
 #include <playbox.h>
 #include <RecSave.h>
 #include <result.h>
-#include <system.h>
+#include <RecSystem.h>
 
 #if 1 /* play score */
 

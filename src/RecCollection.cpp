@@ -10,7 +10,7 @@
 #include <option.h>
 #include <RecSave.h>
 #include <RecWindowRescale.h>
-#include <system.h>
+#include <RecSystem.h>
 
 /* rec sub include */
 #include <collect_seclet.h>

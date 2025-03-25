@@ -19,7 +19,7 @@
 #include <RecScoreFile.h>
 #include <RecSystem.h>
 #include <RecWindowRescale.h>
-#include <system.h>
+#include <RecSystem.h>
 
 /* own include */
 #include <musicserect2.h>

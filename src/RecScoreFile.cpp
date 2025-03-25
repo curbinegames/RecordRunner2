@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 /* rec system include */
-#include <system.h>
+#include <RecSystem.h>
 
 /* own include */
 #include <RecScoreFile.h>

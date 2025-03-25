@@ -8,7 +8,7 @@
 /* rec system include */
 #include <option.h>
 #include <RecWindowRescale.h>
-#include <system.h>
+#include <RecSystem.h>
 
 /* own include */
 #include <helpBar.h>

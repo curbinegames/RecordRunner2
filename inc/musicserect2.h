@@ -1,6 +1,6 @@
 #pragma once
 
-#include <system.h>
+#include <RecSystem.h>
 
 typedef struct rec_to_play_set_s {
 	int packNo = 0;

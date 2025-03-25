@@ -14,7 +14,7 @@
 #include <RecScoreFile.h>
 #include <RecSystem.h>
 #include <RecWindowRescale.h>
-#include <system.h>
+#include <RecSystem.h>
 
 /* TODO: クリア状況はclearrank、スコア評価はscorerateに改名しよう */
 

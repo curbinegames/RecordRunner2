@@ -1,6 +1,6 @@
 #pragma once
 
-#include "system.h"
+#include "RecSystem.h"
 
 #define LANG_JP 0
 #define LANG_EN 1

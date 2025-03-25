@@ -9,7 +9,7 @@
 #include <strcur.h>
 
 /* rec system include */
-#include <system.h>
+#include <RecSystem.h>
 
 /* own include */
 #include <RecWindowRescale.h>

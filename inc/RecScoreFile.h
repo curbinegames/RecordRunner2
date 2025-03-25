@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <sancur.h>
-#include <system.h>
+#include <RecSystem.h>
 
 enum melodysound {
 	MELODYSOUND_NONE = -1,

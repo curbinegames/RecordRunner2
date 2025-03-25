@@ -1,6 +1,6 @@
 #pragma once
 
-#include <system.h>
+#include <RecSystem.h>
 #include <RecScoreFile.h>
 
 extern rec_clear_rank_t JudgeClearRank(const rec_play_userpal_t *userpal);

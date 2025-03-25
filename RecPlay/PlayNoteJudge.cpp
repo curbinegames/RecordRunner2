@@ -5,7 +5,7 @@
 /* curbine code include */
 #include <dxcur.h>
 #include <sancur.h>
-#include <system.h>
+#include <RecSystem.h>
 
 /* rec system include */
 #include <option.h>

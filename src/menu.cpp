@@ -10,7 +10,7 @@
 /* rec system include */
 #include <option.h>
 #include <RecWindowRescale.h>
-#include <system.h>
+#include <RecSystem.h>
 
 typedef struct rec_menu_data_s {
 	DxPic_t card;

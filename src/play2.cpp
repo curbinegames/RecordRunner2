@@ -15,7 +15,7 @@
 
 /* rec system include */
 #include <option.h>
-#include <system.h>
+#include <RecSystem.h>
 #include <recr_cutin.h>
 #include <RecSave.h>
 #include <RecScoreFile.h>

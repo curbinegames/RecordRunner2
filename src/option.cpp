@@ -12,7 +12,7 @@
 #include <helpBar.h>
 #include <RecSystem.h>
 #include <RecWindowRescale.h>
-#include <system.h>
+#include <RecSystem.h>
 
 /* own include */
 #include <option.h>
