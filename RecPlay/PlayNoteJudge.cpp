@@ -225,20 +225,18 @@ static uint RecLPlayGetHitKeyPushCount(const key_hold_t *keyhold) {
  * @param[in] setBscore trueを入れるとBscoreを更新します
  * @param[in] PjustFg   pjustであるかをtrue/falseで入力してください
  * @param[in] addLife   増減するlifeの値
+ * @param[in] addExLife 増減するExlifeの値
  * @param[in] addDscore 増減するDscoreの値
  * @param[in] addCombo  増減するcomboの値、0未満を入れるとコンボが0になります
  */
 static void RecJudgeSetUserpal(userpal_t *userpal, bool setBscore, bool PjustFg,
-	int addLife, int addDscore, int addCombo)
+	int addLife, int addExLife, int addDscore, int addCombo)
 {
 	if (setBscore) { userpal->score.before = pals(500, userpal->score.sum, 0, userpal->score.before, mins_2(s_Ntime - userpal->score.time, 500)); }
 	userpal->score.time = s_Ntime;
 	if (PjustFg) { (userpal->judgeCount.pjust)++; }
 	(userpal->life) += addLife;
-	if (0 < userpal->Exlife) {
-		if (0 <= addLife) { (userpal->Exlife) += addLife; }
-		else { (userpal->Exlife) += addLife * 5; }
-	}
+	if (0 < userpal->Exlife) { (userpal->Exlife) += addExLife; }
 	(userpal->Dscore.add) += addDscore;
 	if (addCombo < 0) { userpal->Ncombo = 0; }
 	else { (userpal->Ncombo) += addCombo; }
@@ -263,26 +261,26 @@ static void note_judge_event(note_judge judge, userpal_t *userpal) {
 	}
 
 	switch (judge) {
-	/*      userpal, setBscore, Pjust, +Life, +Dscore, +Combo); */
+	/*      userpal, setBscore, Pjust, +Life, +ExLife, +Dscore, +Combo); */
 	case NOTE_JUDGE_PJUST:
 		RecJudgeSetUserpal(
-			userpal,      true,  true,     2,       2,      1);
+			userpal,      true,  true,     2,       2,       2,      1);
 		break;
 	case NOTE_JUDGE_JUST:
 		RecJudgeSetUserpal(
-			userpal,      true, false,     2,       2,      1);
+			userpal,      true, false,     2,       1,       2,      1);
 		break;
 	case NOTE_JUDGE_GOOD:
 		RecJudgeSetUserpal(
-			userpal,      true, false,     1,       1,      1);
+			userpal,      true, false,     1,       0,       1,      1);
 		break;
 	case NOTE_JUDGE_SAFE:
 		RecJudgeSetUserpal(
-			userpal,      true, false,     0,       0,      0);
+			userpal,      true, false,     0,      -1,       0,      0);
 		break;
 	case NOTE_JUDGE_MISS:
 		RecJudgeSetUserpal(
-			userpal,     false, false,   -20,       0,     -1);
+			userpal,     false, false,   -20,    -100,       0,     -1);
 		break;
 	}
 

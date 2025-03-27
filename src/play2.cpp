@@ -1176,9 +1176,8 @@ private:
 		RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
 	}
 
-	void ViewLife(int life) {
+	void ViewLife(int life, int Exlife) const {
 		int DrawX = lins(0, -114, 500, 177, life);
-
 		if (100 < life) {
 			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Green, TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 255, 500, 0, life));
@@ -1188,12 +1187,11 @@ private:
 		else {
 			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red, TRUE);
 		}
+		DrawX = lins(0, -114, 500, 177, Exlife);
+		RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red, TRUE);
+		/* TODO: DrawBoxで表現する */
+		// DrawBoxAnchor(24, 4, 572, 52, COLOR_GREEN, DXDRAW_ANCHOR_TOP_CENTRE, TRUE);
 		RecRescaleDrawFormatString(440, 10, COLOR_WHITE, L"%3d", life);
-	}
-
-	void ViewExLife(int Exlife) const {
-		int DrawX = lins(0, -114, 500, 177, Exlife);
-		RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red, TRUE); /* TODO: blueを用意する */
 	}
 
 	void ViewDist(rec_play_status_t status, const distance_score_t *Dscore, const rec_play_time_set_t *time) {
@@ -1237,6 +1235,7 @@ private:
 		}
 	}
 
+	/* TODO: コンストラクタの移動 */
 public:
 	rec_play_sbar_c() {
 		this->baseImg = LoadGraph(_T("picture/scoreber.png"));
@@ -1263,8 +1262,7 @@ public:
 	{
 		RecRescaleDrawGraph(0, 0, this->baseImg, TRUE);
 		this->ViewScore(userpal->score, Hscore, time->now);
-		this->ViewLife(userpal->life);
-		this->ViewExLife(userpal->Exlife); /* TODO: lifeの値がfxlifeで隠れている */
+		this->ViewLife(userpal->life, userpal->Exlife);
 		this->ViewDist(userpal->status, &userpal->Dscore, time);
 		RecRescaleDrawGraph(0, 0, this->sbbarimg, TRUE);
 		this->ViewRunStatus(userpal, mapdata->notes, Hscore);
