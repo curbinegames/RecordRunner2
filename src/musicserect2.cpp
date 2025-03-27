@@ -21,6 +21,10 @@
 #include <RecWindowRescale.h>
 #include <RecSystem.h>
 
+/* others include */
+#include <RecordLoad2.h>
+#include <recp_cal_ddif_2.h>
+
 /* own include */
 #include <musicserect2.h>
 
@@ -42,6 +46,7 @@
 #define REC_SERECT_KEY_LEFT   5
 #define REC_SERECT_KEY_RIGHT  6
 #define REC_SERECT_KEY_SORT   7
+#define REC_SERECT_KEY_RELORD 8
 
 #define REC_SERECT_VECT_UP    -1
 #define REC_SERECT_VECT_DOWN   1
@@ -77,6 +82,42 @@ typedef struct rec_serect_music_set_s {
 	int musicNum = 0;
 } rec_serect_music_set_t;
 typedef rec_serect_music_set_t songdata_set_t;
+
+#if 1 /* all relord */
+
+static void RecSelectAllRelordDrawInfo(uint iPack, uint iSong, uint iDif) {
+	const TCHAR difName[4][16] = { _T("AUTO"), _T("EASY"), _T("NORMAL"), _T("HARD") }; /* another‚Í”ñ•\Ž¦ */
+	static DxTime_t Btime = 0;
+	TCHAR songN[255] = _T("");
+
+	if (((Btime + 100) >= GetNowCount()) || (iDif >= 4)) { return; }
+	if (RecGetMusicFolderName(songN, ARRAY_COUNT(songN), iPack, iSong) != 0) { return; }
+
+	Btime = GetNowCount();
+	ClearDrawScreen();
+	/* TODO: ”wŒi‚­‚ç‚¢‚Í—~‚µ‚¢ */
+	DrawFormatString(5, 5, COLOR_WHITE, L"all record relording...\n%s[%s]", songN, difName[iDif]);
+	ScreenFlip();
+	return;
+}
+
+static void RecSelectAllRelord(void) {
+	TCHAR path[255];
+
+	for (uint iPack = 0; iPack < 10; iPack++) {
+		for (uint iSong = 0; iSong < 20; iSong++) {
+			for (uint iDif = 0; iDif < 5; iDif++) {
+				RecSelectAllRelordDrawInfo(iPack, iSong, iDif);
+				RecordLoad2(iPack, iSong, iDif);
+				if (RecGetMusicMapRrsPath(path, 255, iPack, iSong, (rec_dif_t)iDif) != 0) { continue; }
+				cal_ddif_3(path);
+			}
+		}
+	}
+	return;
+}
+
+#endif
 
 #if 1 /* read map data */
 
@@ -327,6 +368,9 @@ static int RecSerectKeyCheck() {
 		break;
 	case KEY_INPUT_Z:
 		ret = REC_SERECT_KEY_SORT;
+		break;
+	case KEY_INPUT_F5:
+		ret = REC_SERECT_KEY_RELORD;
 		break;
 	default:
 		break;
@@ -1219,7 +1263,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 
 	/* “®ì */
 	switch (key) {
-	case 1: /* ‹ÈŒˆ’è */
+	case REC_SERECT_KEY_RETURN:
 		// ‘I‘ð‚Å‚«‚é‹È‚Å‚ ‚é‚©‚Ç‚¤‚© (Lv‚ª0ˆÈã‚Å‚ ‚é‚©‚Å”»’è)
 		if (SONGDATA_FROM_MAP(songdata, cmd[0]).level[cmd[1]] < 0) { break; }
 		RecSerectSetToPlay(toPlay, cmd, PackFirstNum, songdata);
@@ -1229,27 +1273,30 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 			SONGDATA_FROM_MAP(songdata, cmd[0]).jacketP[cmd[1]]);
 		uiClass->cutin.SetIo(1);
 		break;
-	case 2: /* –ß‚é */
+	case REC_SERECT_KEY_BACK:
 		*next = SCENE_MENU;
 		uiClass->cutin.SetTipNo();
 		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_ON);
 		uiClass->cutin.SetIo(1);
 		break;
-	case 3: /* ‹È‘I‘ðã */
+	case REC_SERECT_KEY_UP:
 		RecSerectKeyActUD(cmd, REC_SERECT_VECT_UP,    uiClass, songdata);
 		break;
-	case 4: /* ‹È‘I‘ð‰º */
+	case REC_SERECT_KEY_DOWN:
 		RecSerectKeyActUD(cmd, REC_SERECT_VECT_DOWN,  uiClass, songdata);
 		break;
-	case 5: /* “ïˆÕ“x‰º~ */
+	case REC_SERECT_KEY_LEFT:
 		RecSerectKeyActLR(cmd, REC_SERECT_VECT_LEFT,  uiClass, songdata);
 		break;
-	case 6: /* “ïˆÕ“xã¸ */
+	case REC_SERECT_KEY_RIGHT:
 		RecSerectKeyActLR(cmd, REC_SERECT_VECT_RIGHT, uiClass, songdata);
 		break;
-	case 7: /* ‹È•À‚Ñ‘Ö‚¦ */
+	case REC_SERECT_KEY_SORT:
 		ChangeSortMode(&songdata->sortMode);
 		SortSongWithSave(songdata, songdata->sortMode, cmd[1], &cmd[0]);
+		break;
+	case REC_SERECT_KEY_RELORD:
+		RecSelectAllRelord();
 		break;
 	default:
 		break;
