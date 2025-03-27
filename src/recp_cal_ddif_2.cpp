@@ -188,7 +188,7 @@ static int qsort_protocol(const void *n1, const void *n2) {
 
 #if 1 /* RecDdifGetKey */
 
-static void RecDdifGetKeyHit(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+static void RecDdifGetKeyHit(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey) {
 	switch (Nowkey->hitN) {
 	case 1:
 		if (Befkey->btn.c.GetVal() == REC_PUSH) {
@@ -224,7 +224,7 @@ static void RecDdifGetKeyArrow(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
-static void RecDdifGetKeyCatch(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+static void RecDdifGetKeyCatch(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey) {
 	if (Befkey->btn.u.CheckPushGroup()) { // 前で上にいる
 		if (Nowkey->note[2] == NOTE_CATCH) {
 			Nowkey->btn.u.SetNone();
@@ -248,7 +248,7 @@ static void RecDdifGetKeyCatch(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey)
 	return;
 }
 
-static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey) {
 	Nowkey->pal.trick = 0;
 	if (Befkey->btn.u.CheckPushGroup()) { // 前で上にいる
 		if (Nowkey->note[0] == NOTE_BOMB) {
@@ -343,7 +343,7 @@ static void RecDdifGetPalChord(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
-static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
 	uint divN = 0; // 2連カウント
 	uint chainN = 0; // 縦連カウント
 	Nowkey->pal.chain = 0;
@@ -404,7 +404,7 @@ static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 	return;
 }
 
-static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
 	uint count = 0; // トリルカウント
 	Nowkey->pal.trill = 0;
 	if (Nowkey->hitN == 0 && Nowkey->arwN == 0) { return; }
@@ -458,7 +458,7 @@ static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 	return;
 }
 
-static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
 	uint count = 0; // 乱打カウント
 	Nowkey->pal.meldy = 0;
 	if (Nowkey->hitN == 0 && Nowkey->arwN == 0) { return; }
@@ -542,7 +542,7 @@ static void RecDdifGetPalActor(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
-static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
 	int FirstTime = Nowkey->time - Befkey->time;
 	int SecondTime = Befkey->time - BBefkey->time;
 	float Gap = 0.0;
