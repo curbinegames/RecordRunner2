@@ -15,22 +15,25 @@ int LargeFontData = 0;
 
 int RecPlayDebug[3] = { 0,0,0 };
 
+/* TODO: 各呼び元での戻り値チェック */
 /**
  * packNoからパックフォルダパスを取得する
  * @param[out] ret パックフォルダパスの格納先
  * @param[in] size retの長さ、配列数で指定
  * @param[in] packNo パックナンバー
- * @return 0:OK, -1:NG
+ * @return rec_error_t
  */
-int RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
+rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
 	TCHAR buf[256];
 	DxFile_t fd;
 
 	strcopy_2(_T("record/"), ret, size); // ret = "record/"
 
 	fd = FileRead_open(_T("RecordPack.txt"));
+	if (fd == DXLIB_FILE_HAND_DEFAULT) { return REC_ERROR_FILE_EXIST; }
+
 	for (int i = 0; i <= packNo; i++) {
-		if (FileRead_eof(fd) != 0) { return -1; }
+		if (FileRead_eof(fd) != 0) { return REC_ERROR_FILE_NUM; }
 		FileRead_gets(buf, 256, fd);
 	} // buf = "<パック名>"
 	FileRead_close(fd);
@@ -38,7 +41,7 @@ int RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
 	strcats_2(ret, size, buf);           // ret = "record/<パック名>"
 	stradds_2(ret, size, _T('/'));       // ret = "record/<パック名>/"
 
-	return 0;
+	return REC_ERROR_NONE;
 }
 
 /**
@@ -47,27 +50,32 @@ int RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
  * @param[in] size retの長さ、配列数で指定
  * @param[in] packNo パックナンバー
  * @param[in] songNo 曲ナンバー
- * @return 0:OK, -1:NG
+ * @return rec_error_t
  */
-int RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo) {
+rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo) {
+	rec_error_t status = REC_ERROR_NONE;
 	TCHAR buf[256];
 	DxFile_t fd;
 
-	RecGetPackFolderPath(ret, size, packNo); // ret = "record/<パック名>/"
+	status = RecGetPackFolderPath(ret, size, packNo); // ret = "record/<パック名>/"
+	if (status != REC_ERROR_NONE) { return status; }
 
 	strcopy_2(ret, buf, 256);            // buf = "record/<パック名>/"
 	strcats_2(buf, 256, _T("list.txt")); // buf = "record/<パック名>/list.txt"
 
 	fd = FileRead_open(buf);
+	if (fd == DXLIB_FILE_HAND_DEFAULT) { return REC_ERROR_FILE_EXIST; }
+
 	for (int i = 0; i <= songNo; i++) {
-		if (FileRead_eof(fd) != 0) { return -1; }
+		if (FileRead_eof(fd) != 0) { return REC_ERROR_FILE_NUM; }
 		FileRead_gets(buf, 256, fd);
 	} // buf = "<曲名>"
 	FileRead_close(fd);
 
 	strcats_2(ret, size, buf);     // ret = "record/<パック名>/<曲名>"
 	stradds_2(ret, size, _T('/')); // ret = "record/<パック名>/<曲名>/"
-	return 0;
+
+	return REC_ERROR_NONE;
 }
 
 /**
@@ -76,27 +84,31 @@ int RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo) {
  * @param[in] size retの長さ、配列数で指定
  * @param[in] packNo パックナンバー
  * @param[in] songNo 曲ナンバー
- * @return 0:OK, -1:NG
+ * @return rec_error_t
  */
-int RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo) {
+rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo) {
+	rec_error_t status = REC_ERROR_NONE;
 	TCHAR GT1[256];
 	TCHAR GT2[256];
 	DxFile_t fd;
 	
-	RecGetPackFolderPath(GT2, size, packNo); // GT2 = "record/<パック名>/"
+	status = RecGetPackFolderPath(GT2, size, packNo); // GT2 = "record/<パック名>/"
+	if (status != REC_ERROR_NONE) { return status; }
 
 	strcats_2(GT2, 256, _T("list.txt")); // GT2 = "record/<パック名>/list.txt"
 
 	fd = FileRead_open(GT2);
+	if (fd == DXLIB_FILE_HAND_DEFAULT) { return REC_ERROR_FILE_EXIST; }
+
 	for (int i = 0; i <= songNo; i++) {
-		if (FileRead_eof(fd) != 0) { return -1; }
+		if (FileRead_eof(fd) != 0) { return REC_ERROR_FILE_NUM; }
 		FileRead_gets(GT1, 256, fd);
 	} // GT1 = "<曲名>"
 	FileRead_close(fd);
 
 	strcopy_2(GT1, ret, size);
 
-	return 0;
+	return REC_ERROR_NONE;
 }
 
 /**
@@ -106,13 +118,15 @@ int RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo) {
  * @param[in] packNo パックナンバー
  * @param[in] songNo 曲ナンバー
  * @param[in] difNo 難易度ナンバー
- * @return 0:OK, -1:NG
+ * @return rec_error_t
  */
-int RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, uint songNo, rec_dif_t difNo) {
-	if (RecGetMusicFolderPath(ret, size, packNo, songNo) != 0) { return -1; }
+rec_error_t RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, uint songNo, rec_dif_t difNo) {
+	rec_error_t status = REC_ERROR_NONE;
+	status = RecGetMusicFolderPath(ret, size, packNo, songNo);
+	if (status != REC_ERROR_NONE) { return status; }
 	stradds_2(ret, size, (TCHAR)((int)_T('0') + (int)difNo));
 	strcats_2(ret, size, _T(".rrs"));
-	return 0;
+	return REC_ERROR_NONE;
 }
 
 /**
@@ -122,11 +136,13 @@ int RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, uint songNo, rec
  * @param[in] packNo パックナンバー
  * @param[in] songNo 曲ナンバー
  * @param[in] difNo 難易度ナンバー
- * @return 0:OK, -1:NG
+ * @return rec_error_t
  */
-int RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo, rec_dif_t difNo) {
-	if (RecGetMusicFolderPath(ret, size, packNo, songNo) != 0) { return -1; }
+rec_error_t RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo, rec_dif_t difNo) {
+	rec_error_t status = REC_ERROR_NONE;
+	status = RecGetMusicFolderPath(ret, size, packNo, songNo);
+	if (status != REC_ERROR_NONE) { return status; }
 	stradds_2(ret, size, (TCHAR)((int)_T('0') + (int)difNo));
 	strcats_2(ret, size, _T(".txt"));
-	return 0;
+	return REC_ERROR_NONE;
 }
