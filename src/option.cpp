@@ -454,8 +454,30 @@ now_scene_t option(void) {
 			break;
 #if REC_DEBUG == 1 /* デバッグ用コード */
 		case KEY_INPUT_Q:
+#if 0
 			RecTxtWriteAllDdif();
-#if 0 /* プレイヤーのレートの詳細を出力 */
+#elif 1 /* スクリーンモードの変更 */
+			static bool fullFg = false;
+			fullFg = !fullFg;
+			if (fullFg) {
+				ChangeWindowMode(FALSE); // フルスクリーンモードにする
+				pic.back = LoadGraph(L"picture/OPTION back.png");
+				pic.cursor = LoadGraph(L"picture/OC.png");
+				s_sel = LoadSoundMem(L"sound/select.wav");
+				help.ReloadMat();
+				SmallFontData = CreateFontToHandle(NULL, -1, -1);
+				LargeFontData = CreateFontToHandle(NULL, lins(OLD_WINDOW_SIZE_Y, 16, 720, 24, WINDOW_SIZE_Y), -1);
+			}
+			else {
+				ChangeWindowMode(TRUE); // ウィンドウモードにする
+				pic.back = LoadGraph(L"picture/OPTION back.png");
+				pic.cursor = LoadGraph(L"picture/OC.png");
+				s_sel = LoadSoundMem(L"sound/select.wav");
+				help.ReloadMat();
+				SmallFontData = CreateFontToHandle(NULL, -1, -1);
+				LargeFontData = CreateFontToHandle(NULL, lins(OLD_WINDOW_SIZE_Y, 16, 720, 24, WINDOW_SIZE_Y), -1);
+			}
+#elif 0 /* プレイヤーのレートの詳細を出力 */
 			FILE *fp;
 			FILE *outfp;
 			play_rate_t temp;

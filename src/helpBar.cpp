@@ -185,3 +185,7 @@ void rec_helpbar_c::DrawHelp(help_bar_mat_t mat) {
 	}
 	return;
 }
+
+void rec_helpbar_c::ReloadMat(void) {
+	this->pic = LoadGraph(L"picture/help.png");
+}
