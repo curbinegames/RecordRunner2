@@ -380,8 +380,8 @@ int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, sizeof(rec_camera_data_t) * 255, SEEK_CUR);//カメラデータ
 	fseek(fp, sizeof(rec_scrool_data_t) * 99, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(view_BPM_box) * allnum.v_BPMnum, SEEK_CUR);//スクロールデータ
-	fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 	REC_LINE_SEEK(&recfp->mapeff.viewLine.d[0], sizeof(rec_viewline_data_t), 99, fp);//ラインガイドの表示/非表示
+	fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 	REC_LINE_READ(ddif, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
 
 	fclose(fp);
@@ -399,7 +399,7 @@ int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	playnum_box allnum;
 	if (RecScoreGetAllnum(&allnum, path) != 0) { return -1; }
 
-	_wfopen_s(&fp, path, L"ab");
+	_wfopen_s(&fp, path, L"rb+");
 
 	if (ddif == NULL || fp == NULL) { return -1; }
 
