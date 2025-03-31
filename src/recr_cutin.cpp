@@ -32,6 +32,7 @@ static cutin_tips_e CutFg = CUTIN_TIPS_NONE;
 static int s_cutIoFg = CUT_FRAG_OUT;
 static int s_cutStime = 0;
 
+/* TODO: 編集いるよ(1.5.5でもいいね) */
 /* tipの最大文字数は30文字(NULL終端除く) */
 static wchar_t const tip[][31] = {
 	L"音楽は万物に影響を与える", /* レコランの世界観 */

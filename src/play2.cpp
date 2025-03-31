@@ -145,7 +145,8 @@ static void RecResetPlayObjectNum(short int objectN[], const rec_score_file_t *r
 	return;
 }
 
-static struct score_box GetScore3(struct score_box score,
+/* TODO: 戻り値に構造体使うのは不適切 */
+static rec_play_score_t GetScore3(rec_play_score_t score,
 	rec_play_judge_t judge, const int notes, const int MaxCombo)
 {
 	score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
@@ -1123,7 +1124,7 @@ private:
 	DxPic_t Tbarimg[2];
 	DxPic_t sbbarimg;
 
-	int CalPosScore(struct score_box score, int RemainNotes, int Notes, int combo, int MaxCombo) {
+	int CalPosScore(rec_play_score_t score, int RemainNotes, int Notes, int combo, int MaxCombo) {
 		int PosCombo = maxs_2(combo + RemainNotes, MaxCombo);
 		return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
 	}
@@ -1163,7 +1164,7 @@ private:
 		}
 	}
 
-	void ViewScore(score_box score, int Hscore, int time) {
+	void ViewScore(rec_play_score_t score, int Hscore, int time) {
 		DxColor_t Cr = GetColor(255, 255, 255);
 		int s_score = score.sum;
 
