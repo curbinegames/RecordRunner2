@@ -1025,6 +1025,34 @@ private:
 public:
 	int pos = 1; //ƒLƒƒƒ‰‚Ì¡‚ÌˆÊ’u[0‚Åã,1‚Å’†,2‚Å‰º]
 
+public:
+	rec_play_runner_c(void) {
+		switch (optiondata.chara) {
+		case 0:
+			LoadDivGraph(L"picture/Picker.png",
+				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			break;
+		case 1:
+			LoadDivGraph(L"picture/Gator.png",
+				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			break;
+		case 2:
+			LoadDivGraph(L"picture/Taylor.png",
+				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			break;
+		}
+		this->charaguideimg = LoadGraph(L"picture/Cguide.png");
+		this->judghimg = LoadGraph(L"picture/Marker.png");
+	}
+
+	~rec_play_runner_c() {
+		for (int i = 0; i < PIC_NUM; i++) {
+			DeleteGraph(this->charaimg[i]);
+		}
+		DeleteGraph(this->charaguideimg);
+		DeleteGraph(this->judghimg);
+	}
+
 private:
 	void PlayDrawChara(rec_play_key_hold_t *key, int charahit, int Xline[], int Yline[],
 		int Ntime, rec_map_eff_data_t *mapeff)
@@ -1061,33 +1089,6 @@ private:
 	}
 
 public:
-	rec_play_runner_c(void) {
-		switch (optiondata.chara) {
-		case 0:
-			LoadDivGraph(L"picture/Picker.png",
-				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
-			break;
-		case 1:
-			LoadDivGraph(L"picture/Gator.png",
-				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
-			break;
-		case 2:
-			LoadDivGraph(L"picture/Taylor.png",
-				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
-			break;
-		}
-		this->charaguideimg = LoadGraph(L"picture/Cguide.png");
-		this->judghimg = LoadGraph(L"picture/Marker.png");
-	}
-
-	~rec_play_runner_c() {
-		for (int i = 0; i < PIC_NUM; i++) {
-			DeleteGraph(this->charaimg[i]);
-		}
-		DeleteGraph(this->charaguideimg);
-		DeleteGraph(this->judghimg);
-	}
-
 	void ViewRunner(rec_map_eff_data_t *mapeff, rec_play_key_hold_t *keyhold,
 		int charahit, int Xline[], int Yline[], int Ntime)
 	{
