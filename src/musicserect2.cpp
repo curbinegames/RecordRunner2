@@ -776,31 +776,16 @@ private:
 	}
 
 	void DrawSort(int baseX, int baseY, int mode) {
-		if (optiondata.lang == 1) {
-			switch (mode) {
-			case REC_SORT_DEFAULT:
-				DrawStringToHandleAnchor(baseX, baseY, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			case SORT_LEVEL:
-				DrawStringToHandleAnchor(baseX, baseY, L"level", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			case SORT_SCORE:
-				DrawStringToHandleAnchor(baseX, baseY, L"score", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			}
-		}
-		else {
-			switch (mode) {
-			case REC_SORT_DEFAULT:
-				DrawStringToHandleAnchor(baseX, baseY, L"デフォルト", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			case SORT_LEVEL:
-				DrawStringToHandleAnchor(baseX, baseY, L"レベル順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			case SORT_SCORE:
-				DrawStringToHandleAnchor(baseX, baseY, L"スコア順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			}
+		switch (mode) {
+		case REC_SORT_DEFAULT:
+			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("デフォルト"), _T("default")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+			break;
+		case SORT_LEVEL:
+			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("レベル順"), _T("level")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+			break;
+		case SORT_SCORE:
+			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("スコア順"), _T("score")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+			break;
 		}
 	}
 

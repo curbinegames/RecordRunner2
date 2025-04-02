@@ -5,6 +5,8 @@
 #define LANG_JP 0
 #define LANG_EN 1
 
+#define REC_STR_LANG(jp, en) ( (optiondata.lang == LANG_JP) ? (jp) : (en) )
+
 typedef enum rec_nowchara_e {
 	REC_CHARA_PICKER = 0,
 	REC_CHARA_MAPGATOR,

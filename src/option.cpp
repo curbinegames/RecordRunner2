@@ -29,7 +29,6 @@
  * 　文字の大きさ
  * 　PLAYINGバーカスタマイズ
  *   ガイドレーンの色
- *   ガイドレーンの太さ
  */
 
 typedef void (*rec_opt_action_t)(TCHAR *ret, int pal);
@@ -56,9 +55,6 @@ DxSnd_t s_sel = DXLIB_SND_NULL;
 
 static const int det_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 20);
 static const int det_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 410);
-
-/* TODO: よそでも使えるマクロなのでRecSystemに持っていきたい */
-#define REC_STR_LANG(jp, en) ( (optiondata.lang == LANG_JP) ? (jp) : (en) )
 
 #if 1 /* option_file */
 

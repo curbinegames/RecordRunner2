@@ -271,45 +271,25 @@ static void RecClctDrawMainStoryTitle(int cmdX, int cmdY, bool openFg) {
 
 	switch (cmdY) {
 	case 0:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("ピッカー"), charaName, 16);
-		}
-		else {
-			strcopy_2(_T("Picker"), charaName, 16);
-		}
+		strcopy_2(REC_STR_LANG(_T("ピッカー"), _T("Picker")), charaName, 16);
 		break;
 	case 1:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("マップゲーター"), charaName, 16);
-		}
-		else {
-			strcopy_2(_T("Mapgator"), charaName, 16);
-		}
+		strcopy_2(REC_STR_LANG(_T("マップゲーター"), _T("Mapgator")), charaName, 16);
 		break;
 	case 2:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("テイラー"), charaName, 16);
-		}
-		else {
-			strcopy_2(_T("Taylor"), charaName, 16);
-		}
+		strcopy_2(REC_STR_LANG(_T("テイラー"), _T("Taylor")), charaName, 16);
 		break;
 	}
 
 	if (openFg == true) {
-		if (optiondata.lang == 0) {
-			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("エピソード%d-%d"), cmdX / 5 + 1, cmdX % 5 + 1);
-		}
-		else {
-			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("Episode %d-%d"), cmdX / 5 + 1, cmdX % 5 + 1);
-		}
+		swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), REC_STR_LANG(_T("エピソード%d-%d"), _T("Episode %d-%d")), cmdX / 5 + 1, cmdX % 5 + 1);
 	}
 	else {
 		uint for_open_count = 0;
 		if      (cmdX == 0)              { for_open_count = 1; }
 		else if (1 <= cmdX && cmdX <= 6) { for_open_count = cmdX * 2; }
 		else                             { for_open_count = cmdX * 3 - 7; }
-		if (optiondata.lang == 0) {
+		if (optiondata.lang == 0) { /* 単純にREC_STR_LANG()は使えなかった */
 			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("%sを使って\n%d回プレイしよう。"), charaName, for_open_count);
 		}
 		else {
@@ -350,12 +330,7 @@ static void RecClctDrawSubStoryTitle(int cmdX, bool openFg) {
 		target_str = _T('A');
 		break;
 	case 1:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("グラデーション・ワールド"), song_name, 32);
-		}
-		else {
-			strcopy_2(_T("Gradation-world"), song_name, 32);
-		}
+		strcopy_2(REC_STR_LANG(_T("グラデーション・ワールド"), _T("Gradation-world")), song_name, 32);
 		strcopy_2(_T("EASY"), dif_name, 32);
 		target_str = _T('A');
 		break;
@@ -365,27 +340,17 @@ static void RecClctDrawSubStoryTitle(int cmdX, bool openFg) {
 		target_str = _T('S');
 		break;
 	case 3:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("トリノユメ"), song_name, 32);
-		}
-		else {
-			strcopy_2(_T("Torinoyume"), song_name, 32);
-		}
+		strcopy_2(REC_STR_LANG(_T("トリノユメ"), _T("Torinoyume")), song_name, 32);
 		strcopy_2(_T("NORMAL"), dif_name, 32);
 		target_str = _T('S');
 		break;
 	}
 
 	if (openFg == 1) {
-		if (optiondata.lang == 0) {
-			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("エピソード%d"), cmdX + 1);
-		}
-		else {
-			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("Episode %d"), cmdX + 1);
-		}
+		swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), REC_STR_LANG(_T("エピソード%d"), _T("Episode %d")), cmdX + 1);
 	}
 	else {
-		if (optiondata.lang == 0) {
+		if (optiondata.lang == 0) { /* 単純にREC_STR_LANG()は使えなかった */
 			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("%s[%s]以上で\n%cランクを取ろう"), song_name, dif_name, target_str);
 		}
 		else {
@@ -417,28 +382,13 @@ static void RecClctDrawExStoryTitle(int cmdX, int openWay) {
 			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("appendix-%d"), cmdX + 1);
 		}
 		else if (openWay == 2) {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("トリノユメ[HOPENESS]で\nEXランクを取れ"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Reath EX RANK at\nTorinoyume[HOPENESS]."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("トリノユメ[HOPENESS]で\nEXランクを取れ"), _T("Reath EX RANK at\nTorinoyume[HOPENESS].")), GT1, 64);
 		}
 		else if (openWay == 1) {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("トリノユx功簾M_^簸]で\nEXランクを取れ"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Reath EX RANK at\nTorim.v?&1/0)\\$cRD]."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("トリノユx功簾M_^簸]で\nEXランクを取れ"), _T("Reath EX RANK at\nTorim.v?&1/0)\\$cRD].")), GT1, 64);
 		}
 		else {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("刈ョ切簾M_^簸]\ne\\ny×蘭区奪"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Rns(}1)Op&rrZ\ne\\ny456Ge/t0Z<=00ax(Q)."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("刈ョ切簾M_^簸]\ne\\ny×蘭区奪"), _T("Rns(}1)Op&rrZ\ne\\ny456Ge/t0Z<=00ax(Q).")), GT1, 64);
 		}
 		break;
 	case 1:
@@ -446,28 +396,13 @@ static void RecClctDrawExStoryTitle(int cmdX, int openWay) {
 			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("appendix-%d"), cmdX + 1);
 		}
 		else if (openWay == 2) {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("drop DOWN DOWN[NIGHTMARE]で\nEXランクを取れ"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Reath EX RANK at\ndrop DOWN DOWN[NIGHTMARE]."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("drop DOWN DOWN[NIGHTMARE]で\nEXランクを取れ"), _T("Reath EX RANK at\ndrop DOWN DOWN[NIGHTMARE].")), GT1, 64);
 		}
 		else if (openWay == 1) {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("drop DOWN DO↓[↓↓↓↓\n↓↓↓ｹ↓↓↓↓↓"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Rea↓↓↓ ↓↓at\n↓↓↓WN DOW↓↓↓↓↓↓↓]."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("drop DOWN DO↓[↓↓↓↓\n↓↓↓ｹ↓↓↓↓↓"), _T("Rea↓↓↓ ↓↓at\n↓↓↓WN DOW↓↓↓↓↓↓↓].")), GT1, 64);
 		}
 		else {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("↓↓↓\n↓↓↓↓↓↓"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("↓↓↓\n↓↓↓↓↓↓"), GT1, 64);
-			}
+			strcopy_2(_T("↓↓↓\n↓↓↓↓↓↓"), GT1, 64); /* jp,en 一緒 */
 		}
 		break;
 	}
@@ -594,12 +529,7 @@ static int C_story(void) {
 
 		// ストーリーのタイトル/解放条件を表示
 		RecRescaleDrawFormatString(5, 5, Cr, L"%d/%d", command[0], command[1]);
-		if (optiondata.lang == 0) {
-			RecRescaleDrawFormatString(330, 220, Cr, L"%s", chan[command[1]]);
-		}
-		else {
-			RecRescaleDrawFormatString(330, 220, Cr, L"%s", chanE[command[1]]);
-		}
+		RecRescaleDrawFormatString(330, 220, Cr, L"%s", REC_STR_LANG(chan[command[1]], chanE[command[1]]));
 		if (command[1] <= 2) {
 			openFg = RecClctCheckOpenMainStory(command[0], command[1], chac);
 			RecClctDrawMainStoryTitle(command[0], command[1], openFg);
