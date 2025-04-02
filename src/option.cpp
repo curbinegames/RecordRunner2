@@ -46,7 +46,7 @@ typedef struct rec_opt_text_s {
 	const int min;
 	const int max;
 	const int loop;
-	int *val_p;
+	int *const val_p;
 } rec_opt_text_t;
 
 rec_option_t optiondata;
@@ -213,67 +213,67 @@ static rec_opt_text_t optionstr[]{
 		L"キャラクター", L"Character",
 		L"使用するキャラクターを変えます。",
 		L"Choose the character you use.",
-		0, 2, TRUE
+		0, 2, TRUE, &optiondata.chara
 	}, {
 		RecOptionOffset,
 		L"オフセット", L"Offset",
 		L"音符が流れてくるタイミングを変えます。\n増やすと遅れて、減らすと早めに流れます。",
 		L"Change the timing of note. Increase to late, Decrease to early.",
-		-2000, 2000, FALSE
+		-2000, 2000, FALSE, &optiondata.offset
 	}, {
 		RecOptionSE,
 		L"効果音", L"SE",
 		L"音符をたたいた時の効果音を鳴らすかどうかを変えます",
 		L"Choose whether to sound of hitting notes.",
-		0, 1, TRUE
+		0, 1, TRUE, &optiondata.SEenable
 	}, {
 		RecOptionBackBright,
 		L"背景の明るさ", L"Background Brightness",
 		L"背景の明るさを変えます。",
 		L"Choose brightness of background.",
-		0, 3, TRUE
+		0, 3, TRUE, &optiondata.backbright
 	}, {
 		RecOptionLang,
 		L"言語 Language", L"言語 Language",
 		L"ゲームで使う言語を変えます。\nChoose the lunguage in this game.",
 		L"ゲームで使う言語を変えます。\nChoose the lunguage in this game.",
-		0, 1, TRUE
+		0, 1, TRUE, &optiondata.lang
 	}, {
 		RecOptionButtonDet,
 		L"ボタン表示", L"Button Guide",
 		L"ボタンの押し状況をプレイ画面に表示します。",
 		L"Choose whether to display the key states on playing mode.",
-		0, 1, TRUE
+		0, 1, TRUE, &optiondata.keydetail
 	}, {
 		RecOptionComboPos,
 		L"判定表示位置", L"Judge Position",
 		L"判定の表示場所を決めます。",
 		L"Choose judge position.",
-		0, 5, TRUE
+		0, 5, TRUE, &optiondata.combopos
 	}, {
 		RecOptionBGMVolume,
 		L"BGMの音量", L"BGM Volume",
 		L"BGMの音量を決めます。",
 		L"Choose BGM volume.",
-		0, 10, FALSE
+		0, 10, FALSE, &optiondata.BGMvolume
 	}, {
 		RecOptionSEVolume,
 		L"SEの音量", L"SE Volume",
 		L"SEの音量を決めます。",
 		L"Choose SE volume.",
-		0, 10, FALSE
+		0, 10, FALSE, &optiondata.SEvolume
 	}, {
 		RecOptionLaneGuideThick,
 		L"レーンガイドの太さ", L"Lane Guide Line Thickness",
 		L"レーンガイドの太さを決めます。",
 		L"Choose lane guide line thickness.",
-		0, 30, FALSE
+		0, 30, FALSE, &optiondata.lineThick
 	}, {
 		RecOptionLaneMeasureThick,
 		L"小節線の太さ", L"Measure Line Thickness",
 		L"小節線の太さを決めます。",
 		L"Choose measure line thickness.",
-		0, 30, FALSE
+		0, 30, FALSE, &optiondata.barThick
 	}
 };
 
@@ -368,18 +368,6 @@ now_scene_t option(void) {
 		optiondata.keydetail = data[5];
 		optiondata.combopos = data[6];
 	}
-
-	optionstr[0].val_p = &optiondata.chara;
-	optionstr[1].val_p = &optiondata.offset;
-	optionstr[2].val_p = &optiondata.SEenable;
-	optionstr[3].val_p = &optiondata.backbright;
-	optionstr[4].val_p = &optiondata.lang;
-	optionstr[5].val_p = &optiondata.keydetail;
-	optionstr[6].val_p = &optiondata.combopos;
-	optionstr[7].val_p = &optiondata.BGMvolume;
-	optionstr[8].val_p = &optiondata.SEvolume;
-	optionstr[9].val_p = &optiondata.lineThick;
-	optionstr[10].val_p = &optiondata.barThick;
 
 	for (int i = 0; i < optionstr_count; i++) {
 		if (*optionstr[i].val_p < optionstr[i].min) {
