@@ -891,6 +891,26 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 	return;
 }
 
+static void PlayShowGuideLine1(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
+	bool viewEn)
+{
+	if (!viewEn) { return; }
+
+	int drawLeft = 0;
+	int drawRight = 0;
+	int drawY1 = 0;
+	int drawY2 = 0;
+	rec_play_xy_set_t camera;
+
+	RecPlayGetCameraPos(&camera.x, &camera.y);
+	RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
+	drawRight = 1280 - camera.x;
+	drawY2    = drawY1;
+	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.barThick);
+	return;
+}
+
 static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos, int Line, int iDraw,
 	short YlockN)
 {
@@ -928,11 +948,7 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *
 
 	/* TODO: StimeがEtimeより遅い(#MOVExxxX:1/x/1をやったときにたまに起こる)ときにスキップされるバグがある */
 	if (Ymove[iDraw].Stime < 0) {
-		if (!viewEn) { return 1; }
-		RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
-		drawRight = 1280 - camera.x;
-		drawY2    = drawY1;
-		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.barThick);
+		PlayShowGuideLine1(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn); /* ラスライン */
 		return 1;
 	}
 	if (iDraw < 1) {
