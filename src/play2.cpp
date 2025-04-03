@@ -518,6 +518,25 @@ static void RecPlayStepViewLineNum(rec_viewline_dataset_t *viewLine, DxTime_t Nt
 	return;
 }
 
+static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *movieN,
+	short *guideN, short *lockN, short *viewTN, const short *objectN)
+{
+	RecPlayStepObjectNG(objectNG, recfp->mapdata.note, objectN);
+	RecPlayStepCharaMotionNum(recfp->mapeff.chamo, recfp->time.now);
+	RecPlayStepSpeedtNum(recfp->mapeff.speedt, recfp->time.now);
+	RecPlayStepViewBpmNum(&recfp->mapeff.v_BPM, recfp->time.now);
+	RecPlayStepCameraNum(&recfp->mapeff.camera, recfp->time.now);
+	RecPlayStepScroolNum(&recfp->mapeff.scrool, recfp->time.now);
+	RecPlayStepMovieNum(recfp->mapeff.Movie, movieN, recfp->time.now);
+	RecPlayStepFallNum(&recfp->mapeff.fall, recfp->time.now);
+	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
+	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
+	RecPlayStepLockNum(lockN, &recfp->mapeff, recfp->time.now);
+	RecPlayStepViewTimeNum(viewTN, &recfp->mapeff, recfp->time.now);
+	RecPlayStepViewLineNum(&recfp->mapeff.viewLine, recfp->time.now);
+	return;
+}
+
 static void RacPlayDrawFieldGrid(void) {
 	int cameraX = 0;
 	int cameraY = 0;
@@ -1528,20 +1547,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	while (1) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
-		// number step
-		RecPlayStepObjectNG(objectNG, recfp.mapdata.note, objectN);
-		RecPlayStepCharaMotionNum(recfp.mapeff.chamo, recfp.time.now);
-		RecPlayStepSpeedtNum(recfp.mapeff.speedt, recfp.time.now);
-		RecPlayStepViewBpmNum(&recfp.mapeff.v_BPM, recfp.time.now);
-		RecPlayStepCameraNum(&recfp.mapeff.camera, recfp.time.now);
-		RecPlayStepScroolNum(&recfp.mapeff.scrool, recfp.time.now);
-		RecPlayStepMovieNum(recfp.mapeff.Movie, &MovieN, recfp.time.now);
-		RecPlayStepFallNum(&recfp.mapeff.fall, recfp.time.now);
-		RecPlayStepGuideLineNum(LineMoveN, recfp.mapeff.move.y, recfp.time.now);
-		RecPlayStepCharaArrowNum(&recfp.mapeff.carrow, recfp.time.now);
-		RecPlayStepLockNum(lockN, &recfp.mapeff, recfp.time.now);
-		RecPlayStepViewTimeNum(&viewTN, &recfp.mapeff, recfp.time.now);
-		RecPlayStepViewLineNum(&recfp.mapeff.viewLine, recfp.time.now);
+		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, lockN, &viewTN, objectN);
 
 		//ÉLÅ[ê›íË
 		GetHitKeyStateAll(key);
