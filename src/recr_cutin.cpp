@@ -93,7 +93,7 @@ static wchar_t const tip[][31] = {
 	L"チュウニズムは早くLv18を出せ",
 	L"音ゲーにクソゲーはない",
 };
-static char const tipNum = sizeof(tip) / sizeof(tip[0]);
+static char const tipNum = ARRAY_COUNT(tip);
 
 #if 1 /* action */
 

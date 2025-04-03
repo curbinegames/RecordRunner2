@@ -279,7 +279,7 @@ static int RecSerectKeyCheck() {
 	int mouseAct = 0;
 	int mouseHoil = 0;
 
-#if 0 /* ウィンドウサイズ変更により座標がずれたので、一時的に消去 */
+#if 0 /* TODO: ウィンドウサイズ変更により座標がずれたので、一時的に消去 */
 	/* マウス入力 */
 	mouseAct = 0;
 	while (GetMouseInputLog2(&mouseBtn, &mouseX, &mouseY, &mouseAct, true) == 0) {}

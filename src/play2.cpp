@@ -301,54 +301,53 @@ static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 	rec_play_xy_set_t camera;
 	RecPlayGetCameraPos(&camera.x, &camera.y);
 	for (item_box *pMovie = &mapeff->Movie[MovieN]; pMovie->endtime > -500; pMovie++) {
-		if (pMovie->starttime <= Ntime && pMovie->endtime >= Ntime) {
-			//base setting
-			drawA = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startalpha,
-				pMovie->endtime, pMovie->endalpha, Ntime);
-			drawX = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startXpos,
-				pMovie->endtime, pMovie->endXpos, Ntime) + camera.x;
-			drawY = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startYpos,
-				pMovie->endtime, pMovie->endYpos, Ntime) + camera.y;
-			drawS = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startsize,
-				pMovie->endtime, pMovie->endsize, Ntime);
-			drawR = (int)movecal(pMovie->movemode,
-				pMovie->starttime, pMovie->startrot,
-				pMovie->endtime, pMovie->endrot, Ntime);
-			//material setting
-			if (pMovie->eff.lock == 1) {
-				drawX -= camera.x;
-			}
-			if (pMovie->eff.lock == 1) {
-				drawY -= 25 + camera.y;
-			}
-			if (pMovie->eff.bpm_alphr == 1) {
-				drawA = lins(0, drawA, 60000 / v_BPM->BPM, 0,
-					(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
-			}
-			if (pMovie->eff.chara_alphr == 1) {
-				drawA = lins(320, drawA, 60, 0, betweens(60, abss(Xmidline, drawX), 320));
-			}
-			if (pMovie->eff.bpm_size == 1) {
-				drawS = pals(60000 / v_BPM->BPM, drawS / 2, 0, drawS,
-					(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
-			}
-			if (pMovie->eff.edge_size == 1) {
-				drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
-				drawS = betweens(0, lins(100, drawS, 0, 0, drawX), drawS);
-			}
-			//rescale
-			drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawX);
-			drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawY);
-			drawS = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawS);
-			//drawing
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-			DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		if ((Ntime < pMovie->starttime) || (pMovie->endtime < Ntime)) { continue; }
+		//base setting
+		drawA = (int)movecal(pMovie->movemode,
+			pMovie->starttime, pMovie->startalpha,
+			pMovie->endtime, pMovie->endalpha, Ntime);
+		drawX = (int)movecal(pMovie->movemode,
+			pMovie->starttime, pMovie->startXpos,
+			pMovie->endtime, pMovie->endXpos, Ntime) + camera.x;
+		drawY = (int)movecal(pMovie->movemode,
+			pMovie->starttime, pMovie->startYpos,
+			pMovie->endtime, pMovie->endYpos, Ntime) + camera.y;
+		drawS = (int)movecal(pMovie->movemode,
+			pMovie->starttime, pMovie->startsize,
+			pMovie->endtime, pMovie->endsize, Ntime);
+		drawR = (int)movecal(pMovie->movemode,
+			pMovie->starttime, pMovie->startrot,
+			pMovie->endtime, pMovie->endrot, Ntime);
+		//material setting
+		if (pMovie->eff.lock == 1) {
+			drawX -= camera.x;
 		}
+		if (pMovie->eff.lock == 1) {
+			drawY -= 25 + camera.y;
+		}
+		if (pMovie->eff.bpm_alphr == 1) {
+			drawA = lins(0, drawA, 60000 / v_BPM->BPM, 0,
+				(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
+		}
+		if (pMovie->eff.chara_alphr == 1) {
+			drawA = lins(320, drawA, 60, 0, betweens(60, abss(Xmidline, drawX), 320));
+		}
+		if (pMovie->eff.bpm_size == 1) {
+			drawS = pals(60000 / v_BPM->BPM, drawS / 2, 0, drawS,
+				(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
+		}
+		if (pMovie->eff.edge_size == 1) {
+			drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
+			drawS = betweens(0, lins(100, drawS, 0, 0, drawX), drawS);
+		}
+		//rescale
+		drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawX);
+		drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawY);
+		drawS = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawS);
+		//drawing
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
+		DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}
 }
 
@@ -608,9 +607,8 @@ static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_
 	//縦位置
 	*DrawY = ((lock1 == 1) ? note->ypos : lanePos->y[iLine]);
 	//横位置
-	*DrawX = (int)((speedt * 20 * (note->viewtime -
-		(scroolSpeed * Ntime + scroolBaseTime)) + 5000) / 50) + 50;
-	*DrawX += ((lock0 == 1) ? note->xpos - 150 : lanePos->x[iLine] - 150); /* TODO: まだ簡単にできる */
+	*DrawX = (2 * speedt * (note->viewtime - scroolSpeed * Ntime - scroolBaseTime) / 5);
+	*DrawX += ((lock0 == 1) ? note->xpos : lanePos->x[iLine]);
 	//色
 	*DrawC = note->color;
 }
