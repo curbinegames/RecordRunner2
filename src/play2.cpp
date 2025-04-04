@@ -9,7 +9,6 @@
 /* curbine code include */
 #include <dxcur.h>
 #include <dxdraw.h>
-#include <dxlibcur.h>
 #include <sancur.h>
 #include <strcur.h>
 
@@ -1302,11 +1301,6 @@ public:
 		this->ViewDist(userpal->status, &userpal->Dscore, time);
 		RecRescaleDrawGraph(0, 0, this->sbbarimg, TRUE);
 		this->ViewRunStatus(userpal, mapdata->notes, Hscore);
-#if 0
-		if (holdG >= 1) {
-			this->ViewDdif(mapdata->ddif, mapdata->ddifG[1]);
-		}
-#endif
 	}
 };
 

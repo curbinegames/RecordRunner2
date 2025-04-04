@@ -181,35 +181,6 @@ static void RecClctGetSubStoryScore(int subScore[]) {
 
 	for (int i = 0; i < 4; i++) {
 		rec_save_score_t databuf[6];
-#if 0 /* TODO:旧ファイルを救う。リネームして保存でOK */
-		switch (i) {
-		case 0:
-			RecSaveReadScoreAllDif(databuf, L"snow town story");
-			buf[6] = 1;
-			break;
-		case 1:
-			RecSaveReadScoreAllDif(databuf, L"グラデーション・ワールド");
-			buf[6] = 1;
-			break;
-		case 2:
-			RecSaveReadScoreAllDif(databuf, L"What Color Is The Sky？");
-			buf[6] = 1;
-			break;
-		case 3:
-			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
-			buf[6] = 2;
-			break;
-		case 4:
-			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
-			buf[6] = 4;
-			break;
-		case 5:
-			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
-			buf[6] = 5;
-			break;
-		}
-		for (j = buf[6]; j <= 5; j++) subScore[i] = maxs_2(subScore[i], databuf[j].score);
-#endif
 		subScore[i] = 0;
 		switch (i) {
 		case 0:

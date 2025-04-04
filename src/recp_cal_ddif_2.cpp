@@ -882,21 +882,6 @@ void cal_ddif_3(const TCHAR *path) {
 		mpal.mdif = lins(0, 0, 414885, REC_DDIF_BASE, mpal.mdif); // リスケール
 	}
 
-#if 0
-	// 各項目をmdifで持ち上げる
-	{
-		double sum = lins(0, 0, 10, 3, mpal.mdif);
-		mpal.notes += sum;
-		mpal.arrow += sum;
-		mpal.chord += sum;
-		mpal.chain += sum;
-		mpal.trill += sum;
-		mpal.meldy += sum;
-		mpal.actor += sum;
-		mpal.trick += sum;
-	}
-#endif
-
 	// mpalを保存する
 	RecScoreWriteDdif(&mpal, path);
 

@@ -18,9 +18,6 @@
 #define CUT_FRAG_OUT 0
 #define CUT_FRAG_IN 1
 
-#define RECR_DEBUG(ofs, data)											\
-		RecRescaleDrawFormatString(20, 120 + ofs * 20, 0xffffffff, L#data": %d", data)
-
 static char TipNo = 0;
 static int pic_cutin[5];
 static int snd_cutin[2];
@@ -251,13 +248,6 @@ void ViewCutIn(int Stime) {
 		break;
 	}
 	RecCutDrawSide(EffTime);
-
-#if 0
-	if (CutInSndLastPlayTime + 3000 < Ntime) {
-		PlaySoundMem(snd_cutin[0], DX_PLAYTYPE_BACK);
-		CutInSndLastPlayTime = Ntime;
-	}
-#endif
 	return;
 }
 
@@ -300,13 +290,6 @@ void ViewCutOut(int Stime) {
 		break;
 	}
 	RecCutDrawSide(EffTime);
-
-#if 0
-	if (CutOutSndLastPlayTime + 3000 < Ntime) {
-		PlaySoundMem(snd_cutin[1], DX_PLAYTYPE_BACK);
-		CutOutSndLastPlayTime = Ntime;
-	}
-#endif
 	return;
 }
 
