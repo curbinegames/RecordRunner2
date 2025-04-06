@@ -18,9 +18,6 @@
 #define CUT_FRAG_OUT 0
 #define CUT_FRAG_IN 1
 
-#define RECR_DEBUG(ofs, data)											\
-		RecRescaleDrawFormatString(20, 120 + ofs * 20, 0xffffffff, L#data": %d", data)
-
 static char TipNo = 0;
 static int pic_cutin[5];
 static int snd_cutin[2];
@@ -32,6 +29,7 @@ static cutin_tips_e CutFg = CUTIN_TIPS_NONE;
 static int s_cutIoFg = CUT_FRAG_OUT;
 static int s_cutStime = 0;
 
+/* TODO: 編集いるよ(1.5.5でもいいね) */
 /* tipの最大文字数は30文字(NULL終端除く) */
 static wchar_t const tip[][31] = {
 	L"音楽は万物に影響を与える", /* レコランの世界観 */
@@ -92,38 +90,9 @@ static wchar_t const tip[][31] = {
 	L"チュウニズムは早くLv18を出せ",
 	L"音ゲーにクソゲーはない",
 };
-static char const tipNum = sizeof(tip) / sizeof(tip[0]);
+static char const tipNum = ARRAY_COUNT(tip);
 
 #if 1 /* action */
-
-void CutinReadyPic() {
-	pic_cutin[0] = LoadGraph(L"picture/cutin/cutinU.png");
-	pic_cutin[1] = LoadGraph(L"picture/cutin/cutinD.png");
-	pic_cutin[2] = LoadGraph(L"picture/cutin/cutinDisk.png");
-	pic_cutin[3] = LoadGraph(SongJucketName);
-	pic_cutin[4] = LoadGraph(L"picture/cutin/cutinS.png");
-}
-
-void CutinReadySnd() {
-	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
-	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
-	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[0]);
-	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[1]);
-}
-
-void SetCutSong(wchar_t* songName, wchar_t* picName) {
-	strcopy_2(songName, CutSongName, 255);
-	strcopy_2(picName, SongJucketName, 255);
-	pic_cutin[3] = LoadGraph(picName);
-}
-
-void SetCutTipFg(cutin_tips_e Fg) {
-	CutFg = Fg;
-}
-
-void SetTipNo() {
-	TipNo = (char)GetRand(tipNum - 1);
-}
 
 static void RecCutDrawShut(int EffTime) {
 	int PosY = 0;
@@ -214,7 +183,7 @@ static void RecCutDrawSide(int EffTime) {
 	return;
 }
 
-void ViewCutIn(int Stime) {
+static void ViewCutIn(int Stime) {
 	int Ntime = GetNowCount();
 	int EffTime = mins_2(Ntime - Stime, 500);
 	int PosY = pals(500, 0, 0, 360, EffTime);
@@ -250,17 +219,10 @@ void ViewCutIn(int Stime) {
 		break;
 	}
 	RecCutDrawSide(EffTime);
-
-#if 0
-	if (CutInSndLastPlayTime + 3000 < Ntime) {
-		PlaySoundMem(snd_cutin[0], DX_PLAYTYPE_BACK);
-		CutInSndLastPlayTime = Ntime;
-	}
-#endif
 	return;
 }
 
-void ViewCutOut(int Stime) {
+static void ViewCutOut(int Stime) {
 	int Ntime = GetNowCount();
 	int EffTime = Ntime - Stime;
 	if (500 < EffTime) {
@@ -299,19 +261,6 @@ void ViewCutOut(int Stime) {
 		break;
 	}
 	RecCutDrawSide(EffTime);
-
-#if 0
-	if (CutOutSndLastPlayTime + 3000 < Ntime) {
-		PlaySoundMem(snd_cutin[1], DX_PLAYTYPE_BACK);
-		CutOutSndLastPlayTime = Ntime;
-	}
-#endif
-	return;
-}
-
-void RecViewCut2() {
-	if (s_cutIoFg == CUT_FRAG_OUT) { ViewCutOut(s_cutStime); }
-	if (s_cutIoFg == CUT_FRAG_IN) { ViewCutIn(s_cutStime); }
 	return;
 }
 
@@ -334,26 +283,6 @@ void RecViewCut3() {
 	RecCutDrawSide(EffTime);
 
 	return;
-}
-
-void RecCutSetIo(int val) {
-	s_cutIoFg = val;
-	s_cutStime = GetNowCount();
-	if (val == CUT_FRAG_IN) {
-		PlaySoundMem(snd_cutin[0], DX_PLAYTYPE_BACK);
-	}
-	else {
-		PlaySoundMem(snd_cutin[1], DX_PLAYTYPE_BACK);
-	}
-	return;
-}
-
-int RecCutIsClosing() {
-	return s_cutIoFg;
-}
-
-int RecCutInEndAnim() {
-	return (s_cutIoFg == 1 && s_cutStime + 2000 <= GetNowCount());
 }
 
 #endif /* action */

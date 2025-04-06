@@ -320,7 +320,7 @@ static int RecSerectKeyCheck() {
 	int mouseAct = 0;
 	int mouseHoil = 0;
 
-#if 0 /* ウィンドウサイズ変更により座標がずれたので、一時的に消去 */
+#if 0 /* TODO: ウィンドウサイズ変更により座標がずれたので、一時的に消去 */
 	/* マウス入力 */
 	mouseAct = 0;
 	while (GetMouseInputLog2(&mouseBtn, &mouseX, &mouseY, &mouseAct, true) == 0) {}
@@ -820,31 +820,16 @@ private:
 	}
 
 	void DrawSort(int baseX, int baseY, int mode) {
-		if (optiondata.lang == 1) {
-			switch (mode) {
-			case REC_SORT_DEFAULT:
-				DrawStringToHandleAnchor(baseX, baseY, L"default", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			case SORT_LEVEL:
-				DrawStringToHandleAnchor(baseX, baseY, L"level", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			case SORT_SCORE:
-				DrawStringToHandleAnchor(baseX, baseY, L"score", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			}
-		}
-		else {
-			switch (mode) {
-			case REC_SORT_DEFAULT:
-				DrawStringToHandleAnchor(baseX, baseY, L"デフォルト", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			case SORT_LEVEL:
-				DrawStringToHandleAnchor(baseX, baseY, L"レベル順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			case SORT_SCORE:
-				DrawStringToHandleAnchor(baseX, baseY, L"スコア順", COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
-				break;
-			}
+		switch (mode) {
+		case REC_SORT_DEFAULT:
+			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("デフォルト"), _T("default")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+			break;
+		case SORT_LEVEL:
+			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("レベル順"), _T("level")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+			break;
+		case SORT_SCORE:
+			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("スコア順"), _T("score")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
+			break;
 		}
 	}
 

@@ -4,7 +4,7 @@
 #include <playbox.h>
 
 /* main action */
-extern void RecPlayResetCamera();
+extern void RecPlayResetCamera(); /* TODO: ‚±‚ê—v‚é‚ñ‚¿‚á‚¤‚ñ? */
 extern void RecPlaySetCamera(rec_camera_set_t *camera, int Ntime);
 extern void RecPlayGetCameraPos(int *retX, int *retY);
 

@@ -951,9 +951,6 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 	TCHAR GT1[255];
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-#if 0 /* fixing... */
-	set_item_set(&mapeff->Movie[MovieN], &MovieN, &recfp->allnum, &GT1[0], mapenc->item_set, mapenc->bpmG, mapenc->timer[0]);
-#else
 	int G[15];
 	uint itemNo = 0;
 	uint mode   = 1;
@@ -1024,7 +1021,6 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 		mapenc->MovieN++;
 		recfp->allnum.movienum++;
 	}
-#endif
 	return;
 }
 
@@ -1251,31 +1247,16 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 
 static void RecMapLoad_SetEndRecfp(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc) {
 	//譜面の最後にgoustを置く
-#if SWITCH_NOTE_BOX_2 == 1
 	recfp->mapdata.note[mapenc->objectN].lane = NOTE_LANE_MID;
 	recfp->mapdata.note[mapenc->objectN].hittime = mapenc->timer[0];
 	recfp->mapdata.note[mapenc->objectN + 1].hittime = -1;
 	recfp->mapdata.note[mapenc->objectN].object = NOTE_GHOST;
 	recfp->mapdata.note[mapenc->objectN].ypos = 1000;
-#else
-	for (uint iLane = 0; iLane < 3; iLane++) {
-		recfp->mapdata.note[iLane][mapenc->objectN[iLine]].hittime = mapenc->timer[iLane];
-		recfp->mapdata.note[iLane][mapenc->objectN[iLine] + 1].hittime = -1;
-		recfp->mapdata.note[iLane][mapenc->objectN[iLine]].object = NOTE_GHOST;
-		recfp->mapdata.note[iLane][mapenc->objectN[iLine]].ypos = 1000;
-	}
-#endif
 	recfp->mapeff.lock[0][0][mapenc->lockN[0]] = 1;
 	recfp->mapeff.lock[0][1][mapenc->lockN[0]] = -1;
 	recfp->mapeff.lock[1][0][mapenc->lockN[1]] = -1;
 	recfp->mapeff.lock[1][1][mapenc->lockN[1]] = -1;
-#if SWITCH_NOTE_BOX_2 == 1
 	recfp->allnum.notenum[1]++;
-#else
-	recfp->allnum.notenum[0]++;
-	recfp->allnum.notenum[1]++;
-	recfp->allnum.notenum[2]++;
-#endif
 	recfp->time.end = mapenc->timer[0];
 	return;
 }
@@ -1313,11 +1294,7 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 
 	//o: 難易度ナンバー
 	short i[2] = { 0,0 };
-#if 0 /* fixing... */
-	int G[4] = { 0,0,0,0 };
-#else
 	int G[14] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-#endif
 	int noteoff = 0; //ノーツのオフセット
 	int Etime = 0; //譜面の終わりの時間
 	int waningLv = 2;

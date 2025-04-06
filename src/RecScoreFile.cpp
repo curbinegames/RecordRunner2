@@ -105,14 +105,8 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 		}
 	}
 	fread(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2 == 1
 	fread(&recfp->mapdata.note, sizeof(note_box_2_t),
 		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
-#else
-	fread(&recfp->mapdata.note2.up[0], sizeof(struct note_box), recfp->allnum.notenum[0], fp); /* 上レーンノーツデータ */
-	fread(&recfp->mapdata.note2.mid[0], sizeof(struct note_box), recfp->allnum.notenum[1], fp); /* 中レーンノーツデータ */
-	fread(&recfp->mapdata.note2.low[0], sizeof(struct note_box), recfp->allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
 	fread(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
 	fread(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
 	{
@@ -206,13 +200,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 		fwrite(&buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 	}
 	fwrite(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2
 	fwrite(&recfp->mapdata.note, sizeof(note_box_2_t), recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
-#else
-	fwrite(&recfp->mapdata.note[0], sizeof(struct note_box), recfp->allnum.notenum[0], fp); /* 上レーンノーツデータ */
-	fwrite(&recfp->mapdata.note[1], sizeof(struct note_box), recfp->allnum.notenum[1], fp); /* 中レーンノーツデータ */
-	fwrite(&recfp->mapdata.note[2], sizeof(struct note_box), recfp->allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
 	fwrite(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
 	fwrite(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
 	fwrite(&recfp->mapdata.ddifG[0], sizeof(int), 1, fp);//最高難易度
@@ -269,14 +257,8 @@ int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path) {
 	fseek(fp, sizeof(int) * 396, SEEK_CUR);//ノーツ固定切り替えタイミング
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//キャラ向き切り替えタイミング
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2 == 1
 	fread(&recfp->mapdata.note, sizeof(note_box_2_t),
 		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
-#else
-	fread(&recfp->mapdata.note2.up[0], sizeof(struct note_box), recfp->allnum.notenum[0], fp); /* 上レーンノーツデータ */
-	fread(&recfp->mapdata.note2.mid[0], sizeof(struct note_box), recfp->allnum.notenum[1], fp); /* 中レーンノーツデータ */
-	fread(&recfp->mapdata.note2.low[0], sizeof(struct note_box), recfp->allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
 	fread(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
 	fseek(fp, sizeof(int), SEEK_CUR);//曲終了時間
 	{
@@ -363,13 +345,7 @@ int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, sizeof(int) * 396, SEEK_CUR);//ノーツ固定切り替えタイミング
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//キャラ向き切り替えタイミング
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2 == 1
 	REC_LINE_SEEK(&recfp->mapdata.note, sizeof(note_box_2_t), allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
-#else
-	REC_LINE_SEEK(&recfp->mapdata.note2.up[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
-	REC_LINE_SEEK(&recfp->mapdata.note2.mid[0], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
-	REC_LINE_SEEK(&recfp->mapdata.note2.low[0], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
 	REC_LINE_SEEK(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
 	fseek(fp, sizeof(int), SEEK_CUR);//曲終了時間
 	REC_LINE_SEEK(buf, sizeof(int), 2, fp);
@@ -380,8 +356,8 @@ int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, sizeof(rec_camera_data_t) * 255, SEEK_CUR);//カメラデータ
 	fseek(fp, sizeof(rec_scrool_data_t) * 99, SEEK_CUR);//スクロールデータ
 	fseek(fp, sizeof(view_BPM_box) * allnum.v_BPMnum, SEEK_CUR);//スクロールデータ
-	fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 	REC_LINE_SEEK(&recfp->mapeff.viewLine.d[0], sizeof(rec_viewline_data_t), 99, fp);//ラインガイドの表示/非表示
+	fseek(fp, sizeof(int) * 2, SEEK_CUR);//エラーデータ
 	REC_LINE_READ(ddif, sizeof(rec_ddif_pal_t), 1, fp);//難易度分析データ
 
 	fclose(fp);
@@ -399,7 +375,7 @@ int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	playnum_box allnum;
 	if (RecScoreGetAllnum(&allnum, path) != 0) { return -1; }
 
-	_wfopen_s(&fp, path, L"ab");
+	_wfopen_s(&fp, path, L"rb+");
 
 	if (ddif == NULL || fp == NULL) { return -1; }
 
@@ -427,13 +403,7 @@ int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, sizeof(int) * 396, SEEK_CUR);//ノーツ固定切り替えタイミング
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//キャラ向き切り替えタイミング
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//ノーツ表示時間変換タイミング
-#if SWITCH_NOTE_BOX_2 == 1
 	REC_LINE_SEEK(&recfp->mapdata.note, sizeof(note_box_2_t), allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
-#else
-	REC_LINE_SEEK(&recfp->mapdata.note2.up[0], sizeof(struct note_box), allnum.notenum[0], fp); /* 上レーンノーツデータ */
-	REC_LINE_SEEK(&recfp->mapdata.note2.mid[0], sizeof(struct note_box), allnum.notenum[1], fp); /* 中レーンノーツデータ */
-	REC_LINE_SEEK(&recfp->mapdata.note2.low[0], sizeof(struct note_box), allnum.notenum[2], fp); /* 下レーンノーツデータ */
-#endif
 	REC_LINE_SEEK(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
 	fseek(fp, sizeof(int), SEEK_CUR);//曲終了時間
 	REC_LINE_SEEK(buf, sizeof(int), 2, fp);

@@ -45,7 +45,7 @@ typedef struct gap_box_t {
 	int count = 0;
 } gap_box;
 
-struct score_box {
+typedef struct rec_play_score_s {
 	int normal = 0;
 	int combo = 0;
 	int loss = 0;
@@ -53,7 +53,7 @@ struct score_box {
 	int pjust = 0;
 	int before = 0;
 	int time = 0;
-};
+} rec_play_score_t;
 
 typedef struct rec_play_xy_set_s {
 	int x;
@@ -85,7 +85,7 @@ typedef struct rec_play_chara_hit_attack_s {
 } rec_play_chara_hit_attack_t;
 
 typedef struct rec_play_userpal_s {
-	struct score_box score;
+	rec_play_score_t score;
 	distance_score_t Dscore;
 	rec_play_status_t status = REC_PLAY_STATUS_PLAYING;
 	int Ncombo = 0;

@@ -13,8 +13,8 @@
 #define OLD_WINDOW_SIZE_X 640                         // 前バージョンのウィンドウの横のサイズ
 #define OLD_WINDOW_SIZE_Y (OLD_WINDOW_SIZE_X * 3 / 4) // 前バージョンのウィンドウの縦のサイズ 480
 
-#define INIT_PIC() InitGraph(); CutinReadyPic(); InitHelpBar()
-#define INIT_SND() InitSoundMem(); CutinReadySnd()
+#define INIT_PIC() InitGraph()
+#define INIT_SND() InitSoundMem()
 #define INIT_MAT() INIT_PIC(); INIT_SND()
 
 #define SWITCH_NOTE_BOX_2 1
@@ -73,6 +73,13 @@ typedef enum rec_dif_e {
 	REC_DIF_SECRET,
 } rec_dif_t;
 
+typedef enum rec_error_e {
+	REC_ERROR_NONE = 0,
+	REC_ERROR_FILE_EXIST = 100, /* ファイルがなかった */
+	REC_ERROR_FILE_NUM   = 101, /* 指定ナンバーが大きすぎた */
+	REC_ERROR_MAP_COUNT  = 200, /* オブジェクト数が多すぎた */
+} rec_error_t;
+
 typedef struct rec_system_s {
 	int chara = 0;
 	int offset = 0;
@@ -88,15 +95,13 @@ extern int RecPlayDebug[3];
 extern int SmallFontData;
 extern int LargeFontData;
 
-extern int RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo);
-extern int RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo);
-extern int RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo);
-extern int RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
+extern rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo);
+extern rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo);
+extern rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo);
+extern rec_error_t RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
 	rec_dif_t difNo);
-extern int RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
+extern rec_error_t RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
 	rec_dif_t difNo);
-
-extern int recSystenLoad(rec_system_t *sys);
 
 extern void RecSysBgmChangeVolume(int val);
 extern void RecSysBgmSetMem(const TCHAR *sndPath, size_t size);

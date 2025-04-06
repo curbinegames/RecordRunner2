@@ -615,6 +615,53 @@ static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *B
 	return;
 }
 
+static void RecDdifGetPalAll(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
+	// 譜面パラメータ各種計算,重み計算,notes
+	Nowkey->pal.notes = 0;
+	if (0 < Nowkey->hitN || 0 < Nowkey->arwN) {
+		Nowkey->pal.notes = 1;
+	}
+
+	// 譜面パラメータ各種計算,重み計算,arrow
+	Nowkey->pal.arrow = 0;
+	switch (Nowkey->arwN) {
+	case 0:
+		Nowkey->pal.arrow = 0;
+		break;
+	case 1:
+		Nowkey->pal.arrow = 10;
+		break;
+	case 2:
+		Nowkey->pal.arrow = 12;
+		break;
+	case 3:
+		Nowkey->pal.arrow = 15;
+		break;
+	}
+
+	// 譜面パラメータ各種計算,重み計算,chord~trick
+	RecDdifGetPalChord(Nowkey);
+	RecDdifGetPalChain(Nowkey, Befkey, BBefkey);
+	RecDdifGetPalTrill(Nowkey, Befkey, BBefkey);
+	RecDdifGetPalMeldy(Nowkey, Befkey, BBefkey);
+	RecDdifGetPalActor(Nowkey);
+	RecDdifGetPalTrick(Nowkey, Befkey, BBefkey);
+
+	// 時間でかける(2000/前回からの時間)
+	DxTime_t TimeGap = 0;
+	TimeGap = 2000 / maxs_2(1, Nowkey->time - Befkey->time);
+	Nowkey->pal.notes *= TimeGap;
+	Nowkey->pal.trill *= TimeGap;
+	Nowkey->pal.arrow *= TimeGap;
+	Nowkey->pal.chord *= TimeGap;
+	Nowkey->pal.chain *= TimeGap;
+	Nowkey->pal.meldy *= TimeGap;
+	Nowkey->pal.actor *= TimeGap;
+	Nowkey->pal.trick *= TimeGap;
+
+	return;
+}
+
 #endif /* RecDdifGetPal */
 
 static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
@@ -711,6 +758,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 
 		//arwノーツ数取得
 		Nowkey->arwN = 0;
+		// TODO: 同種はノーカン
 		if (IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
 		if (IS_NOTE_ARROW_GROUP(Nowkey->note[1])) { Nowkey->arwN++; }
 		if (IS_NOTE_ARROW_GROUP(Nowkey->note[2])) { Nowkey->arwN++; }
@@ -721,47 +769,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		RecDdifGetKeyCatch(Nowkey, Befkey);
 		RecDdifGetKeyBomb(Nowkey, Befkey);
 
-		// 譜面パラメータ各種計算,重み計算,notes
-		Nowkey->pal.notes = 0;
-		if (0 < Nowkey->hitN || 0 < Nowkey->arwN) {
-			Nowkey->pal.notes = 1;
-		}
-
-		// 譜面パラメータ各種計算,重み計算,arrow
-		Nowkey->pal.arrow = 0;
-		switch (Nowkey->arwN) {
-		case 0:
-			Nowkey->pal.arrow = 0;
-			break;
-		case 1:
-			Nowkey->pal.arrow = 10;
-			break;
-		case 2:
-			Nowkey->pal.arrow = 12;
-			break;
-		case 3:
-			Nowkey->pal.arrow = 15;
-			break;
-		}
-
-		// 譜面パラメータ各種計算,重み計算,Chord~Actor
-		RecDdifGetPalChord(Nowkey);
-		RecDdifGetPalChain(Nowkey, Befkey, BBefkey);
-		RecDdifGetPalTrill(Nowkey, Befkey, BBefkey);
-		RecDdifGetPalMeldy(Nowkey, Befkey, BBefkey);
-		RecDdifGetPalActor(Nowkey);
-		RecDdifGetPalTrick(Nowkey, Befkey, BBefkey);
-
-		// 時間でかける(2000/前回からの時間)
-		G[0] = 2000 / maxs_2(1, Nowkey->time - Befkey->time);
-		Nowkey->pal.notes *= G[0];
-		Nowkey->pal.trill *= G[0];
-		Nowkey->pal.arrow *= G[0];
-		Nowkey->pal.chord *= G[0];
-		Nowkey->pal.chain *= G[0];
-		Nowkey->pal.meldy *= G[0];
-		Nowkey->pal.actor *= G[0];
-		Nowkey->pal.trick *= G[0];
+		RecDdifGetPalAll(Nowkey, Befkey, BBefkey);
 
 		// maxの計算
 		{
@@ -873,21 +881,6 @@ void cal_ddif_3(const TCHAR *path) {
 			pal[7] * REC_DDIF_8TH_WAIGHT;
 		mpal.mdif = lins(0, 0, 414885, REC_DDIF_BASE, mpal.mdif); // リスケール
 	}
-
-#if 0
-	// 各項目をmdifで持ち上げる
-	{
-		double sum = lins(0, 0, 10, 3, mpal.mdif);
-		mpal.notes += sum;
-		mpal.arrow += sum;
-		mpal.chord += sum;
-		mpal.chain += sum;
-		mpal.trill += sum;
-		mpal.meldy += sum;
-		mpal.actor += sum;
-		mpal.trick += sum;
-	}
-#endif
 
 	// mpalを保存する
 	RecScoreWriteDdif(&mpal, path);

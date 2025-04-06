@@ -5,6 +5,8 @@
 #define LANG_JP 0
 #define LANG_EN 1
 
+#define REC_STR_LANG(jp, en) ( (optiondata.lang == LANG_JP) ? (jp) : (en) )
+
 typedef enum rec_nowchara_e {
 	REC_CHARA_PICKER = 0,
 	REC_CHARA_MAPGATOR,
@@ -27,6 +29,7 @@ typedef struct rec_option_s {
 
 extern rec_option_t optiondata;
 
+/* TODO: ŒÄ‚Ñ‚ð‚Ç‚¤‚É‚©‚µ‚½‚¢ */
 extern int RecOpenOptionFile(int *data);
 extern int RecOpenOptionFile2(rec_option_t *data);
 extern int RecWriteOptineFile(int *data);

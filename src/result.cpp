@@ -124,15 +124,13 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 #if 1 /* RecResultCalParameter */
 
 static rec_score_rate_t CalScoreRank(int score) {
-	/* TODO: Fランク作る */
 	if (score >= 98000) { return REC_SCORE_RATE_EX; }
 	if (score >= 95000) { return REC_SCORE_RATE_S; }
 	if (score >= 90000) { return REC_SCORE_RATE_A; }
 	if (score >= 85000) { return REC_SCORE_RATE_B; }
 	if (score >= 80000) { return REC_SCORE_RATE_C; }
-	/* if (score > 0) { return REC_SCORE_RATE_D; } */
-	/* return REC_SCORE_RATE_F; */
-	return REC_SCORE_RATE_D;
+	if (score > 0) { return REC_SCORE_RATE_D; }
+	return REC_SCORE_RATE_F;
 }
 
 /**
@@ -270,6 +268,8 @@ static DxPic_t RecResultLoadClearRankGraph(rec_score_rate_t rank) {
 		return LoadGraph(L"picture/rankC.png");
 	case REC_SCORE_RATE_D:
 		return LoadGraph(L"picture/rankD.png");
+	case REC_SCORE_RATE_F:
+		return LoadGraph(L"picture/rankF.png"); /* TODO: 画像作る */
 	default:
 		return DXLIB_PIC_NULL;
 	}
@@ -301,8 +301,10 @@ static cur_font_cr_t RecResultGetCurFontColor(rec_score_rate_t rank) {
 	case REC_SCORE_RATE_C:
 		return CUR_FONT_COLOR_PURPLE;
 	case REC_SCORE_RATE_D:
-	default:
 		return CUR_FONT_COLOR_RED;
+	case REC_SCORE_RATE_F:
+	default:
+		return CUR_FONT_COLOR_MONO;
 	}
 }
 
@@ -318,9 +320,11 @@ static cur_font_cr_t RecResultGetFlortCurFontColor(rec_score_rate_t rank) {
 		return CUR_FONT_COLOR_GREEN;
 	case REC_SCORE_RATE_C:
 		return CUR_FONT_COLOR_PURPLE;
-	case REC_SCORE_RATE_D: /* TODO: Fランクの定義、ver1.6またはそれ以降でやる */
-	default:
+	case REC_SCORE_RATE_D:
 		return CUR_FONT_COLOR_RED;
+	case REC_SCORE_RATE_F:
+	default:
+		return CUR_FONT_COLOR_MONO;
 	}
 }
 

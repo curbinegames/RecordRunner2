@@ -59,12 +59,12 @@ void PlayCheckHitEffect() {
 	return;
 }
 
-static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo) {
+static void PlayShowHitEffectCap1(rec_play_lanepos_t *lanePos, int lineNo) {
 	note_material notemat = NOTE_NONE;
 	int *img = NULL;
 	int frame = 0;
-	int xpos = xline[lineNo] - 10;
-	int ypos = yline[lineNo] - 10;
+	int xpos = lanePos->x[lineNo] - 10;
+	int ypos = lanePos->y[lineNo] - 10;
 
 	switch (EffState[lineNo].note - 1) {
 	case 0:
@@ -149,9 +149,9 @@ static void PlayShowHitEffectCap1(int *xline, int *yline, int lineNo) {
 	return;
 }
 
-void PlayShowHitEffect(int *xline, int *yline) {
-	PlayShowHitEffectCap1(xline, yline, 0);
-	PlayShowHitEffectCap1(xline, yline, 1);
-	PlayShowHitEffectCap1(xline, yline, 2);
+void PlayShowHitEffect(rec_play_lanepos_t *lanePos) {
+	PlayShowHitEffectCap1(lanePos, 0);
+	PlayShowHitEffectCap1(lanePos, 1);
+	PlayShowHitEffectCap1(lanePos, 2);
 	return;
 }

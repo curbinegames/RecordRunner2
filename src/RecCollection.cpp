@@ -15,155 +15,155 @@
 /* rec sub include */
 #include <collect_seclet.h>
 
-#if 1 /* C_item */
+static class rec_clct_itemview_c {
+private:
+	void RecClctGetItemOpenFg(bool openFg[]) {
+		const double Grate = RecSaveGetFullRunnerRate();
+		rec_user_data_t userData;
 
-static void RecClctGetItemOpenFg(bool openFg[]) {
-	const double Grate = RecSaveGetFullRunnerRate();
-	rec_user_data_t userData;
+		RecSaveReadUserPlay(&userData);
 
-	RecSaveReadUserPlay(&userData);
-
-	openFg[0] = ( 1 <= userData.dropCount);
-	openFg[1] = ( 1 <= userData.clearCount);
-	openFg[2] = ( 1 <= userData.NMCount);
-	openFg[3] = ( 1 <= userData.FCCount);
-	openFg[4] = ( 1 <= userData.PFcount);
-	openFg[5] = ( 1 <= userData.playCount);
-	openFg[6] = (10 <= userData.playCount);
-	openFg[7] = (25 <= Grate);
-	openFg[8] = (55 <= Grate);
-	openFg[9] = (90 <= Grate);
-	return;
-}
-
-static void RecClctDrawItemPictureLine(uint DrawX, int DrawY, uint StartNum, uint count,
-	uint cmdX, uint cmdY, const bool openFg[], DxPic_t item[], DxPic_t win, DxPic_t cover)
-{
-	uint cmd_item_num = 0;
-	uint DrawP = 0;
-	switch (cmdY) {
-	case 0:
-		cmd_item_num = cmdX + 0;
-		break;
-	case 1:
-		cmd_item_num = cmdX + 3;
-		break;
-	case 2:
-		cmd_item_num = cmdX + 7;
-		break;
+		openFg[0] = ( 1 <= userData.dropCount);
+		openFg[1] = ( 1 <= userData.clearCount);
+		openFg[2] = ( 1 <= userData.NMCount);
+		openFg[3] = ( 1 <= userData.FCCount);
+		openFg[4] = ( 1 <= userData.PFcount);
+		openFg[5] = ( 1 <= userData.playCount);
+		openFg[6] = (10 <= userData.playCount);
+		openFg[7] = (25 <= Grate);
+		openFg[8] = (55 <= Grate);
+		openFg[9] = (90 <= Grate);
+		return;
 	}
-	for (int i = 0; i < count; i++) {
-		DrawP = (openFg[i + StartNum]) ? (i + 1 + StartNum) : 0;
-		RecRescaleDrawGraph(DrawX + i * 150, DrawY, win, TRUE);
-		RecRescaleDrawGraph(DrawX + i * 150 + 3, DrawY + 3, item[DrawP], TRUE);
-		if (i + StartNum != cmd_item_num) {
-			RecRescaleDrawGraph(DrawX + i * 150, DrawY, cover, TRUE);
-		}
-	}
-	return;
-}
 
-static void RecClctDrawItemDetail(uint cmdX, int cmdY, const bool openFg[]) {
-	const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
-	uint itemNo = 0;
-	switch (cmdY) {
-	case 0:
-		itemNo = cmdX + 0;
-		break;
-	case 1:
-		itemNo = cmdX + 3;
-		break;
-	case 2:
-		itemNo = cmdX + 7;
-		break;
-	}
-	if (openFg[itemNo]) {
-		RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("%s:\n%s\n%s[%s]"),
-			p_item_data[itemNo].name,
-			p_item_data[itemNo].detail1,
-			p_item_data[itemNo].detail2,
-			p_item_data[itemNo].condition);
-	}
-	else {
-		RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("???\n[%s]"),
-			p_item_data[itemNo].condition);
-	}
-	return;
-}
-
-static int C_item(void) {
-	bool openFg[10] = { false,false,false,false,false,false,false,false,false,false };
-	int	command[2] = { 0,0 };
-	DxPic_t win = LoadGraph(L"picture/item枠.png");
-	DxPic_t cover = LoadGraph(L"picture/itemカバー.png");
-	DxPic_t backimg = LoadGraph(L"picture/COLLECT back.png");
-	DxPic_t item[11] = {
-		LoadGraph(L"picture/item0.png"),
-		LoadGraph(L"picture/item1.png"),
-		LoadGraph(L"picture/item2.png"),
-		LoadGraph(L"picture/item3.png"),
-		LoadGraph(L"picture/item4.png"),
-		LoadGraph(L"picture/item5.png"),
-		LoadGraph(L"picture/item6.png"),
-		LoadGraph(L"picture/item7.png"),
-		LoadGraph(L"picture/item8.png"),
-		LoadGraph(L"picture/item9.png"),
-		LoadGraph(L"picture/item10.png")
-	};
-	DxSnd_t sel = LoadSoundMem(L"sound/select.wav");
-	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, sel);
-	rec_helpbar_c help;
-
-	RecClctGetItemOpenFg(openFg);
-
-	while (1) {
-		InputAllKeyHold();
-		switch (GetKeyPushOnce()) {
-		case KEY_INPUT_LEFT:
-			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
-			command[0] = (command[0] + 3) % 4;
-			if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 2; }
+	void RecClctDrawItemPictureLine(uint DrawX, int DrawY, uint StartNum, uint count,
+		uint cmdX, uint cmdY, const bool openFg[], DxPic_t item[], DxPic_t win, DxPic_t cover)
+	{
+		uint cmd_item_num = 0;
+		uint DrawP = 0;
+		switch (cmdY) {
+		case 0:
+			cmd_item_num = cmdX + 0;
 			break;
-		case KEY_INPUT_RIGHT:
-			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
-			command[0] = (command[0] + 1) % 4;
-			if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 0; }
+		case 1:
+			cmd_item_num = cmdX + 3;
 			break;
-		case KEY_INPUT_UP:
-			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
-			command[1] = (command[1] + 2) % 3;
-			if (command[0] == 3 && command[1] == 0) { command[0] = 2; }
-			break;
-		case KEY_INPUT_DOWN:
-			PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
-			command[1] = (command[1] + 1) % 3;
-			if (command[0] == 3 && command[1] == 2) { command[0] = 2; }
-			break;
-		case KEY_INPUT_BACK:
-			return 0;
-		default:
+		case 2:
+			cmd_item_num = cmdX + 7;
 			break;
 		}
-
-		if (GetWindowUserCloseFlag(TRUE)) { return 5; }
-
-		ClearDrawScreen();
-		RecRescaleDrawGraph(0, 0, backimg, TRUE);
-
-		RecClctDrawItemPictureLine(110,  20, 0, 3, command[0], command[1], openFg, item, win, cover);
-		RecClctDrawItemPictureLine( 40, 140, 3, 4, command[0], command[1], openFg, item, win, cover);
-		RecClctDrawItemPictureLine(110, 260, 7, 3, command[0], command[1], openFg, item, win, cover);
-		RecClctDrawItemDetail(command[0], command[1], openFg);
-
-		help.DrawHelp(HELP_MAT_COLLECTION_ITEM);
-		ScreenFlip();
-
-		WaitTimer(10);
+		for (int i = 0; i < count; i++) {
+			DrawP = (openFg[i + StartNum]) ? (i + 1 + StartNum) : 0;
+			RecRescaleDrawGraph(DrawX + i * 150, DrawY, win, TRUE);
+			RecRescaleDrawGraph(DrawX + i * 150 + 3, DrawY + 3, item[DrawP], TRUE);
+			if (i + StartNum != cmd_item_num) {
+				RecRescaleDrawGraph(DrawX + i * 150, DrawY, cover, TRUE);
+			}
+		}
+		return;
 	}
-	return 0;
-}
 
-#endif /* C_item */
+	void RecClctDrawItemDetail(uint cmdX, int cmdY, const bool openFg[]) {
+		const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
+		uint itemNo = 0;
+		switch (cmdY) {
+		case 0:
+			itemNo = cmdX + 0;
+			break;
+		case 1:
+			itemNo = cmdX + 3;
+			break;
+		case 2:
+			itemNo = cmdX + 7;
+			break;
+		}
+		if (openFg[itemNo]) {
+			RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("%s:\n%s\n%s[%s]"),
+				p_item_data[itemNo].name,
+				p_item_data[itemNo].detail1,
+				p_item_data[itemNo].detail2,
+				p_item_data[itemNo].condition);
+		}
+		else {
+			RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("???\n[%s]"),
+				p_item_data[itemNo].condition);
+		}
+		return;
+	}
+
+public:
+	int C_item(void) {
+		bool openFg[10] = { false,false,false,false,false,false,false,false,false,false };
+		int	command[2] = { 0,0 };
+		DxPic_t win = LoadGraph(L"picture/item枠.png");
+		DxPic_t cover = LoadGraph(L"picture/itemカバー.png");
+		DxPic_t backimg = LoadGraph(L"picture/COLLECT back.png");
+		DxPic_t item[11] = {
+			LoadGraph(L"picture/item0.png"),
+			LoadGraph(L"picture/item1.png"),
+			LoadGraph(L"picture/item2.png"),
+			LoadGraph(L"picture/item3.png"),
+			LoadGraph(L"picture/item4.png"),
+			LoadGraph(L"picture/item5.png"),
+			LoadGraph(L"picture/item6.png"),
+			LoadGraph(L"picture/item7.png"),
+			LoadGraph(L"picture/item8.png"),
+			LoadGraph(L"picture/item9.png"),
+			LoadGraph(L"picture/item10.png")
+		};
+		DxSnd_t sel = LoadSoundMem(L"sound/select.wav");
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, sel);
+		rec_helpbar_c help;
+
+		RecClctGetItemOpenFg(openFg);
+
+		while (1) {
+			InputAllKeyHold();
+			switch (GetKeyPushOnce()) {
+			case KEY_INPUT_LEFT:
+				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+				command[0] = (command[0] + 3) % 4;
+				if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 2; }
+				break;
+			case KEY_INPUT_RIGHT:
+				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+				command[0] = (command[0] + 1) % 4;
+				if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 0; }
+				break;
+			case KEY_INPUT_UP:
+				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+				command[1] = (command[1] + 2) % 3;
+				if (command[0] == 3 && command[1] == 0) { command[0] = 2; }
+				break;
+			case KEY_INPUT_DOWN:
+				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+				command[1] = (command[1] + 1) % 3;
+				if (command[0] == 3 && command[1] == 2) { command[0] = 2; }
+				break;
+			case KEY_INPUT_BACK:
+				return 0;
+			default:
+				break;
+			}
+
+			if (GetWindowUserCloseFlag(TRUE)) { return 5; }
+
+			ClearDrawScreen();
+			RecRescaleDrawGraph(0, 0, backimg, TRUE);
+
+			RecClctDrawItemPictureLine(110,  20, 0, 3, command[0], command[1], openFg, item, win, cover);
+			RecClctDrawItemPictureLine( 40, 140, 3, 4, command[0], command[1], openFg, item, win, cover);
+			RecClctDrawItemPictureLine(110, 260, 7, 3, command[0], command[1], openFg, item, win, cover);
+			RecClctDrawItemDetail(command[0], command[1], openFg);
+
+			help.DrawHelp(HELP_MAT_COLLECTION_ITEM);
+			ScreenFlip();
+
+			WaitTimer(10);
+		}
+		return 0;
+	}
+};
 
 #if 1 /* C_story */
 
@@ -181,35 +181,6 @@ static void RecClctGetSubStoryScore(int subScore[]) {
 
 	for (int i = 0; i < 4; i++) {
 		rec_save_score_t databuf[6];
-#if 0 /* TODO:旧ファイルを救う。リネームして保存でOK */
-		switch (i) {
-		case 0:
-			RecSaveReadScoreAllDif(databuf, L"snow town story");
-			buf[6] = 1;
-			break;
-		case 1:
-			RecSaveReadScoreAllDif(databuf, L"グラデーション・ワールド");
-			buf[6] = 1;
-			break;
-		case 2:
-			RecSaveReadScoreAllDif(databuf, L"What Color Is The Sky？");
-			buf[6] = 1;
-			break;
-		case 3:
-			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
-			buf[6] = 2;
-			break;
-		case 4:
-			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
-			buf[6] = 4;
-			break;
-		case 5:
-			RecSaveReadScoreAllDif(databuf, L"トリノユメ");
-			buf[6] = 5;
-			break;
-		}
-		for (j = buf[6]; j <= 5; j++) subScore[i] = maxs_2(subScore[i], databuf[j].score);
-#endif
 		subScore[i] = 0;
 		switch (i) {
 		case 0:
@@ -271,45 +242,25 @@ static void RecClctDrawMainStoryTitle(int cmdX, int cmdY, bool openFg) {
 
 	switch (cmdY) {
 	case 0:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("ピッカー"), charaName, 16);
-		}
-		else {
-			strcopy_2(_T("Picker"), charaName, 16);
-		}
+		strcopy_2(REC_STR_LANG(_T("ピッカー"), _T("Picker")), charaName, 16);
 		break;
 	case 1:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("マップゲーター"), charaName, 16);
-		}
-		else {
-			strcopy_2(_T("Mapgator"), charaName, 16);
-		}
+		strcopy_2(REC_STR_LANG(_T("マップゲーター"), _T("Mapgator")), charaName, 16);
 		break;
 	case 2:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("テイラー"), charaName, 16);
-		}
-		else {
-			strcopy_2(_T("Taylor"), charaName, 16);
-		}
+		strcopy_2(REC_STR_LANG(_T("テイラー"), _T("Taylor")), charaName, 16);
 		break;
 	}
 
 	if (openFg == true) {
-		if (optiondata.lang == 0) {
-			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("エピソード%d-%d"), cmdX / 5 + 1, cmdX % 5 + 1);
-		}
-		else {
-			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("Episode %d-%d"), cmdX / 5 + 1, cmdX % 5 + 1);
-		}
+		swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), REC_STR_LANG(_T("エピソード%d-%d"), _T("Episode %d-%d")), cmdX / 5 + 1, cmdX % 5 + 1);
 	}
 	else {
 		uint for_open_count = 0;
 		if      (cmdX == 0)              { for_open_count = 1; }
 		else if (1 <= cmdX && cmdX <= 6) { for_open_count = cmdX * 2; }
 		else                             { for_open_count = cmdX * 3 - 7; }
-		if (optiondata.lang == 0) {
+		if (optiondata.lang == 0) { /* 単純にREC_STR_LANG()は使えなかった */
 			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("%sを使って\n%d回プレイしよう。"), charaName, for_open_count);
 		}
 		else {
@@ -350,12 +301,7 @@ static void RecClctDrawSubStoryTitle(int cmdX, bool openFg) {
 		target_str = _T('A');
 		break;
 	case 1:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("グラデーション・ワールド"), song_name, 32);
-		}
-		else {
-			strcopy_2(_T("Gradation-world"), song_name, 32);
-		}
+		strcopy_2(REC_STR_LANG(_T("グラデーション・ワールド"), _T("Gradation-world")), song_name, 32);
 		strcopy_2(_T("EASY"), dif_name, 32);
 		target_str = _T('A');
 		break;
@@ -365,27 +311,17 @@ static void RecClctDrawSubStoryTitle(int cmdX, bool openFg) {
 		target_str = _T('S');
 		break;
 	case 3:
-		if (optiondata.lang == 0) {
-			strcopy_2(_T("トリノユメ"), song_name, 32);
-		}
-		else {
-			strcopy_2(_T("Torinoyume"), song_name, 32);
-		}
+		strcopy_2(REC_STR_LANG(_T("トリノユメ"), _T("Torinoyume")), song_name, 32);
 		strcopy_2(_T("NORMAL"), dif_name, 32);
 		target_str = _T('S');
 		break;
 	}
 
 	if (openFg == 1) {
-		if (optiondata.lang == 0) {
-			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("エピソード%d"), cmdX + 1);
-		}
-		else {
-			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("Episode %d"), cmdX + 1);
-		}
+		swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), REC_STR_LANG(_T("エピソード%d"), _T("Episode %d")), cmdX + 1);
 	}
 	else {
-		if (optiondata.lang == 0) {
+		if (optiondata.lang == 0) { /* 単純にREC_STR_LANG()は使えなかった */
 			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("%s[%s]以上で\n%cランクを取ろう"), song_name, dif_name, target_str);
 		}
 		else {
@@ -417,28 +353,13 @@ static void RecClctDrawExStoryTitle(int cmdX, int openWay) {
 			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("appendix-%d"), cmdX + 1);
 		}
 		else if (openWay == 2) {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("トリノユメ[HOPENESS]で\nEXランクを取れ"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Reath EX RANK at\nTorinoyume[HOPENESS]."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("トリノユメ[HOPENESS]で\nEXランクを取れ"), _T("Reath EX RANK at\nTorinoyume[HOPENESS].")), GT1, 64);
 		}
 		else if (openWay == 1) {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("トリノユx功簾M_^簸]で\nEXランクを取れ"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Reath EX RANK at\nTorim.v?&1/0)\\$cRD]."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("トリノユx功簾M_^簸]で\nEXランクを取れ"), _T("Reath EX RANK at\nTorim.v?&1/0)\\$cRD].")), GT1, 64);
 		}
 		else {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("刈ョ切簾M_^簸]\ne\\ny×蘭区奪"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Rns(}1)Op&rrZ\ne\\ny456Ge/t0Z<=00ax(Q)."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("刈ョ切簾M_^簸]\ne\\ny×蘭区奪"), _T("Rns(}1)Op&rrZ\ne\\ny456Ge/t0Z<=00ax(Q).")), GT1, 64);
 		}
 		break;
 	case 1:
@@ -446,28 +367,13 @@ static void RecClctDrawExStoryTitle(int cmdX, int openWay) {
 			swprintf_s(GT1, sizeof(GT1) / sizeof(GT1[0]), _T("appendix-%d"), cmdX + 1);
 		}
 		else if (openWay == 2) {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("drop DOWN DOWN[NIGHTMARE]で\nEXランクを取れ"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Reath EX RANK at\ndrop DOWN DOWN[NIGHTMARE]."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("drop DOWN DOWN[NIGHTMARE]で\nEXランクを取れ"), _T("Reath EX RANK at\ndrop DOWN DOWN[NIGHTMARE].")), GT1, 64);
 		}
 		else if (openWay == 1) {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("drop DOWN DO↓[↓↓↓↓\n↓↓↓ｹ↓↓↓↓↓"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("Rea↓↓↓ ↓↓at\n↓↓↓WN DOW↓↓↓↓↓↓↓]."), GT1, 64);
-			}
+			strcopy_2(REC_STR_LANG(_T("drop DOWN DO↓[↓↓↓↓\n↓↓↓ｹ↓↓↓↓↓"), _T("Rea↓↓↓ ↓↓at\n↓↓↓WN DOW↓↓↓↓↓↓↓].")), GT1, 64);
 		}
 		else {
-			if (optiondata.lang == 0) {
-				strcopy_2(_T("↓↓↓\n↓↓↓↓↓↓"), GT1, 64);
-			}
-			else {
-				strcopy_2(_T("↓↓↓\n↓↓↓↓↓↓"), GT1, 64);
-			}
+			strcopy_2(_T("↓↓↓\n↓↓↓↓↓↓"), GT1, 64); /* jp,en 一緒 */
 		}
 		break;
 	}
@@ -594,12 +500,7 @@ static int C_story(void) {
 
 		// ストーリーのタイトル/解放条件を表示
 		RecRescaleDrawFormatString(5, 5, Cr, L"%d/%d", command[0], command[1]);
-		if (optiondata.lang == 0) {
-			RecRescaleDrawFormatString(330, 220, Cr, L"%s", chan[command[1]]);
-		}
-		else {
-			RecRescaleDrawFormatString(330, 220, Cr, L"%s", chanE[command[1]]);
-		}
+		RecRescaleDrawFormatString(330, 220, Cr, L"%s", REC_STR_LANG(chan[command[1]], chanE[command[1]]));
 		if (command[1] <= 2) {
 			openFg = RecClctCheckOpenMainStory(command[0], command[1], chac);
 			RecClctDrawMainStoryTitle(command[0], command[1], openFg);
@@ -651,7 +552,10 @@ now_scene_t collection(void) {
 		case KEY_INPUT_RETURN:
 			switch (command) {
 			case 0:
-				end = C_item();
+				{
+					rec_clct_itemview_c action;
+					end = action.C_item();
+				}
 				break;
 			case 1:
 				end = C_story();

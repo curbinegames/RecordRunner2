@@ -17,10 +17,8 @@ class rec_helpbar_c {
 private:
 	DxPic_t pic;
 public:
-	rec_helpbar_c();
+	rec_helpbar_c(void);
 	~rec_helpbar_c();
 	void DrawHelp(help_bar_mat_t mat);
+	void ReloadMat(void);
 };
-
-extern void InitHelpBar();
-extern void DrawHelpBar(help_bar_mat_t mat, char lan);

@@ -79,13 +79,8 @@ private:
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 0, 250, 255, time));
 		RecRescaleDrawGraph(0, 0, this->menu_item[this->Ncmd].back, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-#if 0
-		RecRescaleDrawGraph(0, pals(250, WINDOW_SIZE_Y / 2, 0, 0, time), this->menu_item[this->Bcmd].ground, TRUE);
-		RecRescaleDrawGraph(0, pals(250, 0, 0, WINDOW_SIZE_Y / 2, time), this->menu_item[this->Ncmd].ground, TRUE);
-#else
 		DrawGraphAnchor(0, pals(250, WINDOW_SIZE_Y / 2, 0, 0, time), this->menu_item[this->Bcmd].ground, DXDRAW_ANCHOR_BOTTOM_CENTRE);
 		DrawGraphAnchor(0, pals(250, 0, 0, WINDOW_SIZE_Y / 2, time), this->menu_item[this->Ncmd].ground, DXDRAW_ANCHOR_BOTTOM_CENTRE);
-#endif
 		return;
 	}
 

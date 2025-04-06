@@ -30,9 +30,6 @@
 
 typedef rec_play_key_hold_t key_hold_t;
 
-void InitAdif() { return; }
-int GetAdif() { return 0; }
-
 static void AutoBeforeChain(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
 	if (IS_NEAR_NOTE_ARROW_ANYLANE(note, objectNG, Ntime, 40)) {
 		key->up = 0;
