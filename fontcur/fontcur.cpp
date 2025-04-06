@@ -8,6 +8,7 @@ typedef DxPic_t cur_font_pic_t[12];
 
 static cur_font_pic_t cur_font_pic[7];
 
+/* TODO: class‚É‚·‚é */
 void InitCurFont() {
 	LoadDivGraph(_TEXT("fontcur/NumberMono.png"),    12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_MONO]);
 	LoadDivGraph(_TEXT("fontcur/NumberRed.png"),     12, 5, 3, 58, 64, cur_font_pic[CUR_FONT_COLOR_RED]);

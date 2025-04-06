@@ -94,35 +94,6 @@ static char const tipNum = ARRAY_COUNT(tip);
 
 #if 1 /* action */
 
-void CutinReadyPic() {
-	pic_cutin[0] = LoadGraph(L"picture/cutin/cutinU.png");
-	pic_cutin[1] = LoadGraph(L"picture/cutin/cutinD.png");
-	pic_cutin[2] = LoadGraph(L"picture/cutin/cutinDisk.png");
-	pic_cutin[3] = LoadGraph(SongJucketName);
-	pic_cutin[4] = LoadGraph(L"picture/cutin/cutinS.png");
-}
-
-void CutinReadySnd() {
-	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
-	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
-	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[0]);
-	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[1]);
-}
-
-void SetCutSong(wchar_t* songName, wchar_t* picName) {
-	strcopy_2(songName, CutSongName, 255);
-	strcopy_2(picName, SongJucketName, 255);
-	pic_cutin[3] = LoadGraph(picName);
-}
-
-void SetCutTipFg(cutin_tips_e Fg) {
-	CutFg = Fg;
-}
-
-void SetTipNo() {
-	TipNo = (char)GetRand(tipNum - 1);
-}
-
 static void RecCutDrawShut(int EffTime) {
 	int PosY = 0;
 	if (s_cutIoFg == CUT_FRAG_OUT) {
@@ -212,7 +183,7 @@ static void RecCutDrawSide(int EffTime) {
 	return;
 }
 
-void ViewCutIn(int Stime) {
+static void ViewCutIn(int Stime) {
 	int Ntime = GetNowCount();
 	int EffTime = mins_2(Ntime - Stime, 500);
 	int PosY = pals(500, 0, 0, 360, EffTime);
@@ -251,7 +222,7 @@ void ViewCutIn(int Stime) {
 	return;
 }
 
-void ViewCutOut(int Stime) {
+static void ViewCutOut(int Stime) {
 	int Ntime = GetNowCount();
 	int EffTime = Ntime - Stime;
 	if (500 < EffTime) {
@@ -293,12 +264,6 @@ void ViewCutOut(int Stime) {
 	return;
 }
 
-void RecViewCut2() {
-	if (s_cutIoFg == CUT_FRAG_OUT) { ViewCutOut(s_cutStime); }
-	if (s_cutIoFg == CUT_FRAG_IN) { ViewCutIn(s_cutStime); }
-	return;
-}
-
 void RecViewCut3() {
 	int EffTime = mins_2(GetNowCount() - s_cutStime, 500);
 
@@ -318,26 +283,6 @@ void RecViewCut3() {
 	RecCutDrawSide(EffTime);
 
 	return;
-}
-
-void RecCutSetIo(int val) {
-	s_cutIoFg = val;
-	s_cutStime = GetNowCount();
-	if (val == CUT_FRAG_IN) {
-		PlaySoundMem(snd_cutin[0], DX_PLAYTYPE_BACK);
-	}
-	else {
-		PlaySoundMem(snd_cutin[1], DX_PLAYTYPE_BACK);
-	}
-	return;
-}
-
-int RecCutIsClosing() {
-	return s_cutIoFg;
-}
-
-int RecCutInEndAnim() {
-	return (s_cutIoFg == 1 && s_cutStime + 2000 <= GetNowCount());
 }
 
 #endif /* action */

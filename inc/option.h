@@ -29,6 +29,7 @@ typedef struct rec_option_s {
 
 extern rec_option_t optiondata;
 
+/* TODO: ŒÄ‚Ñ‚ð‚Ç‚¤‚É‚©‚µ‚½‚¢ */
 extern int RecOpenOptionFile(int *data);
 extern int RecOpenOptionFile2(rec_option_t *data);
 extern int RecWriteOptineFile(int *data);

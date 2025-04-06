@@ -269,25 +269,6 @@ static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	return;
 }
 
-static int cal_nowdif_p(int *ddif, rec_play_time_set_t *time) {
-	int ret = 0;
-	int sect = 0;
-	int stime = 0;
-	if (time->now - time->offset <= 0) {
-		ret = ddif[0];
-	}
-	else if (time->now - time->end >= 0) {
-		ret = ddif[24];
-	}
-	else {
-		sect = (time->now - time->offset) * 24 / (time->end - time->offset);
-		stime = (time->now - time->offset) % ((time->end - time->offset) / 24);
-		ret = lins(0, ddif[sect], (time->end - time->offset) / 24, ddif[sect + 1], stime);
-	}
-	ret = lins(379 * 50, 100, 34733 * 50, 800, ret);
-	return ret;
-}
-
 static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 	short int MovieN, int Ntime, int Xmidline, int item[])
 {
@@ -1487,8 +1468,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	ReadyBonusPsmat();
 	ReadyEffPicture();
 	ReadyJudgePicture();
-	/* adifのリセット */
-	InitAdif();
 	/* action */
 	for (i[0] = 0; i[0] <= 59; i[0]++) { fps[i[0]] = 17; }
 	fps[60] = 0;
@@ -1695,8 +1674,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
 		if ((cutin.IsClosing() == 0) &&
 			(recfp.time.end + 5000 <= recfp.time.now) &&
-			(RecSysBgmCheckSoundMem() == 0)) {
-			SetCutTipFg(CUTIN_TIPS_NONE);
+			(RecSysBgmCheckSoundMem() == 0))
+		{
+			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
 			cutin.SetIo(1);
 		}
 		cutin.DrawCut();

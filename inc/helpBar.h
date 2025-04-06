@@ -22,6 +22,3 @@ public:
 	void DrawHelp(help_bar_mat_t mat);
 	void ReloadMat(void);
 };
-
-extern void InitHelpBar();
-extern void DrawHelpBar(help_bar_mat_t mat, char lan);

@@ -13,8 +13,8 @@
 #define OLD_WINDOW_SIZE_X 640                         // 前バージョンのウィンドウの横のサイズ
 #define OLD_WINDOW_SIZE_Y (OLD_WINDOW_SIZE_X * 3 / 4) // 前バージョンのウィンドウの縦のサイズ 480
 
-#define INIT_PIC() InitGraph(); CutinReadyPic(); InitHelpBar()
-#define INIT_SND() InitSoundMem(); CutinReadySnd()
+#define INIT_PIC() InitGraph()
+#define INIT_SND() InitSoundMem()
 #define INIT_MAT() INIT_PIC(); INIT_SND()
 
 #define SWITCH_NOTE_BOX_2 1
@@ -102,8 +102,6 @@ extern rec_error_t RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, u
 	rec_dif_t difNo);
 extern rec_error_t RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
 	rec_dif_t difNo);
-
-extern int recSystenLoad(rec_system_t *sys);
 
 extern void RecSysBgmChangeVolume(int val);
 extern void RecSysBgmSetMem(const TCHAR *sndPath, size_t size);
