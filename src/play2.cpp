@@ -222,11 +222,11 @@ static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 {
 	int ans = CHARA_POS_MID;
 	// push up
-	if (1 <= keyhold->up && 0 == keyhold->down) { return CHARA_POS_UP; }
+	if (IS_CHARAUP_KEY(keyhold)) { return CHARA_POS_UP; }
 	// push down
-	else if (0 == keyhold->up && 1 <= keyhold->down) { return CHARA_POS_DOWN; }
+	else if (IS_CHARALOW_KEY(keyhold)) { return CHARA_POS_DOWN; }
 	// push up and down
-	else if (1 <= keyhold->up && 1 <= keyhold->down) { return CHARA_POS_MID; }
+	else if (IS_PUSH_UPDOWN(keyhold)) { return CHARA_POS_MID; }
 	// near catch/bomb
 	for (int i = 0; i < 3; i++) {
 		if (note[No[i]].hittime <= time + 40 &&
@@ -237,11 +237,7 @@ static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
 		}
 	}
 	// hit note
-	if (keyhold->up != 1 && keyhold->down != 1 &&
-		keyhold->left != 1 && keyhold->right != 1 && hitatk->time != -1000)
-	{
-		return hitatk->pos;
-	}
+	if (!IS_PUSH_ANY_ARROWKEY(keyhold) && hitatk->time != -1000) { return hitatk->pos; }
 	return CHARA_POS_MID;
 }
 
@@ -1560,19 +1556,18 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 		runnerClass.pos = GetCharaPos3(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
-			(keyhold.up == 1 || keyhold.down == 1 ||
-			keyhold.left == 1 || keyhold.right == 1))
+			IS_JUST_PUSH_ANY_ARROWKEY(&keyhold))
 		{
 			charahit = 0;
 		}
 		//キー押しヒット解除
-		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk.time + 750 < recfp.time.now) {
+		if (IS_JUST_PUSH_ANY_ARROWKEY(&keyhold) || ((hitatk.time + 750) < recfp.time.now)) {
 			hitatk.time = -1000;
 		}
 		//キャッチ判定に使う数値を計算
 		RecPlayCalLaneTrack(LaneTrack, &keyhold, runnerClass.pos, recfp.time.now);
 		//ヒット
-		if (keyhold.z == 1 || keyhold.x == 1 || keyhold.c == 1) { charahit = GetNowCount(); }
+		if (IS_JUST_PUSH_ANY_HITKEY(&keyhold)) { charahit = GetNowCount(); }
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */
 		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
