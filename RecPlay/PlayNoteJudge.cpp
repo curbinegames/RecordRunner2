@@ -12,6 +12,7 @@
 #include <playbox.h>
 #include <PlayHitEff.h>
 #include <PlayViewJudge.h>
+#include <RecScoreFile.h>
 
 /* own include */
 #include <PlayNoteJudge.h>
@@ -23,8 +24,6 @@
 #define F_MISS_TIME 200
 
 #define AVOID_ARROW_DIV_TIME 10
-
-#define IS_REC_ARROW(mat) (((mat) == NOTE_UP) || ((mat) == NOTE_DOWN) || ((mat) == NOTE_LEFT) || ((mat) == NOTE_RIGHT))
 
 typedef rec_play_chara_hit_attack_t hitatt_t;
 typedef rec_play_key_hold_t key_hold_t;
@@ -368,7 +367,7 @@ static void RecJudgeArrowNote(note_box_2_t note[], short noteNo[], userpal_t *us
 	buf[2] = note[noteNo[2]];
 
 	/* アローのAVOID_ARROW_DIV_TIME以上のズレを検出する */
-	if (IS_REC_ARROW(buf[0].object)) {
+	if (IS_NOTE_ARROW_GROUP(buf[0].object)) {
 		if (buf[0].object == buf[1].object) {
 			if (buf[0].hittime >= buf[1].hittime + AVOID_ARROW_DIV_TIME) {
 				avoidFg[0] = 1;
@@ -388,7 +387,7 @@ static void RecJudgeArrowNote(note_box_2_t note[], short noteNo[], userpal_t *us
 		}
 	}
 
-	if (IS_REC_ARROW(buf[1].object)) {
+	if (IS_NOTE_ARROW_GROUP(buf[1].object)) {
 		if (buf[1].object == buf[2].object) {
 			if (buf[1].hittime >= buf[2].hittime + AVOID_ARROW_DIV_TIME) {
 				avoidFg[1] = 1;

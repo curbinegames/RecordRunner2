@@ -17,27 +17,55 @@
 
 static class rec_clct_itemview_c {
 private:
-	void RecClctGetItemOpenFg(bool openFg[]) {
+	bool openFg[10] = { false,false,false,false,false,false,false,false,false,false };
+	DxPic_t win = LoadGraph(L"picture/item枠.png");
+	DxPic_t cover = LoadGraph(L"picture/itemカバー.png");
+	DxPic_t backimg = LoadGraph(L"picture/COLLECT back.png");
+	DxPic_t item[11] = {
+		LoadGraph(L"picture/item0.png"),
+		LoadGraph(L"picture/item1.png"),
+		LoadGraph(L"picture/item2.png"),
+		LoadGraph(L"picture/item3.png"),
+		LoadGraph(L"picture/item4.png"),
+		LoadGraph(L"picture/item5.png"),
+		LoadGraph(L"picture/item6.png"),
+		LoadGraph(L"picture/item7.png"),
+		LoadGraph(L"picture/item8.png"),
+		LoadGraph(L"picture/item9.png"),
+		LoadGraph(L"picture/item10.png")
+	};
+	DxSnd_t selectSnd = DXLIB_SND_NULL;
+
+private:
+	void RecClctGetItemOpenFg(void) {
 		const double Grate = RecSaveGetFullRunnerRate();
 		rec_user_data_t userData;
 
 		RecSaveReadUserPlay(&userData);
 
-		openFg[0] = ( 1 <= userData.dropCount);
-		openFg[1] = ( 1 <= userData.clearCount);
-		openFg[2] = ( 1 <= userData.NMCount);
-		openFg[3] = ( 1 <= userData.FCCount);
-		openFg[4] = ( 1 <= userData.PFcount);
-		openFg[5] = ( 1 <= userData.playCount);
-		openFg[6] = (10 <= userData.playCount);
-		openFg[7] = (25 <= Grate);
-		openFg[8] = (55 <= Grate);
-		openFg[9] = (90 <= Grate);
+		this->openFg[0] = ( 1 <= userData.dropCount);
+		this->openFg[1] = ( 1 <= userData.clearCount);
+		this->openFg[2] = ( 1 <= userData.NMCount);
+		this->openFg[3] = ( 1 <= userData.FCCount);
+		this->openFg[4] = ( 1 <= userData.PFcount);
+		this->openFg[5] = ( 1 <= userData.playCount);
+		this->openFg[6] = (10 <= userData.playCount);
+		this->openFg[7] = (25 <= Grate);
+		this->openFg[8] = (55 <= Grate);
+		this->openFg[9] = (90 <= Grate);
 		return;
 	}
 
+public:
+	rec_clct_itemview_c(void) {
+		this->selectSnd = LoadSoundMem(L"sound/select.wav");
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->selectSnd);
+		this->RecClctGetItemOpenFg();
+	}
+
+private:
 	void RecClctDrawItemPictureLine(uint DrawX, int DrawY, uint StartNum, uint count,
-		uint cmdX, uint cmdY, const bool openFg[], DxPic_t item[], DxPic_t win, DxPic_t cover)
+		uint cmdX, uint cmdY)
 	{
 		uint cmd_item_num = 0;
 		uint DrawP = 0;
@@ -53,17 +81,17 @@ private:
 			break;
 		}
 		for (int i = 0; i < count; i++) {
-			DrawP = (openFg[i + StartNum]) ? (i + 1 + StartNum) : 0;
-			RecRescaleDrawGraph(DrawX + i * 150, DrawY, win, TRUE);
-			RecRescaleDrawGraph(DrawX + i * 150 + 3, DrawY + 3, item[DrawP], TRUE);
+			DrawP = (this->openFg[i + StartNum]) ? (i + 1 + StartNum) : 0;
+			RecRescaleDrawGraph(DrawX + i * 150, DrawY, this->win, TRUE);
+			RecRescaleDrawGraph(DrawX + i * 150 + 3, DrawY + 3, this->item[DrawP], TRUE);
 			if (i + StartNum != cmd_item_num) {
-				RecRescaleDrawGraph(DrawX + i * 150, DrawY, cover, TRUE);
+				RecRescaleDrawGraph(DrawX + i * 150, DrawY, this->cover, TRUE);
 			}
 		}
 		return;
 	}
 
-	void RecClctDrawItemDetail(uint cmdX, int cmdY, const bool openFg[]) {
+	void RecClctDrawItemDetail(uint cmdX, int cmdY) {
 		const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
 		uint itemNo = 0;
 		switch (cmdY) {
@@ -77,7 +105,7 @@ private:
 			itemNo = cmdX + 7;
 			break;
 		}
-		if (openFg[itemNo]) {
+		if (this->openFg[itemNo]) {
 			RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("%s:\n%s\n%s[%s]"),
 				p_item_data[itemNo].name,
 				p_item_data[itemNo].detail1,
@@ -93,50 +121,29 @@ private:
 
 public:
 	int C_item(void) {
-		bool openFg[10] = { false,false,false,false,false,false,false,false,false,false };
 		int	command[2] = { 0,0 };
-		DxPic_t win = LoadGraph(L"picture/item枠.png");
-		DxPic_t cover = LoadGraph(L"picture/itemカバー.png");
-		DxPic_t backimg = LoadGraph(L"picture/COLLECT back.png");
-		DxPic_t item[11] = {
-			LoadGraph(L"picture/item0.png"),
-			LoadGraph(L"picture/item1.png"),
-			LoadGraph(L"picture/item2.png"),
-			LoadGraph(L"picture/item3.png"),
-			LoadGraph(L"picture/item4.png"),
-			LoadGraph(L"picture/item5.png"),
-			LoadGraph(L"picture/item6.png"),
-			LoadGraph(L"picture/item7.png"),
-			LoadGraph(L"picture/item8.png"),
-			LoadGraph(L"picture/item9.png"),
-			LoadGraph(L"picture/item10.png")
-		};
-		DxSnd_t sel = LoadSoundMem(L"sound/select.wav");
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, sel);
 		rec_helpbar_c help;
-
-		RecClctGetItemOpenFg(openFg);
 
 		while (1) {
 			InputAllKeyHold();
 			switch (GetKeyPushOnce()) {
 			case KEY_INPUT_LEFT:
-				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
 				command[0] = (command[0] + 3) % 4;
 				if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 2; }
 				break;
 			case KEY_INPUT_RIGHT:
-				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
 				command[0] = (command[0] + 1) % 4;
 				if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 0; }
 				break;
 			case KEY_INPUT_UP:
-				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
 				command[1] = (command[1] + 2) % 3;
 				if (command[0] == 3 && command[1] == 0) { command[0] = 2; }
 				break;
 			case KEY_INPUT_DOWN:
-				PlaySoundMem(sel, DX_PLAYTYPE_NORMAL);
+				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
 				command[1] = (command[1] + 1) % 3;
 				if (command[0] == 3 && command[1] == 2) { command[0] = 2; }
 				break;
@@ -149,12 +156,12 @@ public:
 			if (GetWindowUserCloseFlag(TRUE)) { return 5; }
 
 			ClearDrawScreen();
-			RecRescaleDrawGraph(0, 0, backimg, TRUE);
+			RecRescaleDrawGraph(0, 0, this->backimg, TRUE);
 
-			RecClctDrawItemPictureLine(110,  20, 0, 3, command[0], command[1], openFg, item, win, cover);
-			RecClctDrawItemPictureLine( 40, 140, 3, 4, command[0], command[1], openFg, item, win, cover);
-			RecClctDrawItemPictureLine(110, 260, 7, 3, command[0], command[1], openFg, item, win, cover);
-			RecClctDrawItemDetail(command[0], command[1], openFg);
+			this->RecClctDrawItemPictureLine(110,  20, 0, 3, command[0], command[1]);
+			this->RecClctDrawItemPictureLine( 40, 140, 3, 4, command[0], command[1]);
+			this->RecClctDrawItemPictureLine(110, 260, 7, 3, command[0], command[1]);
+			this->RecClctDrawItemDetail(command[0], command[1]);
 
 			help.DrawHelp(HELP_MAT_COLLECTION_ITEM);
 			ScreenFlip();
