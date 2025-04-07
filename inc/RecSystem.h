@@ -80,6 +80,14 @@ typedef enum rec_error_e {
 	REC_ERROR_MAP_COUNT  = 200, /* オブジェクト数が多すぎた */
 } rec_error_t;
 
+typedef struct rec_to_play_set_s {
+	int packNo = 0;
+	int musicNo = 0;
+	int dif = 0;
+	int shift = 0;
+	int autoFg = 0;
+} rec_to_play_set_t;
+
 typedef struct rec_system_s {
 	int chara = 0;
 	int offset = 0;
