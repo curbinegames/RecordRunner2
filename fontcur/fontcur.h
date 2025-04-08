@@ -26,5 +26,5 @@ typedef enum cur_font_cr_e {
 } cur_font_cr_t;
 
 extern void InitCurFont();
-extern void DrawCurFont(double dn, short int x, short int y,
-	int sizeY, cur_font_cr_t Cr, short int a = 0, int zero = 1);
+extern void DrawCurFont(double dn, short x, short y,
+	int sizeY, cur_font_cr_t Cr, short a = 0, int zero = 1);

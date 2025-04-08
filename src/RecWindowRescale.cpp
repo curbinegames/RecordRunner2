@@ -396,8 +396,8 @@ void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const T
 	return;
 }
 
-void RecRescaleDrawCurFont(double dn, short int x, short int y, int sizeY,
-	cur_font_cr_t Cr, short int a, int zero)
+void RecRescaleDrawCurFont(double dn, short x, short y, int sizeY,
+	cur_font_cr_t Cr, short a, int zero)
 {
 	int drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
 	int drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);

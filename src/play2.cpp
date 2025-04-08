@@ -121,7 +121,7 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	return;
 }
 
-static void RecResetPlayObjectNum(short int objectN[], const rec_score_file_t *recfp) {
+static void RecResetPlayObjectNum(short objectN[], const rec_score_file_t *recfp) {
 	uint allnum = recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2];
 	for (uint iView = 0; iView < allnum; iView++) {
 		if (recfp->mapdata.note[iView].lane == NOTE_LANE_UP) {
@@ -242,7 +242,7 @@ static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 }
 
 static void PlayDrawItem(rec_map_eff_data_t *mapeff,
-	short int MovieN, int Ntime, int Xmidline, int item[])
+	short MovieN, int Ntime, int Xmidline, int item[])
 {
 	view_BPM_box *v_BPM = &mapeff->v_BPM.data[mapeff->v_BPM.num];
 	int drawA;
@@ -1398,7 +1398,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	char key[256];
 
 	/* short */
-	short int i[3];
+	short i[3];
 
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
@@ -1411,8 +1411,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
-	short int lockN[2] = { 0,0 }; //↑の番号
-	short int viewTN = 0;
+	short lockN[2] = { 0,0 }; //↑の番号
+	short viewTN = 0;
 	rec_play_lanepos_t lanePos;
 	unsigned int Cr = GetColor(255, 255, 255);
 	unsigned int Crb = GetColor(0, 0, 0);
@@ -1425,10 +1425,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
 	play_key_stat_t key_stat;
-	short int MovieN = 0;
+	short MovieN = 0;
 	rec_view_bpm_set_t v_BPM;
-	short int objectN[3] = { 5999,5999,5999 }; //note number
-	short int objectNG[3] = { 0,0,0 }; //note number without ghost note
+	short objectN[3] = { 5999,5999,5999 }; //note number
+	short objectNG[3] = { 0,0,0 }; //note number without ghost note
 	rec_score_file_t recfp;
 	rec_play_userpal_t userpal;
 
@@ -1453,9 +1453,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	/* mat */
 	int item[99]; //アイテムのfd、DrawGraphで呼べる。
-	short int itemN = 0; //↑の番号
+	short itemN = 0; //↑の番号
 	int Sitem[99]; //サウンドアイテムのfd
-	short int SitemN = 0; //↑の番号
+	short SitemN = 0; //↑の番号
 	rec_play_back_pic_t backpic;
 	int dangerimg = LoadGraph(L"picture/danger.png");
 	int dropimg = LoadGraph(L"picture/drop.png");
