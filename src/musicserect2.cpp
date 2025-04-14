@@ -582,7 +582,7 @@ public:
 		RecSysBgmSetCurrentPosition(this->preTime[this->SongPrePat]);
 		RecSysBgmChangeVolume(0);
 		RecSysBgmPlay(true, false, false);
-		WaitTimer(30);
+		WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 		this->SongPreSTime = GetNowCount();
 	}
 
@@ -1281,7 +1281,7 @@ now_scene_t musicserect(rec_to_play_set_t *toPlay) {
 			next = SCENE_EXIT;
 			break;
 		}
-		WaitTimer(5);
+		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
 
 	RecSerectSaveBefCmd(cmd, songdata.sortMode);

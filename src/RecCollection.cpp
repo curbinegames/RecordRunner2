@@ -166,7 +166,7 @@ public:
 			help.DrawHelp(HELP_MAT_COLLECTION_ITEM);
 			ScreenFlip();
 
-			WaitTimer(10);
+			WaitTimer(WAIT_TIME_ON_GAMELOOP);
 		}
 		return 0;
 	}
@@ -584,7 +584,7 @@ now_scene_t collection(void) {
 
 		//Å~É{É^ÉìÇ™âüÇ≥ÇÍÇΩ
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-		WaitTimer(10);
+		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
 	return SCENE_MENU;
 }

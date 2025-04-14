@@ -1580,7 +1580,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	RecResetPlayObjectNum(objectN, &recfp);
 	RecSysBgmSetMem(recfp.nameset.mp3FN, ARRAY_COUNT(recfp.nameset.mp3FN));
 	RecSysBgmPlay(true, false, true);
-	WaitTimer(10);
+	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	Stime = GetNowCount();
 	cutin.SetIo(0);
 	//ÉQÅ[ÉÄäJén
@@ -1806,7 +1806,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			INIT_PIC();
 			return SCENE_SERECT;
 		}
-		WaitTimer(5);
+		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 		if (StopFrag == -1) {
 			recfp.time.now = GetNowCount() - Stime + optiondata.offset * 5;
 		}

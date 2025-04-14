@@ -158,7 +158,7 @@ now_scene_t title(void) {
 		if (GetWindowUserCloseFlag(TRUE)) {
 			return SCENE_EXIT;
 		}
-		WaitTimer(10);
+		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
 	ClearDrawScreen();
 	return SCENE_MENU;

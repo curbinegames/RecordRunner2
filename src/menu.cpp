@@ -175,6 +175,6 @@ now_scene_t menu(void) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		if (cutin.IsEndAnim()) { return menu_class.GetSerectScene(); }
 
-		WaitTimer(10);
+		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
 }

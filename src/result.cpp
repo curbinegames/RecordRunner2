@@ -62,7 +62,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 
 	InitCurFont();
 	RecSysBgmPlay(true, true, true);
-	WaitTimer(10);
+	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	cutin.SetIo(0);
 	while (1) {
 		ClearDrawScreen(); /* •`‰æƒGƒŠƒA‚±‚±‚©‚ç */
