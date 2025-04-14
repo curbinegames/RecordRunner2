@@ -101,21 +101,6 @@ static int strrans(const TCHAR *p1) {
 	return GetRand(b - a) + a;
 }
 
-double SETbpm(wchar_t *p1) {
-	strmods(p1, 5);
-	return strsans2(p1);
-}
-
-int SEToffset(wchar_t *p1) {
-	strmods(p1, 12);
-	return strsans(p1);
-}
-
-int SETLv(wchar_t *p1) {
-	strmods(p1, 7);
-	return strsans(p1);
-}
-
 int shifttime(double n, double bpm, int time) {
 	return (int)(time + 240000.0 * (n - 1.0) / (bpm * 16.0));
 }
@@ -1319,13 +1304,15 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		}
 		//BPMを読み込む
 		else if (strands_direct(GT1, L"#BPM:")) {
-			mapenc.bpmG = recfp->mapdata.bpm = SETbpm(GT1);
+			strmods(GT1, 5);
+			mapenc.bpmG = recfp->mapdata.bpm = strsans2(GT1);
 			recfp->mapeff.v_BPM.data[0].time = recfp->time.offset;
 			recfp->mapeff.v_BPM.data[0].BPM = (unsigned short)recfp->mapdata.bpm;
 		}
 		//ノートのオフセットを読み込む
 		else if (strands_direct(GT1, L"#NOTEOFFSET:")) {
-			mapenc.timer[0] = mapenc.timer[1] = mapenc.timer[2] = recfp->time.offset = SEToffset(GT1);
+			strmods(GT1, 12);
+			mapenc.timer[0] = mapenc.timer[1] = mapenc.timer[2] = recfp->time.offset = strsans(GT1);
 		}
 		//空の背景を読み込む
 		else if (strands_direct(GT1, L"#SKY:")) {
@@ -1362,7 +1349,10 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 			strcopy_2(GT1, recfp->nameset.songNE, 255);
 		}
 		//レベルを読み込む
-		else if (strands_direct(GT1, L"#LEVEL:")) recfp->mapdata.Lv = SETLv(GT1);
+		else if (strands_direct(GT1, L"#LEVEL:")) {
+			strmods(GT1, 7);
+			recfp->mapdata.Lv = strsans(GT1);
+		}
 		//落ち物背景指定
 		else if (strands_direct(GT1, L"#FALL:")) {
 			strmods(GT1, 6);

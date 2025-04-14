@@ -26,6 +26,7 @@
 
 #endif /* include */
 
+/* TODO: ƒpƒbƒN”§ŒÀ‚ğ‚È‚­‚· */
 #define PackNumLim 9
 #define SongNumLim 64
 #define REC_SORT_DEFAULT 0
