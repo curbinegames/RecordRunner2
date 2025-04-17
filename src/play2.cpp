@@ -1017,6 +1017,39 @@ static void PlayShowAllGuideLine(rec_score_file_t *recfp, const rec_play_lanepos
 
 #endif /* Guide Line */
 
+#if 1 /* control */
+
+static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyhold, int *holdG,
+	short *objectNG, bool AutoFlag)
+{
+	char key[256];
+
+	GetHitKeyStateAll(key);
+	if (AutoFlag) {
+		if (key[KEY_INPUT_G] == 0) { *holdG = 0; }
+		else if (key[KEY_INPUT_G] == 1) { (*holdG)++; }
+		AutoAution(keyhold, recfp->mapdata.note, objectNG, recfp->time.now);
+	}
+	else {
+		if (key[KEY_INPUT_Z] == 0) keyhold->z = 0;
+		else if (key[KEY_INPUT_Z] == 1) keyhold->z++;
+		if (key[KEY_INPUT_X] == 0) keyhold->x = 0;
+		else if (key[KEY_INPUT_X] == 1) keyhold->x++;
+		if (key[KEY_INPUT_C] == 0) keyhold->c = 0;
+		else if (key[KEY_INPUT_C] == 1) keyhold->c++;
+		if (key[KEY_INPUT_UP] == 0) keyhold->up = 0;
+		else if (key[KEY_INPUT_UP] == 1) keyhold->up++;
+		if (key[KEY_INPUT_LEFT] == 0) keyhold->left = 0;
+		else if (key[KEY_INPUT_LEFT] == 1) keyhold->left++;
+		if (key[KEY_INPUT_RIGHT] == 0) keyhold->right = 0;
+		else if (key[KEY_INPUT_RIGHT] == 1) keyhold->right++;
+		if (key[KEY_INPUT_DOWN] == 0) keyhold->down = 0;
+		else if (key[KEY_INPUT_DOWN] == 1) keyhold->down++;
+	}
+}
+
+#endif
+
 #if 1 /* class */
 
 static class rec_play_combo_c {
@@ -1583,30 +1616,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, lockN, &viewTN, objectN);
 
-		//キー設定
-		GetHitKeyStateAll(key);
-		if (AutoFlag == 0) {
-			if (key[KEY_INPUT_Z] == 0) keyhold.z = 0;
-			else if (key[KEY_INPUT_Z] == 1) keyhold.z++;
-			if (key[KEY_INPUT_X] == 0) keyhold.x = 0;
-			else if (key[KEY_INPUT_X] == 1) keyhold.x++;
-			if (key[KEY_INPUT_C] == 0) keyhold.c = 0;
-			else if (key[KEY_INPUT_C] == 1) keyhold.c++;
-			if (key[KEY_INPUT_UP] == 0) keyhold.up = 0;
-			else if (key[KEY_INPUT_UP] == 1) keyhold.up++;
-			if (key[KEY_INPUT_LEFT] == 0) keyhold.left = 0;
-			else if (key[KEY_INPUT_LEFT] == 1) keyhold.left++;
-			if (key[KEY_INPUT_RIGHT] == 0) keyhold.right = 0;
-			else if (key[KEY_INPUT_RIGHT] == 1) keyhold.right++;
-			if (key[KEY_INPUT_DOWN] == 0) keyhold.down = 0;
-			else if (key[KEY_INPUT_DOWN] == 1) keyhold.down++;
-		}
-		//オートプレイ用コード
-		else if (AutoFlag == 1) {
-			if (key[KEY_INPUT_G] == 0) { holdG = 0; }
-			else if (key[KEY_INPUT_G] == 1) { holdG++; }
-			AutoAution(&keyhold, recfp.mapdata.note, objectNG, recfp.time.now);
-		}
+		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, objectNG, AutoFlag);
 
 		//カメラ移動
 		RecPlaySetCamera(&recfp.mapeff.camera, recfp.time.now);
