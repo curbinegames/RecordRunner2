@@ -30,10 +30,10 @@
 	(sanrute(DIV_AVOID_ZERO((all_d_gap) * (count) - (all_gap) * (all_gap), (count) * (count), 0)))
 
 typedef struct rec_result_mat_s {
-	DxPic_t clearRate = DXLIB_PIC_NULL;
-	DxPic_t difBer    = DXLIB_PIC_NULL;
-	DxPic_t rank      = DXLIB_PIC_NULL;
-	DxPic_t chara     = DXLIB_PIC_NULL;
+	dxcur_pic_c clearRate;
+	dxcur_pic_c difBer;
+	dxcur_pic_c rank;
+	dxcur_pic_c chara;
 	cur_font_cr_t fontNo = CUR_FONT_COLOR_MONO;
 	cur_font_cr_t floatfontNo = CUR_FONT_COLOR_MONO;
 } rec_result_mat_t;
@@ -56,7 +56,7 @@ typedef struct rec_result_pal_s {
 
 static now_scene_t ViewResult(const rec_result_pal_t *val) {
 	/* typedef */
-	DxPic_t resultimg = LoadGraph(L"picture/result.png");
+	dxcur_pic_c resultimg = dxcur_pic_c(_T("picture/result.png"));
 	/* class */
 	rec_cutin_c cutin;
 
@@ -68,10 +68,10 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		ClearDrawScreen(); /* •`‰æƒGƒŠƒA‚±‚±‚©‚ç */
 
 		/* ”wŒi */
-		RecRescaleDrawGraph(0, 0, resultimg, TRUE);
+		RecRescaleDrawGraph(0, 0, resultimg.handle(), TRUE);
 		
 		/* ‹Èî•ñ */
-		RecRescaleDrawGraph( 460, 20, val->mat.difBer, TRUE);
+		RecRescaleDrawGraph( 460, 20, val->mat.difBer.handle(), TRUE);
 		RecRescaleDrawString(100, 13, val->songN, COLOR_WHITE);
 
 		/* ”»’èŽü‚è */
@@ -94,9 +94,9 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		RecRescaleDrawCurFont(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO);
 
 		/* ƒ‰ƒ“ƒNŽü‚è */
-		RecRescaleDrawGraph(140, 260, val->mat.rank,      TRUE);
-		RecRescaleDrawGraph(5,   420, val->mat.clearRate, TRUE);
-		RecRescaleDrawGraph(336, 252, val->mat.chara,     TRUE);
+		RecRescaleDrawGraph(140, 260, val->mat.rank.handle(),      TRUE);
+		RecRescaleDrawGraph(5,   420, val->mat.clearRate.handle(), TRUE);
+		RecRescaleDrawGraph(336, 252, val->mat.chara.handle(),     TRUE);
 		RecRescaleDrawCurFont(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, 0);
 
 		cutin.DrawCut();
@@ -115,8 +115,6 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		}
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 	}
-
-	INIT_PIC();
 
 	return SCENE_SERECT;
 }
@@ -219,72 +217,72 @@ double GetFloatRank(int score, int miss, int notes, char rank) {
 	return 0;
 }
 
-static DxPic_t RecResultLoadClearRateGraph(rec_clear_rank_t Clear) {
+static const TCHAR *RecResultLoadClearRateGraph(rec_clear_rank_t Clear) {
 	switch (Clear) {
 	case REC_CLEAR_RANK_DROPED:
-		return LoadGraph(L"picture/DROPED.png");
+		return (_T("picture/DROPED.png"));
 	case REC_CLEAR_RANK_CLEARED:
-		return LoadGraph(L"picture/CLEARED.png");
+		return (_T("picture/CLEARED.png"));
 	case REC_CLEAR_RANK_NOMISS:
-		return LoadGraph(L"picture/NOMISS.png");
+		return (_T("picture/NOMISS.png"));
 	case REC_CLEAR_RANK_FULLCOMBO:
-		return LoadGraph(L"picture/FULLCOMBO.png");
+		return (_T("picture/FULLCOMBO.png"));
 	case REC_CLEAR_RANK_PERFECT:
-		return LoadGraph(L"picture/PERFECT.png");
+		return (_T("picture/PERFECT.png"));
 	default:
-		return DXLIB_PIC_NULL;
+		return (_T(""));
 	}
 }
 
-static DxPic_t RecResultLoadDifBarGraph(rec_dif_t dif, const TCHAR *difFN) {
+static const TCHAR *RecResultLoadDifBarGraph(rec_dif_t dif, const TCHAR *difFN) {
 	switch (dif) {
 	case REC_DIF_AUTO:
-		return LoadGraph(L"picture/difauto.png");
+		return (L"picture/difauto.png");
 	case REC_DIF_EASY:
-		return LoadGraph(L"picture/difeasy.png");
+		return (L"picture/difeasy.png");
 	case REC_DIF_NORMAL:
-		return LoadGraph(L"picture/difnormal.png");
+		return (L"picture/difnormal.png");
 	case REC_DIF_HARD:
-		return LoadGraph(L"picture/difhard.png");
+		return (L"picture/difhard.png");
 	case REC_DIF_ANOTHER:
 	case REC_DIF_SECRET:
-		return LoadGraph(difFN);
+		return (difFN);
 	default:
-		return DXLIB_PIC_HAND_DEFAULT;
+		return (_T(""));
 	}
 }
 
-static DxPic_t RecResultLoadClearRankGraph(rec_score_rate_t rank) {
+static const TCHAR *RecResultLoadClearRankGraph(rec_score_rate_t rank) {
 	switch (rank) {
 	case REC_SCORE_RATE_EX:
-		return LoadGraph(L"picture/rankEX.png");
+		return (L"picture/rankEX.png");
 	case REC_SCORE_RATE_S:
-		return LoadGraph(L"picture/rankS.png");
+		return (L"picture/rankS.png");
 	case REC_SCORE_RATE_A:
-		return LoadGraph(L"picture/rankA.png");
+		return (L"picture/rankA.png");
 	case REC_SCORE_RATE_B:
-		return LoadGraph(L"picture/rankB.png");
+		return (L"picture/rankB.png");
 	case REC_SCORE_RATE_C:
-		return LoadGraph(L"picture/rankC.png");
+		return (L"picture/rankC.png");
 	case REC_SCORE_RATE_D:
-		return LoadGraph(L"picture/rankD.png");
+		return (L"picture/rankD.png");
 	case REC_SCORE_RATE_F:
-		return LoadGraph(L"picture/rankF.png"); /* TODO: ‰æ‘œì‚é */
+		return (L"picture/rankF.png"); /* TODO: ‰æ‘œì‚é */
 	default:
-		return DXLIB_PIC_NULL;
+		return (_T(""));
 	}
 }
 
-static DxPic_t RecResultLoadCharaGraph(void) {
+static const TCHAR *RecResultLoadCharaGraph(void) {
 	switch (optiondata.chara) {
 	case REC_CHARA_PICKER:
-		return LoadGraph(L"picture/RePicker.png");
+		return (L"picture/RePicker.png");
 	case REC_CHARA_MAPGATOR:
-		return LoadGraph(L"picture/ReGator.png");
+		return (L"picture/ReGator.png");
 	case REC_CHARA_TAYLOR:
-		return LoadGraph(L"picture/ReTaylor.png");
+		return (L"picture/ReTaylor.png");
 	default:
-		return DXLIB_PIC_NULL;
+		return (_T(""));
 	}
 }
 
@@ -357,10 +355,11 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 	result_pal->floatRank       = GetFloatRank(userpal->score.sum, userpal->judgeCount.miss, noteCount, rank) / 1000;
 	result_pal->newRate         = RecSaveGetFullRunnerRate() * 100;
 	result_pal->subRate         = result_pal->newRate - result_pal->oldRate; /* oldRate‚ÍƒŒ[ƒg•Û‘¶‘O‚É‘ã“ü‚µ‚Ä‚¢‚é */
-	result_pal->mat.clearRate   = RecResultLoadClearRateGraph(Clear);
-	result_pal->mat.difBer      = RecResultLoadDifBarGraph(dif, nameset->DifFN);
-	result_pal->mat.rank        = RecResultLoadClearRankGraph(rank);
-	result_pal->mat.chara       = RecResultLoadCharaGraph();
+
+	result_pal->mat.clearRate.reload(RecResultLoadClearRateGraph(Clear));
+	result_pal->mat.difBer.reload(RecResultLoadDifBarGraph(dif, nameset->DifFN));
+	result_pal->mat.rank.reload(RecResultLoadClearRankGraph(rank));
+	result_pal->mat.chara.reload(RecResultLoadCharaGraph());
 	result_pal->mat.fontNo      = RecResultGetCurFontColor(rank);
 	result_pal->mat.floatfontNo = RecResultGetFlortCurFontColor(rank);
 

@@ -11,14 +11,14 @@
 #include <PlayCamera.h>
 #include <RecWindowRescale.h>
 
-static int JudgePic[4];
+static dxcur_pic_c JudgePic[4];
 static int viewjudge[4] = { 0,0,0,0 };
 
 void ReadyJudgePicture() {
-	JudgePic[0] = LoadGraph(L"picture/judge-just.png");
-	JudgePic[1] = LoadGraph(L"picture/judge-good.png");
-	JudgePic[2] = LoadGraph(L"picture/judge-safe.png");
-	JudgePic[3] = LoadGraph(L"picture/judge-miss.png");
+	JudgePic[0].reload(L"picture/judge-just.png");
+	JudgePic[1].reload(L"picture/judge-good.png");
+	JudgePic[2].reload(L"picture/judge-safe.png");
+	JudgePic[3].reload(L"picture/judge-miss.png");
 	return;
 }
 
@@ -64,7 +64,7 @@ void PlayShowJudge(rec_play_lanepos_t *lanePos, int charaput) {
 	for (int i = 0; i < 4; i++) {
 		if (GetNowCount() - viewjudge[i] < 750) {
 			drawY = BaseDrawY + pals(250, 0, 0, 25, mins_2(GetNowCount() - viewjudge[i], 250));
-			RecRescaleDrawGraph(BaseDrawX, drawY, JudgePic[i], TRUE);
+			RecRescaleDrawGraph(BaseDrawX, drawY, JudgePic[i].handle(), TRUE);
 		}
 	}
 	return;

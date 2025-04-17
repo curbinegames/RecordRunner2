@@ -15,25 +15,25 @@
 class rec_title_cutin_c {
 private:
 	int StartTime = 0;
-	DxPic_t TitleChar[12] = {
-		LoadGraph(L"picture/Title-1.png"),
-		LoadGraph(L"picture/Title-2.png"),
-		LoadGraph(L"picture/Title-3.png"),
-		LoadGraph(L"picture/Title-4.png"),
-		LoadGraph(L"picture/Title-5.png"),
-		LoadGraph(L"picture/Title-6.png"),
-		LoadGraph(L"picture/Title-7.png"),
-		LoadGraph(L"picture/Title-8.png"),
-		LoadGraph(L"picture/Title-9.png"),
-		LoadGraph(L"picture/Title-10.png"),
-		LoadGraph(L"picture/Title-11.png"),
-		LoadGraph(L"picture/Title-12.png")
+	dxcur_pic_c TitleChar[12] = {
+		dxcur_pic_c(L"picture/Title-1.png"),
+		dxcur_pic_c(L"picture/Title-2.png"),
+		dxcur_pic_c(L"picture/Title-3.png"),
+		dxcur_pic_c(L"picture/Title-4.png"),
+		dxcur_pic_c(L"picture/Title-5.png"),
+		dxcur_pic_c(L"picture/Title-6.png"),
+		dxcur_pic_c(L"picture/Title-7.png"),
+		dxcur_pic_c(L"picture/Title-8.png"),
+		dxcur_pic_c(L"picture/Title-9.png"),
+		dxcur_pic_c(L"picture/Title-10.png"),
+		dxcur_pic_c(L"picture/Title-11.png"),
+		dxcur_pic_c(L"picture/Title-12.png")
 	};
 
 public:
 	~rec_title_cutin_c() {
 		for (uint inum = 0; inum < 12; inum++) {
-			DeleteGraph(TitleChar[inum]);
+			DeleteGraph(TitleChar[inum].handle());
 		}
 	}
 
@@ -52,7 +52,7 @@ public:
 					EFF_TIME_1 * (i * 6 + j) / 14,
 					posX[i * 6 + j] + 640,
 					mins_2(Ntime, EFF_TIME_1 * (i * 6 + j + 3) / 14));
-				RecRescaleDrawGraph(drawX, posY[i], this->TitleChar[i * 6 + j], TRUE);
+				RecRescaleDrawGraph(drawX, posY[i], this->TitleChar[i * 6 + j].handle(), TRUE);
 			}
 		}
 		return;
@@ -66,25 +66,19 @@ public:
 class rec_title_main_c {
 private:
 	int StartTime = 0;
-	DxPic_t Title = LoadGraph(L"picture/TitleMain.png");
-	DxPic_t Push  = LoadGraph(L"picture/pushkey.png");
-	DxPic_t white = LoadGraph(L"picture/White.png");
+	dxcur_pic_c Title = dxcur_pic_c(L"picture/TitleMain.png");
+	dxcur_pic_c Push  = dxcur_pic_c(L"picture/pushkey.png");
+	dxcur_pic_c white = dxcur_pic_c(L"picture/White.png");
 
 public:
-	~rec_title_main_c() {
-		DeleteGraph(Title);
-		DeleteGraph(Push);
-		DeleteGraph(white);
-	}
-
 	void DrawAll(void) const {
-		RecRescaleDrawGraph(0, 0, this->Title, TRUE);
+		RecRescaleDrawGraph(0, 0, this->Title.handle(), TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(-1, 0, 1, 255, sinC((GetNowCount() / 4) % 360)));
-		RecRescaleDrawGraph(0, 0, this->Push, TRUE);
+		RecRescaleDrawGraph(0, 0, this->Push.handle(), TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		if ((GetNowCount() - this->StartTime) < EFF_TIME_2) {
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 255, EFF_TIME_2, 0, GetNowCount() - this->StartTime));
-			RecRescaleDrawGraph(0, 0, this->white, TRUE);
+			RecRescaleDrawGraph(0, 0, this->white.handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 		}
 		return;
@@ -151,7 +145,7 @@ now_scene_t title(void) {
 		}
 
 		if (cutin.IsEndAnim()) {
-			INIT_MAT();
+			INIT_SND();
 			break;
 		}
 

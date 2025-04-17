@@ -427,8 +427,8 @@ static void RecOptionKeyCtrl(int *cmd, bool *exitFg) {
 now_scene_t option(void) {
 	int command = 0;
 	struct {
-		int back = -1;
-		int cursor = -1;
+		dxcur_pic_c back   = dxcur_pic_c(_T("picture/OPTION back.png"));
+		dxcur_pic_c cursor = dxcur_pic_c(_T("picture/OC.png"));
 	} pic;
 	bool exitFg = false;
 	rec_helpbar_c help;
@@ -454,8 +454,6 @@ now_scene_t option(void) {
 		}
 	}
 
-	pic.back = LoadGraph(L"picture/OPTION back.png");
-	pic.cursor = LoadGraph(L"picture/OC.png");
 	s_sel = LoadSoundMem(L"sound/select.wav");
 
 	AvoidKeyRush();
@@ -466,8 +464,8 @@ now_scene_t option(void) {
 
 		ClearDrawScreen(); /* 描画エリアスタート */
 
-		RecRescaleDrawGraph(0, 0, pic.back, TRUE); /* 背景 */
-		RecRescaleDrawGraph(40, 45 + command * 40, pic.cursor, TRUE); /* カーソル */
+		RecRescaleDrawGraph(0, 0, pic.back.handle(), TRUE); /* 背景 */
+		RecRescaleDrawGraph(40, 45 + command * 40, pic.cursor.handle(), TRUE); /* カーソル */
 
 		/* 項目表示 */
 		for (int i = 0; i < optionstr_count; i++) {

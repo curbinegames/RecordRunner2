@@ -16,9 +16,7 @@
 #define WAIT_TIME_AFTER_MUSICPLAY 30 /* 音楽再生直後のウェイト時間 */
 #define WAIT_TIME_ON_GAMELOOP      1 /* ゲーム処理ループ中のウェイト時間 */
 
-#define INIT_PIC() InitGraph()
 #define INIT_SND() InitSoundMem()
-#define INIT_MAT() INIT_PIC(); INIT_SND()
 
 #define SWITCH_NOTE_BOX_2 1
 

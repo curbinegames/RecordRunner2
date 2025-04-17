@@ -19,7 +19,7 @@
 #define CUT_FRAG_IN 1
 
 static char TipNo = 0;
-static int pic_cutin[5];
+static dxcur_pic_c pic_cutin[5];
 static int snd_cutin[2];
 static int CutInSndLastPlayTime = 0;
 static int CutOutSndLastPlayTime = 0;
@@ -94,6 +94,35 @@ static char const tipNum = ARRAY_COUNT(tip);
 
 #if 1 /* action */
 
+void CutinReadyPic() {
+	pic_cutin[0].reload(L"picture/cutin/cutinU.png");
+	pic_cutin[1].reload(L"picture/cutin/cutinD.png");
+	pic_cutin[2].reload(L"picture/cutin/cutinDisk.png");
+	pic_cutin[3].reload(SongJucketName);
+	pic_cutin[4].reload(L"picture/cutin/cutinS.png");
+}
+
+void CutinReadySnd() {
+	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
+	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[0]);
+	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[1]);
+}
+
+void SetCutSong(wchar_t* songName, wchar_t* picName) {
+	strcopy_2(songName, CutSongName, 255);
+	strcopy_2(picName, SongJucketName, 255);
+	pic_cutin[3].reload(picName);
+}
+
+void SetCutTipFg(cutin_tips_e Fg) {
+	CutFg = Fg;
+}
+
+void SetTipNo() {
+	TipNo = (char)GetRand(tipNum - 1);
+}
+
 static void RecCutDrawShut(int EffTime) {
 	int PosY = 0;
 	if (s_cutIoFg == CUT_FRAG_OUT) {
@@ -102,8 +131,8 @@ static void RecCutDrawShut(int EffTime) {
 	else {
 		PosY = pals(500, 0, 0, 360, EffTime);
 	}
-	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
-	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
+	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0].handle(), TRUE);
+	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1].handle(), TRUE);
 	return;
 }
 
@@ -122,7 +151,7 @@ static void RecCutDrawDisk(int EffTime) {
 		DrawX = 320 - pals(500, 0, 0, 360, EffTime);
 		Rot = pals(500, 0, 0, -300, EffTime);
 	}
-	RecRescaleDrawRotaGraph(DrawX, 240 - PosY, 1, (double)Rot / 50.0, pic_cutin[2], TRUE);
+	RecRescaleDrawRotaGraph(DrawX, 240 - PosY, 1, (double)Rot / 50.0, pic_cutin[2].handle(), TRUE);
 	return;
 }
 
@@ -148,7 +177,7 @@ static void RecCutDrawJacket(int EffTime) {
 	drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 440 + PosY);
 	drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 360 + PosY);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
-	DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3], TRUE);
+	DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3].handle(), TRUE);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	return;
 }
@@ -178,8 +207,8 @@ static void RecCutDrawSide(int EffTime) {
 	else {
 		PosS = pals(350, 0, 0, 100, betweens(0, EffTime, 500));
 	}
-	RecRescaleDrawGraph(0 - PosS, 0, pic_cutin[4], TRUE);
-	RecRescaleDrawGraph(590 + PosS, 0, pic_cutin[4], TRUE);
+	RecRescaleDrawGraph(0 - PosS, 0, pic_cutin[4].handle(), TRUE);
+	RecRescaleDrawGraph(590 + PosS, 0, pic_cutin[4].handle(), TRUE);
 	return;
 }
 
@@ -190,10 +219,10 @@ static void ViewCutIn(int Stime) {
 	int Rot = pals(500, 0, 0, -300, EffTime);
 	int Alpha = lins(500, 255, 0, 0, EffTime);
 	s_cutIoFg = CUT_FRAG_IN;
-	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
-	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
+	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0].handle(), TRUE);
+	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1].handle(), TRUE);
 	RecRescaleDrawRotaGraph(320 - PosY, 240 - PosY, 1,
-		(double)Rot / 50.0, pic_cutin[2], TRUE);
+		(double)Rot / 50.0, pic_cutin[2].handle(), TRUE);
 	switch (CutFg) {
 	case CUTIN_TIPS_ON:
 		RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, tip[TipNo], COLOR_BLACK);
@@ -209,7 +238,7 @@ static void ViewCutIn(int Stime) {
 			drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 440 + PosY) + 160;
 			drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 360 + PosY);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
-			DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3], TRUE);
+			DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3].handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 			RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, COLOR_BLACK);
 		}
@@ -232,10 +261,10 @@ static void ViewCutOut(int Stime) {
 	int Rot = pals(0, 0, 500, 300, EffTime);
 	int Alpha = lins(500, 0, 0, 255, EffTime);
 	s_cutIoFg = CUT_FRAG_OUT;
-	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0], TRUE);
-	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1], TRUE);
+	RecRescaleDrawGraph(0, 0 - PosY, pic_cutin[0].handle(), TRUE);
+	RecRescaleDrawGraph(0, 240 + PosY, pic_cutin[1].handle(), TRUE);
 	RecRescaleDrawRotaGraph(320 + PosY, 240 - PosY, 1,
-		(double)Rot / 50.0, pic_cutin[2], TRUE);
+		(double)Rot / 50.0, pic_cutin[2].handle(), TRUE);
 	switch (CutFg) {
 	case CUTIN_TIPS_ON:
 		RecRescaleDrawString(CUT_MES_POSX - PosY * 640 / 360, 430, tip[TipNo], COLOR_BLACK);
@@ -251,7 +280,7 @@ static void ViewCutOut(int Stime) {
 			drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 440 + PosY) + 160;
 			drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 360 + PosY);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
-			DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3], TRUE);
+			DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3].handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 			RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, COLOR_BLACK);
 		}
@@ -288,18 +317,13 @@ void RecViewCut3() {
 #endif /* action */
 
 rec_cutin_c::rec_cutin_c() {
-	DeleteGraph(pic_cutin[0]);
-	DeleteGraph(pic_cutin[1]);
-	DeleteGraph(pic_cutin[2]);
-	DeleteGraph(pic_cutin[3]);
-	DeleteGraph(pic_cutin[4]);
-	DeleteGraph(snd_cutin[0]);
-	DeleteGraph(snd_cutin[1]);
-	pic_cutin[0] = LoadGraph(L"picture/cutin/cutinU.png");
-	pic_cutin[1] = LoadGraph(L"picture/cutin/cutinD.png");
-	pic_cutin[2] = LoadGraph(L"picture/cutin/cutinDisk.png");
-	pic_cutin[3] = LoadGraph(SongJucketName);
-	pic_cutin[4] = LoadGraph(L"picture/cutin/cutinS.png");
+	DeleteSoundMem(snd_cutin[0]);
+	DeleteSoundMem(snd_cutin[1]);
+	pic_cutin[0].reload(L"picture/cutin/cutinU.png");
+	pic_cutin[1].reload(L"picture/cutin/cutinD.png");
+	pic_cutin[2].reload(L"picture/cutin/cutinDisk.png");
+	pic_cutin[3].reload(SongJucketName);
+	pic_cutin[4].reload(L"picture/cutin/cutinS.png");
 	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
 	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
 	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[0]);
@@ -307,19 +331,14 @@ rec_cutin_c::rec_cutin_c() {
 }
 
 rec_cutin_c::~rec_cutin_c() {
-	DeleteGraph(pic_cutin[0]);
-	DeleteGraph(pic_cutin[1]);
-	DeleteGraph(pic_cutin[2]);
-	DeleteGraph(pic_cutin[3]);
-	DeleteGraph(pic_cutin[4]);
-	DeleteGraph(snd_cutin[0]);
-	DeleteGraph(snd_cutin[1]);
+	DeleteSoundMem(snd_cutin[0]);
+	DeleteSoundMem(snd_cutin[1]);
 }
 
 void rec_cutin_c::SetCutSong(TCHAR *songName, TCHAR *picName) {
 	strcopy_2(songName, CutSongName, 255);
 	strcopy_2(picName, SongJucketName, 255);
-	pic_cutin[3] = LoadGraph(picName);
+	pic_cutin[3].reload(picName);
 	return;
 }
 
