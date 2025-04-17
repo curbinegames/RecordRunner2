@@ -344,14 +344,6 @@ static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play
 	return;
 }
 
-static void RecPlayGetMapFileNames(TCHAR *songPath, TCHAR *songName,
-	int packNo, int musicNo, int LvNo)
-{
-	RecGetMusicFolderPath(songPath, 255, packNo, musicNo);
-	RecGetMusicFolderName(songName, 255, packNo, musicNo);
-	return;
-}
-
 static int GetRemainNotes(rec_play_judge_t judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
@@ -1542,7 +1534,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	if (optiondata.SEenable == 0) { RecPlayInitMelodySnd(); }
 
-	RecPlayGetMapFileNames(dataE, ret_fileN, p, n, o);
+	RecGetMusicFolderPath(dataE, 255, p, n);
+	RecGetMusicFolderName(ret_fileN, 255, p, n);
+
 	RecGetMusicMapRrsPath(GT1, 255, p, n, (rec_dif_t)o);
 
 	/* rrsデータの内容を読み込む */
