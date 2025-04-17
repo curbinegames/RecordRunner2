@@ -1167,36 +1167,48 @@ private:
 	}
 
 public:
-	int GetCharaPos3(int time, note_box_2_t note[], short int No[],
+	void UpdateCharapos(int time, note_box_2_t note[], short int No[],
 		rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
 	{
 		int ans = CHARA_POS_MID;
 		// push up
-		if (1 <= keyhold->up && 0 == keyhold->down) { return CHARA_POS_UP; }
+		if (1 <= keyhold->up && 0 == keyhold->down) {
+			this->pos = CHARA_POS_UP;
+			return;
+		}
 		// push down
-		else if (0 == keyhold->up && 1 <= keyhold->down) { return CHARA_POS_DOWN; }
+		if (0 == keyhold->up && 1 <= keyhold->down) {
+			this->pos = CHARA_POS_DOWN;
+			return;
+		}
 		// push up and down
-		else if (1 <= keyhold->up && 1 <= keyhold->down) { return CHARA_POS_MID; }
+		if (1 <= keyhold->up && 1 <= keyhold->down) {
+			this->pos = CHARA_POS_MID;
+			return;
+		}
 		// near catch/bomb
 		for (int i = 0; i < 3; i++) {
 			if (note[No[i]].hittime <= time + 40 &&
 				(note[No[i]].object == NOTE_CATCH ||
 					note[No[i]].object == NOTE_BOMB))
 			{
-				return CHARA_POS_MID;
+				this->pos = CHARA_POS_MID;
+				return;
 			}
 		}
 		// hit note
 		if (keyhold->up != 1 && keyhold->down != 1 &&
 			keyhold->left != 1 && keyhold->right != 1 && hitatk->time != -1000)
 		{
-			return hitatk->pos;
+			this->pos = hitatk->pos;
+			return;
 		}
-		return CHARA_POS_MID;
+		this->pos = CHARA_POS_MID;
+		return;
 	}
 
 	void ViewRunner(rec_map_eff_data_t *mapeff, rec_play_key_hold_t *keyhold,
-		rec_play_lanepos_t *lanePos, int charaput, int charahit, int Ntime)
+		rec_play_lanepos_t *lanePos, int charahit, int Ntime)
 	{
 		// view chara pos guide
 		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
@@ -1629,7 +1641,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		else {
 			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
-		runnerClass.pos = runnerClass.GetCharaPos3(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
+		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
 			IS_JUST_PUSH_ANY_ARROWKEY(&keyhold))
 		{
@@ -1675,7 +1687,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowAllGuideLine(&recfp, &lanePos, LineMoveN, lockN[1]);
 		RecPlayDrawGuideBorder(&recfp, &lanePos, lockN[1]);
 		/* キャラ周り表示 */
-		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, runnerClass.pos, charahit, recfp.time.now);
+		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, charahit, recfp.time.now);
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
