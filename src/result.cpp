@@ -63,7 +63,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 	InitCurFont();
 	RecSysBgmPlay(true, true, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
-	cutin.SetIo(0);
+	cutin.SetIo(CUT_FRAG_OUT);
 	while (1) {
 		ClearDrawScreen(); /* •`‰æƒGƒŠƒA‚±‚±‚©‚ç */
 
@@ -107,7 +107,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		if (CheckHitKey(KEY_INPUT_RETURN) == 1 && cutin.IsClosing() == 0) {
 			cutin.SetCutTipFg(CUTIN_TIPS_ON);
 			cutin.SetTipNo();
-			cutin.SetIo(1);
+			cutin.SetIo(CUT_FRAG_IN);
 		}
 		if (cutin.IsEndAnim()) {
 			RecSysBgmStop();

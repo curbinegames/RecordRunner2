@@ -2,6 +2,10 @@
 
 #include <dxcur.h>
 
+/* TODO: enum‰» */
+#define CUT_FRAG_OUT 0
+#define CUT_FRAG_IN  1
+
 typedef enum cutin_tips_e {
 	CUTIN_TIPS_NONE = 0,
 	CUTIN_TIPS_ON,

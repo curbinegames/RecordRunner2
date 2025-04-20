@@ -1581,7 +1581,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	RecSysBgmPlay(true, false, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	Stime = GetNowCount();
-	cutin.SetIo(0);
+	cutin.SetIo(CUT_FRAG_OUT);
 	//ÉQÅ[ÉÄäJén
 	while (1) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
@@ -1719,7 +1719,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			(RecSysBgmCheckSoundMem() == 0))
 		{
 			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
-			cutin.SetIo(1);
+			cutin.SetIo(CUT_FRAG_IN);
 		}
 		cutin.DrawCut();
 

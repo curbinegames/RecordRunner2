@@ -1160,13 +1160,13 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_SONG);
 		uiClass->cutin.SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName[cmd[1]],
 			SONGDATA_FROM_MAP(songdata, cmd[0]).jacketP[cmd[1]]);
-		uiClass->cutin.SetIo(1);
+		uiClass->cutin.SetIo(CUT_FRAG_IN);
 		break;
 	case 2: /* ñﬂÇÈ */
 		*next = SCENE_MENU;
 		uiClass->cutin.SetTipNo();
 		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_ON);
-		uiClass->cutin.SetIo(1);
+		uiClass->cutin.SetIo(CUT_FRAG_IN);
 		break;
 	case 3: /* ã»ëIëè„ */
 		RecSerectKeyActUD(cmd, REC_SERECT_VECT_UP,    uiClass, songdata);
@@ -1217,7 +1217,7 @@ now_scene_t musicserect(rec_to_play_set_t *toPlay) {
 	AvoidKeyBug();
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
-	uiClass.cutin.SetIo(0);
+	uiClass.cutin.SetIo(CUT_FRAG_OUT);
 
 	while (1) {
 		RecSerectDrawAllUi(&uiClass, cmd, &songdata, closeFg, CutTime);

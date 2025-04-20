@@ -15,9 +15,6 @@
 
 #define CUT_MES_POSX 75
 
-#define CUT_FRAG_OUT 0
-#define CUT_FRAG_IN 1
-
 static char TipNo = 0;
 static dxcur_pic_c pic_cutin[5];
 static int snd_cutin[2];

@@ -141,7 +141,7 @@ now_scene_t title(void) {
 
 		if (CheckHitKeyAll() && (TitleObjectClass.GetState() == 1) && (cutin.IsClosing() == 0)) {
 			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
-			cutin.SetIo(1);
+			cutin.SetIo(CUT_FRAG_IN);
 		}
 
 		if (cutin.IsEndAnim()) {

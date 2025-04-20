@@ -139,7 +139,7 @@ now_scene_t menu(void) {
 	rec_helpbar_c help;
 	rec_cutin_c cutin;
 
-	cutin.SetIo(0);
+	cutin.SetIo(CUT_FRAG_OUT);
 	AvoidKeyRush();
 
 	while (1) {
@@ -165,7 +165,7 @@ now_scene_t menu(void) {
 				if (menu_class.GetSerectScene() != SCENE_SERECT) { return menu_class.GetSerectScene(); }
 				cutin.SetCutTipFg(CUTIN_TIPS_ON);
 				cutin.SetTipNo();
-				cutin.SetIo(1);
+				cutin.SetIo(CUT_FRAG_IN);
 				break;
 			default:
 				break;
