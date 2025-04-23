@@ -34,6 +34,8 @@
 #define RECR_DEBUG_LOOP(n, data_a, data_b)
 #endif
 
+#if 1 /* enum */
+
 typedef enum rec_play_rank_e {
 	REC_SCORE_RATE_EX = 0,
 	REC_SCORE_RATE_S,
@@ -54,6 +56,7 @@ typedef enum now_scene_e {
 	SCENE_EXIT = 5,
 	SCENE_MUSIC,
 	SCENE_RESULT,
+	SCENE_RELOAD,
 } now_scene_t; /* = next */
 
 typedef enum rec_clear_rank_e {
@@ -80,6 +83,8 @@ typedef enum rec_error_e {
 	REC_ERROR_FILE_NUM   = 101, /* 指定ナンバーが大きすぎた */
 	REC_ERROR_MAP_COUNT  = 200, /* オブジェクト数が多すぎた */
 } rec_error_t;
+
+#endif /* enum */
 
 typedef struct rec_to_play_set_s {
 	int packNo = 0;

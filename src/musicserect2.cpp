@@ -91,7 +91,7 @@ static void RecSelectAllRelordDrawInfo(uint iPack, uint iSong, uint iDif) {
 	static DxTime_t Btime = 0;
 	TCHAR songN[255] = _T("");
 
-	if (((Btime + 100) >= GetNowCount()) || (iDif >= 4)) { return; }
+	if (((Btime + 50) >= GetNowCount()) || (iDif >= 4)) { return; }
 	if (RecGetMusicFolderName(songN, ARRAY_COUNT(songN), iPack, iSong) != 0) { return; }
 
 	Btime = GetNowCount();
@@ -1229,7 +1229,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		SortSongWithSave(songdata, songdata->sortMode, cmd[1], &cmd[0]);
 		break;
 	case REC_SERECT_KEY_RELORD:
-		RecSelectAllRelord();
+		*next = SCENE_RELOAD;
 		break;
 	default:
 		break;
@@ -1240,7 +1240,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 
 #endif /* after class action */
 
-now_scene_t musicserect(rec_to_play_set_t *toPlay) {
+static now_scene_t musicserect2(rec_to_play_set_t *toPlay) {
 	/* char */
 	char closeFg = 0;
 
@@ -1270,6 +1270,7 @@ now_scene_t musicserect(rec_to_play_set_t *toPlay) {
 		RecSerectDrawAllUi(&uiClass, cmd, &songdata, closeFg, CutTime);
 		RecSerectKeyActAll(&next, toPlay, &closeFg, cmd, &CutTime,
 			&uiClass, &songdata, PackFirstNum);
+		if (next == SCENE_RELOAD) { return SCENE_RELOAD; }
 		if (uiClass.cutin.IsEndAnim()) { break; }
 		if (GetWindowUserCloseFlag(TRUE)) {
 			next = SCENE_EXIT;
@@ -1282,5 +1283,16 @@ now_scene_t musicserect(rec_to_play_set_t *toPlay) {
 
 	INIT_SND();
 
+	return next;
+}
+
+now_scene_t musicserect(rec_to_play_set_t *toPlay) {
+	now_scene_t next = SCENE_EXIT;
+	while (1) {
+		next = musicserect2(toPlay);
+		/* RecSelectAllRelordを実行するためにはmusicserect2から抜ける必要がある。スタックオーバーフローを起こすから */
+		if (next == SCENE_RELOAD) { RecSelectAllRelord(); }
+		else { break; }
+	}
 	return next;
 }
