@@ -1441,7 +1441,7 @@ public:
 * @param[out] ret_map_det map_detail の受け皿
 * @param[out] ret_userpal userpal の受け皿
 * @param[out] ret_nameset nameset の受け皿
-* @param[out] ret_fileN ファイル名の受け皿
+* @param[in] ret_fileN ファイル名の受け皿
 * @param[in] p パックナンバー
 * @param[in] n 曲ナンバー
 * @param[in] o 難易度ナンバー
@@ -1449,7 +1449,7 @@ public:
 * @return now_scene_t 次のシーン
 */
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
-	rec_play_nameset_t *ret_nameset, TCHAR *ret_fileN, int p, int n, int o, int AutoFlag)
+	rec_play_nameset_t *ret_nameset, const TCHAR *ret_fileN, int p, int n, int o, int AutoFlag)
 {
 
 #if 1 /* num define */
@@ -1536,8 +1536,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	if (optiondata.SEenable == 0) { RecPlayInitMelodySnd(); }
 
 	RecGetMusicFolderPath(dataE, 255, p, n);
-	RecGetMusicFolderName(ret_fileN, 255, p, n);
-
 	RecGetMusicMapRrsPath(GT1, 255, p, n, (rec_dif_t)o);
 
 	/* rrsデータの内容を読み込む */
@@ -1826,6 +1824,7 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 		fclose(fp);
 	}
 
+	RecGetMusicFolderName(fileName, 255, packNo, musicNo);
 	ret = RecPlayMain(&map_detail, &userpal, &nameset, fileName, packNo, musicNo, difNo, AutoFlag);
 
 	if (ret != SCENE_RESULT) { return ret; }
