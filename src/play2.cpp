@@ -49,9 +49,9 @@
 
 /* struct */
 typedef struct rec_play_back_pic_s {
-	int sky = 0;
-	int ground = 0;
-	int water = 0;
+	dxcur_pic_c sky;
+	dxcur_pic_c ground;
+	dxcur_pic_c water;
 } rec_play_back_pic_t;
 
 typedef struct play_key_stat_s {
@@ -65,22 +65,22 @@ typedef struct play_key_stat_s {
 } play_key_stat_t;
 
 typedef struct note_img {
-	int notebase = LoadGraph(L"picture/hit.png");
-	int hitcircle[6] = {
-		LoadGraph(L"picture/hitc-G.png"),
-		LoadGraph(L"picture/hitc-R.png"),
-		LoadGraph(L"picture/hitc-B.png"),
-		LoadGraph(L"picture/hitc-Y.png"),
-		LoadGraph(L"picture/hitc-X.png"),
-		LoadGraph(L"picture/hitc-W.png"),
+	dxcur_pic_c notebase = dxcur_pic_c(L"picture/hit.png");
+	dxcur_pic_c hitcircle[6] = {
+		dxcur_pic_c(L"picture/hitc-G.png"),
+		dxcur_pic_c(L"picture/hitc-R.png"),
+		dxcur_pic_c(L"picture/hitc-B.png"),
+		dxcur_pic_c(L"picture/hitc-Y.png"),
+		dxcur_pic_c(L"picture/hitc-X.png"),
+		dxcur_pic_c(L"picture/hitc-W.png"),
 	};
-	int catchi = LoadGraph(L"picture/catch.png");
-	int up = LoadGraph(L"picture/up.png");
-	int down = LoadGraph(L"picture/down.png");
-	int left = LoadGraph(L"picture/left.png");
-	int right = LoadGraph(L"picture/right.png");
-	int bomb = LoadGraph(L"picture/bomb.png");
-	int goust = LoadGraph(L"picture/goust.png");
+	dxcur_pic_c catchi = dxcur_pic_c(L"picture/catch.png");
+	dxcur_pic_c up     = dxcur_pic_c(L"picture/up.png");
+	dxcur_pic_c down   = dxcur_pic_c(L"picture/down.png");
+	dxcur_pic_c left   = dxcur_pic_c(L"picture/left.png");
+	dxcur_pic_c right  = dxcur_pic_c(L"picture/right.png");
+	dxcur_pic_c bomb   = dxcur_pic_c(L"picture/bomb.png");
+	dxcur_pic_c goust  = dxcur_pic_c(L"picture/goust.png");
 } rec_play_notepic_t;
 
 #endif /* typedef group */
@@ -121,7 +121,7 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	return;
 }
 
-static void RecResetPlayObjectNum(short int objectN[], const rec_score_file_t *recfp) {
+static void RecResetPlayObjectNum(short objectN[], const rec_score_file_t *recfp) {
 	uint allnum = recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2];
 	for (uint iView = 0; iView < allnum; iView++) {
 		if (recfp->mapdata.note[iView].lane == NOTE_LANE_UP) {
@@ -217,34 +217,6 @@ static void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, int cam) {
 	return;
 }
 
-static int GetCharaPos3(int time, note_box_2_t note[], short int No[],
-	rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
-{
-	int ans = CHARA_POS_MID;
-	// push up
-	if (1 <= keyhold->up && 0 == keyhold->down) { return CHARA_POS_UP; }
-	// push down
-	else if (0 == keyhold->up && 1 <= keyhold->down) { return CHARA_POS_DOWN; }
-	// push up and down
-	else if (1 <= keyhold->up && 1 <= keyhold->down) { return CHARA_POS_MID; }
-	// near catch/bomb
-	for (int i = 0; i < 3; i++) {
-		if (note[No[i]].hittime <= time + 40 &&
-			(note[No[i]].object == NOTE_CATCH ||
-				note[No[i]].object == NOTE_BOMB))
-		{
-			return CHARA_POS_MID;
-		}
-	}
-	// hit note
-	if (keyhold->up != 1 && keyhold->down != 1 &&
-		keyhold->left != 1 && keyhold->right != 1 && hitatk->time != -1000)
-	{
-		return hitatk->pos;
-	}
-	return CHARA_POS_MID;
-}
-
 static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	for (int iLine = 0; iLine < loop; iLine++) {
 		if (IS_BETWEEN(0, move[iLine].d[move[iLine].num].Stime, Ntime)) {
@@ -270,7 +242,7 @@ static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 }
 
 static void PlayDrawItem(rec_map_eff_data_t *mapeff,
-	short int MovieN, int Ntime, int Xmidline, int item[])
+	short MovieN, int Ntime, int Xmidline, dxcur_pic_c item[])
 {
 	view_BPM_box *v_BPM = &mapeff->v_BPM.data[mapeff->v_BPM.num];
 	int drawA;
@@ -326,7 +298,7 @@ static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 		drawS = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawS);
 		//drawing
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-		DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]);
+		DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID].handle());
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}
 }
@@ -372,19 +344,10 @@ static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play
 	return;
 }
 
-static void RecPlayGetMapFileNames(TCHAR *songPath, TCHAR *songName,
-	int packNo, int musicNo, int LvNo)
-{
-	RecGetMusicFolderPath(songPath, 255, packNo, musicNo);
-	RecGetMusicFolderName(songName, 255, packNo, musicNo);
-	return;
-}
-
 static int GetRemainNotes(rec_play_judge_t judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
 
-/* TODO: この関数要らない */
 static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 	rec_save_score_t scoreBuf;
 	RecSaveReadScoreOneDif(&scoreBuf, songName, dif);
@@ -545,8 +508,8 @@ static void RecPlayCalLaneTrack(int LaneTrack[], const rec_play_key_hold_t *keyh
 #if 1 /* Notes Picture */
 
 /**
- * return 0 = normal, 1 = continue, 2 = break;
- */
+* return 0 = normal, 1 = continue, 2 = break;
+*/
 static int StepViewNoDrawNote(int hittime, rec_map_eff_data_t *mapeff,
 	short viewTN, int *viewTadd, int Ntime)
 {
@@ -568,8 +531,8 @@ static int StepViewNoDrawNote(int hittime, rec_map_eff_data_t *mapeff,
 }
 
 /**
- * return 0 = normal, 1 = continue, 2 = break;
- */
+* return 0 = normal, 1 = continue, 2 = break;
+*/
 static int StepNoDrawNote(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *SpeedNoAdd,
 	note_box_2_t *note, rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
 	int Ntime)
@@ -613,8 +576,8 @@ static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_
 }
 
 /**
- * return 0 = normal, 1 = continue, 2 = break;
- */
+* return 0 = normal, 1 = continue, 2 = break;
+*/
 static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *SpeedNoAdd,
 	note_box_2_t *note, rec_map_eff_data_t *mapeff, rec_play_lanepos_t *lanePos, short viewTN,
 	short lockN[], int iLine, int Ntime, rec_play_notepic_t *noteimg)
@@ -638,33 +601,33 @@ static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *Spe
 	case 4:
 	case 5:
 	case 6:
-		DrawGraphRecField(DrawX, DrawY, noteimg->notebase);
+		DrawGraphRecField(DrawX, DrawY, noteimg->notebase.handle());
 		break;
 	}
 	switch (note->object) {
 	case 1:
-		DrawID = noteimg->hitcircle[DrawC];
+		DrawID = noteimg->hitcircle[DrawC].handle();
 		break;
 	case 2:
-		DrawID = noteimg->catchi;
+		DrawID = noteimg->catchi.handle();
 		break;
 	case 3:
-		DrawID = noteimg->up;
+		DrawID = noteimg->up.handle();
 		break;
 	case 4:
-		DrawID = noteimg->down;
+		DrawID = noteimg->down.handle();
 		break;
 	case 5:
-		DrawID = noteimg->left;
+		DrawID = noteimg->left.handle();
 		break;
 	case 6:
-		DrawID = noteimg->right;
+		DrawID = noteimg->right.handle();
 		break;
 	case 7:
-		DrawID = noteimg->bomb;
+		DrawID = noteimg->bomb.handle();
 		break;
 	case 8:
-		DrawID = noteimg->goust;
+		DrawID = noteimg->goust.handle();
 		break;
 	}
 	DrawGraphRecField(DrawX, DrawY, DrawID);
@@ -700,13 +663,13 @@ static void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, short objectN[], not
 
 #if 1 /* Back Ground */
 
-static void DrawFallBack(int Yline, int item[], rec_fall_data_t *falleff) {
+static void DrawFallBack(int Yline, dxcur_pic_c item[], rec_fall_data_t *falleff) {
 	static int baseX = 0;
 	static int baseY = 0;
 	for (int ix = 0; ix < 2; ix++) {
 		for (int iy = 0; iy < 3; iy++) {
 			RecRescaleDrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
-				item[falleff->d[falleff->num].No], TRUE);
+				item[falleff->d[falleff->num].No].handle(), TRUE);
 		}
 	}
 	baseX -= 5;
@@ -716,7 +679,7 @@ static void DrawFallBack(int Yline, int item[], rec_fall_data_t *falleff) {
 }
 
 static void PlayDrawBackGround(rec_map_eff_data_t *mapeff, int Yline[],
-	rec_play_back_pic_t *backpic, int *item)
+	rec_play_back_pic_t *backpic, dxcur_pic_c *item)
 {
 	static int bgp[3] = { 0,0,0 };
 	int camX = 0;
@@ -724,11 +687,11 @@ static void PlayDrawBackGround(rec_map_eff_data_t *mapeff, int Yline[],
 	cal_back_x(bgp, mapeff, camX);
 	//draw background picture
 	for (int loop = bgp[0] / 100; loop + camX / 5 < 70000; loop += 640) {
-		DrawGraphRecBackField(loop, Yline[3] / 5 - 160, backpic->sky);
+		DrawGraphRecBackField(loop, Yline[3] / 5 - 160, backpic->sky.handle());
 	}
 	for (int loop = bgp[1] / 100; loop + camX < 70000; loop += 640) {
-		DrawGraphRecField(loop, Yline[3] - 400, backpic->ground);
-		DrawGraphRecField(loop, Yline[4] - 400, backpic->water);
+		DrawGraphRecField(loop, Yline[3] - 400, backpic->ground.handle());
+		DrawGraphRecField(loop, Yline[4] - 400, backpic->water.handle());
 	}
 	//落ち物背景表示
 	if (mapeff->fall.d[mapeff->fall.num].No >= 0) {
@@ -888,7 +851,8 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 	return;
 }
 
-static void PlayShowGuideLine1(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+/* ラスライン */
+static void PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
 	bool viewEn)
 {
@@ -900,17 +864,78 @@ static void PlayShowGuideLine1(rec_map_eff_data_t *mapeff, const rec_move_data_t
 	int drawY2 = 0;
 	rec_play_xy_set_t camera;
 
-	RecPlayGetCameraPos(&camera.x, &camera.y);
+	RecPlayGetCameraPos(&camera.x, &camera.y); /* TODO: スクリーン上での位置を返す関数が欲しい */
 	RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
 	drawRight = 1280 - camera.x;
 	drawY2    = drawY1;
-	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.barThick);
+	if (960 < drawLeft) { return; }
+	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.lineThick);
 	return;
+}
+
+/* スタートライン */
+static int PlayShowStartGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+	const rec_play_lanepos_t *lanePos, int Line, int drawC, int Ntime, short YlockN, bool viewEn)
+{
+	if (!viewEn) { return 1; }
+
+	int drawLeft = 0;
+	int drawRight = 0;
+	int drawY1 = 0;
+	int drawY2 = 0;
+	rec_play_xy_set_t camera;
+
+	RecPlayGetCameraPos(&camera.x, &camera.y);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[0].Stime);
+	drawLeft = 0 - camera.x;
+	drawY1   = drawY2;
+	if (960 < drawLeft) { return 2; }
+	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.lineThick);
+	return 0;
+}
+
+/* move繋ぎライン */
+static int PlayShowChainGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
+	bool viewEn)
+{
+	if (!viewEn) { return 1; }
+
+	int drawLeft = 0;
+	int drawRight = 0;
+	int drawY1 = 0;
+	int drawY2 = 0;
+
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
+	drawY2 = drawY1;
+	if (960 < drawLeft) { return 2; }
+	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.lineThick);
+	return 0;
+}
+
+/* moveライン */
+static int PlayShowMovingGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN, bool viewEn)
+{
+	if (!viewEn) { return 1; }
+
+	int drawLeft = 0;
+	int drawRight = 0;
+	int drawY1 = 0;
+	int drawY2 = 0;
+
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Etime);
+	if (960 < drawLeft) { return 2; }
+	DrawLineCurveRecField(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, optiondata.lineThick);
+	return 0;
 }
 
 static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos, int Line, int iDraw,
 	short YlockN)
 {
+	int ret = 0;
 	int Ntime = recfp->time.now;
 	rec_move_data_t *Ymove = recfp->mapeff.move.y[Line].d;
 	rec_map_eff_data_t *mapeff = &recfp->mapeff;
@@ -943,30 +968,32 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *
 		break;
 	}
 
-	/* TODO: StimeがEtimeより遅い(#MOVExxxX:1/x/1をやったときにたまに起こる)ときにスキップされるバグがある */
+	/* TODO: move直角ラインが欲しい */
 	if (Ymove[iDraw].Stime < 0) {
-		PlayShowGuideLine1(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn); /* ラスライン */
+		PlayShowLastGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn); /* ラスライン */
 		return 1;
 	}
+
 	if (iDraw < 1) {
-		if (!viewEn) { return 0; }
-		RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[0].Stime);
-		drawLeft = 0 - camera.x;
-		drawY1   = drawY2;
-		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.barThick);
+		ret = PlayShowStartGuideLine(mapeff, Ymove, lanePos, Line, drawC, Ntime, YlockN, viewEn); /* スタートライン */
+		switch (ret) {
+		case 1:
+			return 0;
+		case 2:
+			return -1;
+		}
 	}
 	else if (Ntime < Ymove[iDraw].Etime) {
-		if (!viewEn) { return 0; }
-		RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
-		RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
-		drawY2 = drawY1;
-		DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.barThick);
+		ret = PlayShowChainGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn); /* move繋ぎライン */
+		switch (ret) {
+		case 1:
+			return 0;
+		case 2:
+			return -1;
+		}
 	}
-	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
-	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Etime);
-	if (960 < drawLeft) { return 1; }
-	if (!viewEn) { return 0; }
-	DrawLineCurveRecField(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, optiondata.barThick);
+	ret = PlayShowMovingGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn); /* moveライン */
+	if (ret == 2) { return -1; }
 	return 0;
 }
 
@@ -985,6 +1012,39 @@ static void PlayShowAllGuideLine(rec_score_file_t *recfp, const rec_play_lanepos
 }
 
 #endif /* Guide Line */
+
+#if 1 /* control */
+
+static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyhold, int *holdG,
+	short *objectNG, bool AutoFlag)
+{
+	char key[256];
+
+	GetHitKeyStateAll(key);
+	if (AutoFlag) {
+		if (key[KEY_INPUT_G] == 0) { *holdG = 0; }
+		else if (key[KEY_INPUT_G] == 1) { (*holdG)++; }
+		AutoAution(keyhold, recfp->mapdata.note, objectNG, recfp->time.now);
+	}
+	else {
+		if (key[KEY_INPUT_Z] == 0) keyhold->z = 0;
+		else if (key[KEY_INPUT_Z] == 1) keyhold->z++;
+		if (key[KEY_INPUT_X] == 0) keyhold->x = 0;
+		else if (key[KEY_INPUT_X] == 1) keyhold->x++;
+		if (key[KEY_INPUT_C] == 0) keyhold->c = 0;
+		else if (key[KEY_INPUT_C] == 1) keyhold->c++;
+		if (key[KEY_INPUT_UP] == 0) keyhold->up = 0;
+		else if (key[KEY_INPUT_UP] == 1) keyhold->up++;
+		if (key[KEY_INPUT_LEFT] == 0) keyhold->left = 0;
+		else if (key[KEY_INPUT_LEFT] == 1) keyhold->left++;
+		if (key[KEY_INPUT_RIGHT] == 0) keyhold->right = 0;
+		else if (key[KEY_INPUT_RIGHT] == 1) keyhold->right++;
+		if (key[KEY_INPUT_DOWN] == 0) keyhold->down = 0;
+		else if (key[KEY_INPUT_DOWN] == 1) keyhold->down++;
+	}
+}
+
+#endif
 
 #if 1 /* class */
 
@@ -1033,8 +1093,8 @@ static class rec_play_runner_c {
 
 private:
 	DxPic_t	charaimg[PIC_NUM];
-	DxPic_t charaguideimg;
-	DxPic_t judghimg;
+	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/Cguide.png"));
+	dxcur_pic_c judghimg      = dxcur_pic_c(_T("picture/Marker.png"));
 
 public:
 	int pos = 1; //キャラの今の位置[0で上,1で中,2で下]
@@ -1055,16 +1115,12 @@ public:
 				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
 			break;
 		}
-		this->charaguideimg = LoadGraph(L"picture/Cguide.png");
-		this->judghimg = LoadGraph(L"picture/Marker.png");
 	}
 
 	~rec_play_runner_c() {
 		for (int i = 0; i < PIC_NUM; i++) {
 			DeleteGraph(this->charaimg[i]);
 		}
-		DeleteGraph(this->charaguideimg);
-		DeleteGraph(this->judghimg);
 	}
 
 private:
@@ -1103,19 +1159,59 @@ private:
 	}
 
 public:
+	void UpdateCharapos(int time, note_box_2_t note[], short int No[],
+		rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
+	{
+		int ans = CHARA_POS_MID;
+		// push up
+		if (1 <= keyhold->up && 0 == keyhold->down) {
+			this->pos = CHARA_POS_UP;
+			return;
+		}
+		// push down
+		if (0 == keyhold->up && 1 <= keyhold->down) {
+			this->pos = CHARA_POS_DOWN;
+			return;
+		}
+		// push up and down
+		if (1 <= keyhold->up && 1 <= keyhold->down) {
+			this->pos = CHARA_POS_MID;
+			return;
+		}
+		// near catch/bomb
+		for (int i = 0; i < 3; i++) {
+			if (note[No[i]].hittime <= time + 40 &&
+				(note[No[i]].object == NOTE_CATCH ||
+					note[No[i]].object == NOTE_BOMB))
+			{
+				this->pos = CHARA_POS_MID;
+				return;
+			}
+		}
+		// hit note
+		if (keyhold->up != 1 && keyhold->down != 1 &&
+			keyhold->left != 1 && keyhold->right != 1 && hitatk->time != -1000)
+		{
+			this->pos = hitatk->pos;
+			return;
+		}
+		this->pos = CHARA_POS_MID;
+		return;
+	}
+
 	void ViewRunner(rec_map_eff_data_t *mapeff, rec_play_key_hold_t *keyhold,
-		rec_play_lanepos_t *lanePos, int charaput, int charahit, int Ntime)
+		rec_play_lanepos_t *lanePos, int charahit, int Ntime)
 	{
 		// view chara pos guide
 		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
-			DrawGraphRecField(lanePos->x[this->pos] - 4, lanePos->y[this->pos] - 4, this->charaguideimg);
+			DrawGraphRecField(lanePos->x[this->pos] - 4, lanePos->y[this->pos] - 4, this->charaguideimg.handle());
 		}
 		else {
-			DrawTurnGraphRecField(lanePos->x[this->pos] - 56, lanePos->y[this->pos] - 4, this->charaguideimg);
+			DrawTurnGraphRecField(lanePos->x[this->pos] - 56, lanePos->y[this->pos] - 4, this->charaguideimg.handle());
 		}
 		//判定マーカーの表示
 		for (int i = 0; i < 3; i++) {
-			DrawGraphRecField(lanePos->x[i], lanePos->y[i], this->judghimg);
+			DrawGraphRecField(lanePos->x[i], lanePos->y[i], this->judghimg.handle());
 		}
 		/* キャラ表示 */
 		this->PlayDrawChara(keyhold, lanePos, charahit, Ntime, mapeff);
@@ -1130,15 +1226,18 @@ public:
 
 static class rec_play_sbar_c {
 private:
-	DxPic_t baseImg;
+	dxcur_pic_c baseImg = dxcur_pic_c(_T("picture/scoreber.png"));
 	struct {
-		DxPic_t Green;
-		DxPic_t Yellow;
-		DxPic_t Red;
+		dxcur_pic_c Green = dxcur_pic_c(_T("picture/LIFEbar.png"));
+		dxcur_pic_c Yellow = dxcur_pic_c(_T("picture/LIFEbar2.png"));
+		dxcur_pic_c Red = dxcur_pic_c(_T("picture/LIFEbar3.png"));
 	} Lbarimg;
-	DxPic_t Tbarimg[2];
-	DxPic_t sbbarimg;
+	dxcur_pic_c Tbarimg[2] = {
+		dxcur_pic_c(_T("picture/TIMEbar.png")), dxcur_pic_c(_T("picture/TIMEbar2.png"))
+	};
+	dxcur_pic_c sbbarimg = dxcur_pic_c(_T("picture/scoreber2.png"));
 
+private:
 	int CalPosScore(rec_play_score_t score, int RemainNotes, int Notes, int combo, int MaxCombo) {
 		int PosCombo = maxs_2(combo + RemainNotes, MaxCombo);
 		return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
@@ -1195,16 +1294,16 @@ private:
 	void ViewLife(int life, int Exlife) const {
 		int DrawX = lins(0, -114, 500, 177, life);
 		if (100 < life) {
-			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Green, TRUE);
+			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Green.handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 255, 500, 0, life));
-			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Yellow, TRUE);
+			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Yellow.handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
 		else {
-			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red, TRUE);
+			RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red.handle(), TRUE);
 		}
 		DrawX = lins(0, -114, 500, 177, Exlife);
-		RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red, TRUE);
+		RecRescaleDrawGraph(DrawX, 3, this->Lbarimg.Red.handle(), TRUE);
 		/* TODO: DrawBoxで表現する */
 		// DrawBoxAnchor(24, 4, 572, 52, COLOR_GREEN, DXDRAW_ANCHOR_TOP_CENTRE, TRUE);
 		RecRescaleDrawFormatString(440, 10, COLOR_WHITE, L"%3d", life);
@@ -1220,7 +1319,7 @@ private:
 			cr = COLOR_BLACK;
 		}
 		DrawX = (291 * Dscore->now_dis - 136 * time->end + 136 * time->offset) / (time->end - time->offset);
-		RecRescaleDrawGraph(DrawX, 38, this->Tbarimg[DrawNo], TRUE);
+		RecRescaleDrawGraph(DrawX, 38, this->Tbarimg[DrawNo].handle(), TRUE);
 		RecRescaleDrawFormatString(180, 45, cr, L"%.3fkm", Dscore->point / 1000.0);
 	}
 
@@ -1251,66 +1350,36 @@ private:
 		}
 	}
 
-	/* TODO: コンストラクタの移動 */
 public:
-	rec_play_sbar_c() {
-		this->baseImg = LoadGraph(_T("picture/scoreber.png"));
-		this->Lbarimg.Green = LoadGraph(_T("picture/LIFEbar.png"));
-		this->Lbarimg.Yellow = LoadGraph(_T("picture/LIFEbar2.png"));
-		this->Lbarimg.Red = LoadGraph(_T("picture/LIFEbar3.png"));
-		this->Tbarimg[0] = LoadGraph(_T("picture/TIMEbar.png"));
-		this->Tbarimg[1] = LoadGraph(_T("picture/TIMEbar2.png"));
-		this->sbbarimg = LoadGraph(_T("picture/scoreber2.png"));
-	}
-
-	~rec_play_sbar_c() {
-		DeleteGraph(this->baseImg);
-		DeleteGraph(this->Lbarimg.Green);
-		DeleteGraph(this->Lbarimg.Yellow);
-		DeleteGraph(this->Lbarimg.Red);
-		DeleteGraph(this->Tbarimg[0]);
-		DeleteGraph(this->Tbarimg[1]);
-		DeleteGraph(this->sbbarimg);
-	}
-
 	void ViewScoreBar(const rec_play_userpal_t *userpal, const rec_play_time_set_t *time,
 		const rec_map_detail_t *mapdata, int Hscore, int holdG)
 	{
-		RecRescaleDrawGraph(0, 0, this->baseImg, TRUE);
+		RecRescaleDrawGraph(0, 0, this->baseImg.handle(), TRUE);
 		this->ViewScore(userpal->score, Hscore, time->now);
 		this->ViewLife(userpal->life, userpal->Exlife);
 		this->ViewDist(userpal->status, &userpal->Dscore, time);
-		RecRescaleDrawGraph(0, 0, this->sbbarimg, TRUE);
+		RecRescaleDrawGraph(0, 0, this->sbbarimg.handle(), TRUE);
 		this->ViewRunStatus(userpal, mapdata->notes, Hscore);
 	}
 };
 
 class rec_play_gapbar_c {
 private:
-	int gapbarimg;
-	int gaplineimg;
+	dxcur_pic_c gapbarimg  = dxcur_pic_c(L"picture/GapBer.png");
+	dxcur_pic_c gaplineimg = dxcur_pic_c(L"picture/GapBerLine.png");
 
 public:
-	rec_play_gapbar_c() {
-		this->gapbarimg = LoadGraph(L"picture/GapBer.png");
-		this->gaplineimg = LoadGraph(L"picture/GapBerLine.png");
-	}
+	void ViewGapBar(const cur_deviation_c *gap) const {
+		int No = gap->GetHead() % 30;
 
-	~rec_play_gapbar_c() {
-		DeleteGraph(this->gapbarimg);
-		DeleteGraph(this->gaplineimg);
-	}
-
-	void ViewGapBar(gap_box *gap) {
-		int No = gap->count % 30;
-
-		RecRescaleDrawGraph(219, 460, this->gapbarimg, TRUE);
+		RecRescaleDrawGraph(219, 460, this->gapbarimg.handle(), TRUE);
 
 		for (int i = 0; i < 30; i++) {
-			No--;
-			if (No < 0) { No += 30; }
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (510 - No * 17) / 2);
-			RecRescaleDrawGraph(318 - gap->view[i], 460, this->gaplineimg, TRUE);
+			No = LOOP_SUB(No, 30);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 255, 29, 0, i));
+			/* TODO: オプションで、時間で上下にずらすのもあり? */
+			/* TODO: オプションで、左右反転 */
+			RecRescaleDrawGraph(318 - gap->GetList(No), 460, this->gaplineimg.handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
 		}
 	}
@@ -1318,23 +1387,15 @@ public:
 
 class rec_play_keyview_c {
 private:
-	int enable = 0;
+	int enable = optiondata.keydetail;
 	int count[7] = { 0,0,0,0,0,0,0 };
-	DxPic_t KeyViewimg[2];
+	dxcur_pic_c KeyViewimg[2];
 
 public:
 	rec_play_keyview_c(void) {
-		this->enable = optiondata.keydetail;
 		if (this->enable) {
-			this->KeyViewimg[0] = LoadGraph(L"picture/KeyViewOff.png");
-			this->KeyViewimg[1] = LoadGraph(L"picture/KeyViewOn.png");
-		}
-	}
-
-	~rec_play_keyview_c() {
-		if (this->enable) {
-			DeleteGraph(this->KeyViewimg[0]);
-			DeleteGraph(this->KeyViewimg[1]);
+			this->KeyViewimg[0].reload(_T("picture/KeyViewOff.png"));
+			this->KeyViewimg[1].reload(_T("picture/KeyViewOn.png"));
 		}
 	}
 
@@ -1347,13 +1408,13 @@ public:
 			if (keyhold->down == 1) { this->count[4]++; }
 			if (keyhold->left == 1) { this->count[5]++; }
 			if (keyhold->right == 1) { this->count[6]++; }
-			RecRescaleDrawGraph(5, 445, this->KeyViewimg[mins_2(keyhold->z, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(40, 445, this->KeyViewimg[mins_2(keyhold->x, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(75, 445, this->KeyViewimg[mins_2(keyhold->c, 1)], REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(570, 410, this->KeyViewimg[mins_2(keyhold->up, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(570, 445, this->KeyViewimg[mins_2(keyhold->down, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(535, 445, this->KeyViewimg[mins_2(keyhold->left, 1)], REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(605, 445, this->KeyViewimg[mins_2(keyhold->right, 1)], REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(5, 445, this->KeyViewimg[mins_2(keyhold->z, 1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(40, 445, this->KeyViewimg[mins_2(keyhold->x, 1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(75, 445, this->KeyViewimg[mins_2(keyhold->c, 1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(570, 410, this->KeyViewimg[mins_2(keyhold->up, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(570, 445, this->KeyViewimg[mins_2(keyhold->down, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(535, 445, this->KeyViewimg[mins_2(keyhold->left, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(605, 445, this->KeyViewimg[mins_2(keyhold->right, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
 			if (this->count[0] == 0) { RecRescaleAnchorDrawString(10, 450, L"Z", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
 			else { RecRescaleAnchorDrawFormatString(10, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[0] % 100); }
 			if (this->count[1] == 0) { RecRescaleAnchorDrawString(45, 450, L"X", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
@@ -1377,17 +1438,17 @@ public:
 /* main action */
 
 /**
- * @param[out] ret_map_det map_detail の受け皿
- * @param[out] ret_userpal userpal の受け皿
- * @param[out] ret_nameset nameset の受け皿
- * @param[out] ret_fileN ファイル名の受け皿
- * @param[in] p パックナンバー
- * @param[in] n 曲ナンバー
- * @param[in] o 難易度ナンバー
- * @param[in] shift マップ生成フラフ
- * @param[in] AutoFlag オートプレイフラグ
- * @return now_scene_t 次のシーン
- */
+* @param[out] ret_map_det map_detail の受け皿
+* @param[out] ret_userpal userpal の受け皿
+* @param[out] ret_nameset nameset の受け皿
+* @param[out] ret_fileN ファイル名の受け皿
+* @param[in] p パックナンバー
+* @param[in] n 曲ナンバー
+* @param[in] o 難易度ナンバー
+* @param[in] shift マップ生成フラフ
+* @param[in] AutoFlag オートプレイフラグ
+* @return now_scene_t 次のシーン
+*/
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
 	rec_play_nameset_t *ret_nameset, TCHAR *ret_fileN, int p, int n, int o, int AutoFlag)
 {
@@ -1398,7 +1459,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	char key[256];
 
 	/* short */
-	short int i[3];
+	short i[3];
 
 	/* int */
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
@@ -1411,8 +1472,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
-	short int lockN[2] = { 0,0 }; //↑の番号
-	short int viewTN = 0;
+	short lockN[2] = { 0,0 }; //↑の番号
+	short viewTN = 0;
 	rec_play_lanepos_t lanePos;
 	unsigned int Cr = GetColor(255, 255, 255);
 	unsigned int Crb = GetColor(0, 0, 0);
@@ -1425,10 +1486,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
 	play_key_stat_t key_stat;
-	short int MovieN = 0;
+	short MovieN = 0;
 	rec_view_bpm_set_t v_BPM;
-	short int objectN[3] = { 5999,5999,5999 }; //note number
-	short int objectNG[3] = { 0,0,0 }; //note number without ghost note
+	short objectN[3] = { 5999,5999,5999 }; //note number
+	short objectNG[3] = { 0,0,0 }; //note number without ghost note
 	rec_score_file_t recfp;
 	rec_play_userpal_t userpal;
 
@@ -1452,14 +1513,14 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_cutin_c cutin;
 
 	/* mat */
-	int item[99]; //アイテムのfd、DrawGraphで呼べる。
-	short int itemN = 0; //↑の番号
+	dxcur_pic_c item[99]; //アイテムのfd、DrawGraphで呼べる。
+	short itemN = 0; //↑の番号
 	int Sitem[99]; //サウンドアイテムのfd
-	short int SitemN = 0; //↑の番号
+	short SitemN = 0; //↑の番号
 	rec_play_back_pic_t backpic;
-	int dangerimg = LoadGraph(L"picture/danger.png");
-	int dropimg = LoadGraph(L"picture/drop.png");
-	int filterimg = LoadGraph(L"picture/Black.png");
+	dxcur_pic_c dangerimg = dxcur_pic_c(_T("picture/danger.png"));
+	dxcur_pic_c dropimg   = dxcur_pic_c(_T("picture/drop.png"));
+	dxcur_pic_c filterimg = dxcur_pic_c(_T("picture/Black.png"));
 	rec_play_notepic_t noteimg;
 
 #endif /* num define */
@@ -1475,15 +1536,17 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	if (optiondata.SEenable == 0) { RecPlayInitMelodySnd(); }
 
-	RecPlayGetMapFileNames(dataE, ret_fileN, p, n, o);
+	RecGetMusicFolderPath(dataE, 255, p, n);
+	RecGetMusicFolderName(ret_fileN, 255, p, n);
+
 	RecGetMusicMapRrsPath(GT1, 255, p, n, (rec_dif_t)o);
 
 	/* rrsデータの内容を読み込む */
 	if (rec_score_fread(&recfp, GT1) != 0) { return SCENE_EXIT; }
 
-	backpic.sky = LoadGraph(recfp.nameset.sky);
-	backpic.ground = LoadGraph(recfp.nameset.ground);
-	backpic.water = LoadGraph(recfp.nameset.water);
+	backpic.sky.reload(   recfp.nameset.sky);
+	backpic.ground.reload(recfp.nameset.ground);
+	backpic.water.reload( recfp.nameset.water);
 
 	HighScore = GetHighScore(ret_fileN, (rec_dif_t)o);
 
@@ -1491,8 +1554,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		strcopy_2(dataE, GT1, 255);
 		Getxxxpng(&GT2[0], i[0]);
 		strcats(GT1, GT2);
-		item[i[0]] = LoadGraph(GT1);
-		if (item[i[0]] == -1) { break; }
+		item[i[0]].reload(GT1);
+		if (item[i[0]].handle() == -1) { break; }
 	}
 	for (i[0] = 1; i[0] < 100; i[0]++) {
 		strcopy_2(dataE, GT1, 255);
@@ -1513,39 +1576,16 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	RecResetPlayObjectNum(objectN, &recfp);
 	RecSysBgmSetMem(recfp.nameset.mp3FN, ARRAY_COUNT(recfp.nameset.mp3FN));
 	RecSysBgmPlay(true, false, true);
-	WaitTimer(10);
+	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	Stime = GetNowCount();
-	cutin.SetIo(0);
+	cutin.SetIo(CUT_FRAG_OUT);
 	//ゲーム開始
 	while (1) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
 		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, lockN, &viewTN, objectN);
 
-		//キー設定
-		GetHitKeyStateAll(key);
-		if (AutoFlag == 0) {
-			if (key[KEY_INPUT_Z] == 0) keyhold.z = 0;
-			else if (key[KEY_INPUT_Z] == 1) keyhold.z++;
-			if (key[KEY_INPUT_X] == 0) keyhold.x = 0;
-			else if (key[KEY_INPUT_X] == 1) keyhold.x++;
-			if (key[KEY_INPUT_C] == 0) keyhold.c = 0;
-			else if (key[KEY_INPUT_C] == 1) keyhold.c++;
-			if (key[KEY_INPUT_UP] == 0) keyhold.up = 0;
-			else if (key[KEY_INPUT_UP] == 1) keyhold.up++;
-			if (key[KEY_INPUT_LEFT] == 0) keyhold.left = 0;
-			else if (key[KEY_INPUT_LEFT] == 1) keyhold.left++;
-			if (key[KEY_INPUT_RIGHT] == 0) keyhold.right = 0;
-			else if (key[KEY_INPUT_RIGHT] == 1) keyhold.right++;
-			if (key[KEY_INPUT_DOWN] == 0) keyhold.down = 0;
-			else if (key[KEY_INPUT_DOWN] == 1) keyhold.down++;
-		}
-		//オートプレイ用コード
-		else if (AutoFlag == 1) {
-			if (key[KEY_INPUT_G] == 0) { holdG = 0; }
-			else if (key[KEY_INPUT_G] == 1) { holdG++; }
-			AutoAution(&keyhold, recfp.mapdata.note, objectNG, recfp.time.now);
-		}
+		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, objectNG, AutoFlag);
 
 		//カメラ移動
 		RecPlaySetCamera(&recfp.mapeff.camera, recfp.time.now);
@@ -1558,21 +1598,20 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		else {
 			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
-		runnerClass.pos = GetCharaPos3(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
+		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
-			(keyhold.up == 1 || keyhold.down == 1 ||
-			keyhold.left == 1 || keyhold.right == 1))
+			IS_JUST_PUSH_ANY_ARROWKEY(&keyhold))
 		{
 			charahit = 0;
 		}
 		//キー押しヒット解除
-		if (1 == keyhold.up || 1 == keyhold.down || 1 == keyhold.left || 1 == keyhold.right || hitatk.time + 750 < recfp.time.now) {
+		if (IS_JUST_PUSH_ANY_ARROWKEY(&keyhold) || ((hitatk.time + 750) < recfp.time.now)) {
 			hitatk.time = -1000;
 		}
 		//キャッチ判定に使う数値を計算
 		RecPlayCalLaneTrack(LaneTrack, &keyhold, runnerClass.pos, recfp.time.now);
 		//ヒット
-		if (keyhold.z == 1 || keyhold.x == 1 || keyhold.c == 1) { charahit = GetNowCount(); }
+		if (IS_JUST_PUSH_ANY_HITKEY(&keyhold)) { charahit = GetNowCount(); }
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */
 		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
@@ -1588,12 +1627,12 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		switch (optiondata.backbright) {
 		case 1:
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
-			RecRescaleDrawGraph(0, 0, filterimg, TRUE);
+			RecRescaleDrawGraph(0, 0, filterimg.handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 			break;
 		case 2:
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 85);
-			RecRescaleDrawGraph(0, 0, filterimg, TRUE);
+			RecRescaleDrawGraph(0, 0, filterimg.handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 			break;
 		}
@@ -1605,7 +1644,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowAllGuideLine(&recfp, &lanePos, LineMoveN, lockN[1]);
 		RecPlayDrawGuideBorder(&recfp, &lanePos, lockN[1]);
 		/* キャラ周り表示 */
-		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, runnerClass.pos, charahit, recfp.time.now);
+		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, charahit, recfp.time.now);
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
@@ -1661,8 +1700,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			RecRescaleDrawFormatString(20, 120, CrR, L"LOWER OVER");
 		}
 #endif
-		if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, dropimg, TRUE); }
-		else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, dangerimg, TRUE); }
+		if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, dropimg.handle(), TRUE); }
+		else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, dangerimg.handle(), TRUE); }
 		//ノーツが全部なくなった瞬間の時間を記録
 		if (GetRemainNotes(userpal.judgeCount, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
 			AllNotesHitTime = GetNowCount();
@@ -1677,7 +1716,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			(RecSysBgmCheckSoundMem() == 0))
 		{
 			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
-			cutin.SetIo(1);
+			cutin.SetIo(CUT_FRAG_IN);
 		}
 		cutin.DrawCut();
 
@@ -1737,10 +1776,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			RecSysBgmStop();
-			INIT_PIC();
 			return SCENE_SERECT;
 		}
-		WaitTimer(5);
+		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 		if (StopFrag == -1) {
 			recfp.time.now = GetNowCount() - Stime + optiondata.offset * 5;
 		}
@@ -1750,8 +1788,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		ScreenFlip();
 	}
 
-	INIT_PIC();
-
 	*ret_map_det = recfp.mapdata;
 	*ret_userpal = userpal;
 	*ret_nameset = recfp.nameset;
@@ -1760,13 +1796,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 }
 
 /**
- * @param[in] packNo パックナンバー
- * @param[in] musicNo 曲ナンバー
- * @param[in] difNo 難易度ナンバー
- * @param[in] shift マップ生成フラフ
- * @param[in] AutoFlag オートプレイフラグ
- * @return 次のシーン
- */
+* @param[in] packNo パックナンバー
+* @param[in] musicNo 曲ナンバー
+* @param[in] difNo 難易度ナンバー
+* @param[in] shift マップ生成フラフ
+* @param[in] AutoFlag オートプレイフラグ
+* @return 次のシーン
+*/
 now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	TCHAR mapPath[255];
 	TCHAR fileName[255];

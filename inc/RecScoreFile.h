@@ -98,9 +98,9 @@ typedef struct rec_ddif_pal_s {
 
 typedef struct rec_map_detail_s {
 	double bpm = 120;
-	short int Lv = 0;
+	short Lv = 0;
 	note_box_2_t note[6000];
-	short int notes = 0;
+	short notes = 0;
 	intx100_t mdif = 0;
 	int ldif = 0;
 	int ddif[25] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };//Še‹æŠÔ‚Ì“ïˆÕ“x

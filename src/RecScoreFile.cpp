@@ -47,7 +47,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	fread(&recfp->nameset.water, 255, 1, fp);//水中画像名
 	fread(&recfp->nameset.songN, 255, 1, fp);//曲名
 	fread(&recfp->nameset.songNE, 255, 1, fp);//曲名(英語)
-	fread(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//レベル
+	fread(&recfp->mapdata.Lv, sizeof(short), 1, fp);//レベル
 	//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 	{
 		int buf[99][2];
@@ -107,7 +107,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	fread(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
 	fread(&recfp->mapdata.note, sizeof(note_box_2_t),
 		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
-	fread(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
+	fread(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
 	fread(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
 	{
 		int buf[2];
@@ -152,7 +152,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	fwrite(&recfp->nameset.water, 255, 1, fp);//水中画像名
 	fwrite(&recfp->nameset.songN, 255, 1, fp);//曲名
 	fwrite(&recfp->nameset.songNE, 255, 1, fp);//曲名(英語)
-	fwrite(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//レベル
+	fwrite(&recfp->mapdata.Lv, sizeof(short), 1, fp);//レベル
 	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
 	{
 		int buf[99][2];
@@ -201,7 +201,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	}
 	fwrite(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
 	fwrite(&recfp->mapdata.note, sizeof(note_box_2_t), recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
-	fwrite(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
+	fwrite(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
 	fwrite(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
 	fwrite(&recfp->mapdata.ddifG[0], sizeof(int), 1, fp);//最高難易度
 	fwrite(&recfp->mapdata.ddifG[1], sizeof(int), 1, fp);//最終難易度
@@ -242,7 +242,7 @@ int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path) {
 	fseek(fp, 255, SEEK_CUR);//水中画像名
 	fseek(fp, 255, SEEK_CUR);//曲名
 	fseek(fp, 255, SEEK_CUR);//曲名(英語)
-	fread(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//レベル
+	fread(&recfp->mapdata.Lv, sizeof(short), 1, fp);//レベル
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//落ち物背景切り替えタイミング
 	fseek(fp, sizeof(double) * 990, SEEK_CUR);//レーン速度
 	fseek(fp, sizeof(int) * 594, SEEK_CUR);//キャラグラ変換タイミング
@@ -259,7 +259,7 @@ int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path) {
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//ノーツ表示時間変換タイミング
 	fread(&recfp->mapdata.note, sizeof(note_box_2_t),
 		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
-	fread(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
+	fread(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
 	fseek(fp, sizeof(int), SEEK_CUR);//曲終了時間
 	{
 		int buf[2];
@@ -330,7 +330,7 @@ int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, 255, SEEK_CUR);//水中画像名
 	fseek(fp, 255, SEEK_CUR);//曲名
 	fseek(fp, 255, SEEK_CUR);//曲名(英語)
-	REC_LINE_SEEK(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//レベル
+	REC_LINE_SEEK(&recfp->mapdata.Lv, sizeof(short), 1, fp);//レベル
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//落ち物背景切り替えタイミング
 	fseek(fp, sizeof(double) * 990, SEEK_CUR);//レーン速度
 	fseek(fp, sizeof(int) * 594, SEEK_CUR);//キャラグラ変換タイミング
@@ -346,7 +346,7 @@ int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//キャラ向き切り替えタイミング
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//ノーツ表示時間変換タイミング
 	REC_LINE_SEEK(&recfp->mapdata.note, sizeof(note_box_2_t), allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
-	REC_LINE_SEEK(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
+	REC_LINE_SEEK(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
 	fseek(fp, sizeof(int), SEEK_CUR);//曲終了時間
 	REC_LINE_SEEK(buf, sizeof(int), 2, fp);
 	REC_LINE_SEEK(&recfp->mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
@@ -388,7 +388,7 @@ int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, 255, SEEK_CUR);//水中画像名
 	fseek(fp, 255, SEEK_CUR);//曲名
 	fseek(fp, 255, SEEK_CUR);//曲名(英語)
-	REC_LINE_SEEK(&recfp->mapdata.Lv, sizeof(short int), 1, fp);//レベル
+	REC_LINE_SEEK(&recfp->mapdata.Lv, sizeof(short), 1, fp);//レベル
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//落ち物背景切り替えタイミング
 	fseek(fp, sizeof(double) * 990, SEEK_CUR);//レーン速度
 	fseek(fp, sizeof(int) * 594, SEEK_CUR);//キャラグラ変換タイミング
@@ -404,7 +404,7 @@ int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//キャラ向き切り替えタイミング
 	fseek(fp, sizeof(int) * 198, SEEK_CUR);//ノーツ表示時間変換タイミング
 	REC_LINE_SEEK(&recfp->mapdata.note, sizeof(note_box_2_t), allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2], fp); /* ノーツデータ */
-	REC_LINE_SEEK(&recfp->mapdata.notes, sizeof(short int), 1, fp);//ノーツ数
+	REC_LINE_SEEK(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
 	fseek(fp, sizeof(int), SEEK_CUR);//曲終了時間
 	REC_LINE_SEEK(buf, sizeof(int), 2, fp);
 	REC_LINE_SEEK(&recfp->mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ

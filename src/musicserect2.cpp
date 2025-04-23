@@ -30,6 +30,7 @@
 
 #endif /* include */
 
+/* TODO: ƒpƒbƒN”§ŒÀ‚ð‚È‚­‚· */
 #define PackNumLim 9
 #define SongNumLim 64
 #define REC_SORT_DEFAULT 0
@@ -593,22 +594,14 @@ static void RecSerectSetToPlay(rec_to_play_set_t *toPlay, int cmd[],
 
 static class rec_serect_backpic_c {
 private:
-	DxPic_t back;
+	dxcur_pic_c back = dxcur_pic_c(_T("picture/MSback.png"));
 	int backpos = 0;
 
 public:
-	rec_serect_backpic_c() {
-		this->back = LoadGraph(L"picture/MSback.png");
-	}
-
-	~rec_serect_backpic_c() {
-		DeleteGraph(this->back);
-	}
-
-	void DrawBackPic() {
-		this->backpos = (this->backpos - 2) % 640;
-		RecRescaleDrawGraph(this->backpos, 0, this->back, TRUE);
-		RecRescaleDrawGraph(this->backpos + 640, 0, this->back, TRUE);
+	inline void DrawBackPic(void) {
+		this->backpos = (this->backpos - 2) % 640; /* TODO: •ÊŠÖ”‚É‚Å‚«‚é */
+		RecRescaleDrawGraph(this->backpos, 0, this->back.handle(), TRUE);
+		RecRescaleDrawGraph(this->backpos + 640, 0, this->back.handle(), TRUE);
 	}
 };
 
@@ -625,7 +618,7 @@ public:
 		RecSysBgmSetCurrentPosition(this->preTime[this->SongPrePat]);
 		RecSysBgmChangeVolume(0);
 		RecSysBgmPlay(true, false, false);
-		WaitTimer(30);
+		WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 		this->SongPreSTime = GetNowCount();
 	}
 
@@ -681,24 +674,40 @@ private:
 
 	int UD = REC_SERECT_VECT_DOWN;
 	int startC = -MUSE_FADTM;
-	DxPic_t bar[2];
-	DxPic_t CRate[5];
-	DxPic_t rankP[6];
+	dxcur_pic_c bar[2] = {
+		dxcur_pic_c(L"picture/songbarB.png"), dxcur_pic_c(L"picture/songbarY.png")
+	};
+	dxcur_pic_c CRate[5] = {
+		dxcur_pic_c(L"picture/MarkD.png"),
+		dxcur_pic_c(L"picture/MarkC.png"),
+		dxcur_pic_c(L"picture/MarkNM.png"),
+		dxcur_pic_c(L"picture/MarkFC.png"),
+		dxcur_pic_c(L"picture/MarkP.png")
+	};
+	dxcur_pic_c rankP[6] = {
+		dxcur_pic_c(L"picture/MiniEX.png"),
+		dxcur_pic_c(L"picture/MiniS.png"),
+		dxcur_pic_c(L"picture/MiniA.png"),
+		dxcur_pic_c(L"picture/MiniB.png"),
+		dxcur_pic_c(L"picture/MiniC.png"),
+		dxcur_pic_c(L"picture/MiniD.png")
+	};
 
+private:
 	void DrawClear(int x, int y, int clearNo) {
 		if (0 <= clearNo && clearNo <= 4) {
-			DrawGraph(x, y, this->CRate[clearNo], TRUE);
+			DrawGraph(x, y, this->CRate[clearNo].handle(), TRUE);
 		}
 	}
 
 	void DrawRack(int x, int y, int rankNo) {
 		if (0 <= rankNo && rankNo <= 5) {
-			DrawGraph(x, y, this->rankP[rankNo], TRUE);
+			DrawGraph(x, y, this->rankP[rankNo].handle(), TRUE);
 		}
 	}
 
 	void DrawMainOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX *songdata) {
-		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1], TRUE);
+		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1].handle(), TRUE);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_BLACK, SmallFontData);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_BLACK, SmallFontData);
 		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata->ClearRank[dif] - 1);
@@ -710,7 +719,7 @@ private:
 	}
 
 	void DrawSubOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX *songdata) {
-		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0], TRUE);
+		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0].handle(), TRUE);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName[dif], COLOR_WHITE, SmallFontData);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist[dif], COLOR_WHITE, SmallFontData);
 		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata->ClearRank[dif] - 1);
@@ -718,38 +727,6 @@ private:
 	}
 
 public:
-	rec_serect_musicbar_c() {
-		this->bar[0] = LoadGraph(L"picture/songbarB.png");
-		this->bar[1] = LoadGraph(L"picture/songbarY.png");
-		this->CRate[0] = LoadGraph(L"picture/MarkD.png");
-		this->CRate[1] = LoadGraph(L"picture/MarkC.png");
-		this->CRate[2] = LoadGraph(L"picture/MarkNM.png");
-		this->CRate[3] = LoadGraph(L"picture/MarkFC.png");
-		this->CRate[4] = LoadGraph(L"picture/MarkP.png");
-		this->rankP[0] = LoadGraph(L"picture/MiniEX.png");
-		this->rankP[1] = LoadGraph(L"picture/MiniS.png");
-		this->rankP[2] = LoadGraph(L"picture/MiniA.png");
-		this->rankP[3] = LoadGraph(L"picture/MiniB.png");
-		this->rankP[4] = LoadGraph(L"picture/MiniC.png");
-		this->rankP[5] = LoadGraph(L"picture/MiniD.png");
-	}
-
-	~rec_serect_musicbar_c() {
-		DeleteGraph(this->bar[0]);
-		DeleteGraph(this->bar[1]);
-		DeleteGraph(this->CRate[0]);
-		DeleteGraph(this->CRate[1]);
-		DeleteGraph(this->CRate[2]);
-		DeleteGraph(this->CRate[3]);
-		DeleteGraph(this->CRate[4]);
-		DeleteGraph(this->rankP[0]);
-		DeleteGraph(this->rankP[1]);
-		DeleteGraph(this->rankP[2]);
-		DeleteGraph(this->rankP[3]);
-		DeleteGraph(this->rankP[4]);
-		DeleteGraph(this->rankP[5]);
-	}
-
 	void SlideBar(int vect) {
 		this->UD = vect;
 		this->startC = GetNowCount();
@@ -797,13 +774,13 @@ private:
 	int startC = -MUSE_FADTM;
 	intx100_t rate = 0;
 	double Nrot = 0.0;
-	DxPic_t disk;
-	DxPic_t runner;
-	DxPic_t rateBar;
+	dxcur_pic_c disk = dxcur_pic_c(_T("picture/disk.png"));
+	dxcur_pic_c runner;
+	dxcur_pic_c rateBar;
 
 	void DrawNamePlate(int baseX, int baseY) {
-		DrawGraphAnchor(baseX - 30, baseY, this->rateBar, DXDRAW_ANCHOR_TOP_RIGHT);
-		DrawGraphAnchor(baseX, baseY, this->runner, DXDRAW_ANCHOR_TOP_RIGHT);
+		DrawGraphAnchor(baseX - 30, baseY, this->rateBar.handle(), DXDRAW_ANCHOR_TOP_RIGHT);
+		DrawGraphAnchor(baseX, baseY, this->runner.handle(), DXDRAW_ANCHOR_TOP_RIGHT);
 		DrawFormatStringToHandleAnchor(baseX - 220, baseY + 12, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"Lv:%2d", this->Lv);
 		DrawFormatStringToHandleAnchor(baseX - 215, baseY + 37, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"RATE:%d.%02d", this->rate / 100, this->rate % 100);
 	}
@@ -816,7 +793,7 @@ private:
 		else { this->Nrot += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
 		if (this->Nrot > 6.28) { this->Nrot -= 6.28; }
 		else if (this->Nrot < 0) { this->Nrot += 6.28; }
-		DrawRotaGraphAnchor(baseX, baseY, 1, this->Nrot, this->disk, DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
+		DrawRotaGraphAnchor(baseX, baseY, 1, this->Nrot, this->disk.handle(), DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
 	}
 
 	void DrawSort(int baseX, int baseY, int mode) {
@@ -842,46 +819,42 @@ public:
 
 		switch (optiondata.chara) {
 		case 0:
-			this->runner = LoadGraph(L"picture/Mpicker.png");
+			this->runner.reload(L"picture/Mpicker.png");
 			this->Lv = buf.picker;
 			break;
 		case 1:
-			this->runner = LoadGraph(L"picture/Mgator.png");
+			this->runner.reload(L"picture/Mgator.png");
 			this->Lv = buf.mapgator;
 			break;
 		case 2:
-			this->runner = LoadGraph(L"picture/Mtaylor.png");
+			this->runner.reload(L"picture/Mtaylor.png");
 			this->Lv = buf.taylor;
 			break;
 		default:
-			this->runner = -1;
 			this->Lv = 0;
 			break;
 		}
+		this->Lv++;
+
 		if (this->rate < 2500) {
-			this->rateBar = LoadGraph(L"picture/MSrate1.png");
+			this->rateBar.reload(L"picture/MSrate1.png");
 		}
 		else if (2500 <= this->rate && this->rate < 5500) {
-			this->rateBar = LoadGraph(L"picture/MSrate2.png");
+			this->rateBar.reload(L"picture/MSrate2.png");
 		}
 		else if (5500 <= this->rate && this->rate < 9000) {
-			this->rateBar = LoadGraph(L"picture/MSrate3.png");
+			this->rateBar.reload(L"picture/MSrate3.png");
 		}
 		else if (9000 <= this->rate && this->rate < 12000) {
-			this->rateBar = LoadGraph(L"picture/MSrate4.png");
+			this->rateBar.reload(L"picture/MSrate4.png");
 		}
 		else {
-			this->rateBar = LoadGraph(L"picture/MSrate5.png");
+			this->rateBar.reload(L"picture/MSrate5.png");
 		}
-		this->disk = LoadGraph(L"picture/disk.png");
 	}
 
-	~rec_serect_disk_c() {
-		DeleteGraph(this->disk);
-		DeleteGraph(this->rateBar);
-		DeleteGraph(this->runner);
-	}
-
+private:
+public:
 	void SlideDisk(int vect) {
 		this->UD = vect;
 		this->startC = GetNowCount();
@@ -899,45 +872,28 @@ private:
 	int LR = REC_SERECT_VECT_LEFT;
 	int XstartC = -MUSE_FADTM;
 	TCHAR viewingDifBar[255] = { L"NULL" };
-	DxPic_t difbar[6];
-	DxPic_t detail;
-	DxPic_t mpalNamePic;
-	DxPic_t difC[10];
-
-public:
-	rec_serect_detail_c() {
-		this->difbar[0] = LoadGraph(L"picture/difauto.png");
-		this->difbar[1] = LoadGraph(L"picture/difeasy.png");
-		this->difbar[2] = LoadGraph(L"picture/difnormal.png");
-		this->difbar[3] = LoadGraph(L"picture/difhard.png");
-		this->difbar[4] = LoadGraph(L"picture/difanother.png");
-		this->difbar[5] = this->difbar[4];
-		this->detail = LoadGraph(L"picture/detail.png");
-		this->mpalNamePic = LoadGraph(_T("picture/mpalName.png"));
-		this->difC[0] = LoadGraph(L"picture/Dif0S.png");
-		this->difC[1] = LoadGraph(L"picture/Dif0B.png");
-		this->difC[2] = LoadGraph(L"picture/Dif1S.png");
-		this->difC[3] = LoadGraph(L"picture/Dif1B.png");
-		this->difC[4] = LoadGraph(L"picture/Dif2S.png");
-		this->difC[5] = LoadGraph(L"picture/Dif2B.png");
-		this->difC[6] = LoadGraph(L"picture/Dif3S.png");
-		this->difC[7] = LoadGraph(L"picture/Dif3B.png");
-		this->difC[8] = LoadGraph(L"picture/Dif4S.png");
-		this->difC[9] = LoadGraph(L"picture/Dif4B.png");
-	}
-
-	~rec_serect_detail_c() {
-		DeleteGraph(this->detail);
-		DeleteGraph(this->mpalNamePic);
-		DeleteGraph(this->difbar[0]);
-		DeleteGraph(this->difbar[1]);
-		DeleteGraph(this->difbar[2]);
-		DeleteGraph(this->difbar[3]);
-		DeleteGraph(this->difbar[4]);
-		for (int i = 0; i < 10; i++) {
-			DeleteGraph(this->difC[i]);
-		}
-	}
+	dxcur_pic_c difbar[6] = {
+		dxcur_pic_c(L"picture/difauto.png"),
+		dxcur_pic_c(L"picture/difeasy.png"),
+		dxcur_pic_c(L"picture/difnormal.png"),
+		dxcur_pic_c(L"picture/difhard.png"),
+		dxcur_pic_c(L"picture/difanother.png"),
+		dxcur_pic_c(L"picture/difanother.png")
+	};
+	dxcur_pic_c detail = dxcur_pic_c(_T("picture/detail.png"));
+	dxcur_pic_c mpalNamePic = dxcur_pic_c(_T("picture/mpalName.png"));
+	dxcur_pic_c difC[10] = {
+		dxcur_pic_c(L"picture/Dif0S.png"),
+		dxcur_pic_c(L"picture/Dif0B.png"),
+		dxcur_pic_c(L"picture/Dif1S.png"),
+		dxcur_pic_c(L"picture/Dif1B.png"),
+		dxcur_pic_c(L"picture/Dif2S.png"),
+		dxcur_pic_c(L"picture/Dif2B.png"),
+		dxcur_pic_c(L"picture/Dif3S.png"),
+		dxcur_pic_c(L"picture/Dif3B.png"),
+		dxcur_pic_c(L"picture/Dif4S.png"),
+		dxcur_pic_c(L"picture/Dif4B.png")
+	};
 
 private:
 	void DrawDifMark(int baseX, int baseY, MUSIC_BOX *songdata, int comdif) const {
@@ -949,7 +905,7 @@ private:
 			if (comdif == i) { posY = 1; }
 			if (comdif <= i) { posX = 1; }
 			if (strands_direct(songdata->SongFileName[i], L"NULL") == 0 && i <= songdata->limit) {
-				DrawGraphAnchor(baseX + 11 * posX + 16 * i, baseY, this->difC[i * 2 + posY], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+				DrawGraphAnchor(baseX + 11 * posX + 16 * i, baseY, this->difC[i * 2 + posY].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 			}
 		}
 	}
@@ -959,13 +915,13 @@ private:
 
 		if (this->LR == REC_SERECT_VECT_LEFT) {
 			XmoveC = pals(0, 640, MUSE_FADTM, 460, XmoveC);
-			DrawGraphAnchor(baseX, baseY, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
-			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif + 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			DrawGraphAnchor(baseX, baseY, this->difbar[dif].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif + 1].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 		}
 		else if (this->LR == REC_SERECT_VECT_RIGHT) {
 			XmoveC = pals(0, 460, MUSE_FADTM, 640, XmoveC);
-			DrawGraphAnchor(baseX, baseY, this->difbar[dif - 1], DXDRAW_ANCHOR_BOTTOM_RIGHT);
-			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif], DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			DrawGraphAnchor(baseX, baseY, this->difbar[dif - 1].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 		}
 	}
 
@@ -1003,7 +959,7 @@ private:
 			DrawBoxAnchor(baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2, baseX - 70, baseY - 2 * thick * iPal - thick / 2, color[7 - iPal], DXDRAW_ANCHOR_BOTTOM_RIGHT, TRUE);
 			DrawBoxAnchor(baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2, baseX - 70, baseY - 2 * thick * iPal - thick / 2, SubColor[7 - iPal], DXDRAW_ANCHOR_BOTTOM_RIGHT, FALSE);
 		}
-		DrawGraphAnchor(baseX, baseY, this->mpalNamePic, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		DrawGraphAnchor(baseX, baseY, this->mpalNamePic.handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 #if REC_DEBUG == 1
 		for (uint iPal = 1; iPal < 11; iPal++) {
 			DrawLineAnchor(baseX - lins(0, 0, 900, 450, iPal * 100) - 70, baseY - thick - 2 * thick * 0 - thick / 2, baseX - lins(0, 0, 900, 450, iPal * 100) - 70, baseY - 2 * thick * 7 - thick / 2, COLOR_RED, DXDRAW_ANCHOR_BOTTOM_RIGHT);
@@ -1013,7 +969,7 @@ private:
 
 	void DrawDetail(int baseX, int baseY, MUSIC_BOX *songdata, int dif) const {
 		const TCHAR starChar[2][2] = { _T("š"),_T("™")};
-		DrawGraphAnchor(baseX, baseY, this->detail, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+		DrawGraphAnchor(baseX, baseY, this->detail.handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 		DrawFormatStringToHandleAnchor(baseX - 330, baseY - 170, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"%s", songdata->packName);
 		DrawFormatStringToHandleAnchor(baseX - 325, baseY - 145, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"Lv.%2d", songdata->level[dif]);
 		for (int i = 0; i < 15; i++) {
@@ -1035,13 +991,13 @@ public:
 	void FetchDifPic(TCHAR *difpath) {
 		if (strands(this->viewingDifBar, difpath) == 1) { return; }
 
-		DeleteGraph(this->difbar[4]);
-		DeleteGraph(this->difbar[5]);
+		DeleteGraph(this->difbar[4].handle());
+		DeleteGraph(this->difbar[5].handle());
 
-		this->difbar[4] = LoadGraph(difpath);
-		if (this->difbar[4] == -1) {
-			DeleteGraph(this->difbar[4]);
-			this->difbar[4] = LoadGraph(L"picture/difanother.png");
+		this->difbar[4].reload(difpath);
+		if (this->difbar[4].handle() == -1) {
+			DeleteGraph(this->difbar[4].handle());
+			this->difbar[4].reload(L"picture/difanother.png");
 			this->difbar[5] = this->difbar[4];
 			strcopy_2(L"NULL", this->viewingDifBar, 255);
 		}
@@ -1061,28 +1017,20 @@ public:
 
 static class rec_serect_jacket_c {
 private:
-	DxPic_t jacketpic;
+	dxcur_pic_c jacketpic = dxcur_pic_c(_T("picture/NULL jucket.png"));
 	TCHAR viewingjacket[255] = { L"picture/NULL jucket.png" };
 
 public:
-	rec_serect_jacket_c() {
-		this->jacketpic = LoadGraph(L"picture/NULL jucket.png");
-	}
-
-	~rec_serect_jacket_c() {
-		DeleteGraph(this->jacketpic);
-	}
-
 	void UpdateJacket(TCHAR *jacketName) {
 		if (strands(this->viewingjacket, jacketName) == 0) {
-			DeleteGraph(this->jacketpic);
+			DeleteGraph(this->jacketpic.handle());
 			strcopy_2(jacketName, this->viewingjacket, 255);
-			this->jacketpic = LoadGraph(this->viewingjacket);
+			this->jacketpic.reload(this->viewingjacket);
 		}
 	}
 
-	void DrawJacket(int baseX, int baseY, int size) {
-		DrawExtendGraph(baseX, baseY, baseX + size, baseY + size, this->jacketpic, TRUE);
+	void DrawJacket(int baseX, int baseY, int size) const {
+		DrawExtendGraph(baseX, baseY, baseX + size, baseY + size, this->jacketpic.handle(), TRUE);
 	}
 };
 
@@ -1256,13 +1204,13 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_SONG);
 		uiClass->cutin.SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName[cmd[1]],
 			SONGDATA_FROM_MAP(songdata, cmd[0]).jacketP[cmd[1]]);
-		uiClass->cutin.SetIo(1);
+		uiClass->cutin.SetIo(CUT_FRAG_IN);
 		break;
 	case REC_SERECT_KEY_BACK:
 		*next = SCENE_MENU;
 		uiClass->cutin.SetTipNo();
 		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_ON);
-		uiClass->cutin.SetIo(1);
+		uiClass->cutin.SetIo(CUT_FRAG_IN);
 		break;
 	case REC_SERECT_KEY_UP:
 		RecSerectKeyActUD(cmd, REC_SERECT_VECT_UP,    uiClass, songdata);
@@ -1316,7 +1264,7 @@ now_scene_t musicserect(rec_to_play_set_t *toPlay) {
 	AvoidKeyBug();
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
-	uiClass.cutin.SetIo(0);
+	uiClass.cutin.SetIo(CUT_FRAG_OUT);
 
 	while (1) {
 		RecSerectDrawAllUi(&uiClass, cmd, &songdata, closeFg, CutTime);
@@ -1327,12 +1275,12 @@ now_scene_t musicserect(rec_to_play_set_t *toPlay) {
 			next = SCENE_EXIT;
 			break;
 		}
-		WaitTimer(5);
+		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
 
 	RecSerectSaveBefCmd(cmd, songdata.sortMode);
 
-	INIT_MAT();
+	INIT_SND();
 
 	return next;
 }

@@ -13,9 +13,10 @@
 #define OLD_WINDOW_SIZE_X 640                         // 前バージョンのウィンドウの横のサイズ
 #define OLD_WINDOW_SIZE_Y (OLD_WINDOW_SIZE_X * 3 / 4) // 前バージョンのウィンドウの縦のサイズ 480
 
-#define INIT_PIC() InitGraph()
+#define WAIT_TIME_AFTER_MUSICPLAY 30 /* 音楽再生直後のウェイト時間 */
+#define WAIT_TIME_ON_GAMELOOP      1 /* ゲーム処理ループ中のウェイト時間 */
+
 #define INIT_SND() InitSoundMem()
-#define INIT_MAT() INIT_PIC(); INIT_SND()
 
 #define SWITCH_NOTE_BOX_2 1
 
@@ -79,6 +80,14 @@ typedef enum rec_error_e {
 	REC_ERROR_FILE_NUM   = 101, /* 指定ナンバーが大きすぎた */
 	REC_ERROR_MAP_COUNT  = 200, /* オブジェクト数が多すぎた */
 } rec_error_t;
+
+typedef struct rec_to_play_set_s {
+	int packNo = 0;
+	int musicNo = 0;
+	int dif = 0;
+	int shift = 0;
+	int autoFg = 0;
+} rec_to_play_set_t;
 
 typedef struct rec_system_s {
 	int chara = 0;

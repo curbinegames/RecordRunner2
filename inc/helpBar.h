@@ -15,10 +15,8 @@ typedef enum help_bar_mat_e {
 
 class rec_helpbar_c {
 private:
-	DxPic_t pic;
+	dxcur_pic_c pic = dxcur_pic_c(_T("picture/help.png"));
 public:
-	rec_helpbar_c(void);
-	~rec_helpbar_c();
 	void DrawHelp(help_bar_mat_t mat);
 	void ReloadMat(void);
 };

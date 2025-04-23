@@ -38,13 +38,6 @@ typedef struct judge_box {
 	int miss = 0;
 } rec_play_judge_t;
 
-typedef struct gap_box_t {
-	int view[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-	int sum = 0;
-	int ssum = 0;
-	int count = 0;
-} gap_box;
-
 typedef struct rec_play_score_s {
 	int normal = 0;
 	int combo = 0;
@@ -70,6 +63,13 @@ typedef struct rec_play_key_hold_s {
 	int left = 0;
 	int right = 0;
 } rec_play_key_hold_t;
+#define IS_PUSH_UPDOWN(keyhold)            ( ((keyhold)->up >= 1) && ((keyhold)->down >= 1) )
+#define IS_PUSH_ANY_ARROWKEY(keyhold)      ( ((keyhold)->up >= 1) || ((keyhold)->down >= 1) || ((keyhold)->left >= 1) || ((keyhold)->right >= 1) )
+#define IS_JUST_PUSH_ANY_ARROWKEY(keyhold) ( ((keyhold)->up == 1) || ((keyhold)->down == 1) || ((keyhold)->left == 1) || ((keyhold)->right == 1) )
+#define IS_JUST_PUSH_ANY_HITKEY(keyhold)   ( ((keyhold)->z  == 1) || ((keyhold)->x    == 1) || ((keyhold)->c    == 1) )
+#define IS_CHARAUP_KEY(keyhold)            ( ((keyhold)->up >= 1) && ((keyhold)->down == 0) )
+#define IS_CHARAMID_KEY(keyhold)           ( ((keyhold)->up == 0) && ((keyhold)->down == 0) || ((keyhold)->up >= 1) && ((keyhold)->down >= 1) )
+#define IS_CHARALOW_KEY(keyhold)           ( ((keyhold)->up == 0) && ((keyhold)->down >= 1) )
 
 typedef struct distance_score_s {
 	int add = 0;
@@ -93,7 +93,7 @@ typedef struct rec_play_userpal_s {
 	rec_play_judge_t judgeCount;
 	int life = 500;
 	int Exlife = 500;
-	gap_box gap;
+	cur_deviation_c gap;
 } rec_play_userpal_t;
 
 class rec_play_sound_c {

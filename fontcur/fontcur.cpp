@@ -31,8 +31,8 @@ void InitCurFont() {
  * @param[in] zero draw "0." (if dn = 0.524 and zero = 0, draw ".524")
  * @return ‚È‚µ
  */
-void DrawCurFont(double dn, short int x, short int y, int sizeY,
-	cur_font_cr_t Cr, short int a, int zero)
+void DrawCurFont(double dn, short x, short y, int sizeY,
+	cur_font_cr_t Cr, short a, int zero)
 {
 	/* int */
 	int k = 0;

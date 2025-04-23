@@ -348,13 +348,89 @@ void RecTxtWriteAllDdif() {
 
 #endif /* デバッグ用関数 */
 
+static void RecOptionKeyCtrl(int *cmd, bool *exitFg) {
+	InputAllKeyHold();
+	switch (GetKeyPushOnce()) {
+	case KEY_INPUT_LEFT:
+		PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
+		(*optionstr[*cmd].val_p)--;
+		if (*optionstr[*cmd].val_p < optionstr[*cmd].min) {
+			if (optionstr[*cmd].loop == FALSE) {
+				*optionstr[*cmd].val_p = optionstr[*cmd].min;
+			}
+			else {
+				*optionstr[*cmd].val_p = optionstr[*cmd].max;
+			}
+		}
+		break;
+	case KEY_INPUT_RIGHT:
+		PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
+		(*optionstr[*cmd].val_p)++;
+		if (optionstr[*cmd].max < *optionstr[*cmd].val_p) {
+			if (optionstr[*cmd].loop == FALSE) {
+				*optionstr[*cmd].val_p = optionstr[*cmd].max;
+			}
+			else {
+				*optionstr[*cmd].val_p = optionstr[*cmd].min;
+			}
+		}
+		break;
+	case KEY_INPUT_UP:
+		PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
+		*cmd = (*cmd + optionstr_count - 1) % optionstr_count;
+		break;
+	case KEY_INPUT_DOWN:
+		PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
+		*cmd = (*cmd + 1) % optionstr_count;
+		break;
+	case KEY_INPUT_BACK:
+		RecWriteOptineFile2(&optiondata);
+		{
+			int buf[7] = {
+				optiondata.chara,
+				optiondata.offset,
+				optiondata.SEenable,
+				optiondata.backbright,
+				optiondata.lang,
+				optiondata.keydetail,
+				optiondata.combopos
+			};
+			RecWriteOptineFile(buf);
+		}
+		*exitFg = true;
+		break;
+#if REC_DEBUG == 1 /* デバッグ用コード */
+	case KEY_INPUT_Q:
+		RecTxtWriteAllDdif();
+#if 0 /* プレイヤーのレートの詳細を出力 */
+		FILE *fp;
+		FILE *outfp;
+		play_rate_t temp;
+		wchar_t temp2[255];
+		(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
+		(void)_wfopen_s(&outfp, L"RateDetail.txt", L"w");
+		if (fp != NULL && outfp != NULL) {
+			for (int i = 0; i < RATE_NUM; i++) {
+				fread(&temp, sizeof(play_rate_t), 1, fp);
+				fwprintf(outfp, L"%2d: %5.2f: %s\n", i + 1, temp.num, temp.name);
+			}
+		}
+		fclose(fp);
+		fclose(outfp);
+#endif
+		break;
+#endif
+	}
+	return;
+}
+
 now_scene_t option(void) {
 	int command = 0;
 	struct {
-		int back = -1;
-		int cursor = -1;
+		dxcur_pic_c back   = dxcur_pic_c(_T("picture/OPTION back.png"));
+		dxcur_pic_c cursor = dxcur_pic_c(_T("picture/OC.png"));
 	} pic;
-	int exitFg = 0;
+	bool exitFg = false;
 	rec_helpbar_c help;
 
 	if (RecOpenOptionFile2(&optiondata) != 0) {
@@ -378,113 +454,18 @@ now_scene_t option(void) {
 		}
 	}
 
-	pic.back = LoadGraph(L"picture/OPTION back.png");
-	pic.cursor = LoadGraph(L"picture/OC.png");
 	s_sel = LoadSoundMem(L"sound/select.wav");
 
 	AvoidKeyRush();
 
 	//処理
 	while (1) {
-		InputAllKeyHold();
-		switch (GetKeyPushOnce()) {
-		case KEY_INPUT_LEFT:
-			PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
-			(*optionstr[command].val_p)--;
-			if (*optionstr[command].val_p < optionstr[command].min) {
-				if (optionstr[command].loop == FALSE) {
-					*optionstr[command].val_p = optionstr[command].min;
-				}
-				else {
-					*optionstr[command].val_p = optionstr[command].max;
-				}
-			}
-			break;
-		case KEY_INPUT_RIGHT:
-			PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
-			(*optionstr[command].val_p)++;
-			if (optionstr[command].max < *optionstr[command].val_p) {
-				if (optionstr[command].loop == FALSE) {
-					*optionstr[command].val_p = optionstr[command].max;
-				}
-				else {
-					*optionstr[command].val_p = optionstr[command].min;
-				}
-			}
-			break;
-		case KEY_INPUT_UP:
-			PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
-			command = (command + optionstr_count - 1) % optionstr_count;
-			break;
-		case KEY_INPUT_DOWN:
-			PlaySoundMem(s_sel, DX_PLAYTYPE_NORMAL);
-			command = (command + 1) % optionstr_count;
-			break;
-		case KEY_INPUT_BACK:
-			RecWriteOptineFile2(&optiondata);
-			{
-				int buf[7] = {
-					optiondata.chara,
-					optiondata.offset,
-					optiondata.SEenable,
-					optiondata.backbright,
-					optiondata.lang,
-					optiondata.keydetail,
-					optiondata.combopos
-				};
-				RecWriteOptineFile(buf);
-			}
-			exitFg = 1;
-			break;
-#if REC_DEBUG == 1 /* デバッグ用コード */
-		case KEY_INPUT_Q:
-#if 0
-			RecTxtWriteAllDdif();
-#elif 1 /* スクリーンモードの変更 */
-			static bool fullFg = false;
-			fullFg = !fullFg;
-			if (fullFg) {
-				ChangeWindowMode(FALSE); // フルスクリーンモードにする
-				pic.back = LoadGraph(L"picture/OPTION back.png");
-				pic.cursor = LoadGraph(L"picture/OC.png");
-				s_sel = LoadSoundMem(L"sound/select.wav");
-				help.ReloadMat();
-				SmallFontData = CreateFontToHandle(NULL, -1, -1);
-				LargeFontData = CreateFontToHandle(NULL, lins(OLD_WINDOW_SIZE_Y, 16, 720, 24, WINDOW_SIZE_Y), -1);
-			}
-			else {
-				ChangeWindowMode(TRUE); // ウィンドウモードにする
-				pic.back = LoadGraph(L"picture/OPTION back.png");
-				pic.cursor = LoadGraph(L"picture/OC.png");
-				s_sel = LoadSoundMem(L"sound/select.wav");
-				help.ReloadMat();
-				SmallFontData = CreateFontToHandle(NULL, -1, -1);
-				LargeFontData = CreateFontToHandle(NULL, lins(OLD_WINDOW_SIZE_Y, 16, 720, 24, WINDOW_SIZE_Y), -1);
-			}
-#elif 0 /* プレイヤーのレートの詳細を出力 */
-			FILE *fp;
-			FILE *outfp;
-			play_rate_t temp;
-			wchar_t temp2[255];
-			(void)_wfopen_s(&fp, RATE_FILE_NAME, L"rb");
-			(void)_wfopen_s(&outfp, L"RateDetail.txt", L"w");
-			if (fp != NULL && outfp != NULL) {
-				for (int i = 0; i < RATE_NUM; i++) {
-					fread(&temp, sizeof(play_rate_t), 1, fp);
-					fwprintf(outfp, L"%2d: %5.2f: %s\n", i + 1, temp.num, temp.name);
-				}
-			}
-			fclose(fp);
-			fclose(outfp);
-#endif
-			break;
-#endif
-		}
+		RecOptionKeyCtrl(&command, &exitFg);
 
 		ClearDrawScreen(); /* 描画エリアスタート */
 
-		RecRescaleDrawGraph(0, 0, pic.back, TRUE); /* 背景 */
-		RecRescaleDrawGraph(40, 45 + command * 40, pic.cursor, TRUE); /* カーソル */
+		RecRescaleDrawGraph(0, 0, pic.back.handle(), TRUE); /* 背景 */
+		RecRescaleDrawGraph(40, 45 + command * 40, pic.cursor.handle(), TRUE); /* カーソル */
 
 		/* 項目表示 */
 		for (int i = 0; i < optionstr_count; i++) {
@@ -509,7 +490,7 @@ now_scene_t option(void) {
 
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
-		if (exitFg == 1) { break; }
+		if (exitFg) { break; }
 	}
 
 	return SCENE_MENU;

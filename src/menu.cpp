@@ -13,9 +13,9 @@
 #include <RecSystem.h>
 
 typedef struct rec_menu_data_s {
-	DxPic_t card;
-	DxPic_t ground;
-	DxPic_t back;
+	dxcur_pic_c card;
+	dxcur_pic_c ground;
+	dxcur_pic_c back;
 	now_scene_t num;
 } rec_menu_data_t;
 
@@ -29,27 +29,27 @@ private:
 
 	rec_menu_data_t menu_item[4] = {
 		{
-			LoadGraph(L"picture/menu/FREE PLAY.png"),
-			LoadGraph(L"picture/menu/FREE PLAY G.png"),
-			LoadGraph(L"picture/backskynoamal.png"),
+			dxcur_pic_c(L"picture/menu/FREE PLAY.png"),
+			dxcur_pic_c(L"picture/menu/FREE PLAY G.png"),
+			dxcur_pic_c(L"picture/backskynoamal.png"),
 			SCENE_SERECT
 		},
 		{
-			LoadGraph(L"picture/menu/COLLECTION.png"),
-			LoadGraph(L"picture/menu/COLLECT G.png"),
-			LoadGraph(L"picture/menu/COLLECT W.png"),
+			dxcur_pic_c(L"picture/menu/COLLECTION.png"),
+			dxcur_pic_c(L"picture/menu/COLLECT G.png"),
+			dxcur_pic_c(L"picture/menu/COLLECT W.png"),
 			SCENE_COLLECTION
 		},
 		{
-			LoadGraph(L"picture/menu/OPTION.png"),
-			LoadGraph(L"picture/menu/OPTION G.png"),
-			LoadGraph(L"picture/menu/OPTION W.png"),
+			dxcur_pic_c(L"picture/menu/OPTION.png"),
+			dxcur_pic_c(L"picture/menu/OPTION G.png"),
+			dxcur_pic_c(L"picture/menu/OPTION W.png"),
 			SCENE_OPTION
 		},
 		{
-			LoadGraph(L"picture/menu/QUIT.png"),
-			LoadGraph(L"picture/menu/QUIT G.png"),
-			LoadGraph(L"picture/backstar.png"),
+			dxcur_pic_c(L"picture/menu/QUIT.png"),
+			dxcur_pic_c(L"picture/menu/QUIT G.png"),
+			dxcur_pic_c(L"picture/backstar.png"),
 			SCENE_EXIT
 		}
 	};
@@ -64,9 +64,9 @@ public:
 
 	~rec_manu_dataset_c(void) {
 		for (int inum = 0; inum < MENU_NUM; inum++) {
-			DeleteGraph(this->menu_item[inum].card);
-			DeleteGraph(this->menu_item[inum].ground);
-			DeleteGraph(this->menu_item[inum].back);
+			DeleteGraph(this->menu_item[inum].card.handle());
+			DeleteGraph(this->menu_item[inum].ground.handle());
+			DeleteGraph(this->menu_item[inum].back.handle());
 		}
 		return;
 	}
@@ -75,12 +75,12 @@ private:
 	void DrawBack(void) const {
 		int time = GetNowCount() - this->stime;
 		time = betweens(0, time, 250);
-		RecRescaleDrawGraph(0, 0, this->menu_item[this->Bcmd].back, TRUE);
+		RecRescaleDrawGraph(0, 0, this->menu_item[this->Bcmd].back.handle(), TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 0, 250, 255, time));
-		RecRescaleDrawGraph(0, 0, this->menu_item[this->Ncmd].back, TRUE);
+		RecRescaleDrawGraph(0, 0, this->menu_item[this->Ncmd].back.handle(), TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		DrawGraphAnchor(0, pals(250, WINDOW_SIZE_Y / 2, 0, 0, time), this->menu_item[this->Bcmd].ground, DXDRAW_ANCHOR_BOTTOM_CENTRE);
-		DrawGraphAnchor(0, pals(250, 0, 0, WINDOW_SIZE_Y / 2, time), this->menu_item[this->Ncmd].ground, DXDRAW_ANCHOR_BOTTOM_CENTRE);
+		DrawGraphAnchor(0, pals(250, WINDOW_SIZE_Y / 2, 0, 0, time), this->menu_item[this->Bcmd].ground.handle(), DXDRAW_ANCHOR_BOTTOM_CENTRE);
+		DrawGraphAnchor(0, pals(250, 0, 0, WINDOW_SIZE_Y / 2, time), this->menu_item[this->Ncmd].ground.handle(), DXDRAW_ANCHOR_BOTTOM_CENTRE);
 		return;
 	}
 
@@ -95,7 +95,7 @@ private:
 		for (int i = 0; i < 5; i++) {
 			int drawX = pals(250, 420 * i - 680, 0, 420 * i + 420 * this->LR - 680, time);
 			int drawY = pals(250, 100, -250, 0, -time * this->LR + 250 * i + 250 * this->LR - 250);
-			RecRescaleDrawGraph(drawX, drawY, this->menu_item[num].card, TRUE);
+			RecRescaleDrawGraph(drawX, drawY, this->menu_item[num].card.handle(), TRUE);
 			num = (num + 1) % MENU_NUM;
 		}
 		return;
@@ -139,7 +139,7 @@ now_scene_t menu(void) {
 	rec_helpbar_c help;
 	rec_cutin_c cutin;
 
-	cutin.SetIo(0);
+	cutin.SetIo(CUT_FRAG_OUT);
 	AvoidKeyRush();
 
 	while (1) {
@@ -165,7 +165,7 @@ now_scene_t menu(void) {
 				if (menu_class.GetSerectScene() != SCENE_SERECT) { return menu_class.GetSerectScene(); }
 				cutin.SetCutTipFg(CUTIN_TIPS_ON);
 				cutin.SetTipNo();
-				cutin.SetIo(1);
+				cutin.SetIo(CUT_FRAG_IN);
 				break;
 			default:
 				break;
@@ -175,6 +175,6 @@ now_scene_t menu(void) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		if (cutin.IsEndAnim()) { return menu_class.GetSerectScene(); }
 
-		WaitTimer(10);
+		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
 }
