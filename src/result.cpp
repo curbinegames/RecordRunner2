@@ -346,8 +346,8 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 	const rec_score_rate_t rank  = CalScoreRank(userpal->score.sum);
 
 	result_pal->acc             = CAL_ACC(userpal->judgeCount, noteCount);
-	result_pal->gap             = CAL_GAP(userpal->gap.sum, userpal->gap.count);
-	result_pal->width           = CAL_GAP_WIDTH(userpal->gap.sum, userpal->gap.count, userpal->gap.ssum);
+	result_pal->gap             = userpal->gap.GetAverage();
+	result_pal->width           = userpal->gap.GetDeviation();
 	result_pal->score           = userpal->score.sum;
 	result_pal->judge           = userpal->judgeCount;
 	result_pal->Mcombo          = userpal->Mcombo;

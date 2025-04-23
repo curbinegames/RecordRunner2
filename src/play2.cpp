@@ -1369,16 +1369,17 @@ private:
 	dxcur_pic_c gaplineimg = dxcur_pic_c(L"picture/GapBerLine.png");
 
 public:
-	void ViewGapBar(gap_box *gap) {
-		int No = gap->count % 30;
+	void ViewGapBar(const cur_deviation_c *gap) const {
+		int No = gap->GetHead() % 30;
 
 		RecRescaleDrawGraph(219, 460, this->gapbarimg.handle(), TRUE);
 
 		for (int i = 0; i < 30; i++) {
-			No--;
-			if (No < 0) { No += 30; }
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, (510 - No * 17) / 2);
-			RecRescaleDrawGraph(318 - gap->view[i], 460, this->gaplineimg.handle(), TRUE);
+			No = LOOP_SUB(No, 30);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 255, 29, 0, i));
+			/* TODO: オプションで、時間で上下にずらすのもあり? */
+			/* TODO: オプションで、左右反転 */
+			RecRescaleDrawGraph(318 - gap->GetList(No), 460, this->gaplineimg.handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 225);
 		}
 	}

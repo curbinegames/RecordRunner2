@@ -38,13 +38,6 @@ typedef struct judge_box {
 	int miss = 0;
 } rec_play_judge_t;
 
-typedef struct gap_box_t {
-	int view[30] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-	int sum = 0;
-	int ssum = 0;
-	int count = 0;
-} gap_box;
-
 typedef struct rec_play_score_s {
 	int normal = 0;
 	int combo = 0;
@@ -100,7 +93,7 @@ typedef struct rec_play_userpal_s {
 	rec_play_judge_t judgeCount;
 	int life = 500;
 	int Exlife = 500;
-	gap_box gap;
+	cur_deviation_c gap;
 } rec_play_userpal_t;
 
 class rec_play_sound_c {

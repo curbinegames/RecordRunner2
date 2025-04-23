@@ -286,13 +286,13 @@ static void note_judge_event(note_judge judge, userpal_t *userpal) {
 	return;
 }
 
-/* 目標の関数の形: RecNoteJudgeEventAll(判定, ノーツの種類); */
+/* TODO: 目標の関数の形: RecNoteJudgeEventAll(判定, ノーツの種類); */
 static void RecNoteJudgeEventAll(note_judge judge, const note_box_2_t note[], int lineNo,
 	userpal_t *userpal, short noteNo[])
 {
-	int GapTime = 0;
-	const note_box_2_t *noteinfo = &note[noteNo[lineNo]];
 	if (judge == NOTE_JUDGE_NONE) { return; }
+
+	const note_box_2_t *noteinfo = &note[noteNo[lineNo]];
 
 	PlaySetJudge(judge);
 	PlaySetHitEffect(judge, noteinfo->object, lineNo);
@@ -300,7 +300,7 @@ static void RecNoteJudgeEventAll(note_judge judge, const note_box_2_t note[], in
 	PlayNoteHitSoundGeneral(judge, noteinfo);
 
 	/* gapのデータ(ズレの平均と偏差値)を更新する */
-	GapTime = noteinfo->hittime - s_Ntime;
+	int GapTime = noteinfo->hittime - s_Ntime;
 	if ((-SAFE_TIME) <= GapTime && GapTime <= SAFE_TIME) {
 		switch (noteinfo->object) {
 		case NOTE_HIT:
@@ -308,15 +308,7 @@ static void RecNoteJudgeEventAll(note_judge judge, const note_box_2_t note[], in
 		case NOTE_DOWN:
 		case NOTE_LEFT:
 		case NOTE_RIGHT:
-			userpal->gap.view[userpal->gap.count % 30] = GapTime;
-			if ((int)(userpal->gap.ssum + GapTime * GapTime) < (int)(userpal->gap.ssum)) {
-				userpal->gap.sum /= 2;
-				userpal->gap.ssum /= 2;
-				userpal->gap.count /= 2;
-			}
-			userpal->gap.sum += GapTime;
-			userpal->gap.ssum += GapTime * GapTime;
-			userpal->gap.count++;
+			userpal->gap.add(GapTime);
 			break;
 		}
 	}
