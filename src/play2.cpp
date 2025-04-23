@@ -1445,7 +1445,6 @@ public:
 * @param[in] p パックナンバー
 * @param[in] n 曲ナンバー
 * @param[in] o 難易度ナンバー
-* @param[in] shift マップ生成フラフ
 * @param[in] AutoFlag オートプレイフラグ
 * @return now_scene_t 次のシーン
 */
@@ -1812,15 +1811,15 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	now_scene_t ret = SCENE_EXIT;
 	FILE *fp = NULL;
 
+	RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
+
 	/* rrsデータが無い、または作成の指示があれば作る */
 	if (shift == 0) {
-		RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
 		_wfopen_s(&fp, mapPath, L"rb");
 	}
 
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
-		RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
 		cal_ddif_3(mapPath);
 	}
 	else {
