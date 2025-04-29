@@ -198,25 +198,6 @@ static void Getxxxwav(wchar_t *str, int num) {
 	return;
 }
 
-/* (ret / 100) */
-static void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, int cam) {
-	const double scrool = mapeff->scrool.data[mapeff->scrool.num].speed;
-	rec_mapeff_speedt_dataset_t *p_speedt = mapeff->speedt;
-	double speed3 = p_speedt[3].d[p_speedt[3].num].speed;
-	double speed4 = p_speedt[4].d[p_speedt[4].num].speed;
-
-	xpos[0] -= (int)(100 * speed3 * scrool);
-	while (xpos[0] + 100 * cam / 5 > 0)      { xpos[0] -= 64000; }
-	while (xpos[0] + 100 * cam / 5 < -64000) { xpos[0] += 64000; }
-
-	xpos[1] -= (int)(500 * speed4 * scrool);
-	while (xpos[1] + 100 * cam > 0)      { xpos[1] -= 64000; }
-	while (xpos[1] + 100 * cam < -64000) { xpos[1] += 64000; }
-
-	xpos[2] = xpos[1];
-	return;
-}
-
 static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	for (int iLine = 0; iLine < loop; iLine++) {
 		if (IS_BETWEEN(0, move[iLine].d[move[iLine].num].Stime, Ntime)) {
@@ -661,47 +642,6 @@ static void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, short objectN[], not
 
 #endif /* Notes Picture */
 
-#if 1 /* Back Ground */
-
-static void DrawFallBack(int Yline, dxcur_pic_c item[], rec_fall_data_t *falleff) {
-	static int baseX = 0;
-	static int baseY = 0;
-	for (int ix = 0; ix < 2; ix++) {
-		for (int iy = 0; iy < 3; iy++) {
-			RecRescaleDrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
-				item[falleff->d[falleff->num].No].handle(), TRUE);
-		}
-	}
-	baseX -= 5;
-	baseY += 2;
-	if (baseX <= -640) { baseX += 640; }
-	if (baseY >= 640) { baseY -= 480; }
-}
-
-static void PlayDrawBackGround(rec_map_eff_data_t *mapeff, int Yline[],
-	rec_play_back_pic_t *backpic, dxcur_pic_c *item)
-{
-	static int bgp[3] = { 0,0,0 };
-	int camX = 0;
-	RecPlayGetCameraPos(&camX, NULL);
-	cal_back_x(bgp, mapeff, camX);
-	//draw background picture
-	for (int loop = bgp[0] / 100; loop + camX / 5 < 70000; loop += 640) {
-		DrawGraphRecBackField(loop, Yline[3] / 5 - 160, backpic->sky.handle());
-	}
-	for (int loop = bgp[1] / 100; loop + camX < 70000; loop += 640) {
-		DrawGraphRecField(loop, Yline[3] - 400, backpic->ground.handle());
-		DrawGraphRecField(loop, Yline[4] - 400, backpic->water.handle());
-	}
-	//óéÇøï®îwåiï\é¶
-	if (mapeff->fall.d[mapeff->fall.num].No >= 0) {
-		DrawFallBack(Yline[3], item, &mapeff->fall);
-	}
-	return;
-}
-
-#endif /* Back Ground */
-
 #if 1 /* Guide Line */
 
 static int RecMapGetPosFromMove(rec_move_set_t move[], int time, int lane) {
@@ -1047,6 +987,66 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyh
 #endif
 
 #if 1 /* class */
+
+static class rec_play_draw_back_c {
+private:
+	void DrawFallBack(int Yline, dxcur_pic_c item[], rec_fall_data_t *falleff) {
+		static int baseX = 0;
+		static int baseY = 0;
+		for (int ix = 0; ix < 2; ix++) {
+			for (int iy = 0; iy < 3; iy++) {
+				RecRescaleDrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
+					item[falleff->d[falleff->num].No].handle(), TRUE);
+			}
+		}
+		baseX -= 5;
+		baseY += 2;
+		if (baseX <= -640) { baseX += 640; }
+		if (baseY >= 640) { baseY -= 480; }
+	}
+
+	/* (ret / 100) */
+	void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, int cam) {
+		const double scrool = mapeff->scrool.data[mapeff->scrool.num].speed;
+		rec_mapeff_speedt_dataset_t *p_speedt = mapeff->speedt;
+		double speed3 = p_speedt[3].d[p_speedt[3].num].speed;
+		double speed4 = p_speedt[4].d[p_speedt[4].num].speed;
+
+		xpos[0] -= (int)(100 * speed3 * scrool);
+		while (xpos[0] + 100 * cam / 5 > 0)      { xpos[0] -= 64000; }
+		while (xpos[0] + 100 * cam / 5 < -64000) { xpos[0] += 64000; }
+
+		xpos[1] -= (int)(500 * speed4 * scrool);
+		while (xpos[1] + 100 * cam > 0)      { xpos[1] -= 64000; }
+		while (xpos[1] + 100 * cam < -64000) { xpos[1] += 64000; }
+
+		xpos[2] = xpos[1];
+		return;
+	}
+
+public:
+	void PlayDrawBackGround(rec_map_eff_data_t *mapeff, int Yline[],
+		rec_play_back_pic_t *backpic, dxcur_pic_c *item)
+	{
+		static int bgp[3] = { 0,0,0 };
+		int camX = 0;
+		RecPlayGetCameraPos(&camX, NULL);
+		cal_back_x(bgp, mapeff, camX);
+		//draw background picture
+		for (int loop = bgp[0] / 100; loop + camX / 5 < 70000; loop += 640) {
+			DrawGraphRecBackField(loop, Yline[3] / 5 - 160, backpic->sky.handle());
+		}
+		for (int loop = bgp[1] / 100; loop + camX < 70000; loop += 640) {
+			DrawGraphRecField(loop, Yline[3] - 400, backpic->ground.handle());
+			DrawGraphRecField(loop, Yline[4] - 400, backpic->water.handle());
+		}
+		//óéÇøï®îwåiï\é¶
+		if (mapeff->fall.d[mapeff->fall.num].No >= 0) {
+			DrawFallBack(Yline[3], item, &mapeff->fall);
+		}
+		return;
+	}
+};
 
 static class rec_play_combo_c {
 private:
@@ -1454,9 +1454,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 #if 1 /* num define */
 
-	/* char */
-	char key[256];
-
 	/* short */
 	short i[3];
 
@@ -1618,7 +1615,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		ClearDrawScreen(); /* ï`âÊÉGÉäÉAÇ±Ç±Ç©ÇÁ */
 		//îwåiï\é¶
 		if (optiondata.backbright != 0) {
-			PlayDrawBackGround(&recfp.mapeff, lanePos.y, &backpic, item);
+			rec_play_draw_back_c action;
+			action.PlayDrawBackGround(&recfp.mapeff, lanePos.y, &backpic, item);
 		}
 		//ÉtÉBÉãÉ^Å[ï\é¶
 		switch (optiondata.backbright) {
