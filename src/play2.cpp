@@ -47,6 +47,8 @@
 
 #if 1 /* typedef group */
 
+typedef rec_map_eff_data_t mapeff_t;
+
 /* struct */
 typedef struct rec_play_back_pic_s {
 	dxcur_pic_c sky;
@@ -489,55 +491,41 @@ static void RecPlayCalLaneTrack(int LaneTrack[], const rec_play_key_hold_t *keyh
 #if 1 /* Notes Picture */
 
 /**
-* return 0 = normal, 1 = continue, 2 = break;
-*/
-static int StepViewNoDrawNote(int hittime, rec_map_eff_data_t *mapeff,
-	short viewTN, int *viewTadd, int Ntime)
-{
+ * return 0 = normal, 1 = continue, 2 = break;
+ */
+static int StepViewNoDrawNote(const mapeff_t *mapeff, int hittime, int viewTN, int Ntime) {
+	int viewTadd = viewTN;
 	//表示/非表示ナンバーを進める
-	if (hittime >= mapeff->viewT[0][viewTN + *viewTadd + 1] &&
-		mapeff->viewT[0][viewTN + *viewTadd + 1] >= 0) {
-		(*viewTadd)++;
-	}
+	if (IS_BETWEEN(0, mapeff->viewT[0][viewTadd + 1], hittime)) { viewTadd++; }
 	//非表示スキップ
-	if (hittime - Ntime >= mapeff->viewT[1][viewTN + *viewTadd]) {
-		return 1;
-	}
+	if (hittime - Ntime >= mapeff->viewT[1][viewTadd]) { return 1; }
 	//3秒ブレーク
-	if (hittime - Ntime >= 3000 &&
-		3000 >= mapeff->viewT[1][viewTN + *viewTadd]) {
-		return 2;
-	}
+	if (IS_BETWEEN(mapeff->viewT[1][viewTadd], 3000, hittime - Ntime)) { return 2; }
 	return 0;
 }
 
 /**
-* return 0 = normal, 1 = continue, 2 = break;
-*/
-static int StepNoDrawNote(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *SpeedNoAdd,
-	note_box_2_t *note, rec_map_eff_data_t *mapeff, short viewTN, short lockN[], int iLine,
-	int Ntime)
+ * return 0 = normal, 1 = continue, 2 = break;
+ */
+static void StepNoDrawNote(int *XLockp, int *YLockp, double *Speedp, note_box_2_t *note,
+	rec_map_eff_data_t *mapeff, short lockN[], int iLine)
 {
 	rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
+	int XLockNoAdd = lockN[0];
+	int YLockNoAdd = lockN[1];
+	int SpeedNoAdd = p_speedt->num;
 
-	int ret = 0;
-	ret = StepViewNoDrawNote(note->hittime, mapeff, viewTN, viewTadd, Ntime);
-	if (ret == 1) { return 1; }
-	else if (ret == 2) { return 2; }
 	//ノーツロックナンバーを進める
-	if (note->hittime >= mapeff->lock[0][1][lockN[0] + *XLockNoAdd + 1] &&
-		mapeff->lock[0][1][lockN[0] + *XLockNoAdd + 1] >= 0) {
-		(*XLockNoAdd)++;
-	}
-	if (note->hittime >= mapeff->lock[1][1][lockN[1] + *YLockNoAdd + 1] &&
-		mapeff->lock[1][1][lockN[1] + *YLockNoAdd + 1] >= 0) {
-		(*YLockNoAdd)++;
-	}
+	while (IS_BETWEEN(0, mapeff->lock[0][1][XLockNoAdd + 1], note->hittime)) { XLockNoAdd++; }
+	(*XLockp) = mapeff->lock[0][0][XLockNoAdd];
+
+	while (IS_BETWEEN(0, mapeff->lock[1][1][YLockNoAdd + 1], note->hittime)) { YLockNoAdd++; }
+	(*YLockp) = mapeff->lock[1][0][YLockNoAdd];
+
 	// スピードナンバーを進める
-	while (IS_BETWEEN(0, p_speedt->d[p_speedt->num + *SpeedNoAdd + 1].time, note->hittime)) {
-		(*SpeedNoAdd)++;
-	}
-	return 0;
+	while (IS_BETWEEN(0, p_speedt->d[SpeedNoAdd + 1].time, note->hittime)) { SpeedNoAdd++; }
+	(*Speedp) = mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + SpeedNoAdd].speed;
+	return;
 }
 
 static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_t *lanePos,
@@ -557,24 +545,20 @@ static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_
 }
 
 /**
-* return 0 = normal, 1 = continue, 2 = break;
-*/
-static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *SpeedNoAdd,
-	note_box_2_t *note, rec_map_eff_data_t *mapeff, rec_play_lanepos_t *lanePos, short viewTN,
-	short lockN[], int iLine, int Ntime, rec_play_notepic_t *noteimg)
+ * return 0 = normal, 1 = continue, 2 = break;
+ */
+static void DrawNoteOne(note_box_2_t *note, rec_map_eff_data_t *mapeff,
+	rec_play_lanepos_t *lanePos, short lockN[], int iLine, int Ntime, rec_play_notepic_t *noteimg)
 {
-	int ret = 0;
 	int DrawX = 0;
 	int DrawY = 0;
 	int DrawC = 0;
 	int DrawID = 0;
-	ret = StepNoDrawNote(viewTadd, XLockNoAdd, YLockNoAdd, SpeedNoAdd,
-		note, mapeff, viewTN, lockN, iLine, Ntime);
-	if (ret == 1) { return 1; }
-	else if (ret == 2) { return 2; }
-	CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, mapeff->lock[0][0][lockN[0] + *XLockNoAdd],
-		mapeff->lock[1][0][lockN[1] + *YLockNoAdd], note,
-		mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + *SpeedNoAdd].speed, &mapeff->scrool,
+	int XLockp = 0;
+	int YLockp = 0;
+	double Speedp = 0;
+	StepNoDrawNote(&XLockp, &YLockp, &Speedp, note, mapeff, lockN, iLine);
+	CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp, &mapeff->scrool,
 		Ntime, iLine);
 	switch (note->object) {
 	case 1:
@@ -612,28 +596,18 @@ static int DrawNoteOne(int *viewTadd, int *XLockNoAdd, int *YLockNoAdd, int *Spe
 		break;
 	}
 	DrawGraphRecField(DrawX, DrawY, DrawID);
-	return 0;
+	return;
 }
 
 static void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, short objectN[], note_box_2_t note[],
 	rec_map_eff_data_t *mapeff, short viewTN, short *lockN, int Ntime, rec_play_notepic_t *noteimg)
 {
-	int ret = 0;
-	int viewTadd = 0;
-	int XLockNoAdd = 0;
-	int YLockNoAdd = 0;
-	int SpeedNoAdd = 0;
-
 	for (int iLine = 0; iLine < 3; iLine++) {
-		viewTadd = 0;
-		XLockNoAdd = 0;
-		YLockNoAdd = 0;
-		SpeedNoAdd = 0;
 		for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
-			ret = DrawNoteOne(&viewTadd, &XLockNoAdd, &YLockNoAdd, &SpeedNoAdd, &note[iNote],
-				mapeff, lanePos, viewTN, lockN, iLine, Ntime, noteimg);
+			int ret = StepViewNoDrawNote(mapeff, note->hittime, viewTN, Ntime);
 			if (ret == 1) { continue; }
 			else if (ret == 2) { break; }
+			DrawNoteOne(&note[iNote], mapeff, lanePos, lockN, iLine, Ntime, noteimg);
 			if (note[iNote].next == -1) { break; }
 		}
 	}
@@ -1438,16 +1412,16 @@ public:
 /* main action */
 
 /**
-* @param[out] ret_map_det map_detail の受け皿
-* @param[out] ret_userpal userpal の受け皿
-* @param[out] ret_nameset nameset の受け皿
-* @param[in] ret_fileN ファイル名の受け皿
-* @param[in] p パックナンバー
-* @param[in] n 曲ナンバー
-* @param[in] o 難易度ナンバー
-* @param[in] AutoFlag オートプレイフラグ
-* @return now_scene_t 次のシーン
-*/
+ * @param[out] ret_map_det map_detail の受け皿
+ * @param[out] ret_userpal userpal の受け皿
+ * @param[out] ret_nameset nameset の受け皿
+ * @param[in] ret_fileN ファイル名の受け皿
+ * @param[in] p パックナンバー
+ * @param[in] n 曲ナンバー
+ * @param[in] o 難易度ナンバー
+ * @param[in] AutoFlag オートプレイフラグ
+ * @return now_scene_t 次のシーン
+ */
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
 	rec_play_nameset_t *ret_nameset, const TCHAR *ret_fileN, int p, int n, int o, int AutoFlag)
 {
@@ -1791,13 +1765,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 }
 
 /**
-* @param[in] packNo パックナンバー
-* @param[in] musicNo 曲ナンバー
-* @param[in] difNo 難易度ナンバー
-* @param[in] shift マップ生成フラフ
-* @param[in] AutoFlag オートプレイフラグ
-* @return 次のシーン
-*/
+ * @param[in] packNo パックナンバー
+ * @param[in] musicNo 曲ナンバー
+ * @param[in] difNo 難易度ナンバー
+ * @param[in] shift マップ生成フラフ
+ * @param[in] AutoFlag オートプレイフラグ
+ * @return 次のシーン
+ */
 now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	TCHAR mapPath[255];
 	TCHAR fileName[255];
