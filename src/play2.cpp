@@ -1415,15 +1415,15 @@ public:
  * @param[out] ret_map_det map_detail の受け皿
  * @param[out] ret_userpal userpal の受け皿
  * @param[out] ret_nameset nameset の受け皿
- * @param[in] ret_fileN ファイル名の受け皿
  * @param[in] p パックナンバー
  * @param[in] n 曲ナンバー
  * @param[in] o 難易度ナンバー
+ * @param[in] HighScore ハイスコア
  * @param[in] AutoFlag オートプレイフラグ
  * @return now_scene_t 次のシーン
  */
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
-	rec_play_nameset_t *ret_nameset, const TCHAR *ret_fileN, int p, int n, int o, int AutoFlag)
+	rec_play_nameset_t *ret_nameset, int p, int n, int o, int HighScore, int AutoFlag)
 {
 
 #if 1 /* num define */
@@ -1438,7 +1438,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int AllNotesHitTime = -1;
 	int LaneTrack[3] = { -150,-150,-150 };
 	int StopFrag = -1;
-	int HighScore; //ハイスコア
 	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
@@ -1515,8 +1514,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	backpic.sky.reload(   recfp.nameset.sky);
 	backpic.ground.reload(recfp.nameset.ground);
 	backpic.water.reload( recfp.nameset.water);
-
-	HighScore = GetHighScore(ret_fileN, (rec_dif_t)o);
 
 	for (i[0] = 0; i[0] < 100; i[0]++) {
 		strcopy_2(dataE, GT1, 255);
@@ -1773,6 +1770,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
  * @return 次のシーン
  */
 now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
+	int HighScore = 0;
 	TCHAR mapPath[255];
 	TCHAR fileName[255];
 	rec_map_detail_t map_detail;
@@ -1797,7 +1795,8 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	}
 
 	RecGetMusicFolderName(fileName, 255, packNo, musicNo);
-	ret = RecPlayMain(&map_detail, &userpal, &nameset, fileName, packNo, musicNo, difNo, AutoFlag);
+	HighScore = GetHighScore(fileName, (rec_dif_t)difNo);
+	ret = RecPlayMain(&map_detail, &userpal, &nameset, packNo, musicNo, difNo, HighScore, AutoFlag);
 
 	if (ret != SCENE_RESULT) { return ret; }
 	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)difNo, fileName); }
