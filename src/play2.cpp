@@ -56,16 +56,6 @@ typedef struct rec_play_back_pic_s {
 	dxcur_pic_c water;
 } rec_play_back_pic_t;
 
-typedef struct play_key_stat_s {
-	char z = 0;
-	char x = 0;
-	char c = 0;
-	char up = 0;
-	char down = 0;
-	char left = 0;
-	char right = 0;
-} play_key_stat_t;
-
 typedef struct note_img {
 	dxcur_pic_c notebase = dxcur_pic_c(L"picture/hit.png");
 	dxcur_pic_c hitcircle[6] = {
@@ -1454,7 +1444,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	/* struct */
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
-	play_key_stat_t key_stat;
 	short MovieN = 0;
 	rec_view_bpm_set_t v_BPM;
 	short objectN[3] = { 5999,5999,5999 }; //note number
