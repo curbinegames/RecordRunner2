@@ -122,52 +122,68 @@ static void RecSelectAllRelord(void) {
 
 #if 1 /* read map data */
 
-static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *songdata, int dif) {
+static rec_error_t RecSerectReadMapDataOneDif(MUSIC_BOX *songdata,
+	const TCHAR *path, const TCHAR *subpath, const TCHAR *packName, int dif)
+{
 	DxFile_t fd;
 	TCHAR buf[256];
 	int lang = optiondata.lang;
 
+	//初期値定義
+	songdata->level[dif]      =      -1;
+	songdata->preview[dif][0] =  441000;
+	songdata->preview[dif][1] = 2646000;
+	strcopy_2(L"NULL",                    songdata->SongName[dif],     255);
+	strcopy_2(L"NULL",                    songdata->artist[dif],       255);
+	strcopy_2(L"NULL",                    songdata->SongFileName[dif], 255);
+	strcopy_2(L"picture/NULL jucket.png", songdata->jacketP[dif],      255);
+	strcopy_2(packName,                   songdata->packName,          255);
+
 	fd = FileRead_open(path);
 
-	if (fd == 0) { return; }
+	if (fd == 0) { return REC_ERROR_FILE_EXIST; }
 
 	while (FileRead_eof(fd) == 0) {
 		FileRead_gets(buf, 256, fd);
 		//曲名を読み込む
-		if (strands_direct(buf, L"#TITLE:") &&
-			(lang == 0 || strands_direct(songdata->SongName[dif], L"NULL"))) {
+		if (strands_direct(buf, L"#TITLE:")) {
 			strmods(buf, 7);
-			strcopy_2(buf, songdata->SongName[dif], 255);
+			if ((lang == 0) || strands_direct(songdata->SongName[dif], L"NULL")) {
+				strcopy_2(buf, songdata->SongName[dif], 255);
+			}
 		}
-		if (strands_direct(buf, L"#E.TITLE:") &&
-			(lang == 1 || strands_direct(songdata->SongName[dif], L"NULL"))) {
+		else if (strands_direct(buf, L"#E.TITLE:")) {
 			strmods(buf, 9);
-			strcopy_2(buf, songdata->SongName[dif], 255);
+			if ((lang == 1) || strands_direct(songdata->SongName[dif], L"NULL")) {
+				strcopy_2(buf, songdata->SongName[dif], 255);
+			}
 		}
 		//作曲者を読み込む
-		if (strands_direct(buf, L"#ARTIST:") &&
-			(lang == 0 || strands_direct(songdata->artist[dif], L"NULL"))) {
+		else if (strands_direct(buf, L"#ARTIST:")) {
 			strmods(buf, 8);
-			strcopy_2(buf, songdata->artist[dif], 255);
+			if ((lang == 0) || strands_direct(songdata->artist[dif], L"NULL")) {
+				strcopy_2(buf, songdata->artist[dif], 255);
+			}
 		}
-		if (strands_direct(buf, L"#E.ARTIST:") &&
-			(lang == 1 || strands_direct(songdata->artist[dif], L"NULL"))) {
+		else if (strands_direct(buf, L"#E.ARTIST:")) {
 			strmods(buf, 10);
-			strcopy_2(buf, songdata->artist[dif], 255);
+			if ((lang == 1) || strands_direct(songdata->artist[dif], L"NULL")) {
+				strcopy_2(buf, songdata->artist[dif], 255);
+			}
 		}
 		//曲ファイル名を読み込む
-		if (strands_direct(buf, L"#MUSIC:")) {
+		else if (strands_direct(buf, L"#MUSIC:")) {
 			strmods(buf, 7);
 			strcopy_2(subpath, songdata->SongFileName[dif], 255);
 			strcats(songdata->SongFileName[dif], buf);
 		}
 		//難易度を読み込む
-		if (strands_direct(buf, L"#LEVEL:")) {
+		else if (strands_direct(buf, L"#LEVEL:")) {
 			strmods(buf, 7);
 			songdata->level[dif] = strsans(buf);
 		}
 		//プレビュー時間を読み込む
-		if (strands_direct(buf, L"#PREVIEW:")) {
+		else if (strands_direct(buf, L"#PREVIEW:")) {
 			strmods(buf, 9);
 			songdata->preview[dif][0] = (int)((double)strsans(buf) / 1000.0 * 44100.0);
 			strnex(buf);
@@ -176,47 +192,44 @@ static void RecSerectReadMapDataOneDif(TCHAR *path, TCHAR *subpath, MUSIC_BOX *s
 			}
 		}
 		//ジャケット写真を読み込む
-		if (strands_direct(buf, L"#JACKET:")) {
+		else if (strands_direct(buf, L"#JACKET:")) {
 			strmods(buf, 8);
 			strcopy_2(subpath, songdata->jacketP[dif], 255);
 			strcats(songdata->jacketP[dif], buf);
 		}
 		//差し替えAnotherバーを読み込む
-		if (strands_direct(buf, L"#DIFBAR:")) {
+		else if (strands_direct(buf, L"#DIFBAR:")) {
 			strmods(buf, 8);
 			strcopy_2(subpath, songdata->difP, 255);
 			strcats(songdata->difP, buf);
 		}
 		//マップに入ったら抜ける
-		if (strands_direct(buf, L"#MAP:")) { break; }
+		else if (strands_direct(buf, L"#MAP:")) { break; }
 	}
 	FileRead_close(fd);
 
+	return REC_ERROR_NONE;
+}
+
+static void RecSerectReadHighscore(MUSIC_BOX *songdata, const TCHAR *songName, rec_dif_t dif) {
+	rec_save_score_t score;
+	RecSaveReadScoreOneDif(&score, songName, dif);
+	songdata->Hscore[dif]    = score.score;
+	songdata->Hacc[dif]      = score.acc;
+	songdata->Hdis[dif]      = score.dist;
+	songdata->ScoreRate[dif] = score.scoreRate;
+	songdata->ClearRank[dif] = score.clearRank;
 	return;
 }
 
-static void RecSerectReadHighscore(MUSIC_BOX *songdata, TCHAR *songName) {
-	rec_save_score_t score[6];
-
-	RecSaveReadScoreAllDif(score, songName);
-
-	for (uint iDif = 0; iDif < 6; iDif++) {
-		songdata->Hscore[iDif]    = score[iDif].score;
-		songdata->Hacc[iDif]      = score[iDif].acc;
-		songdata->Hdis[iDif]      = score[iDif].dist;
-		songdata->ScoreRate[iDif] = score[iDif].scoreRate;
-		songdata->ClearRank[iDif] = score[iDif].clearRank;
-	}
-
-	return;
-}
-
-static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TCHAR *songName) {
+static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata,
+	const TCHAR *packName, const TCHAR *songName)
+{
+	rec_error_t status = REC_ERROR_NONE;
 	TCHAR path[256];
 	TCHAR subPath[256];
 	TCHAR rrsPath[256];
 
-	songdata->limit = 3;
 	strcopy_2(L"NULL", songdata->difP, 255);
 
 	for (int iDif = 0; iDif < 6; iDif++) {
@@ -230,33 +243,12 @@ static void RecSerectReadMapDataOneSong(MUSIC_BOX *songdata, TCHAR *packName, TC
 		strcopy_2(path, rrsPath, 255); //rrsPathにコピー
 		strcats(path, _T(".txt")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 		strcats(rrsPath, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
-		//初期値定義(ファイルがなくても代入する)
-		strcopy_2(L"NULL", songdata->SongName[iDif], 255);
-		strcopy_2(L"NULL", songdata->artist[iDif], 255);
-		strcopy_2(L"NULL", songdata->SongFileName[iDif], 255);
-		strcopy_2(L"picture/NULL jucket.png", songdata->jacketP[iDif], 255);
-		strcopy_2(packName, songdata->packName, 255);
-		songdata->level[iDif] = -1;
-		songdata->preview[iDif][0] = 441000;
-		songdata->preview[iDif][1] = 2646000;
-		RecSerectReadMapDataOneDif(path, subPath, songdata, iDif);
-		RecScoreReadDdif(&songdata->mpal[iDif], rrsPath);
+		status = RecSerectReadMapDataOneDif(songdata, path, subPath, packName, iDif);
+		if (status == REC_ERROR_NONE) {
+			RecScoreReadDdif(&songdata->mpal[iDif], rrsPath);
+			RecSerectReadHighscore(songdata, songName, (rec_dif_t)iDif);
+		}
 	}
-
-	RecSerectReadHighscore(songdata, songName);
-
-	//難易度リミットの処理
-	if (strands_direct(songdata->SongName[4], L"NULL") == 0 &&
-		(strands_direct(songdata->SongName[5], L"NULL") ||
-			songdata->Hscore[5] >= 1))
-	{
-		songdata->limit = 4;
-	}
-	if (songdata->limit == 3) {
-		strcopy_2(L"NULL", songdata->SongName[4], 255);
-		strcopy_2(L"NULL", songdata->artist[4], 255);
-	}
-
 	return;
 }
 
@@ -400,6 +392,7 @@ static int RecSerectTrySecret(int Hscore) {
 	return ret;
 }
 
+#if 0
 static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
 	if (AutoFlag == 0 && dif == 3 &&
 		songdata->Hscore[3] >= 90000 &&
@@ -412,6 +405,7 @@ static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
 	}
 	return 0;
 }
+#endif
 
 /**
  * 曲リストを並び替えします
@@ -424,12 +418,12 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 	int m = songdata->musicNum;
 	int o = 0;
 	int p = 1;
+
+	for (int i = 0; i < songdata->musicNum; i++) {
+		songdata->mapping[i] = i;
+	}
+
 	switch (mode) {
-	case REC_SORT_DEFAULT:
-		for (int i = 0; i < songdata->musicNum; i++) {
-			songdata->mapping[i] = i;
-		}
-		break;
 	case SORT_LEVEL:
 		while (p) {
 			p = 0;
@@ -472,6 +466,8 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 			}
 		}
 		break;
+	case REC_SORT_DEFAULT:
+		break;
 	}
 	songdata->sortMode = mode;
 	return;
@@ -497,6 +493,7 @@ static void SortSongWithSave(songdata_set_t *songdata, int mode, int dif, int *c
 	return;
 }
 
+#if 0
 /**
  * 今選んでいる難易度に譜面がなかったら、ほかの難易度を探しに行く
  * @param[in] songdata 今選んでいる曲データ
@@ -538,6 +535,7 @@ static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
 
 	return ret;
 }
+#endif
 
 static void RecSerectLoadBefCmd(int *cmd, int *sortMode) {
 	FILE *fp;
@@ -581,10 +579,12 @@ static void RecSerectSetToPlay(rec_to_play_set_t *toPlay, int cmd[],
 	toPlay->musicNo = songdata->mapping[cmd[0]] - PackFirstNum[inum];
 	toPlay->dif = cmd[1];
 
+#if 0
 	//隠し曲用
 	if (RecSerectTrySecret2(toPlay->autoFg, cmd[1], &SONGDATA_FROM_MAP(songdata, cmd[0])) == 1) {
 		toPlay->dif = 5;
 	}
+#endif
 	return;
 }
 
@@ -637,7 +637,7 @@ public:
 		return 1;
 	}
 
-	void CheckTime(MUSIC_BOX *songdata, int dif) {
+	void CheckTime(void) {
 		int Ntime = GetNowCount();
 		if (Ntime - this->SongPreSTime < 500) {
 			RecSysBgmChangeVolume(lins(0, 0, 500, 255, Ntime - this->SongPreSTime));
@@ -896,6 +896,7 @@ private:
 	};
 
 private:
+#if 0
 	void DrawDifMark(int baseX, int baseY, MUSIC_BOX *songdata, int comdif) const {
 		int posX = 0;
 		int posY = 0;
@@ -909,6 +910,7 @@ private:
 			}
 		}
 	}
+#endif
 
 	void DrawDifBar(int baseX, int baseY, int dif) const {
 		int XmoveC = maxs_2(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
@@ -1008,7 +1010,7 @@ public:
 	}
 
 	void DrawDetailAll(int baseX, int baseY, MUSIC_BOX *songdata, int dif) const {
-		this->DrawDifMark(baseX - 100, baseY - 365, songdata, dif);
+		// this->DrawDifMark(baseX - 100, baseY - 365, songdata, dif);
 		this->DrawDifBar(baseX - 15, baseY - 320, dif);
 		this->DrawDifMpal(baseX - 20, baseY - 186, songdata->mpal, dif);
 		this->DrawDetail(baseX, baseY, songdata, dif);
@@ -1098,7 +1100,7 @@ public:
 		this->musicbar.DrawAll(300, cmd, songdata);
 		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
 		this->detail.DrawDetailAll(20, 60, &SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
-		this->previewSnd.CheckTime(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->previewSnd.CheckTime();
 		this->previewSnd.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
 		this->help.DrawHelp(HELP_MAT_MUSIC_SELECT);
 		this->cutin.DrawCut();
@@ -1131,8 +1133,8 @@ static void RecSerectKeyActLR(int cmd[], int vect,
 		break;
 	case REC_SERECT_VECT_RIGHT:
 		cmd[1]++;
-		if (cmd[1] > SONGDATA_FROM_MAP(songdata, cmd[0]).limit) {
-			cmd[1] = SONGDATA_FROM_MAP(songdata, cmd[0]).limit;
+		if (cmd[1] > 4) {
+			cmd[1] = 4;
 			return;
 		}
 		break;
@@ -1164,11 +1166,9 @@ static void RecSerectKeyActUD(int cmd[], int vect,
 		return;
 	}
 
-	if (cmd[1] > SONGDATA_FROM_MAP(songdata, cmd[0]).limit) {
-		RecSerectKeyActLR(cmd, REC_SERECT_VECT_LEFT, uiClass, songdata);
-	}
 	uiClass->UpdateUD(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], vect);
 
+#if 0
 	{
 		int diffixBuf = RecSerectFetchDif(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], songdata->sortMode);
 		if (diffixBuf < cmd[1]) {
@@ -1180,6 +1180,7 @@ static void RecSerectKeyActUD(int cmd[], int vect,
 			uiClass->UpdateLR(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], REC_SERECT_VECT_RIGHT);
 		}
 	}
+#endif
 
 	return;
 }

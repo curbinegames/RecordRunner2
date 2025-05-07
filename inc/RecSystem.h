@@ -109,6 +109,8 @@ extern int RecPlayDebug[3];
 extern int SmallFontData;
 extern int LargeFontData;
 
+/* これらの関数は、呼ばれるたびにリソースを全探索するので、 */
+/* for文などで曲の全探索をするとo(n^2)になって処理が遅くなる。やめてね */
 extern rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo);
 extern rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo);
 extern rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo);
