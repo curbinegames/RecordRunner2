@@ -755,47 +755,48 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 	return;
 }
 
+#define RET_DRAW       0
+#define RET_DISABLE    1
+#define RET_OVERSCREEN 2
+#define RET_FINISH     3
+
 /* ラスライン */
-static void PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
 	bool viewEn)
 {
-	if (!viewEn) { return; }
-
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
 	rec_play_xy_set_t camera;
-
 	RecPlayGetCameraPos(&camera.x, &camera.y); /* TODO: スクリーン上での位置を返す関数が欲しい */
 	RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
 	drawRight = 1280 - camera.x;
 	drawY2    = drawY1;
-	if (960 < drawLeft) { return; }
+	if (960 < drawLeft) { return RET_FINISH; }
+	if (!viewEn) { return RET_FINISH; }
 	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.lineThick);
-	return;
+	return RET_FINISH;
 }
 
 /* スタートライン */
 static int PlayShowStartGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int drawC, int Ntime, short YlockN, bool viewEn)
 {
-	if (!viewEn) { return 1; }
-
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
 	rec_play_xy_set_t camera;
-
 	RecPlayGetCameraPos(&camera.x, &camera.y);
 	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[0].Stime);
 	drawLeft = 0 - camera.x;
 	drawY1   = drawY2;
-	if (960 < drawLeft) { return 2; }
+	if (960 < drawLeft) { return RET_OVERSCREEN; }
+	if (!viewEn) { return RET_DISABLE; }
 	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.lineThick);
-	return 0;
+	return RET_DRAW;
 }
 
 /* move繋ぎライン */
@@ -803,43 +804,60 @@ static int PlayShowChainGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
 	bool viewEn)
 {
-	if (!viewEn) { return 1; }
-
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
-
 	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
 	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
 	drawY2 = drawY1;
-	if (960 < drawLeft) { return 2; }
+	if (960 < drawLeft) { return RET_OVERSCREEN; }
+	if (!viewEn) { return RET_DISABLE; }
 	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.lineThick);
-	return 0;
+	return RET_DRAW;
 }
 
 /* moveライン */
 static int PlayShowMovingGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN, bool viewEn)
 {
-	if (!viewEn) { return 1; }
-
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
-
 	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
 	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Etime);
-	if (960 < drawLeft) { return 2; }
+	if (960 < drawLeft) { return RET_OVERSCREEN; }
+	if (!viewEn) { return RET_DISABLE; }
 	DrawLineCurveRecField(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, optiondata.lineThick);
-	return 0;
+	return RET_DRAW;
+}
+
+/* 通常ライングループ */
+static int PlayShowGuideLineStandard(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
+	bool viewEn)
+{
+	int ret = 0;
+	/* TODO: move直角ラインが欲しい */
+	ret = PlayShowChainGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
+	/* TODO: move直角ラインが欲しい */
+	return PlayShowMovingGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+}
+
+/* ラスライングループ */
+static int PlayShowLastGuideLineGroup(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
+	bool viewEn)
+{
+	/* TODO: move直角ラインが欲しい */
+	return PlayShowLastGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
 }
 
 static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos, int Line, int iDraw,
 	short YlockN)
 {
-	int ret = 0;
 	int Ntime = recfp->time.now;
 	rec_move_data_t *Ymove = recfp->mapeff.move.y[Line].d;
 	rec_map_eff_data_t *mapeff = &recfp->mapeff;
@@ -872,48 +890,35 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *
 		break;
 	}
 
-	/* TODO: move直角ラインが欲しい */
 	if (Ymove[iDraw].Stime < 0) {
-		PlayShowLastGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn); /* ラスライン */
-		return 1;
+		return PlayShowLastGuideLineGroup(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
 	}
-
-	if (iDraw < 1) {
-		ret = PlayShowStartGuideLine(mapeff, Ymove, lanePos, Line, drawC, Ntime, YlockN, viewEn); /* スタートライン */
-		switch (ret) {
-		case 1:
-			return 0;
-		case 2:
-			return -1;
-		}
+	else if (iDraw < 1) {
+		return PlayShowStartGuideLine(mapeff, Ymove, lanePos, Line, drawC, Ntime, YlockN, viewEn);
 	}
-	else if (Ntime < Ymove[iDraw].Etime) {
-		ret = PlayShowChainGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn); /* move繋ぎライン */
-		switch (ret) {
-		case 1:
-			return 0;
-		case 2:
-			return -1;
-		}
+	else {
+		return PlayShowGuideLineStandard(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
 	}
-	ret = PlayShowMovingGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn); /* moveライン */
-	if (ret == 2) { return -1; }
-	return 0;
 }
 
 static void PlayShowAllGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos,
 	short LineMoveN[], short YlockN)
 {
-	int flag = 0;
+	int ret = 0;
 
 	for (int iLine = 0; iLine < 3; iLine++) {
 		for (int iDraw = LineMoveN[iLine]; 1; iDraw++) {
-			flag = PlayShowGuideLine(recfp, lanePos, iLine, iDraw, YlockN);
-			if (flag != 0) { break; }
+			ret = PlayShowGuideLine(recfp, lanePos, iLine, iDraw, YlockN);
+			if (ret == RET_OVERSCREEN) { break; }
+			if (ret == RET_FINISH) { break; }
 		}
 	}
 	return;
 }
+
+#undef RET_DRAW
+#undef RET_DISABLE
+#undef RET_OVERSCREEN
 
 #endif /* Guide Line */
 
