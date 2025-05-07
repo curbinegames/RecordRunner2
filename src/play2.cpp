@@ -478,134 +478,6 @@ static void RecPlayCalLaneTrack(int LaneTrack[], const rec_play_key_hold_t *keyh
 
 #endif /* sub action */
 
-#if 1 /* Notes Picture */
-
-/**
- * return 0 = normal, 1 = continue, 2 = break;
- */
-static int StepViewNoDrawNote(const mapeff_t *mapeff, int hittime, int viewTN, int Ntime) {
-	int viewTadd = viewTN;
-	//表示/非表示ナンバーを進める
-	if (IS_BETWEEN(0, mapeff->viewT[0][viewTadd + 1], hittime)) { viewTadd++; }
-	//非表示スキップ
-	if (hittime - Ntime >= mapeff->viewT[1][viewTadd]) { return 1; }
-	//3秒ブレーク
-	if (IS_BETWEEN(mapeff->viewT[1][viewTadd], 3000, hittime - Ntime)) { return 2; }
-	return 0;
-}
-
-/**
- * return 0 = normal, 1 = continue, 2 = break;
- */
-static void StepNoDrawNote(int *XLockp, int *YLockp, double *Speedp, note_box_2_t *note,
-	rec_map_eff_data_t *mapeff, short lockN[], int iLine)
-{
-	rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
-	int XLockNoAdd = lockN[0];
-	int YLockNoAdd = lockN[1];
-	int SpeedNoAdd = p_speedt->num;
-
-	//ノーツロックナンバーを進める
-	while (IS_BETWEEN(0, mapeff->lock[0][1][XLockNoAdd + 1], note->hittime)) { XLockNoAdd++; }
-	(*XLockp) = mapeff->lock[0][0][XLockNoAdd];
-
-	while (IS_BETWEEN(0, mapeff->lock[1][1][YLockNoAdd + 1], note->hittime)) { YLockNoAdd++; }
-	(*YLockp) = mapeff->lock[1][0][YLockNoAdd];
-
-	// スピードナンバーを進める
-	while (IS_BETWEEN(0, p_speedt->d[SpeedNoAdd + 1].time, note->hittime)) { SpeedNoAdd++; }
-	(*Speedp) = mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + SpeedNoAdd].speed;
-	return;
-}
-
-static void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_t *lanePos,
-	int lock0, int lock1, const note_box_2_t *note, double speedt, const rec_scrool_set_t *scrool,
-	int Ntime, int iLine)
-{
-	const double scroolSpeed = scrool->data[scrool->num].speed;
-	const double scroolBaseTime = scrool->data[scrool->num].basetime;
-
-	//縦位置
-	*DrawY = ((lock1 == 1) ? note->ypos : lanePos->y[iLine]);
-	//横位置
-	*DrawX = (2 * speedt * (note->viewtime - scroolSpeed * Ntime - scroolBaseTime) / 5);
-	*DrawX += ((lock0 == 1) ? note->xpos : lanePos->x[iLine]);
-	//色
-	*DrawC = note->color;
-}
-
-/**
- * return 0 = normal, 1 = continue, 2 = break;
- */
-static void DrawNoteOne(note_box_2_t *note, rec_map_eff_data_t *mapeff,
-	rec_play_lanepos_t *lanePos, short lockN[], int iLine, int Ntime, rec_play_notepic_t *noteimg)
-{
-	int DrawX = 0;
-	int DrawY = 0;
-	int DrawC = 0;
-	int DrawID = 0;
-	int XLockp = 0;
-	int YLockp = 0;
-	double Speedp = 0;
-	StepNoDrawNote(&XLockp, &YLockp, &Speedp, note, mapeff, lockN, iLine);
-	CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp, &mapeff->scrool,
-		Ntime, iLine);
-	switch (note->object) {
-	case 1:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-		DrawGraphRecField(DrawX, DrawY, noteimg->notebase.handle());
-		break;
-	}
-	switch (note->object) {
-	case 1:
-		DrawID = noteimg->hitcircle[DrawC].handle();
-		break;
-	case 2:
-		DrawID = noteimg->catchi.handle();
-		break;
-	case 3:
-		DrawID = noteimg->up.handle();
-		break;
-	case 4:
-		DrawID = noteimg->down.handle();
-		break;
-	case 5:
-		DrawID = noteimg->left.handle();
-		break;
-	case 6:
-		DrawID = noteimg->right.handle();
-		break;
-	case 7:
-		DrawID = noteimg->bomb.handle();
-		break;
-	case 8:
-		DrawID = noteimg->goust.handle();
-		break;
-	}
-	DrawGraphRecField(DrawX, DrawY, DrawID);
-	return;
-}
-
-static void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, short objectN[], note_box_2_t note[],
-	rec_map_eff_data_t *mapeff, short viewTN, short *lockN, int Ntime, rec_play_notepic_t *noteimg)
-{
-	for (int iLine = 0; iLine < 3; iLine++) {
-		for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
-			int ret = StepViewNoDrawNote(mapeff, note->hittime, viewTN, Ntime);
-			if (ret == 1) { continue; }
-			else if (ret == 2) { break; }
-			DrawNoteOne(&note[iNote], mapeff, lanePos, lockN, iLine, Ntime, noteimg);
-			if (note[iNote].next == -1) { break; }
-		}
-	}
-	return;
-}
-
-#endif /* Notes Picture */
-
 #if 1 /* Guide Line */
 
 static int RecMapGetPosFromMove(rec_move_set_t move[], int time, int lane) {
@@ -956,6 +828,128 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyh
 #endif
 
 #if 1 /* class */
+
+static class rec_play_drawnotes_c {
+private:
+	/**
+	 * return 0 = normal, 1 = continue, 2 = break;
+	 */
+	int StepViewNoDrawNote(const mapeff_t *mapeff, int hittime, int viewTN, int Ntime) {
+		int viewTadd = viewTN;
+		//表示/非表示ナンバーを進める
+		if (IS_BETWEEN(0, mapeff->viewT[0][viewTadd + 1], hittime)) { viewTadd++; }
+		//非表示スキップ
+		if (hittime - Ntime >= mapeff->viewT[1][viewTadd]) { return 1; }
+		//3秒ブレーク
+		if (IS_BETWEEN(mapeff->viewT[1][viewTadd], 3000, hittime - Ntime)) { return 2; }
+		return 0;
+	}
+
+	void StepNoDrawNote(int *XLockp, int *YLockp, double *Speedp, note_box_2_t *note,
+		rec_map_eff_data_t *mapeff, short lockN[], int iLine)
+	{
+		rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
+		int XLockNoAdd = lockN[0];
+		int YLockNoAdd = lockN[1];
+		int SpeedNoAdd = p_speedt->num;
+
+		//ノーツロックナンバーを進める
+		while (IS_BETWEEN(0, mapeff->lock[0][1][XLockNoAdd + 1], note->hittime)) { XLockNoAdd++; }
+		(*XLockp) = mapeff->lock[0][0][XLockNoAdd];
+
+		while (IS_BETWEEN(0, mapeff->lock[1][1][YLockNoAdd + 1], note->hittime)) { YLockNoAdd++; }
+		(*YLockp) = mapeff->lock[1][0][YLockNoAdd];
+
+		// スピードナンバーを進める
+		while (IS_BETWEEN(0, p_speedt->d[SpeedNoAdd + 1].time, note->hittime)) { SpeedNoAdd++; }
+		(*Speedp) = mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + SpeedNoAdd].speed;
+		return;
+	}
+
+	void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_t *lanePos,
+		int lock0, int lock1, const note_box_2_t *note, double speedt, const rec_scrool_set_t *scrool,
+		int Ntime, int iLine)
+	{
+		const double scroolSpeed = scrool->data[scrool->num].speed;
+		const double scroolBaseTime = scrool->data[scrool->num].basetime;
+
+		//縦位置
+		*DrawY = ((lock1 == 1) ? note->ypos : lanePos->y[iLine]);
+		//横位置
+		*DrawX = (2 * speedt * (note->viewtime - scroolSpeed * Ntime - scroolBaseTime) / 5);
+		*DrawX += ((lock0 == 1) ? note->xpos : lanePos->x[iLine]);
+		//色
+		*DrawC = note->color;
+	}
+
+	void DrawNoteOne(note_box_2_t *note, rec_map_eff_data_t *mapeff,
+		rec_play_lanepos_t *lanePos, short lockN[], int iLine, int Ntime, rec_play_notepic_t *noteimg)
+	{
+		int DrawX = 0;
+		int DrawY = 0;
+		int DrawC = 0;
+		int DrawID = 0;
+		int XLockp = 0;
+		int YLockp = 0;
+		double Speedp = 0;
+		this->StepNoDrawNote(&XLockp, &YLockp, &Speedp, note, mapeff, lockN, iLine);
+		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp, &mapeff->scrool,
+			Ntime, iLine);
+		switch (note->object) {
+		case 1:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+			DrawGraphRecField(DrawX, DrawY, noteimg->notebase.handle());
+			break;
+		}
+		switch (note->object) {
+		case 1:
+			DrawID = noteimg->hitcircle[DrawC].handle();
+			break;
+		case 2:
+			DrawID = noteimg->catchi.handle();
+			break;
+		case 3:
+			DrawID = noteimg->up.handle();
+			break;
+		case 4:
+			DrawID = noteimg->down.handle();
+			break;
+		case 5:
+			DrawID = noteimg->left.handle();
+			break;
+		case 6:
+			DrawID = noteimg->right.handle();
+			break;
+		case 7:
+			DrawID = noteimg->bomb.handle();
+			break;
+		case 8:
+			DrawID = noteimg->goust.handle();
+			break;
+		}
+		DrawGraphRecField(DrawX, DrawY, DrawID);
+		return;
+	}
+
+public:
+	void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, short objectN[], note_box_2_t note[],
+		rec_map_eff_data_t *mapeff, short viewTN, short *lockN, int Ntime, rec_play_notepic_t *noteimg)
+	{
+		for (int iLine = 0; iLine < 3; iLine++) {
+			for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
+				int ret = this->StepViewNoDrawNote(mapeff, note->hittime, viewTN, Ntime);
+				if (ret == 1) { continue; }
+				else if (ret == 2) { break; }
+				this->DrawNoteOne(&note[iNote], mapeff, lanePos, lockN, iLine, Ntime, noteimg);
+				if (note[iNote].next == -1) { break; }
+			}
+		}
+		return;
+	}
+};
 
 static class rec_play_draw_back_c {
 private:
@@ -1610,8 +1604,11 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//判定表示
 		PlayShowJudge(&lanePos, runnerClass.pos);
 		/* 音符表示 */
-		RecPlayDrawNoteAll(&lanePos, objectN, recfp.mapdata.note, &recfp.mapeff, viewTN,
-			lockN, recfp.time.now, &noteimg);
+		{
+			rec_play_drawnotes_c action;
+			action.RecPlayDrawNoteAll(&lanePos, objectN, recfp.mapdata.note, &recfp.mapeff,
+				viewTN, lockN, recfp.time.now, &noteimg);
+		}
 		//ヒットエフェクト表示
 		PlayShowHitEffect(&lanePos);
 		PlayCheckHitEffect();
