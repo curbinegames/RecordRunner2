@@ -136,22 +136,6 @@ static void RecResetPlayObjectNum(short objectN[], const rec_score_file_t *recfp
 	return;
 }
 
-/* TODO: 戻り値に構造体使うのは不適切 */
-static rec_play_score_t GetScore3(rec_play_score_t score,
-	rec_play_judge_t judge, const int notes, const int MaxCombo)
-{
-	score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
-	score.combo = MaxCombo * 10000 / notes;
-	if (score.normal + score.combo - score.loss == 100000) {
-		score.pjust = maxs_2(maxs_2(100 - (notes - judge.pjust), (judge.pjust * 100 / (double)notes) - 65), 0);
-	}
-	else {
-		score.pjust = 0;
-	}
-	score.sum = score.normal + score.combo - score.loss + score.pjust;
-	return score;
-}
-
 static void Getxxxpng(wchar_t *str, int num) {
 	*str = num / 100 + '0';
 	str++;
@@ -274,47 +258,6 @@ static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 		DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID].handle());
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}
-}
-
-static void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time, int AutoFg) {
-	userpal->Mcombo = maxs_2(userpal->Mcombo, userpal->Ncombo);
-	//ライフが0未満の時、1毎に減点スコアを20増やす。
-	if (userpal->life < 0) {
-		userpal->score.loss = mins_2(userpal->score.loss - userpal->life * 20, userpal->score.normal + userpal->score.combo);
-		userpal->life = 0;
-	}
-	//ライフ上限
-	userpal->life = mins_2(userpal->life, 500);
-	userpal->Exlife = mins_2(userpal->Exlife, 500);
-	//スコア計算
-	userpal->score = GetScore3(userpal->score, userpal->judgeCount, notes, userpal->Mcombo);
-	//ステータス
-	if (userpal->life <= 0 && userpal->status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
-		userpal->status = REC_PLAY_STATUS_DROPED;
-		userpal->Dscore.add_save = userpal->Dscore.add;
-		userpal->Dscore.dis_save = maxs_2(time->now - time->offset, 0);
-	}
-	else if (userpal->status != REC_PLAY_STATUS_DROPED &&
-		maxs_2(time->now - time->offset, 0) > time->end - time->offset)
-	{ //CLEARED
-		userpal->status = REC_PLAY_STATUS_CLEARED;
-	}
-	//距離計算
-	switch (userpal->status) {
-	case REC_PLAY_STATUS_PLAYING:
-		userpal->Dscore.now_dis = maxs_2(time->now - time->offset, 0);
-		userpal->Dscore.add_save = userpal->Dscore.add;
-		break;
-	case REC_PLAY_STATUS_CLEARED:
-		userpal->Dscore.now_dis = time->end - time->offset;
-		userpal->Dscore.add_save = userpal->Dscore.add;
-		break;
-	case REC_PLAY_STATUS_DROPED:
-		userpal->Dscore.now_dis = userpal->Dscore.dis_save;
-		break;
-	}
-	userpal->Dscore.point = (int)(userpal->Dscore.now_dis / 100.0 + userpal->Dscore.add_save);
-	return;
 }
 
 static int GetRemainNotes(rec_play_judge_t judge, int Notes) {
@@ -828,6 +771,68 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyh
 #endif
 
 #if 1 /* class */
+
+/* TODO: miss判定でもスコアスリップが発生する */
+static class rec_play_score_calculator_c {
+private:
+	/* TODO: 戻り値に構造体使うのは不適切 */
+	rec_play_score_t CalScore(rec_play_score_t score,
+		rec_play_judge_t judge, const int notes, const int MaxCombo)
+	{
+		score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
+		score.combo = MaxCombo * 10000 / notes;
+		if (score.normal + score.combo - score.loss == 100000) {
+			score.pjust = maxs_2(maxs_2(100 - (notes - judge.pjust), (judge.pjust * 100 / (double)notes) - 65), 0);
+		}
+		else {
+			score.pjust = 0;
+		}
+		score.sum = score.normal + score.combo - score.loss + score.pjust;
+		return score;
+	}
+
+public:
+	void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time, int AutoFg) {
+		userpal->Mcombo = maxs_2(userpal->Mcombo, userpal->Ncombo);
+		//ライフが0未満の時、1毎に減点スコアを20増やす。
+		if (userpal->life < 0) {
+			userpal->score.loss = mins_2(userpal->score.loss - userpal->life * 20, userpal->score.normal + userpal->score.combo);
+			userpal->life = 0;
+		}
+		//ライフ上限
+		userpal->life = mins_2(userpal->life, 500);
+		userpal->Exlife = mins_2(userpal->Exlife, 500);
+		//スコア計算
+		userpal->score = this->CalScore(userpal->score, userpal->judgeCount, notes, userpal->Mcombo);
+		//ステータス
+		if (userpal->life <= 0 && userpal->status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
+			userpal->status = REC_PLAY_STATUS_DROPED;
+			userpal->Dscore.add_save = userpal->Dscore.add;
+			userpal->Dscore.dis_save = maxs_2(time->now - time->offset, 0);
+		}
+		else if (userpal->status != REC_PLAY_STATUS_DROPED &&
+			maxs_2(time->now - time->offset, 0) > time->end - time->offset)
+		{ //CLEARED
+			userpal->status = REC_PLAY_STATUS_CLEARED;
+		}
+		//距離計算
+		switch (userpal->status) {
+		case REC_PLAY_STATUS_PLAYING:
+			userpal->Dscore.now_dis = maxs_2(time->now - time->offset, 0);
+			userpal->Dscore.add_save = userpal->Dscore.add;
+			break;
+		case REC_PLAY_STATUS_CLEARED:
+			userpal->Dscore.now_dis = time->end - time->offset;
+			userpal->Dscore.add_save = userpal->Dscore.add;
+			break;
+		case REC_PLAY_STATUS_DROPED:
+			userpal->Dscore.now_dis = userpal->Dscore.dis_save;
+			break;
+		}
+		userpal->Dscore.point = (int)(userpal->Dscore.now_dis / 100.0 + userpal->Dscore.add_save);
+		return;
+	}
+};
 
 static class rec_play_drawnotes_c {
 private:
@@ -1569,7 +1574,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		/* ノーツ判定 */
 		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
 			&keyhold, &hitatk, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound);
-		RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
+		{
+			rec_play_score_calculator_c action;
+			action.RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
+		}
 
 		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示

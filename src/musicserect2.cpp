@@ -211,6 +211,7 @@ static rec_error_t RecSerectReadMapDataOneDif(MUSIC_BOX *songdata,
 	return REC_ERROR_NONE;
 }
 
+/* TODO: ‰Šú’l‚ª³‚µ‚­‘ã“ü‚³‚ê‚È‚¢ */
 static void RecSerectReadHighscore(MUSIC_BOX *songdata, const TCHAR *songName, rec_dif_t dif) {
 	rec_save_score_t score;
 	RecSaveReadScoreOneDif(&score, songName, dif);
