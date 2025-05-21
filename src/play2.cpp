@@ -648,16 +648,50 @@ static int PlayShowMovingGuideLine(rec_map_eff_data_t *mapeff, const rec_move_da
 	return RET_DRAW;
 }
 
+/* move後直角ライン */
+static int PlayShowOuterGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN, bool viewEn)
+{
+	int drawLeft = 0;
+	int drawRight = 0;
+	int drawY1 = 0;
+	int drawY2 = 0;
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Etime);
+	if (960 < drawLeft) { return RET_DISABLE; } // TODO: 止血コード、本来RET_OVERSCREEN
+	if (!viewEn) { return RET_DISABLE; }
+	DrawLineCurveRecField(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, optiondata.lineThick);
+	return RET_DRAW;
+}
+
+/* move前直角ライン */
+static int PlayShowInnerGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN, bool viewEn)
+{
+	int drawLeft = 0;
+	int drawRight = 0;
+	int drawY1 = 0;
+	int drawY2 = 0;
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime + 1);
+	if (960 < drawLeft) { return RET_DISABLE; } // TODO: 止血コード、本来RET_OVERSCREEN
+	if (!viewEn) { return RET_DISABLE; }
+	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.lineThick);
+	return RET_DRAW;
+}
+
 /* 通常ライングループ */
 static int PlayShowGuideLineStandard(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
 	bool viewEn)
 {
 	int ret = 0;
-	/* TODO: move直角ラインが欲しい */
+	ret = PlayShowOuterGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
 	ret = PlayShowChainGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
 	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
-	/* TODO: move直角ラインが欲しい */
+	ret = PlayShowInnerGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
 	return PlayShowMovingGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
 }
 
@@ -666,7 +700,9 @@ static int PlayShowLastGuideLineGroup(rec_map_eff_data_t *mapeff, const rec_move
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
 	bool viewEn)
 {
-	/* TODO: move直角ラインが欲しい */
+	int ret = 0;
+	ret = PlayShowOuterGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
 	return PlayShowLastGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
 }
 
@@ -837,8 +873,8 @@ public:
 static class rec_play_drawnotes_c {
 private:
 	/**
-	 * return 0 = normal, 1 = continue, 2 = break;
-	 */
+	* return 0 = normal, 1 = continue, 2 = break;
+	*/
 	int StepViewNoDrawNote(const mapeff_t *mapeff, int hittime, int viewTN, int Ntime) {
 		int viewTadd = viewTN;
 		//表示/非表示ナンバーを進める
@@ -867,7 +903,7 @@ private:
 
 		// スピードナンバーを進める
 		while (IS_BETWEEN(0, p_speedt->d[SpeedNoAdd + 1].time, note->hittime)) { SpeedNoAdd++; }
-		(*Speedp) = mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + SpeedNoAdd].speed;
+		(*Speedp) = mapeff->speedt[iLine].d[SpeedNoAdd].speed;
 		return;
 	}
 
@@ -898,8 +934,8 @@ private:
 		int YLockp = 0;
 		double Speedp = 0;
 		this->StepNoDrawNote(&XLockp, &YLockp, &Speedp, note, mapeff, lockN, iLine);
-		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp, &mapeff->scrool,
-			Ntime, iLine);
+		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp,
+			&mapeff->scrool, Ntime, iLine);
 		switch (note->object) {
 		case 1:
 		case 3:
@@ -1406,16 +1442,16 @@ public:
 /* main action */
 
 /**
- * @param[out] ret_map_det map_detail の受け皿
- * @param[out] ret_userpal userpal の受け皿
- * @param[out] ret_nameset nameset の受け皿
- * @param[in] p パックナンバー
- * @param[in] n 曲ナンバー
- * @param[in] o 難易度ナンバー
- * @param[in] HighScore ハイスコア
- * @param[in] AutoFlag オートプレイフラグ
- * @return now_scene_t 次のシーン
- */
+* @param[out] ret_map_det map_detail の受け皿
+* @param[out] ret_userpal userpal の受け皿
+* @param[out] ret_nameset nameset の受け皿
+* @param[in] p パックナンバー
+* @param[in] n 曲ナンバー
+* @param[in] o 難易度ナンバー
+* @param[in] HighScore ハイスコア
+* @param[in] AutoFlag オートプレイフラグ
+* @return now_scene_t 次のシーン
+*/
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
 	rec_play_nameset_t *ret_nameset, int p, int n, int o, int HighScore, int AutoFlag)
 {
@@ -1761,13 +1797,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 }
 
 /**
- * @param[in] packNo パックナンバー
- * @param[in] musicNo 曲ナンバー
- * @param[in] difNo 難易度ナンバー
- * @param[in] shift マップ生成フラフ
- * @param[in] AutoFlag オートプレイフラグ
- * @return 次のシーン
- */
+* @param[in] packNo パックナンバー
+* @param[in] musicNo 曲ナンバー
+* @param[in] difNo 難易度ナンバー
+* @param[in] shift マップ生成フラフ
+* @param[in] AutoFlag オートプレイフラグ
+* @return 次のシーン
+*/
 now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	int HighScore = 0;
 	TCHAR mapPath[255];

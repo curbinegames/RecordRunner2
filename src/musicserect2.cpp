@@ -66,13 +66,15 @@ typedef struct music_box_2 {
 	int Hdis       =  0;
 	int ScoreRate  =  6; //0=EX, 1=S, 2=A, 3=B, 4=C, 5=D, 6=not play
 	int ClearRank  =  0; //0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
+	int packNo     =  0;
+	int musicNo    =  0;
 	double Hacc    =  0.0;
-	wchar_t difP[256]         = _T("");
-	wchar_t packName[64]     = _T("");
-	wchar_t SongName[64]     = _T("");
-	wchar_t artist[64]       = _T("");
-	wchar_t SongFileName[256] = _T("");
-	wchar_t jacketP[256]      = _T("");
+	TCHAR difP[256]         = _T("");
+	TCHAR packName[64]      = _T("");
+	TCHAR SongName[64]      = _T("");
+	TCHAR artist[64]        = _T("");
+	TCHAR SongFileName[256] = _T("");
+	TCHAR jacketP[256]      = _T("");
 	rec_ddif_pal_t mpal;
 } MUSIC_BOX_2;
 
@@ -122,22 +124,12 @@ static void RecSelectAllRelord(void) {
 
 #if 1 /* read map data */
 
-static rec_error_t RecSerectReadMapDataOneDif(MUSIC_BOX_2 *songdata,
-	const TCHAR *path, const TCHAR *subpath, const TCHAR *packName, int dif)
+static rec_error_t RecSerectReadMapDataOneDif(MUSIC_BOX_2 *songdata, const TCHAR *path,
+	const TCHAR *subpath, const TCHAR *packName, int packNum, int musicNo, int dif)
 {
 	DxFile_t fd;
 	TCHAR buf[256];
 	int lang = optiondata.lang;
-
-	//初期値定義
-	songdata->level      =      -1;
-	songdata->preview[0] =  441000;
-	songdata->preview[1] = 2646000;
-	strcopy_2(L"NULL",                    songdata->SongName,     255);
-	strcopy_2(L"NULL",                    songdata->artist,       255);
-	strcopy_2(L"NULL",                    songdata->SongFileName, 255);
-	strcopy_2(L"picture/NULL jucket.png", songdata->jacketP,      255);
-	strcopy_2(packName,                   songdata->packName,     255);
 
 	fd = FileRead_open(path);
 
@@ -148,37 +140,40 @@ static rec_error_t RecSerectReadMapDataOneDif(MUSIC_BOX_2 *songdata,
 	songdata->level      =      -1;
 	songdata->preview[0] =  441000;
 	songdata->preview[1] = 2646000;
-	strcopy_2(L"NULL",                    songdata->SongName,     255);
-	strcopy_2(L"NULL",                    songdata->artist,       255);
+	songdata->packNo     = packNum;
+	songdata->musicNo    = musicNo;
+	strcopy_2(L"NULL",                    songdata->SongName,      64);
+	strcopy_2(L"NULL",                    songdata->artist,        64);
 	strcopy_2(L"NULL",                    songdata->SongFileName, 255);
 	strcopy_2(L"picture/NULL jucket.png", songdata->jacketP,      255);
-	strcopy_2(packName,                   songdata->packName,     255);
+	strcopy_2(packName,                   songdata->packName,      64);
+
 	while (FileRead_eof(fd) == 0) {
 		FileRead_gets(buf, 256, fd);
 		//曲名を読み込む
 		if (strands_direct(buf, L"#TITLE:")) {
 			strmods(buf, 7);
 			if ((lang == 0) || strands_direct(songdata->SongName, L"NULL")) {
-				strcopy_2(buf, songdata->SongName, 255);
+				strcopy_2(buf, songdata->SongName, 64);
 			}
 		}
 		else if (strands_direct(buf, L"#E.TITLE:")) {
 			strmods(buf, 9);
 			if ((lang == 1) || strands_direct(songdata->SongName, L"NULL")) {
-				strcopy_2(buf, songdata->SongName, 255);
+				strcopy_2(buf, songdata->SongName, 64);
 			}
 		}
 		//作曲者を読み込む
 		else if (strands_direct(buf, L"#ARTIST:")) {
 			strmods(buf, 8);
 			if ((lang == 0) || strands_direct(songdata->artist, L"NULL")) {
-				strcopy_2(buf, songdata->artist, 255);
+				strcopy_2(buf, songdata->artist, 64);
 			}
 		}
 		else if (strands_direct(buf, L"#E.ARTIST:")) {
 			strmods(buf, 10);
 			if ((lang == 1) || strands_direct(songdata->artist, L"NULL")) {
-				strcopy_2(buf, songdata->artist, 255);
+				strcopy_2(buf, songdata->artist, 64);
 			}
 		}
 		//曲ファイル名を読み込む
@@ -234,7 +229,7 @@ static void RecSerectReadHighscore(MUSIC_BOX_2 *songdata, const TCHAR *songName,
 }
 
 static void RecSerectReadMapDataOneSong(songdata_set_t *dataset,
-	const TCHAR *packName, const TCHAR *songName)
+	const TCHAR *packName, const TCHAR *songName, int packNum, int musicNo)
 {
 	rec_error_t status = REC_ERROR_NONE;
 	TCHAR path[256];
@@ -252,7 +247,8 @@ static void RecSerectReadMapDataOneSong(songdata_set_t *dataset,
 		strcopy_2(path, rrsPath, 255); //rrsPathにコピー
 		strcats(path, _T(".txt")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 		strcats(rrsPath, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
-		status = RecSerectReadMapDataOneDif(&songdata[dataset->mapNum], path, subPath, packName, iDif);
+		status = RecSerectReadMapDataOneDif(
+			&songdata[dataset->mapNum], path, subPath, packName, packNum, musicNo, iDif);
 		if (status == REC_ERROR_NONE) {
 			RecScoreReadDdif(&songdata[dataset->mapNum].mpal, rrsPath);
 			RecSerectReadHighscore(&songdata[dataset->mapNum], songName, (rec_dif_t)iDif);
@@ -270,6 +266,7 @@ static void RecSerectReadMapDataOneSong(songdata_set_t *dataset,
  */
 static void RecSerectReadMapData(songdata_set_t *songdata, int PackFirstNum[]) {
 	int packNum = 0;
+	int musicNo = 0;
 	int songCount = 0;
 	DxFile_t fd;
 	rec_pack_name_set_t PackName[PackNumLim];
@@ -290,9 +287,11 @@ static void RecSerectReadMapData(songdata_set_t *songdata, int PackFirstNum[]) {
 		strcats(songName, L"/list.txt"); //"record/<パック名>/list.txt"
 		fd = FileRead_open(songName);
 		PackFirstNum[i] = songCount;
+		musicNo = 0;
 		while (FileRead_eof(fd) == 0) {
 			FileRead_gets(songName, 256, fd);
-			RecSerectReadMapDataOneSong(songdata, PackName[i], songName);
+			RecSerectReadMapDataOneSong(songdata, PackName[i], songName, i, musicNo);
+			musicNo++;
 		}
 		FileRead_close(fd);
 	}
@@ -576,14 +575,9 @@ static void RecSerectSetToPlay(rec_to_play_set_t *toPlay, int cmd[],
 	else { toPlay->shift = 0; }
 	if (CheckHitKey(KEY_INPUT_P) == 1) { toPlay->autoFg = 1; }
 	else { toPlay->autoFg = 0; }
-	for (inum = PackNumLim; inum >= 0; inum--) {
-		if (PackFirstNum[inum] >= 0 && PackFirstNum[inum] <= songdata->mapping[cmd[0]]) {
-			toPlay->packNo = inum;
-			break;
-		}
-	}
-	toPlay->musicNo = songdata->mapping[cmd[0]] - PackFirstNum[inum];
-	toPlay->dif = cmd[1];
+	toPlay->packNo  = SONGDATA_FROM_MAP(songdata, cmd[0]).packNo;
+	toPlay->musicNo = SONGDATA_FROM_MAP(songdata, cmd[0]).musicNo;
+	toPlay->dif     = SONGDATA_FROM_MAP(songdata, cmd[0]).LvType;
 
 #if 0
 	//隠し曲用
