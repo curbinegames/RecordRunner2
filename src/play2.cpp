@@ -1442,18 +1442,20 @@ public:
 /* main action */
 
 /**
-* @param[out] ret_map_det map_detail の受け皿
-* @param[out] ret_userpal userpal の受け皿
-* @param[out] ret_nameset nameset の受け皿
-* @param[in] p パックナンバー
-* @param[in] n 曲ナンバー
-* @param[in] o 難易度ナンバー
-* @param[in] HighScore ハイスコア
-* @param[in] AutoFlag オートプレイフラグ
-* @return now_scene_t 次のシーン
-*/
+ * @param[out] ret_map_det map_detail の受け皿
+ * @param[out] ret_userpal userpal の受け皿
+ * @param[out] ret_nameset nameset の受け皿
+ * @param[in] folderPath フォルダーパス
+ * @param[in] p パックナンバー
+ * @param[in] n 曲ナンバー
+ * @param[in] o 難易度ナンバー
+ * @param[in] HighScore ハイスコア
+ * @param[in] AutoFlag オートプレイフラグ
+ * @return now_scene_t 次のシーン
+ */
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
-	rec_play_nameset_t *ret_nameset, int p, int n, int o, int HighScore, int AutoFlag)
+	rec_play_nameset_t *ret_nameset, const TCHAR *folderPath, int p, int n, int o, int HighScore,
+	int AutoFlag)
 {
 
 #if 1 /* num define */
@@ -1497,7 +1499,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	double DifRate; //譜面定数
 
 	/* string */
-	TCHAR dataE[255];
 	TCHAR GT1[255];
 	TCHAR GT2[255];
 
@@ -1534,7 +1535,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	if (optiondata.SEenable == 0) { RecPlayInitMelodySnd(); }
 
-	RecGetMusicFolderPath(dataE, 255, p, n);
 	RecGetMusicMapRrsPath(GT1, 255, p, n, (rec_dif_t)o);
 
 	/* rrsデータの内容を読み込む */
@@ -1545,14 +1545,14 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	backpic.water.reload( recfp.nameset.water);
 
 	for (i[0] = 0; i[0] < 100; i[0]++) {
-		strcopy_2(dataE, GT1, 255);
+		strcopy_2(folderPath, GT1, 255);
 		Getxxxpng(&GT2[0], i[0]);
 		strcats(GT1, GT2);
 		item[i[0]].reload(GT1);
 		if (item[i[0]].handle() == -1) { break; }
 	}
 	for (i[0] = 1; i[0] < 100; i[0]++) {
-		strcopy_2(dataE, GT1, 255);
+		strcopy_2(folderPath, GT1, 255);
 		Getxxxwav(&GT2[0], i[0]);
 		strcats(GT1, GT2);
 		Sitem[i[0] - 1] = LoadSoundMem(GT1);
@@ -1808,6 +1808,7 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	int HighScore = 0;
 	TCHAR mapPath[255];
 	TCHAR fileName[255];
+	TCHAR folderPath[255];
 	rec_map_detail_t map_detail;
 	rec_play_userpal_t userpal;
 	rec_play_nameset_t nameset;
@@ -1831,7 +1832,8 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	RecGetMusicFolderName(fileName, 255, packNo, musicNo);
 	HighScore = GetHighScore(fileName, (rec_dif_t)difNo);
-	ret = RecPlayMain(&map_detail, &userpal, &nameset, packNo, musicNo, difNo, HighScore, AutoFlag);
+	RecGetMusicFolderPath(folderPath, 255, packNo, musicNo);
+	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath, packNo, musicNo, difNo, HighScore, AutoFlag);
 
 	if (ret != SCENE_RESULT) { return ret; }
 	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)difNo, fileName); }
