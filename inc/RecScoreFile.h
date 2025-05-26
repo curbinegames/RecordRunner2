@@ -172,6 +172,16 @@ typedef struct rec_view_bpm_set_s {
 	int num = 0;
 } rec_view_bpm_set_t;
 
+typedef struct rec_view_time_data_s {
+	int Vtime = 3000;
+	int Stime = -10000;
+} rec_view_time_data_t;
+
+typedef struct rec_view_time_set_s {
+	rec_view_time_data_t data[99];
+	uint num = 0;
+} rec_view_time_set_t;
+
 typedef struct rec_chara_arrow_s {
 	struct {
 		int data = 0;
@@ -251,10 +261,9 @@ typedef struct rec_map_eff_data_s {
 	rec_scrool_set_t scrool;
 	item_box Movie[999];
 	rec_view_bpm_set_t v_BPM;
-	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
+	rec_view_time_set_t viewT;
 	rec_chara_arrow_t carrow;
 	rec_notelock_allset_t lock;
-	//int lock[2][2][99]; [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	rec_move_all_set_t move;
 	rec_chara_gra_data_t chamo;
 	rec_fall_data_t fall;

@@ -79,15 +79,12 @@ typedef struct note_img {
 
 #if 1 /* sub action */
 
-static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[],
-	short *viewTN, short *MovieN)
-{
+static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[], short *MovieN) {
 	*itemN = 0;
 	*SitemN = 0;
 	LineMoveN[0] = 0;
 	LineMoveN[1] = 0;
 	LineMoveN[2] = 0;
-	*viewTN = 0;
 	*MovieN = 0;
 	return;
 }
@@ -110,6 +107,7 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->fall.num = 0;
 	mapeff->lock.x.num = 0;
 	mapeff->lock.y.num = 0;
+	mapeff->viewT.num = 0;
 	return;
 }
 
@@ -364,10 +362,8 @@ static void RecPlayStepLockNum(rec_map_eff_data_t *mapeff, DxTime_t Ntime) {
 	return;
 }
 
-static void RecPlayStepViewTimeNum(short *viewTN, const rec_map_eff_data_t *mapeff,
-	DxTime_t Ntime)
-{
-	while (IS_BETWEEN(0, mapeff->viewT[0][*viewTN + 1], Ntime)) { (*viewTN)++; }
+static void RecPlayStepViewTimeNum(rec_map_eff_data_t *mapeff, DxTime_t Ntime) {
+	while (IS_BETWEEN(0, mapeff->viewT.data[mapeff->viewT.num].Stime, Ntime)) { mapeff->viewT.num++; }
 	return;
 }
 
@@ -379,7 +375,7 @@ static void RecPlayStepViewLineNum(rec_viewline_dataset_t *viewLine, DxTime_t Nt
 }
 
 static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *movieN,
-	short *guideN, short *viewTN, const short *objectN)
+	short *guideN, const short *objectN)
 {
 	RecPlayStepObjectNG(objectNG, recfp->mapdata.note, objectN);
 	RecPlayStepCharaMotionNum(recfp->mapeff.chamo, recfp->time.now);
@@ -392,7 +388,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
 	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
 	RecPlayStepLockNum(&recfp->mapeff, recfp->time.now);
-	RecPlayStepViewTimeNum(viewTN, &recfp->mapeff, recfp->time.now);
+	RecPlayStepViewTimeNum(&recfp->mapeff, recfp->time.now);
 	RecPlayStepViewLineNum(&recfp->mapeff.viewLine, recfp->time.now);
 	return;
 }
@@ -867,17 +863,17 @@ public:
 static class rec_play_drawnotes_c {
 private:
 	/**
-	* return 0 = normal, 1 = continue, 2 = break;
-	*/
-	int StepViewNoDrawNote(const mapeff_t *mapeff, int hittime, int viewTN, int Ntime) {
-		int viewTadd = viewTN;
+	 * return 0 = normal, 1 = continue, 2 = break;
+	 */
+	int StepViewNoDrawNote(const mapeff_t *mapeff, int hittime, int Ntime) {
+		int viewTadd = mapeff->viewT.num;
 		//表示/非表示ナンバーを進める
-		if (IS_BETWEEN(0, mapeff->viewT[0][viewTadd + 1], hittime)) { viewTadd++; }
+		if (IS_BETWEEN(0, mapeff->viewT.data[viewTadd + 1].Stime, hittime)) { viewTadd++; }
 		//非表示スキップ
-		if (hittime - Ntime >= mapeff->viewT[1][viewTadd]) { return 1; }
-		/* TODO: 3秒ブレークが働いていない */
+		if (hittime - Ntime >= mapeff->viewT.data[viewTadd].Vtime) { return 1; }
+		/* TODO: struct改造前からviewtimeが正常に働いていない */
 		//3秒ブレーク
-		if (IS_BETWEEN(mapeff->viewT[1][viewTadd], 3000, hittime - Ntime)) { return 2; }
+		if (IS_BETWEEN(mapeff->viewT.data[viewTadd].Vtime, 3000, hittime - Ntime)) { return 2; }
 		return 0;
 	}
 
@@ -972,11 +968,11 @@ private:
 
 public:
 	void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, short objectN[], note_box_2_t note[],
-		rec_map_eff_data_t *mapeff, short viewTN, int Ntime, rec_play_notepic_t *noteimg)
+		rec_map_eff_data_t *mapeff, int Ntime, rec_play_notepic_t *noteimg)
 	{
 		for (int iLine = 0; iLine < 3; iLine++) {
 			for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
-				int ret = this->StepViewNoDrawNote(mapeff, note->hittime, viewTN, Ntime);
+				int ret = this->StepViewNoDrawNote(mapeff, note->hittime, Ntime);
 				if (ret == 1) { continue; }
 				else if (ret == 2) { break; }
 				this->DrawNoteOne(&note[iNote], mapeff, lanePos, iLine, Ntime, noteimg);
@@ -1468,7 +1464,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
-	short viewTN = 0;
 	rec_play_lanepos_t lanePos;
 	unsigned int Cr = GetColor(255, 255, 255);
 	unsigned int Crb = GetColor(0, 0, 0);
@@ -1571,7 +1566,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	while (1) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
-		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, &viewTN, objectN);
+		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, objectN);
 
 		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, objectNG, AutoFlag);
 
@@ -1645,7 +1640,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		{
 			rec_play_drawnotes_c action;
 			action.RecPlayDrawNoteAll(&lanePos, objectN, recfp.mapdata.note, &recfp.mapeff,
-				viewTN, recfp.time.now, &noteimg);
+				recfp.time.now, &noteimg);
 		}
 		//ヒットエフェクト表示
 		PlayShowHitEffect(&lanePos);
@@ -1743,7 +1738,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				recfp.time.now = maxs_2(recfp.time.now - 10000, 0);
 				RecResetPlayObjectNum(objectN, &recfp);
 				RecResetPlayRecfpMapeffNum(&recfp.mapeff);
-				RecResetPlayPartNum(&itemN, &SitemN, LineMoveN, &viewTN, &MovieN);
+				RecResetPlayPartNum(&itemN, &SitemN, LineMoveN, &MovieN);
 				for (i[0] = 0; i[0] < 3; i[0]++) {
 					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
 						recfp.mapdata.note[objectN[i[0]]].next != 5999)

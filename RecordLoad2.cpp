@@ -829,12 +829,13 @@ static void RecMapencSetView(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 	TCHAR GT1[255];
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	const uint nowNo = recfp->mapeff.viewLine.num;
-	strmods(GT1, 8);
-	recfp->mapeff.viewLine.d[nowNo].enable = (GT1[0] == _T('1')) ? true : false;
+	rec_view_time_data_t *dest = &recfp->mapeff.viewT.data[recfp->mapeff.viewT.num];
+
+	strmods(GT1, 6);
+	dest->Stime = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.viewLine.d[nowNo].time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
-	recfp->mapeff.viewLine.num = mins_2(recfp->mapeff.viewLine.num + 1, 98);
+	dest->Vtime = strsans(GT1);
+	recfp->mapeff.viewT.num = mins_2(recfp->mapeff.viewT.num + 1, 98);
 	return;
 }
 
@@ -1133,18 +1134,15 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.camera.data[0].mode = 0;
 	recfp->mapeff.camera.num = 1;
 	recfp->mapeff.scrool.data[0].starttime = 0;
-	recfp->mapeff.scrool.data[0].basetime = 0;
-	recfp->mapeff.scrool.data[0].speed = 1;
-	recfp->mapeff.scrool.num = 1;
-	for (int i = 0; i < 99; i++) {
-		recfp->mapeff.viewT[0][i] = -1000;
-		recfp->mapeff.viewT[1][i] = -1000;
-	}
-	recfp->mapeff.viewT[0][0] = 0;
-	recfp->mapeff.viewT[1][0] = 3000;
+	recfp->mapeff.scrool.data[0].basetime  = 0;
+	recfp->mapeff.scrool.data[0].speed     = 1;
+	recfp->mapeff.scrool.num               = 1;
+	recfp->mapeff.viewT.data[0].Stime = 0;
+	recfp->mapeff.viewT.data[0].Vtime = 3000;
+	recfp->mapeff.viewT.num           = 1;
 	recfp->mapeff.carrow.d[0].data = 1;
 	recfp->mapeff.carrow.d[0].time = 0;
-	recfp->mapeff.carrow.num = 1;
+	recfp->mapeff.carrow.num       = 1;
 	recfp->mapeff.lock.x.data[0].en    = false;
 	recfp->mapeff.lock.x.data[0].Stime = 0;
 	recfp->mapeff.lock.x.num           = 1;

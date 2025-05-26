@@ -105,7 +105,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 			recfp->mapeff.carrow.d[i].time = buf[1][i];
 		}
 	}
-	fread(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
+	fread(&recfp->mapeff.viewT.data, sizeof(rec_view_time_data_t), 99, fp);//ノーツ表示時間変換タイミング
 	fread(&recfp->mapdata.note, sizeof(note_box_2_t),
 		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
 	fread(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
@@ -201,7 +201,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 		}
 		fwrite(&buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
 	}
-	fwrite(&recfp->mapeff.viewT, sizeof(int), 198, fp);//ノーツ表示時間変換タイミング
+	fwrite(&recfp->mapeff.viewT.data, sizeof(rec_view_time_data_t), 99, fp);//ノーツ表示時間変換タイミング
 	fwrite(&recfp->mapdata.note, sizeof(note_box_2_t), recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
 	fwrite(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
 	fwrite(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
