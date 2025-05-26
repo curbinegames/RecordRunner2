@@ -79,7 +79,7 @@ typedef struct note_img {
 
 #if 1 /* sub action */
 
-static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[], short lockN[],
+static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[],
 	short *viewTN, short *MovieN)
 {
 	*itemN = 0;
@@ -87,8 +87,6 @@ static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[], 
 	LineMoveN[0] = 0;
 	LineMoveN[1] = 0;
 	LineMoveN[2] = 0;
-	lockN[0] = 0;
-	lockN[1] = 0;
 	*viewTN = 0;
 	*MovieN = 0;
 	return;
@@ -110,6 +108,8 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->chamo[1].num = 0;
 	mapeff->chamo[2].num = 0;
 	mapeff->fall.num = 0;
+	mapeff->lock.x.num = 0;
+	mapeff->lock.y.num = 0;
 	return;
 }
 
@@ -354,11 +354,12 @@ static void RecPlayStepCharaArrowNum(rec_chara_arrow_t *carrow, DxTime_t Ntime) 
 	return;
 }
 
-static void RecPlayStepLockNum(short lockN[], const rec_map_eff_data_t *mapeff, DxTime_t Ntime) {
-	for (int iVect = 0; iVect < 2; iVect++) {
-		while (IS_BETWEEN(0, mapeff->lock[iVect][1][lockN[iVect] + 1], Ntime)) {
-			lockN[iVect]++;
-		}
+static void RecPlayStepLockNum(rec_map_eff_data_t *mapeff, DxTime_t Ntime) {
+	while (IS_BETWEEN(0, mapeff->lock.x.data[mapeff->lock.x.num + 1].Stime, Ntime)) {
+		mapeff->lock.x.num++;
+	}
+	while (IS_BETWEEN(0, mapeff->lock.y.data[mapeff->lock.y.num + 1].Stime, Ntime)) {
+		mapeff->lock.y.num++;
 	}
 	return;
 }
@@ -378,7 +379,7 @@ static void RecPlayStepViewLineNum(rec_viewline_dataset_t *viewLine, DxTime_t Nt
 }
 
 static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *movieN,
-	short *guideN, short *lockN, short *viewTN, const short *objectN)
+	short *guideN, short *viewTN, const short *objectN)
 {
 	RecPlayStepObjectNG(objectNG, recfp->mapdata.note, objectN);
 	RecPlayStepCharaMotionNum(recfp->mapeff.chamo, recfp->time.now);
@@ -390,7 +391,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	RecPlayStepFallNum(&recfp->mapeff.fall, recfp->time.now);
 	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
 	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
-	RecPlayStepLockNum(lockN, &recfp->mapeff, recfp->time.now);
+	RecPlayStepLockNum(&recfp->mapeff, recfp->time.now);
 	RecPlayStepViewTimeNum(viewTN, &recfp->mapeff, recfp->time.now);
 	RecPlayStepViewLineNum(&recfp->mapeff.viewLine, recfp->time.now);
 	return;
@@ -466,13 +467,13 @@ static int RecPlayStepSpeedNum(rec_map_eff_data_t *mapeff, int iLine, int Ptime)
 }
 
 static void RecPlayGetTimeLanePosBase(int *DrawX, int *DrawY, rec_move_all_set_t *move,
-	const rec_play_lanepos_t *lanePos, double speedt, int Ylock, rec_scrool_set_t *scrool, int Ntime, int Ptime, int lane)
+	const rec_play_lanepos_t *lanePos, double speedt, bool Ylock, rec_scrool_set_t *scrool, int Ntime, int Ptime, int lane)
 {
 	/* TODO: 今後使うから消すな */
 	const double scroolSpeed = scrool->data[scrool->num].speed;
 	const double scroolBaseTime = scrool->data[scrool->num].basetime;
 
-	*DrawY = ((Ylock == 1) ? RecMapGetPosFromMove(move->y, Ptime, lane) : lanePos->y[lane]) + 15;
+	*DrawY = (Ylock ? RecMapGetPosFromMove(move->y, Ptime, lane) : lanePos->y[lane]) + 15;
 
 	/* TODO: スクロールの考慮ができていない、てかVtime作りたい */
 	*DrawX = (int)((speedt * 20 * (Ptime - Ntime) + 5000) / 50) + 50;
@@ -481,24 +482,23 @@ static void RecPlayGetTimeLanePosBase(int *DrawX, int *DrawY, rec_move_all_set_t
 }
 
 static void RecPlayGetTimeLanePos(int *retX, int *retY, rec_map_eff_data_t *mapeff, const rec_play_lanepos_t *lanePos,
-	int iLine, short YlockN, int Ntime, int Ptime)
+	int iLine, int Ntime, int Ptime)
 {
 	int SpeedNoAdd = RecPlayStepSpeedNum(mapeff, iLine, Ptime);
 	int YlockNoAdd = 0;
 
-	while (IS_BETWEEN(0, mapeff->lock[1][1][YlockN + YlockNoAdd + 1], Ptime)) {
+	while (IS_BETWEEN(0, mapeff->lock.y.data[mapeff->lock.y.num + YlockNoAdd + 1].Stime, Ptime)) {
 		YlockNoAdd++;
 	}
 
 	RecPlayGetTimeLanePosBase(retX, retY, &mapeff->move, lanePos,
 		mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + SpeedNoAdd].speed,
-		mapeff->lock[1][0][YlockN + YlockNoAdd],
-		&mapeff->scrool, Ntime, Ptime,
-		iLine);
+		mapeff->lock.y.data[mapeff->lock.y.num + YlockNoAdd].en,
+		&mapeff->scrool, Ntime, Ptime, iLine);
 	return;
 }
 
-void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos, short YlockN) {
+void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos) {
 	int Ptime = 0;
 	int pnum  = 0;
 	DxTime_t Ntime = recfp->time.now;
@@ -537,9 +537,9 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { continue; }
 		if (recfp->time.end < Ptime) { return; }
 
-		RecPlayGetTimeLanePos(&posX1, &posY1, &recfp->mapeff, lanePos, 0, YlockN, Ntime, Ptime);
-		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, lanePos, 1, YlockN, Ntime, Ptime);
-		RecPlayGetTimeLanePos(&posX3, &posY3, &recfp->mapeff, lanePos, 2, YlockN, Ntime, Ptime);
+		RecPlayGetTimeLanePos(&posX1, &posY1, &recfp->mapeff, lanePos, 0, Ntime, Ptime);
+		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, lanePos, 1, Ntime, Ptime);
+		RecPlayGetTimeLanePos(&posX3, &posY3, &recfp->mapeff, lanePos, 2, Ntime, Ptime);
 
 		if (abss(posY1, posY2) < 25) {
 			posY1 = posY2 - 20;
@@ -577,8 +577,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 
 /* ラスライン */
 static int PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
-	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
-	bool viewEn)
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
 	int drawRight = 0;
@@ -586,7 +585,7 @@ static int PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data
 	int drawY2 = 0;
 	rec_play_xy_set_t camera;
 	RecPlayGetCameraPos(&camera.x, &camera.y); /* TODO: スクリーン上での位置を返す関数が欲しい */
-	RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
+	RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, lanePos, Line, Ntime, Ymove[iDraw - 1].Etime);
 	drawRight = 1280 - camera.x;
 	drawY2    = drawY1;
 	if (960 < drawLeft) { return RET_FINISH; }
@@ -597,7 +596,7 @@ static int PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data
 
 /* スタートライン */
 static int PlayShowStartGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
-	const rec_play_lanepos_t *lanePos, int Line, int drawC, int Ntime, short YlockN, bool viewEn)
+	const rec_play_lanepos_t *lanePos, int Line, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
 	int drawRight = 0;
@@ -605,7 +604,7 @@ static int PlayShowStartGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 	int drawY2 = 0;
 	rec_play_xy_set_t camera;
 	RecPlayGetCameraPos(&camera.x, &camera.y);
-	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[0].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, Ntime, Ymove[0].Stime);
 	drawLeft = 0 - camera.x;
 	drawY1   = drawY2;
 	if (960 < drawLeft) { return RET_OVERSCREEN; }
@@ -616,15 +615,14 @@ static int PlayShowStartGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 
 /* move繋ぎライン */
 static int PlayShowChainGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
-	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
-	bool viewEn)
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
-	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw - 1].Etime);
-	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, Ntime, Ymove[iDraw - 1].Etime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, Ntime, Ymove[iDraw].Stime);
 	drawY2 = drawY1;
 	if (960 < drawLeft) { return RET_OVERSCREEN; }
 	if (!viewEn) { return RET_DISABLE; }
@@ -634,14 +632,14 @@ static int PlayShowChainGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 
 /* moveライン */
 static int PlayShowMovingGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
-	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN, bool viewEn)
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
-	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
-	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Etime);
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, Ntime, Ymove[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, Ntime, Ymove[iDraw].Etime);
 	if (960 < drawLeft) { return RET_OVERSCREEN; }
 	if (!viewEn) { return RET_DISABLE; }
 	DrawLineCurveRecField(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, optiondata.lineThick);
@@ -650,14 +648,14 @@ static int PlayShowMovingGuideLine(rec_map_eff_data_t *mapeff, const rec_move_da
 
 /* move後直角ライン */
 static int PlayShowOuterGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
-	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN, bool viewEn)
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
-	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
-	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Etime);
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, Ntime, Ymove[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, Ntime, Ymove[iDraw].Etime);
 	if (960 < drawLeft) { return RET_DISABLE; } // TODO: 止血コード、本来RET_OVERSCREEN
 	if (!viewEn) { return RET_DISABLE; }
 	DrawLineCurveRecField(drawLeft, drawY1, drawRight, drawY2, Ymove[iDraw].mode, drawC, optiondata.lineThick);
@@ -666,14 +664,14 @@ static int PlayShowOuterGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 
 /* move前直角ライン */
 static int PlayShowInnerGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
-	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN, bool viewEn)
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
-	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime);
-	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, YlockN, Ntime, Ymove[iDraw].Stime + 1);
+	RecPlayGetTimeLanePos(&drawLeft,  &drawY1, mapeff, lanePos, Line, Ntime, Ymove[iDraw].Stime);
+	RecPlayGetTimeLanePos(&drawRight, &drawY2, mapeff, lanePos, Line, Ntime, Ymove[iDraw].Stime + 1);
 	if (960 < drawLeft) { return RET_DISABLE; } // TODO: 止血コード、本来RET_OVERSCREEN
 	if (!viewEn) { return RET_DISABLE; }
 	DrawLineRecField(drawLeft, drawY1, drawRight, drawY2, drawC, optiondata.lineThick);
@@ -682,33 +680,29 @@ static int PlayShowInnerGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 
 /* 通常ライングループ */
 static int PlayShowGuideLineStandard(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
-	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
-	bool viewEn)
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int ret = 0;
-	ret = PlayShowOuterGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	ret = PlayShowOuterGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, viewEn);
 	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
-	ret = PlayShowChainGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	ret = PlayShowChainGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, viewEn);
 	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
-	ret = PlayShowInnerGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	ret = PlayShowInnerGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, viewEn);
 	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
-	return PlayShowMovingGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	return PlayShowMovingGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, viewEn);
 }
 
 /* ラスライングループ */
 static int PlayShowLastGuideLineGroup(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
-	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, short YlockN,
-	bool viewEn)
+	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int ret = 0;
-	ret = PlayShowOuterGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	ret = PlayShowOuterGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, viewEn);
 	if (ret == RET_OVERSCREEN) { return RET_OVERSCREEN; }
-	return PlayShowLastGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+	return PlayShowLastGuideLine(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, viewEn);
 }
 
-static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos, int Line, int iDraw,
-	short YlockN)
-{
+static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos, int Line, int iDraw) {
 	int Ntime = recfp->time.now;
 	rec_move_data_t *Ymove = recfp->mapeff.move.y[Line].d;
 	rec_map_eff_data_t *mapeff = &recfp->mapeff;
@@ -742,24 +736,24 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *
 	}
 
 	if (Ymove[iDraw].Stime < 0) {
-		return PlayShowLastGuideLineGroup(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+		return PlayShowLastGuideLineGroup(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, viewEn);
 	}
 	else if (iDraw < 1) {
-		return PlayShowStartGuideLine(mapeff, Ymove, lanePos, Line, drawC, Ntime, YlockN, viewEn);
+		return PlayShowStartGuideLine(mapeff, Ymove, lanePos, Line, drawC, Ntime, viewEn);
 	}
 	else {
-		return PlayShowGuideLineStandard(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, YlockN, viewEn);
+		return PlayShowGuideLineStandard(mapeff, Ymove, lanePos, Line, iDraw, drawC, Ntime, viewEn);
 	}
 }
 
 static void PlayShowAllGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos,
-	short LineMoveN[], short YlockN)
+	short LineMoveN[])
 {
 	int ret = 0;
 
 	for (int iLine = 0; iLine < 3; iLine++) {
 		for (int iDraw = LineMoveN[iLine]; 1; iDraw++) {
-			ret = PlayShowGuideLine(recfp, lanePos, iLine, iDraw, YlockN);
+			ret = PlayShowGuideLine(recfp, lanePos, iLine, iDraw);
 			if (ret == RET_OVERSCREEN) { break; }
 			if (ret == RET_FINISH) { break; }
 		}
@@ -881,25 +875,26 @@ private:
 		if (IS_BETWEEN(0, mapeff->viewT[0][viewTadd + 1], hittime)) { viewTadd++; }
 		//非表示スキップ
 		if (hittime - Ntime >= mapeff->viewT[1][viewTadd]) { return 1; }
+		/* TODO: 3秒ブレークが働いていない */
 		//3秒ブレーク
 		if (IS_BETWEEN(mapeff->viewT[1][viewTadd], 3000, hittime - Ntime)) { return 2; }
 		return 0;
 	}
 
-	void StepNoDrawNote(int *XLockp, int *YLockp, double *Speedp, note_box_2_t *note,
-		rec_map_eff_data_t *mapeff, short lockN[], int iLine)
+	void StepNoDrawNote(bool *XLockp, bool *YLockp, double *Speedp, const note_box_2_t *note,
+		const rec_map_eff_data_t *mapeff, int iLine)
 	{
-		rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
-		int XLockNoAdd = lockN[0];
-		int YLockNoAdd = lockN[1];
+		const rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
+		int XLockNoAdd = mapeff->lock.x.num;
+		int YLockNoAdd = mapeff->lock.y.num;
 		int SpeedNoAdd = p_speedt->num;
 
 		//ノーツロックナンバーを進める
-		while (IS_BETWEEN(0, mapeff->lock[0][1][XLockNoAdd + 1], note->hittime)) { XLockNoAdd++; }
-		(*XLockp) = mapeff->lock[0][0][XLockNoAdd];
+		while (IS_BETWEEN(0, mapeff->lock.x.data[XLockNoAdd + 1].Stime, note->hittime)) { XLockNoAdd++; }
+		(*XLockp) = mapeff->lock.x.data[XLockNoAdd].en;
 
-		while (IS_BETWEEN(0, mapeff->lock[1][1][YLockNoAdd + 1], note->hittime)) { YLockNoAdd++; }
-		(*YLockp) = mapeff->lock[1][0][YLockNoAdd];
+		while (IS_BETWEEN(0, mapeff->lock.y.data[YLockNoAdd + 1].Stime, note->hittime)) { YLockNoAdd++; }
+		(*YLockp) = mapeff->lock.y.data[YLockNoAdd].en;
 
 		// スピードナンバーを進める
 		while (IS_BETWEEN(0, p_speedt->d[SpeedNoAdd + 1].time, note->hittime)) { SpeedNoAdd++; }
@@ -908,32 +903,32 @@ private:
 	}
 
 	void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_t *lanePos,
-		int lock0, int lock1, const note_box_2_t *note, double speedt, const rec_scrool_set_t *scrool,
+		bool XLockp, bool YLockp, const note_box_2_t *note, double speedt, const rec_scrool_set_t *scrool,
 		int Ntime, int iLine)
 	{
 		const double scroolSpeed = scrool->data[scrool->num].speed;
 		const double scroolBaseTime = scrool->data[scrool->num].basetime;
 
 		//縦位置
-		*DrawY = ((lock1 == 1) ? note->ypos : lanePos->y[iLine]);
+		*DrawY = (YLockp ? note->ypos : lanePos->y[iLine]);
 		//横位置
 		*DrawX = (2 * speedt * (note->viewtime - scroolSpeed * Ntime - scroolBaseTime) / 5);
-		*DrawX += ((lock0 == 1) ? note->xpos : lanePos->x[iLine]);
+		*DrawX += (XLockp ? note->xpos : lanePos->x[iLine]);
 		//色
 		*DrawC = note->color;
 	}
 
 	void DrawNoteOne(note_box_2_t *note, rec_map_eff_data_t *mapeff,
-		rec_play_lanepos_t *lanePos, short lockN[], int iLine, int Ntime, rec_play_notepic_t *noteimg)
+		rec_play_lanepos_t *lanePos, int iLine, int Ntime, rec_play_notepic_t *noteimg)
 	{
 		int DrawX = 0;
 		int DrawY = 0;
 		int DrawC = 0;
 		int DrawID = 0;
-		int XLockp = 0;
-		int YLockp = 0;
+		bool XLockp = false;
+		bool YLockp = false;
 		double Speedp = 0;
-		this->StepNoDrawNote(&XLockp, &YLockp, &Speedp, note, mapeff, lockN, iLine);
+		this->StepNoDrawNote(&XLockp, &YLockp, &Speedp, note, mapeff, iLine);
 		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp,
 			&mapeff->scrool, Ntime, iLine);
 		switch (note->object) {
@@ -977,14 +972,14 @@ private:
 
 public:
 	void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, short objectN[], note_box_2_t note[],
-		rec_map_eff_data_t *mapeff, short viewTN, short *lockN, int Ntime, rec_play_notepic_t *noteimg)
+		rec_map_eff_data_t *mapeff, short viewTN, int Ntime, rec_play_notepic_t *noteimg)
 	{
 		for (int iLine = 0; iLine < 3; iLine++) {
 			for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
 				int ret = this->StepViewNoDrawNote(mapeff, note->hittime, viewTN, Ntime);
 				if (ret == 1) { continue; }
 				else if (ret == 2) { break; }
-				this->DrawNoteOne(&note[iNote], mapeff, lanePos, lockN, iLine, Ntime, noteimg);
+				this->DrawNoteOne(&note[iNote], mapeff, lanePos, iLine, Ntime, noteimg);
 				if (note[iNote].next == -1) { break; }
 			}
 		}
@@ -1473,7 +1468,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
-	short lockN[2] = { 0,0 }; //↑の番号
 	short viewTN = 0;
 	rec_play_lanepos_t lanePos;
 	unsigned int Cr = GetColor(255, 255, 255);
@@ -1577,7 +1571,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	while (1) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
-		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, lockN, &viewTN, objectN);
+		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, &viewTN, objectN);
 
 		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, objectNG, AutoFlag);
 
@@ -1639,8 +1633,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			PlayDrawItem(&recfp.mapeff, MovieN, recfp.time.now, lanePos.x[1], item);
 		}
 		// view line
-		PlayShowAllGuideLine(&recfp, &lanePos, LineMoveN, lockN[1]);
-		RecPlayDrawGuideBorder(&recfp, &lanePos, lockN[1]);
+		PlayShowAllGuideLine(&recfp, &lanePos, LineMoveN);
+		RecPlayDrawGuideBorder(&recfp, &lanePos);
 		/* キャラ周り表示 */
 		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, charahit, recfp.time.now);
 		//コンボ表示
@@ -1651,7 +1645,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		{
 			rec_play_drawnotes_c action;
 			action.RecPlayDrawNoteAll(&lanePos, objectN, recfp.mapdata.note, &recfp.mapeff,
-				viewTN, lockN, recfp.time.now, &noteimg);
+				viewTN, recfp.time.now, &noteimg);
 		}
 		//ヒットエフェクト表示
 		PlayShowHitEffect(&lanePos);
@@ -1749,7 +1743,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				recfp.time.now = maxs_2(recfp.time.now - 10000, 0);
 				RecResetPlayObjectNum(objectN, &recfp);
 				RecResetPlayRecfpMapeffNum(&recfp.mapeff);
-				RecResetPlayPartNum(&itemN, &SitemN, LineMoveN, lockN, &viewTN, &MovieN);
+				RecResetPlayPartNum(&itemN, &SitemN, LineMoveN, &viewTN, &MovieN);
 				for (i[0] = 0; i[0] < 3; i[0]++) {
 					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
 						recfp.mapdata.note[objectN[i[0]]].next != 5999)

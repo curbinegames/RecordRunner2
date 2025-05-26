@@ -95,7 +95,8 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.move.x[0].num = 0;
 	recfp->mapeff.move.x[1].num = 0;
 	recfp->mapeff.move.x[2].num = 0;
-	fread(&recfp->mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
+	fread(&recfp->mapeff.lock.x.data, sizeof(rec_notelock_data_t), 99, fp);//ノーツ固定切り替えタイミング
+	fread(&recfp->mapeff.lock.y.data, sizeof(rec_notelock_data_t), 99, fp);//ノーツ固定切り替えタイミング
 	{
 		int buf[2][99];
 		fread(buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
@@ -190,7 +191,8 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	fwrite(&recfp->mapeff.move.x[0].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[0], fp);//上レーン横位置移動タイミング
 	fwrite(&recfp->mapeff.move.x[1].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[1], fp);//中レーン横位置移動タイミング
 	fwrite(&recfp->mapeff.move.x[2].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[2], fp);//下レーン横位置移動タイミング
-	fwrite(&recfp->mapeff.lock, sizeof(int), 396, fp);//ノーツ固定切り替えタイミング
+	fwrite(&recfp->mapeff.lock.x.data, sizeof(rec_notelock_data_t), 99, fp);//ノーツ固定切り替えタイミング
+	fwrite(&recfp->mapeff.lock.y.data, sizeof(rec_notelock_data_t), 99, fp);//ノーツ固定切り替えタイミング
 	{
 		int buf[2][99];
 		for (int inum = 0; inum < 99; inum++) {

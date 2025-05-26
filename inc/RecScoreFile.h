@@ -180,6 +180,21 @@ typedef struct rec_chara_arrow_s {
 	int num = 0;
 } rec_chara_arrow_t;
 
+typedef struct rec_notelock_data_s {
+	bool en = true;
+	int Stime = -10000;
+} rec_notelock_data_t;
+
+typedef struct rec_notelock_set_s {
+	rec_notelock_data_t data[99];
+	uint num = 0;
+} rec_notelock_set_t;
+
+typedef struct rec_notelock_allset_s {
+	rec_notelock_set_t x;
+	rec_notelock_set_t y;
+} rec_notelock_allset_t;
+
 typedef struct rec_move_data_s {
 	int Stime = -10000;
 	int pos = -10000;
@@ -238,7 +253,8 @@ typedef struct rec_map_eff_data_s {
 	rec_view_bpm_set_t v_BPM;
 	int viewT[2][99];//[音符表示時間,実行時間,[0]=現ナンバー]
 	rec_chara_arrow_t carrow;
-	int lock[2][2][99]; //lock = [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
+	rec_notelock_allset_t lock;
+	//int lock[2][2][99]; [横,縦]の音符の位置を[(1=固定する,-1以外=固定しない),時間]
 	rec_move_all_set_t move;
 	rec_chara_gra_data_t chamo;
 	rec_fall_data_t fall;
