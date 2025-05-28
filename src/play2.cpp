@@ -1437,15 +1437,13 @@ public:
  * @param[out] ret_userpal userpal の受け皿
  * @param[out] ret_nameset nameset の受け皿
  * @param[in] folderPath フォルダーパス
- * @param[in] p パックナンバー
- * @param[in] n 曲ナンバー
- * @param[in] o 難易度ナンバー
+ * @param[in] rrsPath 譜面パス
  * @param[in] HighScore ハイスコア
  * @param[in] AutoFlag オートプレイフラグ
  * @return now_scene_t 次のシーン
  */
 now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
-	rec_play_nameset_t *ret_nameset, const TCHAR *folderPath, int p, int n, int o, int HighScore,
+	rec_play_nameset_t *ret_nameset, const TCHAR *folderPath, const TCHAR *rrsPath, int HighScore,
 	int AutoFlag)
 {
 
@@ -1524,10 +1522,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	if (optiondata.SEenable == 0) { RecPlayInitMelodySnd(); }
 
-	RecGetMusicMapRrsPath(GT1, 255, p, n, (rec_dif_t)o);
-
-	/* rrsデータの内容を読み込む */
-	if (rec_score_fread(&recfp, GT1) != 0) { return SCENE_EXIT; }
+	if (rec_score_fread(&recfp, rrsPath) != 0) { return SCENE_EXIT; } /* TODO: EXITにしてるのは、どうなの? */
 
 	backpic.sky.reload(   recfp.nameset.sky);
 	backpic.ground.reload(recfp.nameset.ground);
@@ -1807,22 +1802,18 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
 
 	/* rrsデータが無い、または作成の指示があれば作る */
-	if (shift == 0) {
-		_wfopen_s(&fp, mapPath, L"rb");
-	}
+	if (shift == 0) { _wfopen_s(&fp, mapPath, L"rb"); } /* TODO: IsExist()関数とかあっていいかも */
 
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
 		cal_ddif_3(mapPath);
 	}
-	else {
-		fclose(fp);
-	}
+	else { fclose(fp); }
 
 	RecGetMusicFolderName(fileName, 255, packNo, musicNo);
 	HighScore = GetHighScore(fileName, (rec_dif_t)difNo);
 	RecGetMusicFolderPath(folderPath, 255, packNo, musicNo);
-	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath, packNo, musicNo, difNo, HighScore, AutoFlag);
+	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath, mapPath, HighScore, AutoFlag);
 
 	if (ret != SCENE_RESULT) { return ret; }
 	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)difNo, fileName); }
