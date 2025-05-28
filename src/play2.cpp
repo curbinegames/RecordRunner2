@@ -393,6 +393,60 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	return;
 }
 
+/* キー入力 */
+static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFrag, short objectN[],
+	short *itemN, short *SitemN, short LineMoveN[], short *MovieN, short *objectNG)
+{
+	InputAllKeyHold();
+	if (AutoFlag == 1) {
+		switch (GetKeyPushOnce()) {
+		case KEY_INPUT_SPACE:
+			(*StopFrag) *= -1;
+			if (*StopFrag == 1) { RecSysBgmStop(); }
+			else {
+				RecSysBgmSetCurrentPosition((int)((double)recfp->time.now / 1000.0 * 44100.0));
+				RecSysBgmPlay(true, false, false);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (*StopFrag != 1) { return; }
+
+	switch (GetKeyPushOnce()) {
+	case KEY_INPUT_LEFT:
+		recfp->time.now = maxs_2(recfp->time.now - 10000, 0);
+		RecResetPlayObjectNum(objectN, recfp);
+		RecResetPlayRecfpMapeffNum(&recfp->mapeff);
+		RecResetPlayPartNum(itemN, SitemN, LineMoveN, MovieN);
+		for (int iLane = 0; iLane < 3; iLane++) {
+			while (recfp->mapdata.note[objectN[iLane]].hittime < recfp->time.now &&
+				recfp->mapdata.note[objectN[iLane]].next != 5999)
+			{
+				objectN[iLane] = recfp->mapdata.note[objectN[iLane]].next;
+			}
+			objectNG[iLane] = objectN[iLane];
+		}
+		break;
+	case KEY_INPUT_RIGHT:
+		recfp->time.now += 10000;
+		for (int iLane = 0; iLane < 3; iLane++) {
+			while (recfp->mapdata.note[objectN[iLane]].hittime < recfp->time.now &&
+				recfp->mapdata.note[objectN[iLane]].next != 5999)
+			{
+				objectN[iLane] = recfp->mapdata.note[objectN[iLane]].next;
+			}
+			objectNG[iLane] = objectN[iLane];
+		}
+		break;
+	default:
+		break;
+	}
+	return;
+}
+
 static void RacPlayDrawFieldGrid(void) {
 	int cameraX = 0;
 	int cameraY = 0;
@@ -1710,55 +1764,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			RecSysBgmStop();
 			break;
 		}
-
-		/* キー入力 */
-		InputAllKeyHold();
-		if (AutoFlag == 1) {
-			switch (GetKeyPushOnce()) {
-			case KEY_INPUT_SPACE:
-				StopFrag *= -1;
-				if (StopFrag == 1) { RecSysBgmStop(); }
-				else {
-					RecSysBgmSetCurrentPosition((int)((double)recfp.time.now / 1000.0 * 44100.0));
-					RecSysBgmPlay(true, false, false);
-				}
-				break;
-			default:
-				break;
-			}
-		}
-		if (StopFrag == 1) {
-			switch (GetKeyPushOnce()) {
-			case KEY_INPUT_LEFT:
-				recfp.time.now = maxs_2(recfp.time.now - 10000, 0);
-				RecResetPlayObjectNum(objectN, &recfp);
-				RecResetPlayRecfpMapeffNum(&recfp.mapeff);
-				RecResetPlayPartNum(&itemN, &SitemN, LineMoveN, &MovieN);
-				for (i[0] = 0; i[0] < 3; i[0]++) {
-					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
-						recfp.mapdata.note[objectN[i[0]]].next != 5999)
-					{
-						objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
-					}
-					objectNG[i[0]] = objectN[i[0]];
-				}
-				break;
-			case KEY_INPUT_RIGHT:
-				recfp.time.now += 10000;
-				for (i[0] = 0; i[0] < 3; i[0]++) {
-					while (recfp.mapdata.note[objectN[i[0]]].hittime < recfp.time.now &&
-						recfp.mapdata.note[objectN[i[0]]].next != 5999)
-					{
-						objectN[i[0]] = recfp.mapdata.note[objectN[i[0]]].next;
-					}
-					objectNG[i[0]] = objectN[i[0]];
-				}
-				break;
-			default:
-				break;
-			}
-		}
-
+		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, objectN, &itemN,
+			&SitemN, LineMoveN, &MovieN, objectNG);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			RecSysBgmStop();
 			return SCENE_SERECT;
