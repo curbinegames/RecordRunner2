@@ -923,11 +923,14 @@ private:
 		int viewTadd = mapeff->viewT.num;
 		//表示/非表示ナンバーを進める
 		if (IS_BETWEEN(0, mapeff->viewT.data[viewTadd + 1].Stime, hittime)) { viewTadd++; }
-		//非表示スキップ
-		if (hittime - Ntime >= mapeff->viewT.data[viewTadd].Vtime) { return 1; }
-		/* TODO: struct改造前からviewtimeが正常に働いていない */
 		//3秒ブレーク
-		if (IS_BETWEEN(mapeff->viewT.data[viewTadd].Vtime, 3000, hittime - Ntime)) { return 2; }
+		if (IS_BETWEEN(mapeff->viewT.data[viewTadd].Vtime, 3000, hittime - Ntime)) {
+			return 2;
+		}
+		//非表示スキップ
+		if (hittime - Ntime >= mapeff->viewT.data[viewTadd].Vtime) {
+			return 1;
+		}
 		return 0;
 	}
 
@@ -1026,7 +1029,7 @@ public:
 	{
 		for (int iLine = 0; iLine < 3; iLine++) {
 			for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
-				int ret = this->StepViewNoDrawNote(mapeff, note->hittime, Ntime);
+				int ret = this->StepViewNoDrawNote(mapeff, note[iNote].hittime, Ntime);
 				if (ret == 1) { continue; }
 				else if (ret == 2) { break; }
 				this->DrawNoteOne(&note[iNote], mapeff, lanePos, iLine, Ntime, noteimg);
@@ -1612,7 +1615,14 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	Stime = GetNowCount();
 	cutin.SetIo(CUT_FRAG_OUT);
 	//ゲーム開始
+	//終了判定->キー入力->計算->描画->ウェイトの順で処理する
 	while (1) {
+		//終了判定
+		//カットイン再生から2秒以上たったら抜ける。
+		if (cutin.IsEndAnim()) {
+			RecSysBgmStop();
+			break;
+		}
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 
 		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, objectN);
@@ -1759,11 +1769,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 		cutin.DrawCut();
 
-		//カットイン再生から2秒以上たったら抜ける。
-		if (cutin.IsEndAnim()) {
-			RecSysBgmStop();
-			break;
-		}
 		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, objectN, &itemN,
 			&SitemN, LineMoveN, &MovieN, objectNG);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
