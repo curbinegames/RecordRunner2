@@ -853,22 +853,24 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyh
 #if 1 /* class */
 
 /* TODO: miss判定でもスコアスリップが発生する */
+/* TODO: そもそもスコアフリップいる? */
 static class rec_play_score_calculator_c {
 private:
-	/* TODO: 戻り値に構造体使うのは不適切 */
-	rec_play_score_t CalScore(rec_play_score_t score,
-		rec_play_judge_t judge, const int notes, const int MaxCombo)
+	void CalScore(rec_play_userpal_t *userpal, int notes)
 	{
-		score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
-		score.combo = MaxCombo * 10000 / notes;
-		if (score.normal + score.combo - score.loss == 100000) {
-			score.pjust = maxs_2(maxs_2(100 - (notes - judge.pjust), (judge.pjust * 100 / (double)notes) - 65), 0);
+		rec_play_score_t *score = &userpal->score;
+		const rec_play_judge_t *judge = &userpal->judgeCount;
+		int MaxCombo = userpal->Mcombo;
+		score->normal = (judge->just * 90000 + judge->good * 86667 + judge->safe * 45000) / notes;
+		score->combo = MaxCombo * 10000 / notes;
+		if (score->normal + score->combo - score->loss == 100000) {
+			score->pjust = maxs_2(maxs_2(100 - (notes - judge->pjust), (judge->pjust * 100 / (double)notes) - 65), 0);
 		}
 		else {
-			score.pjust = 0;
+			score->pjust = 0;
 		}
-		score.sum = score.normal + score.combo - score.loss + score.pjust;
-		return score;
+		score->sum = score->normal + score->combo - score->loss + score->pjust;
+		return;
 	}
 
 public:
@@ -883,7 +885,7 @@ public:
 		userpal->life = mins_2(userpal->life, 500);
 		userpal->Exlife = mins_2(userpal->Exlife, 500);
 		//スコア計算
-		userpal->score = this->CalScore(userpal->score, userpal->judgeCount, notes, userpal->Mcombo);
+		this->CalScore(userpal, notes);
 		//ステータス
 		if (userpal->life <= 0 && userpal->status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
 			userpal->status = REC_PLAY_STATUS_DROPED;
