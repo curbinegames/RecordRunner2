@@ -1625,11 +1625,17 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			RecSysBgmStop();
 			break;
 		}
+
+		//キー入力
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-
-		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, objectN);
-
+		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, objectN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
 		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, objectNG, AutoFlag);
+		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, objectN, &itemN,
+			&SitemN, LineMoveN, &MovieN, objectNG);
+		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
+			RecSysBgmStop();
+			return SCENE_SERECT;
+		}
 
 		//カメラ移動
 		RecPlaySetCamera(&recfp.mapeff.camera, recfp.time.now);
@@ -1771,12 +1777,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 		cutin.DrawCut();
 
-		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, objectN, &itemN,
-			&SitemN, LineMoveN, &MovieN, objectNG);
-		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
-			RecSysBgmStop();
-			return SCENE_SERECT;
-		}
 		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 		if (StopFrag == -1) {
 			recfp.time.now = GetNowCount() - Stime + optiondata.offset * 5;
