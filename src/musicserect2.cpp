@@ -30,6 +30,8 @@
 
 #endif /* include */
 
+#if 1 /* define */
+
 /* TODO: レベルフィルター周りの実装 */
 #define PackNumLim 16
 #define MapNumLim  128 /* とりあえず128譜面とする、現時点収録で結構ギリギリ */
@@ -55,6 +57,8 @@
 #define REC_SERECT_VECT_RIGHT -1
 
 #define SONGDATA_FROM_MAP(songdata, mapNo) ((songdata)->base2[(songdata)->mapping[mapNo]])
+
+#endif /* define */
 
 typedef TCHAR rec_pack_name_set_t[256];
 
@@ -927,6 +931,7 @@ private:
 		}
 	}
 
+	/* TODO: ddifが表示されない */
 	void DrawDifMpal(int baseX, int baseY, rec_ddif_pal_t *mpal, int dif) const {
 		const int thick = 8;
 		const DxColor_t color[8] = {

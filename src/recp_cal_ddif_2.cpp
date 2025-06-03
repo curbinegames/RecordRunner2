@@ -758,10 +758,18 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 
 		//arwノーツ数取得
 		Nowkey->arwN = 0;
-		// TODO: 同種はノーカン
-		if (IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
-		if (IS_NOTE_ARROW_GROUP(Nowkey->note[1])) { Nowkey->arwN++; }
-		if (IS_NOTE_ARROW_GROUP(Nowkey->note[2])) { Nowkey->arwN++; }
+		if ( IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
+		if ((IS_NOTE_ARROW_GROUP(Nowkey->note[1])) ||
+			(Nowkey->note[1] != Nowkey->note[0]))
+		{
+			Nowkey->arwN++;
+		}
+		if ((IS_NOTE_ARROW_GROUP(Nowkey->note[2])) ||
+			(Nowkey->note[2] != Nowkey->note[0])   ||
+			(Nowkey->note[2] != Nowkey->note[1]))
+		{
+			Nowkey->arwN++;
+		}
 
 		//押しキーの判定
 		RecDdifGetKeyHit(Nowkey, Befkey);
