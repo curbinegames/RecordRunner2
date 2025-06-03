@@ -12,6 +12,18 @@
 #include <recp_cal_ddif_2.h>
 #include <RecSystem.h>
 
+#define REC_MAPENC_BLANK_CHAR     ( _T('0') )
+#define REC_MAPENC_HITNOTE_CHAR   ( _T('H') )
+#define REC_MAPENC_CATCHNOTE_CHAR ( _T('C') )
+#define REC_MAPENC_UPNOTE_CHAR    ( _T('U') )
+#define REC_MAPENC_DOWNNOTE_CHAR  ( _T('D') )
+#define REC_MAPENC_LEFTNOTE_CHAR  ( _T('L') )
+#define REC_MAPENC_RIGHTNOTE_CHAR ( _T('R') )
+#define REC_MAPENC_BOMBNOTE_CHAR  ( _T('B') )
+#define REC_MAPENC_GHOSTNOTE_CHAR ( _T('G') )
+#define REC_MAPENC_RANDOM1_CHAR   ( _T('?') )
+#define REC_MAPENC_RANDOM2_CHAR   ( _T('!') )
+
 #if 1 /* typedef */
 
 typedef enum rec_map_move_code_e {
@@ -116,21 +128,21 @@ void SETMove(rec_move_data_t *Buff, double StartTime, double MovePoint,
 
 static note_material GetNoteObjMat(TCHAR code) {
 	switch (code) {
-	case L'H':
+	case REC_MAPENC_HITNOTE_CHAR:
 		return NOTE_HIT;
-	case L'C':
+	case REC_MAPENC_CATCHNOTE_CHAR:
 		return NOTE_CATCH;
-	case L'U':
+	case REC_MAPENC_UPNOTE_CHAR:
 		return NOTE_UP;
-	case L'D':
+	case REC_MAPENC_DOWNNOTE_CHAR:
 		return NOTE_DOWN;
-	case L'L':
+	case REC_MAPENC_LEFTNOTE_CHAR:
 		return NOTE_LEFT;
-	case L'R':
+	case REC_MAPENC_RIGHTNOTE_CHAR:
 		return NOTE_RIGHT;
-	case L'B':
+	case REC_MAPENC_BOMBNOTE_CHAR:
 		return NOTE_BOMB;
-	case L'G':
+	case REC_MAPENC_GHOSTNOTE_CHAR:
 		return NOTE_GHOST;
 	}
 	return NOTE_NONE;
@@ -189,7 +201,7 @@ void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 }
 
 static TCHAR RecEncNoteGetStrcode(TCHAR c, struct custom_note_box customnote[]) {
-	TCHAR strcode = _T('0');
+	TCHAR strcode = REC_MAPENC_BLANK_CHAR;
 
 	if (L'1' <= c && c <= L'9') {
 		if (customnote[c - L'1'].rand == 0) {
@@ -202,31 +214,31 @@ static TCHAR RecEncNoteGetStrcode(TCHAR c, struct custom_note_box customnote[]) 
 			}
 			switch (ret) {
 			case 8:
-				strcode = L'0';
+				strcode = REC_MAPENC_BLANK_CHAR;
 				break;
 			case 7:
-				strcode = L'H';
+				strcode = REC_MAPENC_HITNOTE_CHAR;
 				break;
 			case 6:
-				strcode = L'C';
+				strcode = REC_MAPENC_CATCHNOTE_CHAR;
 				break;
 			case 5:
-				strcode = L'U';
+				strcode = REC_MAPENC_UPNOTE_CHAR;
 				break;
 			case 4:
-				strcode = L'D';
+				strcode = REC_MAPENC_DOWNNOTE_CHAR;
 				break;
 			case 3:
-				strcode = L'L';
+				strcode = REC_MAPENC_LEFTNOTE_CHAR;
 				break;
 			case 2:
-				strcode = L'R';
+				strcode = REC_MAPENC_RIGHTNOTE_CHAR;
 				break;
 			case 1:
-				strcode = L'B';
+				strcode = REC_MAPENC_BOMBNOTE_CHAR;
 				break;
 			case 0:
-				strcode = L'G';
+				strcode = REC_MAPENC_GHOSTNOTE_CHAR;
 				break;
 			}
 		}
@@ -234,50 +246,50 @@ static TCHAR RecEncNoteGetStrcode(TCHAR c, struct custom_note_box customnote[]) 
 	else {
 		strcode = c;
 	}
-	if (strcode == L'?') {
+	if (strcode == REC_MAPENC_RANDOM1_CHAR) {
 		switch (GetRand(4)) {
 		case 0:
-			strcode = L'H';
+			strcode = REC_MAPENC_HITNOTE_CHAR;
 			break;
 		case 1:
-			strcode = L'U';
+			strcode = REC_MAPENC_UPNOTE_CHAR;
 			break;
 		case 2:
-			strcode = L'D';
+			strcode = REC_MAPENC_DOWNNOTE_CHAR;
 			break;
 		case 3:
-			strcode = L'L';
+			strcode = REC_MAPENC_LEFTNOTE_CHAR;
 			break;
 		case 4:
-			strcode = L'R';
+			strcode = REC_MAPENC_RIGHTNOTE_CHAR;
 			break;
 		}
 	}
-	if (strcode == L'!') {
+	if (strcode == REC_MAPENC_RANDOM2_CHAR) {
 		switch (GetRand(7)) {
 		case 0:
-			strcode = L'H';
+			strcode = REC_MAPENC_HITNOTE_CHAR;
 			break;
 		case 1:
-			strcode = L'U';
+			strcode = REC_MAPENC_UPNOTE_CHAR;
 			break;
 		case 2:
-			strcode = L'D';
+			strcode = REC_MAPENC_DOWNNOTE_CHAR;
 			break;
 		case 3:
-			strcode = L'L';
+			strcode = REC_MAPENC_LEFTNOTE_CHAR;
 			break;
 		case 4:
-			strcode = L'R';
+			strcode = REC_MAPENC_RIGHTNOTE_CHAR;
 			break;
 		case 5:
-			strcode = L'C';
+			strcode = REC_MAPENC_CATCHNOTE_CHAR;
 			break;
 		case 6:
-			strcode = L'B';
+			strcode = REC_MAPENC_BOMBNOTE_CHAR;
 			break;
 		case 7:
-			strcode = L'G';
+			strcode = REC_MAPENC_GHOSTNOTE_CHAR;
 			break;
 		}
 	}
@@ -290,7 +302,7 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	int objectN = mapenc->objectN;
 	note_box_2_t *notedata = &recfp->mapdata.note[objectN];
 
-	TCHAR strcode = L'0';
+	TCHAR strcode = REC_MAPENC_BLANK_CHAR;
 	if (IsNoteCode(c) == 0) { return -1; }
 	if (0 <= mapenc->noteLaneNo[iLine]) {
 		recfp->mapdata.note[mapenc->noteLaneNo[iLine]].next = objectN;
@@ -401,31 +413,31 @@ static void RecEncCustomSetNoteMat(struct custom_note_box *ret, TCHAR str[]) {
 		bool loopFg = true;
 		while (loopFg) {
 			switch (str[i]) {
-			case _T('0'):
+			case REC_MAPENC_BLANK_CHAR:
 				ret->rand |= (1 << 8);
 				break;
-			case _T('H'):
+			case REC_MAPENC_HITNOTE_CHAR:
 				ret->rand |= (1 << 7);
 				break;
-			case _T('C'):
+			case REC_MAPENC_CATCHNOTE_CHAR:
 				ret->rand |= (1 << 6);
 				break;
-			case _T('U'):
+			case REC_MAPENC_UPNOTE_CHAR:
 				ret->rand |= (1 << 5);
 				break;
-			case _T('D'):
+			case REC_MAPENC_DOWNNOTE_CHAR:
 				ret->rand |= (1 << 4);
 				break;
-			case _T('L'):
+			case REC_MAPENC_LEFTNOTE_CHAR:
 				ret->rand |= (1 << 3);
 				break;
-			case _T('R'):
+			case REC_MAPENC_RIGHTNOTE_CHAR:
 				ret->rand |= (1 << 2);
 				break;
-			case _T('B'):
+			case REC_MAPENC_BOMBNOTE_CHAR:
 				ret->rand |= (1 << 1);
 				break;
-			case _T('G'):
+			case REC_MAPENC_GHOSTNOTE_CHAR:
 				ret->rand |= (1 << 0);
 				break;
 			default:
@@ -1415,8 +1427,18 @@ void RecordLoad2(int packNo, int songNo, int difNo) {
 #if 1 /* under */
 
 int IsNoteCode(wchar_t c) {
-	if (c == L'H' || c == L'C' || c == L'U' || c == L'D' || c == L'L' || c == L'R' || c == L'B' ||
-		c == L'G' || c == L'?' || c == L'!' || (L'1' <= c && c <= L'9')) {
+	if ((c == REC_MAPENC_HITNOTE_CHAR) ||
+		(c == REC_MAPENC_CATCHNOTE_CHAR) ||
+		(c == REC_MAPENC_UPNOTE_CHAR) ||
+		(c == REC_MAPENC_DOWNNOTE_CHAR) ||
+		(c == REC_MAPENC_LEFTNOTE_CHAR) ||
+		(c == REC_MAPENC_RIGHTNOTE_CHAR) ||
+		(c == REC_MAPENC_BOMBNOTE_CHAR) ||
+		(c == REC_MAPENC_GHOSTNOTE_CHAR) ||
+		(c == REC_MAPENC_RANDOM1_CHAR) ||
+		(c == REC_MAPENC_RANDOM2_CHAR) ||
+		(L'1' <= c && c <= L'9'))
+	{
 		return 1;
 	}
 	return 0;
