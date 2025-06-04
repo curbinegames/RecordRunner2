@@ -664,6 +664,32 @@ static void RecDdifGetPalAll(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Bef
 
 #endif /* RecDdifGetPal */
 
+//Nowkeyの初期化
+static void RecDdifInitNowkey(rec_ddif_data_t *Nowkey) {
+	Nowkey->time = 0;
+	Nowkey->note[0] = NOTE_NONE;
+	Nowkey->note[1] = NOTE_NONE;
+	Nowkey->note[2] = NOTE_NONE;
+	Nowkey->hitN = 0;
+	Nowkey->arwN = 0;
+	Nowkey->btn.z.Reset();
+	Nowkey->btn.x.Reset();
+	Nowkey->btn.c.Reset();
+	Nowkey->btn.u.Reset();
+	Nowkey->btn.d.Reset();
+	Nowkey->btn.l.Reset();
+	Nowkey->btn.r.Reset();
+	Nowkey->pal.notes = 0;
+	Nowkey->pal.trill = 0;
+	Nowkey->pal.arrow = 0;
+	Nowkey->pal.chord = 0;
+	Nowkey->pal.chain = 0;
+	Nowkey->pal.meldy = 0;
+	Nowkey->pal.actor = 0;
+	Nowkey->pal.trick = 0;
+	return;
+}
+
 static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	TCHAR esc_path[255];
 	strcopy_2(path, esc_path, 255);
@@ -697,32 +723,11 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	}
 
 	while (objectN[0] != 5999 || objectN[1] != 5999 || objectN[2] != 5999) {
-		rec_ddif_data_t *Nowkey = &key[keyN];
-		rec_ddif_data_t *Befkey = &key[(keyN + REC_DDIF_BUF_NUM - 1) % REC_DDIF_BUF_NUM];
+		rec_ddif_data_t *Nowkey  = &key[keyN];
+		rec_ddif_data_t *Befkey  = &key[(keyN + REC_DDIF_BUF_NUM - 1) % REC_DDIF_BUF_NUM];
 		rec_ddif_data_t *BBefkey = &key[(keyN + REC_DDIF_BUF_NUM - 2) % REC_DDIF_BUF_NUM];
 
-		//Nowkeyの初期化
-		Nowkey->time = 0;
-		Nowkey->note[0] = NOTE_NONE;
-		Nowkey->note[1] = NOTE_NONE;
-		Nowkey->note[2] = NOTE_NONE;
-		Nowkey->hitN = 0;
-		Nowkey->arwN = 0;
-		Nowkey->btn.z.Reset();
-		Nowkey->btn.x.Reset();
-		Nowkey->btn.c.Reset();
-		Nowkey->btn.u.Reset();
-		Nowkey->btn.d.Reset();
-		Nowkey->btn.l.Reset();
-		Nowkey->btn.r.Reset();
-		Nowkey->pal.notes = 0;
-		Nowkey->pal.trill = 0;
-		Nowkey->pal.arrow = 0;
-		Nowkey->pal.chord = 0;
-		Nowkey->pal.chain = 0;
-		Nowkey->pal.meldy = 0;
-		Nowkey->pal.actor = 0;
-		Nowkey->pal.trick = 0;
+		RecDdifInitNowkey(Nowkey);
 
 		//次のノーツの時間を取得
 		G[0] = -1; //次のノーツのレーン番号
