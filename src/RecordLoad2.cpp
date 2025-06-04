@@ -90,17 +90,51 @@ typedef void (*rec_mapenc_noteact_f)(rec_score_file_t *recfp, rec_mapenc_data_t 
 
 #endif /* typedef */
 
-#if 1 /* proto */
-
-int IsNoteCode(wchar_t c);
-void set_item_set(item_box *const Movie, short *const MovieN,
-	playnum_box *allnum, wchar_t *const s, item_set_box const *const item_set,
-	double bpmG, double timer);
-item_eff_box set_pic_mat(wchar_t *s);
-
-#endif /* proto */
-
 #if 1 /* sub action 2 */
+
+static int IsNoteCode(TCHAR c) {
+	if ((c == REC_MAPENC_HITNOTE_CHAR) ||
+		(c == REC_MAPENC_CATCHNOTE_CHAR) ||
+		(c == REC_MAPENC_UPNOTE_CHAR) ||
+		(c == REC_MAPENC_DOWNNOTE_CHAR) ||
+		(c == REC_MAPENC_LEFTNOTE_CHAR) ||
+		(c == REC_MAPENC_RIGHTNOTE_CHAR) ||
+		(c == REC_MAPENC_BOMBNOTE_CHAR) ||
+		(c == REC_MAPENC_GHOSTNOTE_CHAR) ||
+		(c == REC_MAPENC_RANDOM1_CHAR) ||
+		(c == REC_MAPENC_RANDOM2_CHAR) ||
+		(L'1' <= c && c <= L'9'))
+	{
+		return 1;
+	}
+	return 0;
+}
+
+static item_eff_box set_pic_mat(TCHAR *s) {
+	item_eff_box eff;
+	while (s[0] != L'\0' && s[0] != L'\n') {
+		if (strands_direct(s, L"bpm_a")) {
+			eff.bpm_alphr = 1;
+		}
+		else if (strands_direct(s, L"bpm_s")) {
+			eff.bpm_size = 1;
+		}
+		else if (strands_direct(s, L"lock")) {
+			eff.lock = 1;
+		}
+		else if (strands_direct(s, L"cha_a")) {
+			eff.chara_alphr = 1;
+		}
+		else if (strands_direct(s, L"edge_s")) {
+			eff.edge_size = 1;
+		}
+		else {
+			break;
+		}
+		strnex(s);
+	}
+	return eff;
+}
 
 static int strrans(const TCHAR *p1) {
 	int a, b;
@@ -1423,134 +1457,3 @@ void RecordLoad2(int packNo, int songNo, int difNo) {
 	rec_score_fwrite(&recfp, mapPath);
 	return;
 }
-
-#if 1 /* under */
-
-int IsNoteCode(wchar_t c) {
-	if ((c == REC_MAPENC_HITNOTE_CHAR) ||
-		(c == REC_MAPENC_CATCHNOTE_CHAR) ||
-		(c == REC_MAPENC_UPNOTE_CHAR) ||
-		(c == REC_MAPENC_DOWNNOTE_CHAR) ||
-		(c == REC_MAPENC_LEFTNOTE_CHAR) ||
-		(c == REC_MAPENC_RIGHTNOTE_CHAR) ||
-		(c == REC_MAPENC_BOMBNOTE_CHAR) ||
-		(c == REC_MAPENC_GHOSTNOTE_CHAR) ||
-		(c == REC_MAPENC_RANDOM1_CHAR) ||
-		(c == REC_MAPENC_RANDOM2_CHAR) ||
-		(L'1' <= c && c <= L'9'))
-	{
-		return 1;
-	}
-	return 0;
-}
-
-void set_item_set(item_box *const Movie, short *const MovieN,
-	playnum_box *allnum, wchar_t *const s, item_set_box const *const item_set,
-	double bpmG, double timer) {
-	int itemN = 0;
-	int moveM = 1;
-	int BStime = 0;
-	int BEtime = 0;
-	int BSXpos = 0;
-	int BEXpos = 0;
-	int BSYpos = 0;
-	int BEYpos = 0;
-	int BSsize = 100;
-	int BEsize = 100;
-	int BSrot = 0;
-	int BErot = 0;
-	int BSalpha = 255;
-	int BEalpha = 255;
-	strmods(s, 10);
-	itemN = strsans(s);
-	strnex(s);
-	switch (s[0]) {
-	case L'l':
-		moveM = 1;
-		break;
-	case L'a':
-		moveM = 2;
-		break;
-	case L'd':
-		moveM = 3;
-		break;
-	}
-	strnex(s);
-	BStime = shifttime(strsans2(s), bpmG, (int)timer);
-	strnex(s);
-	BEtime = shifttime(strsans2(s), bpmG, (int)timer);
-	strnex(s);
-	BSXpos = (int)(strsans2(s) * 50 + 115);
-	strnex(s);
-	BEXpos = strsans2(s) * 50 + 115;
-	strnex(s);
-	BSYpos = strsans2(s) * 50 + 115;
-	strnex(s);
-	BEYpos = strsans2(s) * 50 + 115;
-	strnex(s);
-	BSsize = strsans2(s) * 100;
-	strnex(s);
-	BEsize = strsans2(s) * 100;
-	strnex(s);
-	BSrot = strsans(s);
-	strnex(s);
-	BErot = strsans(s);
-	strnex(s);
-	BSalpha = strsans2(s) * 255.0;
-	strnex(s);
-	BEalpha = strsans2(s) * 255.0;
-	for (int i = 0; i < item_set[itemN].num; i++) {
-		Movie[*MovieN].ID = item_set[itemN].picID[i].picID;
-		Movie[*MovieN].movemode = moveM;
-		Movie[*MovieN].eff = item_set[itemN].picID[i].eff;
-		Movie[*MovieN].starttime = BStime;
-		Movie[*MovieN].endtime = BEtime;
-		Movie[*MovieN].startXpos = item_set[itemN].picID[i].Xpos * BSsize / 100;
-		Movie[*MovieN].endXpos = item_set[itemN].picID[i].Xpos * BEsize / 100;
-		Movie[*MovieN].startYpos = item_set[itemN].picID[i].Ypos * BSsize / 100;
-		Movie[*MovieN].endYpos = item_set[itemN].picID[i].Ypos * BEsize / 100;
-		rot_xy_pos(BSrot, &Movie[*MovieN].startXpos, &Movie[*MovieN].startYpos);
-		rot_xy_pos(BSrot, &Movie[*MovieN].endXpos, &Movie[*MovieN].endYpos);
-		Movie[*MovieN].startXpos += BSXpos;
-		Movie[*MovieN].endXpos += BEXpos;
-		Movie[*MovieN].startYpos += BSYpos;
-		Movie[*MovieN].endYpos += BEYpos;
-		Movie[*MovieN].startsize = BSsize * item_set[itemN].picID[i].size / 100;
-		Movie[*MovieN].endsize = BEsize * item_set[itemN].picID[i].size / 100;
-		Movie[*MovieN].startrot = BSrot + item_set[itemN].picID[i].rot;
-		Movie[*MovieN].endrot = BErot + item_set[itemN].picID[i].rot;
-		Movie[*MovieN].startalpha = BSalpha * item_set[itemN].picID[i].alpha / 255;
-		Movie[*MovieN].endalpha = BEalpha * item_set[itemN].picID[i].alpha / 255;
-		(*MovieN)++;
-		(allnum->movienum)++;
-	}
-	return;
-}
-
-item_eff_box set_pic_mat(wchar_t *s) {
-	item_eff_box eff;
-	while (s[0] != L'\0' && s[0] != L'\n') {
-		if (strands_direct(s, L"bpm_a")) {
-			eff.bpm_alphr = 1;
-		}
-		else if (strands_direct(s, L"bpm_s")) {
-			eff.bpm_size = 1;
-		}
-		else if (strands_direct(s, L"lock")) {
-			eff.lock = 1;
-		}
-		else if (strands_direct(s, L"cha_a")) {
-			eff.chara_alphr = 1;
-		}
-		else if (strands_direct(s, L"edge_s")) {
-			eff.edge_size = 1;
-		}
-		else {
-			break;
-		}
-		strnex(s);
-	}
-	return eff;
-}
-
-#endif /* under */
