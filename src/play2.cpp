@@ -1637,6 +1637,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			return SCENE_SERECT;
 		}
 
+		//計算
 		//カメラ移動
 		RecPlaySetCamera(&recfp.mapeff.camera, recfp.time.now);
 		//lanePos.x(横位置)の計算
@@ -1669,6 +1670,17 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		{
 			rec_play_score_calculator_c action;
 			action.RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
+		}
+		//ノーツが全部なくなった瞬間の時間を記録
+		if (GetRemainNotes(userpal.judgeCount, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
+			AllNotesHitTime = GetNowCount();
+		}
+		//時間計算
+		if (StopFrag == -1) {
+			recfp.time.now = GetNowCount() - Stime + optiondata.offset * 5;
+		}
+		else {
+			Stime = GetNowCount() - recfp.time.now + optiondata.offset * 5;
 		}
 
 		ClearDrawScreen(); /* 描画エリアここから */
@@ -1759,10 +1771,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 #endif
 		if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, dropimg.handle(), TRUE); }
 		else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, dangerimg.handle(), TRUE); }
-		//ノーツが全部なくなった瞬間の時間を記録
-		if (GetRemainNotes(userpal.judgeCount, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
-			AllNotesHitTime = GetNowCount();
-		}
 		//オートでなく、ノーミス以上を出したら演出
 		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
 			ShowBonusEff(userpal.judgeCount, AllNotesHitTime);
@@ -1778,12 +1786,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		cutin.DrawCut();
 
 		WaitTimer(WAIT_TIME_ON_GAMELOOP);
-		if (StopFrag == -1) {
-			recfp.time.now = GetNowCount() - Stime + optiondata.offset * 5;
-		}
-		else {
-			Stime = GetNowCount() - recfp.time.now + optiondata.offset * 5;
-		}
 		ScreenFlip();
 	}
 
