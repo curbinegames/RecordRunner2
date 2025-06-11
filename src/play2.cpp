@@ -1683,6 +1683,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			Stime = GetNowCount() - recfp.time.now + optiondata.offset * 5;
 		}
 
+		//描画
 		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示
 		if (optiondata.backbright != 0) {
@@ -1784,9 +1785,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			cutin.SetIo(CUT_FRAG_IN);
 		}
 		cutin.DrawCut();
+		ScreenFlip(); /* 描画エリアここまで */
 
+		//ウェイト
 		WaitTimer(WAIT_TIME_ON_GAMELOOP);
-		ScreenFlip();
 	}
 
 	*ret_map_det = recfp.mapdata;
