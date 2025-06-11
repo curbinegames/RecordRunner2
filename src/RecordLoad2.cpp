@@ -24,6 +24,8 @@
 #define REC_MAPENC_RANDOM1_CHAR   ( _T('?') )
 #define REC_MAPENC_RANDOM2_CHAR   ( _T('!') )
 
+#define shifttime(num, bpm, Ntime) ( (Ntime) + 240000 * ((num) - 1) / (double)((bpm) * 16) )
+
 #if 1 /* typedef */
 
 typedef enum rec_map_move_code_e {
@@ -147,16 +149,12 @@ static int strrans(const TCHAR *p1) {
 	return GetRand(b - a) + a;
 }
 
-int shifttime(double n, double bpm, int time) {
-	return (int)(time + 240000.0 * (n - 1.0) / (bpm * 16.0));
-}
-
 void SETMove(rec_move_data_t *Buff, double StartTime, double MovePoint,
 	double EndTime, double MoveType, double bpm, double NowTime)
 {
-	Buff->Stime = shifttime(StartTime, bpm, (int)NowTime);
+	Buff->Stime = shifttime(StartTime, bpm, NowTime);
 	Buff->pos = (int)(MovePoint * 50.0 + 100.0);
-	Buff->Etime = maxs_2(shifttime(EndTime, bpm, (int)NowTime) - 5, Buff->Stime);
+	Buff->Etime = maxs_2(shifttime(EndTime, bpm, NowTime) - 5, Buff->Stime);
 	Buff->mode = (int)MoveType;
 }
 
@@ -567,7 +565,7 @@ static void RecMapencSetVBpm(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 	view_BPM_box *dest = &recfp->mapeff.v_BPM.data[*num];
 
 	strmods(GT1, 7);
-	dest->time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	dest->time = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
 	dest->BPM = strsans(GT1);
 	(*num)++;
@@ -854,7 +852,7 @@ static void RecMapencSetCArrow(rec_score_file_t *recfp, rec_mapenc_data_t *mapen
 
 	strmods(GT1, 8);
 	recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].data = recfp->mapeff.carrow.d[recfp->mapeff.carrow.num - 1].data * -1;
-	recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].time = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
 	recfp->mapeff.carrow.num++;
 	return;
 }
@@ -866,7 +864,7 @@ static void RecMapencSetFall(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 	strmods(GT1, 6);
 	recfp->mapeff.fall.d[recfp->mapeff.fall.num].No = strsans(GT1);
 	strnex(GT1);
-	recfp->mapeff.fall.d[recfp->mapeff.fall.num].time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.fall.d[recfp->mapeff.fall.num].time = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
 	recfp->mapeff.fall.num++;
 	return;
 }
@@ -893,7 +891,7 @@ static void RecMapencSetVLane(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	strmods(GT1, 8);
 	recfp->mapeff.viewLine.d[nowNo].enable = (GT1[0] == _T('1')) ? true : false;
 	strnex(GT1);
-	recfp->mapeff.viewLine.d[nowNo].time = shifttime(strsans(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.viewLine.d[nowNo].time = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
 	recfp->mapeff.viewLine.num = mins_2(recfp->mapeff.viewLine.num + 1, 98);
 	return;
 }
@@ -917,9 +915,9 @@ static void RecMapencSetMovie(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 		break;
 	}
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].starttime = shifttime(strsans2(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.Movie[mapenc->MovieN].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].endtime = shifttime(strsans2(GT1), mapenc->bpmG, (int)mapenc->timer[0]);
+	recfp->mapeff.Movie[mapenc->MovieN].endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
 	recfp->mapeff.Movie[mapenc->MovieN].startXpos = (int)(strsans2(GT1) * 50 + 115);
 	strnex(GT1);
@@ -1009,9 +1007,9 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 	}
 
 	strnex(GT1);
-	G[2] = shifttime(strsans2(GT1), mapenc->bpmG, (int)mapenc->timer[0]); /* stime */
+	G[2] = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]); /* stime */
 	strnex(GT1);
-	G[3] = shifttime(strsans2(GT1), mapenc->bpmG, (int)mapenc->timer[0]); /* etime */
+	G[3] = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]); /* etime */
 	strnex(GT1);
 	G[4] = (int)(strsans2(GT1) * 50 + 115); /* sx */
 	strnex(GT1);
