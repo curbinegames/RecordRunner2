@@ -960,7 +960,7 @@ private:
 		DrawBoxAnchor(baseX - lins(0, 0, 900, 450, mpal[dif].mdif) - 70, baseY - thick - 2 * thick * 0 - thick / 2, baseX - 70, baseY - 2 * thick * 7 - thick / 2, COLOR_WHITE, DXDRAW_ANCHOR_BOTTOM_RIGHT, TRUE);
 		DrawBoxAnchor(baseX - lins(0, 0, 900, 450, mpal[dif].mdif) - 70, baseY - thick - 2 * thick * 0 - thick / 2, baseX - 70, baseY - 2 * thick * 7 - thick / 2, COLOR_BLACK, DXDRAW_ANCHOR_BOTTOM_RIGHT, FALSE);
 #endif
-		uint *p_mpal = (uint *)&mpal[dif];
+		uint *p_mpal = (uint *)mpal;
 		for (uint iPal = 0; iPal < 8; iPal++) {
 			uint length = lins(0, 0, 900, 450, p_mpal[7 - iPal]);
 			DrawBoxAnchor(baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2, baseX - 70, baseY - 2 * thick * iPal - thick / 2, color[7 - iPal], DXDRAW_ANCHOR_BOTTOM_RIGHT, TRUE);

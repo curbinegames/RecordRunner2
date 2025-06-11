@@ -690,6 +690,64 @@ static void RecDdifInitNowkey(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
+static int RecDdifSetNowkeyBase(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_score_file_row_t *recfp, const int objectN[]) {
+	int G[4];
+	//次のノーツの時間を取得
+	G[0] = -1; //次のノーツのレーン番号
+	if (0 <= recfp->mapdata.note[objectN[0]].hittime) { G[0] = 0; }
+	else if (0 <= recfp->mapdata.note[objectN[1]].hittime) { G[0] = 1; }
+	else if (0 <= recfp->mapdata.note[objectN[2]].hittime) { G[0] = 2; }
+	if (G[0] == -1) { return -1; }
+
+	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[objectN[0]].hittime, recfp->mapdata.note[objectN[G[0]]].hittime)) { G[0] = 0; }
+	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[objectN[1]].hittime, recfp->mapdata.note[objectN[G[0]]].hittime)) { G[0] = 1; }
+	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[objectN[2]].hittime, recfp->mapdata.note[objectN[G[0]]].hittime)) { G[0] = 2; }
+	Nowkey->time = recfp->mapdata.note[objectN[G[0]]].hittime;
+
+	//次のノーツ群を取得
+	Nowkey->note[0] = NOTE_NONE;
+	if (recfp->mapdata.note[objectN[0]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+		Nowkey->note[0] = recfp->mapdata.note[objectN[0]].object;
+	}
+	Nowkey->note[1] = NOTE_NONE;
+	if (recfp->mapdata.note[objectN[1]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+		Nowkey->note[1] = recfp->mapdata.note[objectN[1]].object;
+	}
+	Nowkey->note[2] = NOTE_NONE;
+	if (recfp->mapdata.note[objectN[2]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+		Nowkey->note[2] = recfp->mapdata.note[objectN[2]].object;
+	}
+
+	//hitノーツ数取得
+	Nowkey->hitN = 0;
+	if (Nowkey->note[0] == NOTE_HIT) { Nowkey->hitN++; }
+	if (Nowkey->note[1] == NOTE_HIT) { Nowkey->hitN++; }
+	if (Nowkey->note[2] == NOTE_HIT) { Nowkey->hitN++; }
+
+	//arwノーツ数取得
+	Nowkey->arwN = 0;
+	if ( IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
+	if ((IS_NOTE_ARROW_GROUP(Nowkey->note[1])) ||
+		(Nowkey->note[1] != Nowkey->note[0]))
+	{
+		Nowkey->arwN++;
+	}
+	if ((IS_NOTE_ARROW_GROUP(Nowkey->note[2])) ||
+		(Nowkey->note[2] != Nowkey->note[0])   ||
+		(Nowkey->note[2] != Nowkey->note[1]))
+	{
+		Nowkey->arwN++;
+	}
+
+	//押しキーの判定
+	RecDdifGetKeyHit(Nowkey, Befkey);
+	RecDdifGetKeyArrow(Nowkey);
+	RecDdifGetKeyCatch(Nowkey, Befkey);
+	RecDdifGetKeyBomb(Nowkey, Befkey);
+
+	return 0;
+}
+
 static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	TCHAR esc_path[255];
 	strcopy_2(path, esc_path, 255);
@@ -729,59 +787,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 
 		RecDdifInitNowkey(Nowkey);
 
-		//次のノーツの時間を取得
-		G[0] = -1; //次のノーツのレーン番号
-		if (0 <= recfp.mapdata.note[objectN[0]].hittime) { G[0] = 0; }
-		else if (0 <= recfp.mapdata.note[objectN[1]].hittime) { G[0] = 1; }
-		else if (0 <= recfp.mapdata.note[objectN[2]].hittime) { G[0] = 2; }
-		if (G[0] == -1) { break; }
-
-		if (IS_BETWEEN_RIGHT_LESS(0, recfp.mapdata.note[objectN[0]].hittime, recfp.mapdata.note[objectN[G[0]]].hittime)) { G[0] = 0; }
-		if (IS_BETWEEN_RIGHT_LESS(0, recfp.mapdata.note[objectN[1]].hittime, recfp.mapdata.note[objectN[G[0]]].hittime)) { G[0] = 1; }
-		if (IS_BETWEEN_RIGHT_LESS(0, recfp.mapdata.note[objectN[2]].hittime, recfp.mapdata.note[objectN[G[0]]].hittime)) { G[0] = 2; }
-		Nowkey->time = recfp.mapdata.note[objectN[G[0]]].hittime;
-
-		//次のノーツ群を取得
-		Nowkey->note[0] = NOTE_NONE;
-		if (recfp.mapdata.note[objectN[0]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
-			Nowkey->note[0] = recfp.mapdata.note[objectN[0]].object;
-		}
-		Nowkey->note[1] = NOTE_NONE;
-		if (recfp.mapdata.note[objectN[1]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
-			Nowkey->note[1] = recfp.mapdata.note[objectN[1]].object;
-		}
-		Nowkey->note[2] = NOTE_NONE;
-		if (recfp.mapdata.note[objectN[2]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
-			Nowkey->note[2] = recfp.mapdata.note[objectN[2]].object;
-		}
-
-		//hitノーツ数取得
-		Nowkey->hitN = 0;
-		if (Nowkey->note[0] == NOTE_HIT) { Nowkey->hitN++; }
-		if (Nowkey->note[1] == NOTE_HIT) { Nowkey->hitN++; }
-		if (Nowkey->note[2] == NOTE_HIT) { Nowkey->hitN++; }
-
-		//arwノーツ数取得
-		Nowkey->arwN = 0;
-		if ( IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
-		if ((IS_NOTE_ARROW_GROUP(Nowkey->note[1])) ||
-			(Nowkey->note[1] != Nowkey->note[0]))
-		{
-			Nowkey->arwN++;
-		}
-		if ((IS_NOTE_ARROW_GROUP(Nowkey->note[2])) ||
-			(Nowkey->note[2] != Nowkey->note[0])   ||
-			(Nowkey->note[2] != Nowkey->note[1]))
-		{
-			Nowkey->arwN++;
-		}
-
-		//押しキーの判定
-		RecDdifGetKeyHit(Nowkey, Befkey);
-		RecDdifGetKeyArrow(Nowkey);
-		RecDdifGetKeyCatch(Nowkey, Befkey);
-		RecDdifGetKeyBomb(Nowkey, Befkey);
-
+		if (RecDdifSetNowkeyBase(Nowkey, Befkey, &recfp, objectN) != 0) { break; }
 		RecDdifGetPalAll(Nowkey, Befkey, BBefkey);
 
 		// maxの計算
