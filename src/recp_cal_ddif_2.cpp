@@ -748,6 +748,33 @@ static int RecDdifSetNowkeyBase(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *
 	return 0;
 }
 
+static void RecDdifCalMax(rec_ddif_pal_t *mpal, const rec_ddif_data_t key[], uint keyN) {
+	rec_ddif_pal_t buf;
+	uint mlp = 100;
+	for (uint iNum = 0; iNum < REC_DDIF_BUF_NUM; iNum++) {
+		uint iView = (keyN + REC_DDIF_BUF_NUM - iNum) % REC_DDIF_BUF_NUM;
+		buf.notes += key[iView].pal.notes * mlp / 100;
+		buf.trill += key[iView].pal.trill * mlp / 100;
+		buf.arrow += key[iView].pal.arrow * mlp / 100;
+		buf.chord += key[iView].pal.chord * mlp / 100;
+		buf.chain += key[iView].pal.chain * mlp / 100;
+		buf.meldy += key[iView].pal.meldy * mlp / 100;
+		buf.actor += key[iView].pal.actor * mlp / 100;
+		buf.trick += key[iView].pal.trick * mlp / 100;
+		mlp = mlp * 95 / 100;
+	}
+	/* TODO: maxの発生タイムを記録する */
+	if (mpal->notes < buf.notes) { mpal->notes = buf.notes; }
+	if (mpal->trill < buf.trill) { mpal->trill = buf.trill; }
+	if (mpal->arrow < buf.arrow) { mpal->arrow = buf.arrow; }
+	if (mpal->chord < buf.chord) { mpal->chord = buf.chord; }
+	if (mpal->chain < buf.chain) { mpal->chain = buf.chain; }
+	if (mpal->meldy < buf.meldy) { mpal->meldy = buf.meldy; }
+	if (mpal->actor < buf.actor) { mpal->actor = buf.actor; }
+	if (mpal->trick < buf.trick) { mpal->trick = buf.trick; }
+	return;
+}
+
 static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	TCHAR esc_path[255];
 	strcopy_2(path, esc_path, 255);
@@ -784,37 +811,10 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		rec_ddif_data_t *Nowkey  = &key[keyN];
 		rec_ddif_data_t *Befkey  = &key[(keyN + REC_DDIF_BUF_NUM - 1) % REC_DDIF_BUF_NUM];
 		rec_ddif_data_t *BBefkey = &key[(keyN + REC_DDIF_BUF_NUM - 2) % REC_DDIF_BUF_NUM];
-
 		RecDdifInitNowkey(Nowkey);
-
 		if (RecDdifSetNowkeyBase(Nowkey, Befkey, &recfp, objectN) != 0) { break; }
 		RecDdifGetPalAll(Nowkey, Befkey, BBefkey);
-
-		// maxの計算
-		{
-			rec_ddif_pal_t buf;
-			uint mlp = 100;
-			for (uint iNum = 0; iNum < REC_DDIF_BUF_NUM; iNum++) {
-				uint iView = (keyN + 50 - iNum) % 50;
-				buf.notes += key[iView].pal.notes * mlp / 100;
-				buf.trill += key[iView].pal.trill * mlp / 100;
-				buf.arrow += key[iView].pal.arrow * mlp / 100;
-				buf.chord += key[iView].pal.chord * mlp / 100;
-				buf.chain += key[iView].pal.chain * mlp / 100;
-				buf.meldy += key[iView].pal.meldy * mlp / 100;
-				buf.actor += key[iView].pal.actor * mlp / 100;
-				buf.trick += key[iView].pal.trick * mlp / 100;
-				mlp = mlp * 95 / 100;
-			}
-			if (mpal->notes < buf.notes) { mpal->notes = buf.notes; }
-			if (mpal->trill < buf.trill) { mpal->trill = buf.trill; }
-			if (mpal->arrow < buf.arrow) { mpal->arrow = buf.arrow; }
-			if (mpal->chord < buf.chord) { mpal->chord = buf.chord; }
-			if (mpal->chain < buf.chain) { mpal->chain = buf.chain; }
-			if (mpal->meldy < buf.meldy) { mpal->meldy = buf.meldy; }
-			if (mpal->actor < buf.actor) { mpal->actor = buf.actor; }
-			if (mpal->trick < buf.trick) { mpal->trick = buf.trick; }
-		}
+		RecDdifCalMax(mpal, key, keyN);
 
 		//次のノートへ
 		G[0] = 1; // ノーツなしフラグ
