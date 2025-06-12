@@ -1319,16 +1319,8 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		{ _T("#CUSTOM:"),        RecMapencSetCustomNote }
 	};
 
-	//o: 難易度ナンバー
-	short i[2] = { 0,0 };
-	int G[14] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-	int noteoff = 0; //ノーツのオフセット
-	int Etime = 0; //譜面の終わりの時間
 	int waningLv = 2;
-	double GD[5] = { 0,0,0,0,0 };
-	short viewTN = 1;
 	TCHAR GT1[255];
-
 	rec_mapenc_data_t mapenc;
 
 	RecMapLoad_SetInitRecfp(recfp);
