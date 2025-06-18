@@ -1,3 +1,3 @@
 #pragma once
 
-extern void RecordLoad2(int packNo, int songNo, int difNo);
+extern rec_error_t RecordLoad2(int packNo, int songNo, int difNo);

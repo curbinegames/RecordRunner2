@@ -1807,6 +1807,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 * @return 次のシーン
 */
 now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
+	rec_error_t status = REC_ERROR_NONE;
 	int HighScore = 0;
 	TCHAR mapPath[255];
 	TCHAR fileName[255];
@@ -1817,7 +1818,8 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	now_scene_t ret = SCENE_EXIT;
 	FILE *fp = NULL;
 
-	RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
+	status = RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
+	if (status != REC_ERROR_NONE) { return SCENE_SERECT; }
 
 	/* rrsデータが無い、または作成の指示があれば作る */
 	if (shift == 0) { _wfopen_s(&fp, mapPath, L"rb"); } /* TODO: IsExist()関数とかあっていいかも */
