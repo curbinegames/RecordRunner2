@@ -775,12 +775,59 @@ static void RecDdifCalMax(rec_ddif_pal_t *mpal, const rec_ddif_data_t key[], uin
 	return;
 }
 
+static int RecDdifStepNote(int objectN[], const rec_ddif_data_t *Nowkey, const note_box_2_t *notedata) {
+	bool isExist = false;
+
+	if (Nowkey->note[0] != NOTE_NONE && notedata[objectN[0]].next != -1) {
+		objectN[0] = notedata[objectN[0]].next;
+		isExist = true;
+	}
+	if (Nowkey->note[1] != NOTE_NONE && notedata[objectN[1]].next != -1) {
+		objectN[1] = notedata[objectN[1]].next;
+		isExist = true;
+	}
+	if (Nowkey->note[2] != NOTE_NONE && notedata[objectN[2]].next != -1) {
+		objectN[2] = notedata[objectN[2]].next;
+		isExist = true;
+	}
+
+	if (!isExist) { return -1; }
+
+	//GHOSTノーツ,連actをスキップ
+	for (uint iLane = 0; iLane < 3; iLane++) {
+		if (Nowkey->note[iLane] == NOTE_CATCH) {
+			while ((notedata[objectN[iLane]].object == NOTE_GHOST ||
+				notedata[objectN[iLane]].object == NOTE_CATCH) &&
+				notedata[objectN[iLane]].next != -1)
+			{
+				objectN[iLane] = notedata[objectN[iLane]].next;
+			}
+		}
+		else if (Nowkey->note[iLane] == NOTE_BOMB) {
+			while ((notedata[objectN[iLane]].object == NOTE_GHOST ||
+				notedata[objectN[iLane]].object == NOTE_BOMB) &&
+				notedata[objectN[iLane]].next != -1)
+			{
+				objectN[iLane] = notedata[objectN[iLane]].next;
+			}
+		}
+		else {
+			while (notedata[objectN[iLane]].object == NOTE_GHOST &&
+				notedata[objectN[iLane]].next != -1)
+			{
+				objectN[iLane] = notedata[objectN[iLane]].next;
+			}
+		}
+	}
+
+	return 0;
+}
+
 static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	TCHAR esc_path[255];
 	strcopy_2(path, esc_path, 255);
 	(void)path;
 
-	int G[5];
 	rec_score_file_row_t recfp;
 	rec_ddif_data_t key[REC_DDIF_BUF_NUM];
 	uint keyN = 0;
@@ -815,52 +862,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		if (RecDdifSetNowkeyBase(Nowkey, Befkey, &recfp, objectN) != 0) { break; }
 		RecDdifGetPalAll(Nowkey, Befkey, BBefkey);
 		RecDdifCalMax(mpal, key, keyN);
-
-		//次のノートへ
-		G[0] = 1; // ノーツなしフラグ
-		if (Nowkey->note[0] != NOTE_NONE && recfp.mapdata.note[objectN[0]].next != -1) {
-			objectN[0] = recfp.mapdata.note[objectN[0]].next;
-			G[0] = 0;
-		}
-		if (Nowkey->note[1] != NOTE_NONE && recfp.mapdata.note[objectN[1]].next != -1) {
-			objectN[1] = recfp.mapdata.note[objectN[1]].next;
-			G[0] = 0;
-		}
-		if (Nowkey->note[2] != NOTE_NONE && recfp.mapdata.note[objectN[2]].next != -1) {
-			objectN[2] = recfp.mapdata.note[objectN[2]].next;
-			G[0] = 0;
-		}
-
-		if (G[0] == 1) { break; }
-
-		//GHOSTノーツ,連actをスキップ
-		for (uint iLane = 0; iLane < 3; iLane++) {
-			if (Nowkey->note[iLane] == NOTE_CATCH) {
-				while ((recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST ||
-					recfp.mapdata.note[objectN[iLane]].object == NOTE_CATCH) &&
-					recfp.mapdata.note[objectN[iLane]].next != -1)
-				{
-					objectN[iLane] = recfp.mapdata.note[objectN[iLane]].next;
-				}
-			}
-			else if (Nowkey->note[iLane] == NOTE_BOMB) {
-				while ((recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST ||
-					recfp.mapdata.note[objectN[iLane]].object == NOTE_BOMB) &&
-					recfp.mapdata.note[objectN[iLane]].next != -1)
-				{
-					objectN[iLane] = recfp.mapdata.note[objectN[iLane]].next;
-				}
-			}
-			else {
-				while (recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST &&
-					recfp.mapdata.note[objectN[iLane]].next != -1)
-				{
-					objectN[iLane] = recfp.mapdata.note[objectN[iLane]].next;
-				}
-			}
-		}
-
-		// keyNを進める
+		if (RecDdifStepNote(objectN, Nowkey, recfp.mapdata.note) != 0) { break; }
 		keyN = (keyN + 1) % REC_DDIF_BUF_NUM;
 	}
 	return 0;
