@@ -34,7 +34,7 @@ typedef enum rec_play_status_e {
 	REC_PLAY_STATUS_DROPED,
 } rec_play_status_t;
 
-#if 1 /*struct */
+#if 1 /* struct */
 
 typedef struct judge_box {
 	int pjust = 0;
@@ -107,7 +107,7 @@ typedef struct rec_play_lanepos_s {
 	int y[5] = { 300,350,400,350,600 };
 } rec_play_lanepos_t;
 
-#endif /*struct */
+#endif /* struct */
 
 class rec_play_sound_c {
 private:
