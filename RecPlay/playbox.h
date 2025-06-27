@@ -1,5 +1,9 @@
 #pragma once
 
+/**
+ * mapenc,play,result‚ÅŽg‚¤
+ */
+
 #include <tchar.h>
 #include <DxLib.h>
 #include <dxcur.h>
@@ -29,6 +33,8 @@ typedef enum rec_play_status_e {
 	REC_PLAY_STATUS_CLEARED,
 	REC_PLAY_STATUS_DROPED,
 } rec_play_status_t;
+
+#if 1 /*struct */
 
 typedef struct judge_box {
 	int pjust = 0;
@@ -96,6 +102,13 @@ typedef struct rec_play_userpal_s {
 	cur_deviation_c gap;
 } rec_play_userpal_t;
 
+typedef struct rec_play_lanepos_s {
+	int x[3] = { 150,150,150 };
+	int y[5] = { 300,350,400,350,600 };
+} rec_play_lanepos_t;
+
+#endif /*struct */
+
 class rec_play_sound_c {
 private:
 	dxcur_snd_c att;
@@ -145,8 +158,3 @@ public:
 		this->swi.PlaySound();
 	}
 };
-
-typedef struct rec_play_lanepos_s {
-	int x[3] = { 150,150,150 };
-	int y[5] = { 300,350,400,350,600 };
-} rec_play_lanepos_t;
