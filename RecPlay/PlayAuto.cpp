@@ -3,31 +3,6 @@
 #include <playbox.h>
 #include <RecScoreFile.h>
 
-/* 指定のノーツがgap[ms]以内にあったらtrue */
-#define IS_NEAR_NOTE(notedata, mat, Ntime, gap)                             \
-	((notedata)->object == (mat) && (notedata)->hittime - (Ntime) <= (gap))
-
-/* bombノーツが40ms以内にあったらtrue */
-#define IS_NEAR_NOTE_BOMB(notedata, Ntime) IS_NEAR_NOTE(notedata, NOTE_BOMB, Ntime, 40)
-
-/* 指定のノーツがgap[ms]以内にどこかのレーンにあったらtrue */
-#define IS_NEAR_NOTE_ANYLANE(notedata, num, mat, Ntime, gap) \
-	(IS_NEAR_NOTE(&(notedata)[(num)[0]], mat, Ntime, gap) || \
-	 IS_NEAR_NOTE(&(notedata)[(num)[1]], mat, Ntime, gap) || \
-	 IS_NEAR_NOTE(&(notedata)[(num)[2]], mat, Ntime, gap))
-
-/* arrowノーツがgap[ms]以内にどこかのレーンにあったらtrue */
-#define IS_NEAR_NOTE_ARROW_ANYLANE(notedata, num, Ntime, gap)       \
-	(IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_UP,    Ntime, gap) || \
-	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_DOWN,  Ntime, gap) || \
-	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_LEFT,  Ntime, gap) || \
-	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_RIGHT, Ntime, gap))
-
-/* actorノーツがgap[ms]以内にどこかのレーンにあったらtrue */
-#define IS_NEAR_NOTE_ACTOR_ANYLANE(notedata, num, Ntime, gap)       \
-	(IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_CATCH, Ntime, gap) || \
-	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_BOMB,  Ntime, gap))
-
 typedef rec_play_key_hold_t key_hold_t;
 
 static void AutoBeforeChain(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {

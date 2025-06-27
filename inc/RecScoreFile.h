@@ -32,6 +32,8 @@ enum melodysound {
 	HIGH_E
 };
 
+#if 1 /* note_material */
+
 typedef enum note_material {
 	NOTE_NONE = -1,
 	NOTE_HIT = 1,
@@ -44,6 +46,33 @@ typedef enum note_material {
 	NOTE_GHOST
 } note_material;
 #define IS_NOTE_ARROW_GROUP(mat) ((mat) == NOTE_UP || (mat) == NOTE_DOWN || (mat) == NOTE_LEFT || (mat) == NOTE_RIGHT)
+
+/* 指定のノーツがgap[ms]以内にあったらtrue */
+#define IS_NEAR_NOTE(notedata, mat, Ntime, gap)                             \
+	((notedata)->object == (mat) && (notedata)->hittime - (Ntime) <= (gap))
+
+/* bombノーツが40ms以内にあったらtrue */
+#define IS_NEAR_NOTE_BOMB(notedata, Ntime) IS_NEAR_NOTE(notedata, NOTE_BOMB, Ntime, 40)
+
+/* 指定のノーツがgap[ms]以内にどこかのレーンにあったらtrue */
+#define IS_NEAR_NOTE_ANYLANE(notedata, num, mat, Ntime, gap) \
+	(IS_NEAR_NOTE(&(notedata)[(num)[0]], mat, Ntime, gap) || \
+	 IS_NEAR_NOTE(&(notedata)[(num)[1]], mat, Ntime, gap) || \
+	 IS_NEAR_NOTE(&(notedata)[(num)[2]], mat, Ntime, gap))
+
+/* arrowノーツがgap[ms]以内にどこかのレーンにあったらtrue */
+#define IS_NEAR_NOTE_ARROW_ANYLANE(notedata, num, Ntime, gap)       \
+	(IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_UP,    Ntime, gap) || \
+	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_DOWN,  Ntime, gap) || \
+	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_LEFT,  Ntime, gap) || \
+	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_RIGHT, Ntime, gap))
+
+/* actorノーツがgap[ms]以内にどこかのレーンにあったらtrue */
+#define IS_NEAR_NOTE_ACTOR_ANYLANE(notedata, num, Ntime, gap)       \
+	(IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_CATCH, Ntime, gap) || \
+	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_BOMB,  Ntime, gap))
+
+#endif /* note_material */
 
 typedef enum note_lane_num_e {
 	NOTE_LANE_UP = 0,
