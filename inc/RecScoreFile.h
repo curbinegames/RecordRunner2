@@ -113,7 +113,7 @@ typedef struct note_box_2_s {
 	int next = 5999;
 } note_box_2_t;
 
-typedef struct rec_ddif_pal_s {
+typedef struct rec_ddif_time_s {
 	uint notes = 0; //HIT,ARROWの密度     青
 	uint arrow = 0; //ARROWの密度         赤
 	uint chord = 0; //同時押しの密度      緑
@@ -122,7 +122,19 @@ typedef struct rec_ddif_pal_s {
 	uint meldy = 0; //乱打密度            ピンク
 	uint actor = 0; //CATCH,BOMBの密度    オレンジ
 	uint trick = 0; //ARROWひっかけの密度 茶色
+} rec_ddif_time_t;
+
+typedef struct rec_ddif_pal_s {
+	uint notes = 0; //HIT,ARROWの密度     青
+	uint arrow = 0; //ARROWの密度         赤
+	uint chord = 0; //同時押しの密度      緑
+	uint chain = 0; //縦連密度            紫
+	uint trill = 0; //トリルの密度        黄色
+	uint meldy = 0; //乱打密度            ピンク
+	uint actor = 0; //CATCH,BOMBの密度    オレンジ
+	uint trick = 0; //リズム難の密度      茶色
 	intx100_t mdif = 0; //全体の難易度
+	rec_ddif_time_t time;
 } rec_ddif_pal_t;
 
 typedef struct rec_map_detail_s {

@@ -34,10 +34,10 @@
 // Lv10? U‚èØ‚ê‚Ä‚È‚ñ‚Ú‚æ
 #define REC_DDIF_NOTES_BASE  354
 #define REC_DDIF_ARROW_BASE 3757
-#define REC_DDIF_CHORD_BASE 3911
-#define REC_DDIF_CHAIN_BASE 2102
-#define REC_DDIF_TRILL_BASE 3420
-#define REC_DDIF_MELDY_BASE  289
+#define REC_DDIF_CHORD_BASE 2929
+#define REC_DDIF_CHAIN_BASE 3650
+#define REC_DDIF_TRILL_BASE 3717
+#define REC_DDIF_MELDY_BASE  321
 #define REC_DDIF_ACTOR_BASE 2012
 #define REC_DDIF_TRICK_BASE 3842
 
@@ -727,13 +727,13 @@ static int RecDdifSetNowkeyBase(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *
 	//arwƒm[ƒc”Žæ“¾
 	Nowkey->arwN = 0;
 	if ( IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
-	if ((IS_NOTE_ARROW_GROUP(Nowkey->note[1])) ||
+	if ((IS_NOTE_ARROW_GROUP(Nowkey->note[1])) &&
 		(Nowkey->note[1] != Nowkey->note[0]))
 	{
 		Nowkey->arwN++;
 	}
-	if ((IS_NOTE_ARROW_GROUP(Nowkey->note[2])) ||
-		(Nowkey->note[2] != Nowkey->note[0])   ||
+	if ((IS_NOTE_ARROW_GROUP(Nowkey->note[2])) &&
+		(Nowkey->note[2] != Nowkey->note[0])   &&
 		(Nowkey->note[2] != Nowkey->note[1]))
 	{
 		Nowkey->arwN++;
@@ -748,7 +748,9 @@ static int RecDdifSetNowkeyBase(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *
 	return 0;
 }
 
-static void RecDdifCalMax(rec_ddif_pal_t *mpal, const rec_ddif_data_t key[], uint keyN) {
+static void RecDdifCalMax(rec_ddif_pal_t *mpal, const rec_ddif_data_t key[], uint keyN,
+	DxTime_t Ntime)
+{
 	rec_ddif_pal_t buf;
 	uint mlp = 100;
 	for (uint iNum = 0; iNum < REC_DDIF_BUF_NUM; iNum++) {
@@ -763,15 +765,38 @@ static void RecDdifCalMax(rec_ddif_pal_t *mpal, const rec_ddif_data_t key[], uin
 		buf.trick += key[iView].pal.trick * mlp / 100;
 		mlp = mlp * 95 / 100;
 	}
-	/* TODO: max‚Ì”­¶ƒ^ƒCƒ€‚ð‹L˜^‚·‚é */
-	if (mpal->notes < buf.notes) { mpal->notes = buf.notes; }
-	if (mpal->trill < buf.trill) { mpal->trill = buf.trill; }
-	if (mpal->arrow < buf.arrow) { mpal->arrow = buf.arrow; }
-	if (mpal->chord < buf.chord) { mpal->chord = buf.chord; }
-	if (mpal->chain < buf.chain) { mpal->chain = buf.chain; }
-	if (mpal->meldy < buf.meldy) { mpal->meldy = buf.meldy; }
-	if (mpal->actor < buf.actor) { mpal->actor = buf.actor; }
-	if (mpal->trick < buf.trick) { mpal->trick = buf.trick; }
+	if (mpal->notes < buf.notes) {
+		mpal->notes      = buf.notes;
+		mpal->time.notes = Ntime;
+	}
+	if (mpal->trill < buf.trill) {
+		mpal->trill      = buf.trill;
+		mpal->time.trill = Ntime;
+	}
+	if (mpal->arrow < buf.arrow) {
+		mpal->arrow      = buf.arrow;
+		mpal->time.arrow = Ntime;
+	}
+	if (mpal->chord < buf.chord) {
+		mpal->chord      = buf.chord;
+		mpal->time.chord = Ntime;
+	}
+	if (mpal->chain < buf.chain) {
+		mpal->chain      = buf.chain;
+		mpal->time.chain = Ntime;
+	}
+	if (mpal->meldy < buf.meldy) {
+		mpal->meldy      = buf.meldy;
+		mpal->time.meldy = Ntime;
+	}
+	if (mpal->actor < buf.actor) {
+		mpal->actor      = buf.actor;
+		mpal->time.actor = Ntime;
+	}
+	if (mpal->trick < buf.trick) {
+		mpal->trick      = buf.trick;
+		mpal->time.trick = Ntime;
+	}
 	return;
 }
 
@@ -861,7 +886,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 		RecDdifInitNowkey(Nowkey);
 		if (RecDdifSetNowkeyBase(Nowkey, Befkey, &recfp, objectN) != 0) { break; }
 		RecDdifGetPalAll(Nowkey, Befkey, BBefkey);
-		RecDdifCalMax(mpal, key, keyN);
+		RecDdifCalMax(mpal, key, keyN, Nowkey->time);
 		if (RecDdifStepNote(objectN, Nowkey, recfp.mapdata.note) != 0) { break; }
 		keyN = (keyN + 1) % REC_DDIF_BUF_NUM;
 	}

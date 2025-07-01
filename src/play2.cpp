@@ -37,12 +37,6 @@
 
 /* define */
 
-#define MODE_CHANGE 1
-
-#define CHARA_POS_UP 0
-#define CHARA_POS_MID 1
-#define CHARA_POS_DOWN 2
-
 #endif /* define group */
 
 #if 1 /* typedef group */
@@ -1145,6 +1139,10 @@ static class rec_play_runner_c {
 #define PIC_SIZE_X 160
 #define PIC_SIZE_Y 160
 
+#define CHARA_POS_UP 0
+#define CHARA_POS_MID 1
+#define CHARA_POS_DOWN 2
+
 private:
 	DxPic_t	charaimg[PIC_NUM];
 	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/Cguide.png"));
@@ -1363,7 +1361,9 @@ private:
 		RecRescaleDrawFormatString(440, 10, COLOR_WHITE, L"%3d", life);
 	}
 
-	void ViewDist(rec_play_status_t status, const distance_score_t *Dscore, const rec_play_time_set_t *time) {
+	void ViewDist(rec_play_status_t status, const distance_score_t *Dscore,
+		const rec_play_time_set_t *time, const rec_ddif_time_t *mdiftime, bool holdG)
+	{
 		int DrawX = 0;
 		int DrawNo = 0;
 		DxColor_t cr = COLOR_WHITE;
@@ -1375,6 +1375,24 @@ private:
 		DrawX = (291 * Dscore->now_dis - 136 * time->end + 136 * time->offset) / (time->end - time->offset);
 		RecRescaleDrawGraph(DrawX, 38, this->Tbarimg[DrawNo].handle(), TRUE);
 		RecRescaleDrawFormatString(180, 45, cr, L"%.3fkm", Dscore->point / 1000.0);
+		if (holdG) {
+			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->notes);
+			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(  0,   0, 255));
+			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->arrow);
+			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(255,   0,   0));
+			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->chord);
+			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(  0, 255,   0));
+			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->chain);
+			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(127,   0, 255));
+			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->trill);
+			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(255, 255,   0));
+			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->meldy);
+			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(255, 127, 255));
+			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->actor);
+			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(255, 127,   0));
+			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->trick);
+			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(127,   0,   0));
+		}
 	}
 
 	void ViewRunStatus(const rec_play_userpal_t *userpal, int notes, int HighScore) {
@@ -1406,12 +1424,12 @@ private:
 
 public:
 	void ViewScoreBar(const rec_play_userpal_t *userpal, const rec_play_time_set_t *time,
-		const rec_map_detail_t *mapdata, int Hscore, int holdG)
+		const rec_map_detail_t *mapdata, int Hscore, bool holdG)
 	{
 		RecRescaleDrawGraph(0, 0, this->baseImg.handle(), TRUE);
 		this->ViewScore(userpal->score, Hscore, time->now);
 		this->ViewLife(userpal->life, userpal->Exlife);
-		this->ViewDist(userpal->status, &userpal->Dscore, time);
+		this->ViewDist(userpal->status, &userpal->Dscore, time, &mapdata->mpal.time, holdG);
 		RecRescaleDrawGraph(0, 0, this->sbbarimg.handle(), TRUE);
 		this->ViewRunStatus(userpal, mapdata->notes, Hscore);
 	}
