@@ -1,6 +1,9 @@
 
-#include <strcur.h>
+/* curbine code include */
 #include <sancur.h>
+#include <strcur.h>
+
+/* rec system include */
 #include <playbox.h>
 #include <RecScoreFile.h>
 
@@ -31,10 +34,10 @@
 // Lv10? 振り切れてなんぼよ
 #define REC_DDIF_NOTES_BASE  354
 #define REC_DDIF_ARROW_BASE 3757
-#define REC_DDIF_CHORD_BASE 3911
-#define REC_DDIF_CHAIN_BASE 2102
-#define REC_DDIF_TRILL_BASE 3420
-#define REC_DDIF_MELDY_BASE  289
+#define REC_DDIF_CHORD_BASE 2929
+#define REC_DDIF_CHAIN_BASE 3650
+#define REC_DDIF_TRILL_BASE 3717
+#define REC_DDIF_MELDY_BASE  321
 #define REC_DDIF_ACTOR_BASE 2012
 #define REC_DDIF_TRICK_BASE 3842
 
@@ -185,7 +188,7 @@ static int qsort_protocol(const void *n1, const void *n2) {
 
 #if 1 /* RecDdifGetKey */
 
-static void RecDdifGetKeyHit(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+static void RecDdifGetKeyHit(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey) {
 	switch (Nowkey->hitN) {
 	case 1:
 		if (Befkey->btn.c.GetVal() == REC_PUSH) {
@@ -221,7 +224,7 @@ static void RecDdifGetKeyArrow(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
-static void RecDdifGetKeyCatch(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+static void RecDdifGetKeyCatch(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey) {
 	if (Befkey->btn.u.CheckPushGroup()) { // 前で上にいる
 		if (Nowkey->note[2] == NOTE_CATCH) {
 			Nowkey->btn.u.SetNone();
@@ -245,7 +248,7 @@ static void RecDdifGetKeyCatch(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey)
 	return;
 }
 
-static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey) {
+static void RecDdifGetKeyBomb(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey) {
 	Nowkey->pal.trick = 0;
 	if (Befkey->btn.u.CheckPushGroup()) { // 前で上にいる
 		if (Nowkey->note[0] == NOTE_BOMB) {
@@ -340,7 +343,7 @@ static void RecDdifGetPalChord(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
-static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
 	uint divN = 0; // 2連カウント
 	uint chainN = 0; // 縦連カウント
 	Nowkey->pal.chain = 0;
@@ -401,7 +404,7 @@ static void RecDdifGetPalChain(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 	return;
 }
 
-static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
 	uint count = 0; // トリルカウント
 	Nowkey->pal.trill = 0;
 	if (Nowkey->hitN == 0 && Nowkey->arwN == 0) { return; }
@@ -455,7 +458,7 @@ static void RecDdifGetPalTrill(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey,
 	return;
 }
 
-static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+static void RecDdifGetPalMeldy(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
 	uint count = 0; // 乱打カウント
 	Nowkey->pal.meldy = 0;
 	if (Nowkey->hitN == 0 && Nowkey->arwN == 0) { return; }
@@ -539,7 +542,7 @@ static void RecDdifGetPalActor(rec_ddif_data_t *Nowkey) {
 	return;
 }
 
-static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, rec_ddif_data_t *Befkey, rec_ddif_data_t *BBefkey) {
+static void RecDdifGetPalTrick(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *Befkey, const rec_ddif_data_t *BBefkey) {
 	int FirstTime = Nowkey->time - Befkey->time;
 	int SecondTime = Befkey->time - BBefkey->time;
 	float Gap = 0.0;
@@ -708,9 +711,18 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 
 		//arwノーツ数取得
 		Nowkey->arwN = 0;
-		if (IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
-		if (IS_NOTE_ARROW_GROUP(Nowkey->note[1])) { Nowkey->arwN++; }
-		if (IS_NOTE_ARROW_GROUP(Nowkey->note[2])) { Nowkey->arwN++; }
+		if ( IS_NOTE_ARROW_GROUP(Nowkey->note[0])) { Nowkey->arwN++; }
+		if ((IS_NOTE_ARROW_GROUP(Nowkey->note[1])) &&
+			 (Nowkey->note[1] != Nowkey->note[0]))
+		{
+			Nowkey->arwN++;
+		}
+		if ((IS_NOTE_ARROW_GROUP(Nowkey->note[2])) &&
+			 (Nowkey->note[2] != Nowkey->note[0])  &&
+			 (Nowkey->note[2] != Nowkey->note[1]))
+		{
+			Nowkey->arwN++;
+		}
 
 		//押しキーの判定
 		RecDdifGetKeyHit(Nowkey, Befkey);
