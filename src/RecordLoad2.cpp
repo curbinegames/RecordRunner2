@@ -528,23 +528,22 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 
 static void RecMapencSetSpeed(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	rec_mapeff_speedt_st buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	uint lane = betweens(0, GT1[6] - 49, 4);
-	int *num = &recfp->mapeff.speedt[lane].num;
-	rec_mapeff_speedt_data_t *dest = &recfp->mapeff.speedt[lane].d[*num];
 
 	strmods(GT1, 8);
-	dest->speed = strsans2(GT1);
+	buf.speed = strsans2(GT1);
 	strnex(GT1);
 	if (GT1[0] >= L'0' && GT1[0] <= L'9' || GT1[0] == L'-') {
-		dest->time = mapenc->timer[lane] + 240000 * (dest->speed - 1) / (mapenc->bpmG * 16) - 10;
-		dest->speed = strsans2(GT1);
+		buf.time = mapenc->timer[lane] + 240000 * (buf.speed - 1) / (mapenc->bpmG * 16) - 10;
+		buf.speed = strsans2(GT1);
 	}
 	else {
-		dest->time = mapenc->timer[lane] - 10;
+		buf.time = mapenc->timer[lane] - 10;
 	}
-	(*num)++;
+	recfp->mapeff.speedt[lane].push_back(buf);
 	return;
 }
 
@@ -1251,21 +1250,11 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.chamo[2].time[0] = 0;
 	recfp->mapeff.chamo[2].num = 1;
 	recfp->mapeff.fall.num = 1;
-	recfp->mapeff.speedt[0].d[0].time = 0;
-	recfp->mapeff.speedt[0].d[0].speed = 1.0;
-	recfp->mapeff.speedt[0].num = 1;
-	recfp->mapeff.speedt[1].d[0].time = 0;
-	recfp->mapeff.speedt[1].d[0].speed = 1.0;
-	recfp->mapeff.speedt[1].num = 1;
-	recfp->mapeff.speedt[2].d[0].time = 0;
-	recfp->mapeff.speedt[2].d[0].speed = 1.0;
-	recfp->mapeff.speedt[2].num = 1;
-	recfp->mapeff.speedt[3].d[0].time = 0;
-	recfp->mapeff.speedt[3].d[0].speed = 1.0;
-	recfp->mapeff.speedt[3].num = 1;
-	recfp->mapeff.speedt[4].d[0].time = 0;
-	recfp->mapeff.speedt[4].d[0].speed = 1.0;
-	recfp->mapeff.speedt[4].num = 1;
+	recfp->mapeff.speedt[0].push_back({ 0,1.0 });
+	recfp->mapeff.speedt[1].push_back({ 0,1.0 });
+	recfp->mapeff.speedt[2].push_back({ 0,1.0 });
+	recfp->mapeff.speedt[3].push_back({ 0,1.0 });
+	recfp->mapeff.speedt[4].push_back({ 0,1.0 });
 	recfp->mapeff.viewLine.d[0].enable = true;
 	recfp->mapeff.viewLine.d[0].time = 0;
 	recfp->mapeff.viewLine.num = 1;

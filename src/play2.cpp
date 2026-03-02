@@ -281,17 +281,10 @@ static void RecPlayStepCharaMotionNum(rec_chara_gra_data_t chamo, DxTime_t Ntime
 	return;
 }
 
-static void RecPlayStepSpeedtNum(rec_mapeff_speedt_dataset_t speedt[], DxTime_t Ntime) {
-	for (int iLine = 0; iLine < 3; iLine++) {
-		while (IS_BETWEEN(0, speedt[iLine].d[speedt[iLine].num + 1].time, Ntime)) {
-			speedt[iLine].num++;
-		}
-	}
-	if (optiondata.backbright == 0) { return; }
-	while (IS_BETWEEN(0, speedt[3].d[speedt[3].num + 1].time, Ntime)) {
-		speedt[3].num++;
-	}
-	return;
+static void RecPlayStepSpeedtNum(
+	datacur_cursor_vector<rec_mapeff_speedt_st> &speedt, DxTime_t Ntime
+) {
+	while (!speedt.isEndNo() && IS_BETWEEN(0, speedt.offsetData(1).time, Ntime)) { speedt.stepNo(); }
 }
 
 static void RecPlayStepViewBpmNum(rec_view_bpm_set_t *v_BPM, DxTime_t Ntime) {
@@ -373,7 +366,14 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 {
 	RecPlayStepObjectNG(objectNG, recfp->mapdata.note, objectN);
 	RecPlayStepCharaMotionNum(recfp->mapeff.chamo, recfp->time.now);
-	RecPlayStepSpeedtNum(recfp->mapeff.speedt, recfp->time.now);
+
+	RecPlayStepSpeedtNum(recfp->mapeff.speedt[0], recfp->time.now);
+	RecPlayStepSpeedtNum(recfp->mapeff.speedt[1], recfp->time.now);
+	RecPlayStepSpeedtNum(recfp->mapeff.speedt[2], recfp->time.now);
+	if (optiondata.backbright != 0) {
+		RecPlayStepSpeedtNum(recfp->mapeff.speedt[3], recfp->time.now);
+	}
+
 	RecPlayStepViewBpmNum(&recfp->mapeff.v_BPM, recfp->time.now);
 	RecPlayStepCameraNum(&recfp->mapeff.camera, recfp->time.now);
 	RecPlayStepScroolNum(&recfp->mapeff.scrool, recfp->time.now);
@@ -501,12 +501,10 @@ static int RecMapGetPosFromMove(rec_move_set_t move[], int time, int lane) {
 	return ret;
 }
 
-static int RecPlayStepSpeedNum(rec_map_eff_data_t *mapeff, int iLine, int Ptime) {
-	rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
+static int RecPlayStepSpeedNum(datacur_cursor_vector<rec_mapeff_speedt_st> speedt, int Ptime) {
 	int SpeedNoAdd = 0;
-	while (IS_BETWEEN(0, p_speedt->d[p_speedt->num + SpeedNoAdd + 1].time, Ptime)) {
-		SpeedNoAdd++;
-	}
+	while ((speedt.nowNo() + SpeedNoAdd + 1) != speedt.size() &&
+		IS_BETWEEN(0, speedt.offsetData(SpeedNoAdd + 1).time, Ptime)) { SpeedNoAdd++; }
 	return SpeedNoAdd;
 }
 
@@ -525,10 +523,10 @@ static void RecPlayGetTimeLanePosBase(int *DrawX, int *DrawY, rec_move_all_set_t
 	return;
 }
 
-static void RecPlayGetTimeLanePos(int *retX, int *retY, rec_map_eff_data_t *mapeff, const rec_play_lanepos_t *lanePos,
-	int iLine, int Ntime, int Ptime)
+static void RecPlayGetTimeLanePos(int *retX, int *retY, rec_map_eff_data_t *mapeff,
+	const rec_play_lanepos_t *lanePos, int iLine, int Ntime, int Ptime)
 {
-	int SpeedNoAdd = RecPlayStepSpeedNum(mapeff, iLine, Ptime);
+	int SpeedNoAdd = RecPlayStepSpeedNum(mapeff->speedt[iLine], Ptime);
 	int YlockNoAdd = 0;
 
 	while (IS_BETWEEN(0, mapeff->lock.y.data[mapeff->lock.y.num + YlockNoAdd + 1].Stime, Ptime)) {
@@ -536,7 +534,7 @@ static void RecPlayGetTimeLanePos(int *retX, int *retY, rec_map_eff_data_t *mape
 	}
 
 	RecPlayGetTimeLanePosBase(retX, retY, &mapeff->move, lanePos,
-		mapeff->speedt[iLine].d[mapeff->speedt[iLine].num + SpeedNoAdd].speed,
+		mapeff->speedt[iLine].offsetData(SpeedNoAdd).speed,
 		mapeff->lock.y.data[mapeff->lock.y.num + YlockNoAdd].en,
 		&mapeff->scrool, Ntime, Ptime, iLine);
 	return;
@@ -930,13 +928,13 @@ private:
 		return 0;
 	}
 
-	void StepNoDrawNote(bool *XLockp, bool *YLockp, double *Speedp, const note_box_2_t *note,
-		const rec_map_eff_data_t *mapeff, int iLine)
-	{
-		const rec_mapeff_speedt_dataset_t *p_speedt = &mapeff->speedt[iLine];
+	void StepNoDrawNote(bool *XLockp, bool *YLockp, double *Speedp,
+		const datacur_cursor_vector<rec_mapeff_speedt_st> &speedt,
+		const note_box_2_t *note, const rec_map_eff_data_t *mapeff
+	) {
 		int XLockNoAdd = mapeff->lock.x.num;
 		int YLockNoAdd = mapeff->lock.y.num;
-		int SpeedNoAdd = p_speedt->num;
+		int SpeedNoAdd = 0;
 
 		//ノーツロックナンバーを進める
 		while (IS_BETWEEN(0, mapeff->lock.x.data[XLockNoAdd + 1].Stime, note->hittime)) { XLockNoAdd++; }
@@ -946,8 +944,9 @@ private:
 		(*YLockp) = mapeff->lock.y.data[YLockNoAdd].en;
 
 		// スピードナンバーを進める
-		while (IS_BETWEEN(0, p_speedt->d[SpeedNoAdd + 1].time, note->hittime)) { SpeedNoAdd++; }
-		(*Speedp) = mapeff->speedt[iLine].d[SpeedNoAdd].speed;
+		while ((speedt.nowNo() + SpeedNoAdd + 1) != speedt.size() &&
+			IS_BETWEEN(0, speedt.offsetData(SpeedNoAdd + 1).time, note->hittime)) { SpeedNoAdd++; }
+		(*Speedp) = speedt.offsetData(SpeedNoAdd).speed;
 		return;
 	}
 
@@ -977,7 +976,7 @@ private:
 		bool XLockp = false;
 		bool YLockp = false;
 		double Speedp = 0;
-		this->StepNoDrawNote(&XLockp, &YLockp, &Speedp, note, mapeff, iLine);
+		this->StepNoDrawNote(&XLockp, &YLockp, &Speedp, mapeff->speedt[iLine], note, mapeff);
 		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp,
 			&mapeff->scrool, Ntime, iLine);
 		switch (note->object) {
@@ -1056,9 +1055,8 @@ private:
 	/* (ret / 100) */
 	void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, int cam) {
 		const double scrool = mapeff->scrool.data[mapeff->scrool.num].speed;
-		rec_mapeff_speedt_dataset_t *p_speedt = mapeff->speedt;
-		double speed3 = p_speedt[3].d[p_speedt[3].num].speed;
-		double speed4 = p_speedt[4].d[p_speedt[4].num].speed;
+		double speed3 = mapeff->speedt[3].nowData().speed;
+		double speed4 = mapeff->speedt[4].nowData().speed;
 
 		xpos[0] -= (int)(100 * speed3 * scrool);
 		while (xpos[0] + 100 * cam / 5 > 0)      { xpos[0] -= 64000; }
