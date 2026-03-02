@@ -214,15 +214,10 @@ typedef struct rec_view_bpm_set_s {
 	int num = 0;
 } rec_view_bpm_set_t;
 
-typedef struct rec_view_time_data_s {
-	int Vtime = 3000;
-	int Stime = -10000;
-} rec_view_time_data_t;
-
-typedef struct rec_view_time_set_s {
-	rec_view_time_data_t data[99];
-	uint num = 0;
-} rec_view_time_set_t;
+typedef struct rec_mapenc_viewtime_s {
+	int Stime = -10000; /* 適用時間 */
+	int Vtime = 3000; /* ノーツの表示時間 */
+} rec_mapenc_viewtime_st;
 
 typedef struct rec_chara_arrow_s {
 	struct {
@@ -298,7 +293,7 @@ typedef struct rec_map_eff_data_s {
 	rec_scrool_set_t scrool;
 	item_box Movie[999];
 	rec_view_bpm_set_t v_BPM;
-	rec_view_time_set_t viewT;
+	datacur_cursor_vector<rec_mapenc_viewtime_st> viewT{99};
 	rec_chara_arrow_t carrow;
 	rec_notelock_allset_t lock;
 	rec_move_all_set_t move;

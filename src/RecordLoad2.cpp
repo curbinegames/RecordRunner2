@@ -870,15 +870,14 @@ static void RecMapencSetFall(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 
 static void RecMapencSetView(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	rec_mapenc_viewtime_st buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	rec_view_time_data_t *dest = &recfp->mapeff.viewT.data[recfp->mapeff.viewT.num];
-
 	strmods(GT1, 6);
-	dest->Stime = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
+	buf.Stime = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	dest->Vtime = strsans(GT1);
-	recfp->mapeff.viewT.num = mins_2(recfp->mapeff.viewT.num + 1, 98);
+	buf.Vtime = strsans(GT1);
+	recfp->mapeff.viewT.push_back(buf);
 	return;
 }
 
@@ -1180,9 +1179,7 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.scrool.data[0].basetime  = 0;
 	recfp->mapeff.scrool.data[0].speed     = 1;
 	recfp->mapeff.scrool.num               = 1;
-	recfp->mapeff.viewT.data[0].Stime = 0;
-	recfp->mapeff.viewT.data[0].Vtime = 3000;
-	recfp->mapeff.viewT.num           = 1;
+	recfp->mapeff.viewT.push_back({ 0,3000 });
 	recfp->mapeff.carrow.d[0].data = 1;
 	recfp->mapeff.carrow.d[0].time = 0;
 	recfp->mapeff.carrow.num       = 1;

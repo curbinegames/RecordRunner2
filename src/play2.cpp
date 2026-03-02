@@ -101,7 +101,12 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->fall.num = 0;
 	mapeff->lock.x.num = 0;
 	mapeff->lock.y.num = 0;
-	mapeff->viewT.num = 0;
+	mapeff->viewT.resetNo();
+	mapeff->speedt[0].resetNo();
+	mapeff->speedt[1].resetNo();
+	mapeff->speedt[2].resetNo();
+	mapeff->speedt[3].resetNo();
+	mapeff->speedt[4].resetNo();
 	return;
 }
 
@@ -349,9 +354,10 @@ static void RecPlayStepLockNum(rec_map_eff_data_t *mapeff, DxTime_t Ntime) {
 	return;
 }
 
-static void RecPlayStepViewTimeNum(rec_map_eff_data_t *mapeff, DxTime_t Ntime) {
-	while (IS_BETWEEN(0, mapeff->viewT.data[mapeff->viewT.num].Stime, Ntime)) { mapeff->viewT.num++; }
-	return;
+static void RecPlayStepViewTimeNum(
+	datacur_cursor_vector<rec_mapenc_viewtime_st> &viewT, DxTime_t Ntime
+) {
+	while (!viewT.isEndNo() && IS_BETWEEN(0, viewT.offsetData(1).Stime, Ntime)) { viewT.stepNo(); }
 }
 
 static void RecPlayStepViewLineNum(rec_viewline_dataset_t *viewLine, DxTime_t Ntime) {
@@ -382,7 +388,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
 	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
 	RecPlayStepLockNum(&recfp->mapeff, recfp->time.now);
-	RecPlayStepViewTimeNum(&recfp->mapeff, recfp->time.now);
+	RecPlayStepViewTimeNum(recfp->mapeff.viewT, recfp->time.now);
 	RecPlayStepViewLineNum(&recfp->mapeff.viewLine, recfp->time.now);
 	return;
 }
@@ -913,16 +919,17 @@ private:
 	/**
 	 * return 0 = normal, 1 = continue, 2 = break;
 	 */
-	int StepViewNoDrawNote(const mapeff_t *mapeff, int hittime, int Ntime) {
-		int viewTadd = mapeff->viewT.num;
+	int StepViewNoDrawNote(const datacur_cursor_vector<rec_mapenc_viewtime_st> &viewT, int hittime, int Ntime) {
+		int viewTadd = 0;
 		//表示/非表示ナンバーを進める
-		if (IS_BETWEEN(0, mapeff->viewT.data[viewTadd + 1].Stime, hittime)) { viewTadd++; }
+		while ((viewT.nowNo() + viewTadd + 1) < viewT.size() &&
+			IS_BETWEEN(0, viewT.offsetData(viewTadd + 1).Stime, hittime)) { viewTadd++; }
 		//3秒ブレーク
-		if (IS_BETWEEN(mapeff->viewT.data[viewTadd].Vtime, 3000, hittime - Ntime)) {
+		if (IS_BETWEEN(viewT.offsetData(viewTadd).Vtime, 3000, hittime - Ntime)) {
 			return 2;
 		}
 		//非表示スキップ
-		if (hittime - Ntime >= mapeff->viewT.data[viewTadd].Vtime) {
+		if (hittime - Ntime >= viewT.offsetData(viewTadd).Vtime) {
 			return 1;
 		}
 		return 0;
@@ -1024,7 +1031,7 @@ public:
 	{
 		for (int iLine = 0; iLine < 3; iLine++) {
 			for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
-				int ret = this->StepViewNoDrawNote(mapeff, note[iNote].hittime, Ntime);
+				int ret = this->StepViewNoDrawNote(mapeff->viewT, note[iNote].hittime, Ntime);
 				if (ret == 1) { continue; }
 				else if (ret == 2) { break; }
 				this->DrawNoteOne(&note[iNote], mapeff, lanePos, iLine, Ntime, noteimg);
