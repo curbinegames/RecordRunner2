@@ -273,15 +273,10 @@ typedef struct rec_fall_data_s {
 	int num = 0;
 } rec_fall_data_t;
 
-typedef struct rec_viewline_data_s {
-	int time = -1;
-	bool enable = true;
-} rec_viewline_data_t;
-
-typedef struct rec_viewline_dataset_s {
-	rec_viewline_data_t d[99];
-	uint num = 0;
-} rec_viewline_dataset_t;
+typedef struct rec_mapeff_viewline_s {
+	int time = -1; /* 適用時間 */
+	bool enable = true; /* 表示フラグ */
+} rec_mapeff_viewline_st;
 
 typedef struct rec_mapeff_speedt_s {
 	int time = -1; /* 適用時間 */
@@ -299,7 +294,7 @@ typedef struct rec_map_eff_data_s {
 	rec_move_all_set_t move;
 	rec_chara_gra_data_t chamo;
 	rec_fall_data_t fall;
-	rec_viewline_dataset_t viewLine;
+	datacur_cursor_vector<rec_mapeff_viewline_st> viewLine{99};
 	datacur_cursor_vector<rec_mapeff_speedt_st> speedt[5] = { datacur_cursor_vector<rec_mapeff_speedt_st>(99) };
 } rec_map_eff_data_t;
 

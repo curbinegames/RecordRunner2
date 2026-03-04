@@ -360,11 +360,12 @@ static void RecPlayStepViewTimeNum(
 	while (!viewT.isEndNo() && IS_BETWEEN(0, viewT.offsetData(1).Stime, Ntime)) { viewT.stepNo(); }
 }
 
-static void RecPlayStepViewLineNum(rec_viewline_dataset_t *viewLine, DxTime_t Ntime) {
-	while (IS_BETWEEN_LEFT_LESS(0, viewLine->d[viewLine->num + 1].time, Ntime)) {
-		viewLine->num++;
+static void RecPlayStepViewLineNum(
+	datacur_cursor_vector<rec_mapeff_viewline_st> &viewLine, DxTime_t Ntime
+) {
+	while (!viewLine.isEndNo() && IS_BETWEEN(0, viewLine.offsetData(1).time, Ntime)) {
+		viewLine .stepNo();
 	}
-	return;
 }
 
 static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *movieN,
@@ -389,7 +390,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
 	RecPlayStepLockNum(&recfp->mapeff, recfp->time.now);
 	RecPlayStepViewTimeNum(recfp->mapeff.viewT, recfp->time.now);
-	RecPlayStepViewLineNum(&recfp->mapeff.viewLine, recfp->time.now);
+	RecPlayStepViewLineNum(recfp->mapeff.viewLine, recfp->time.now);
 	return;
 }
 
@@ -578,12 +579,18 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 		/* ˆÊ’uŒvŽZ */
 		Ptime = recfp->time.offset + 240000 * (pnum + iNum) / recfp->mapdata.bpm;
 
-		uint NlineViewNo = recfp->mapeff.viewLine.num;
-		while (IS_BETWEEN_LEFT_LESS(0, recfp->mapeff.viewLine.d[NlineViewNo + 1].time, Ptime)) {
-			NlineViewNo++;
+		{
+			uint ViewNoAdd = 0;
+			datacur_cursor_vector<rec_mapeff_viewline_st> &p_viewLine = recfp->mapeff.viewLine;
+			while (
+				((p_viewLine.nowNo() + ViewNoAdd + 1) != p_viewLine.size()) &&
+				IS_BETWEEN(0, p_viewLine.offsetData(ViewNoAdd + 1).time, Ptime)
+				) {
+				ViewNoAdd++;
+			}
+			if (!(p_viewLine.offsetData(ViewNoAdd).enable)) { continue; }
+			if (recfp->time.end < Ptime) { return; }
 		}
-		if (!(recfp->mapeff.viewLine.d[NlineViewNo].enable)) { continue; }
-		if (recfp->time.end < Ptime) { return; }
 
 		RecPlayGetTimeLanePos(&posX1, &posY1, &recfp->mapeff, lanePos, 0, Ntime, Ptime);
 		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, lanePos, 1, Ntime, Ptime);
@@ -763,12 +770,16 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *
 	rec_play_xy_set_t camera;
 	RecPlayGetCameraPos(&camera.x, &camera.y);
 
-	uint NlineViewNo = recfp->mapeff.viewLine.num;
-	while (IS_BETWEEN_LEFT_LESS(0, recfp->mapeff.viewLine.d[NlineViewNo + 1].time, Ymove[iDraw].Stime)) {
-		NlineViewNo++;
+	uint ViewNoAdd = 0;
+	datacur_cursor_vector<rec_mapeff_viewline_st> &p_viewLine = recfp->mapeff.viewLine;
+	while (
+		(p_viewLine.nowNo() + ViewNoAdd + 1) != p_viewLine.size() &&
+		IS_BETWEEN(0, p_viewLine.offsetData(ViewNoAdd + 1).time, Ymove[iDraw].Stime)
+	) {
+		ViewNoAdd++;
 	}
 
-	const bool viewEn = recfp->mapeff.viewLine.d[NlineViewNo].enable;
+	const bool viewEn = p_viewLine.offsetData(ViewNoAdd).enable;
 
 	// color code
 	switch (Line) {
