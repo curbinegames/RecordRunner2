@@ -295,7 +295,7 @@ typedef struct rec_map_eff_data_s {
 	rec_move_all_set_t move;
 	rec_chara_gra_data_t chamo;
 	rec_fall_data_t fall;
-	tvec<char> viewLine{99}; /* ガイドライン表示フラグ */ /* !! vector<bool>が使えない !! */
+	tvec<bool> viewLine{99}; /* ガイドライン表示フラグ */
 	tvec<double> speedt[5] = { tvec<double>(99) }; /* ノーツ速度 */
 } rec_map_eff_data_t;
 

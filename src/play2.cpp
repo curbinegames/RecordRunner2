@@ -563,7 +563,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 		/* ˆÊ’uŒvŽZ */
 		Ptime = recfp->time.offset + 240000 * (pnum + iNum) / recfp->mapdata.bpm;
 
-		if (recfp->mapeff.viewLine.searchDataFront(Ptime) != 1) { continue; }
+		if (!recfp->mapeff.viewLine.searchDataFront(Ptime)) { continue; }
 		if (recfp->time.end < Ptime) { return; }
 
 		RecPlayGetTimeLanePos(&posX1, &posY1, &recfp->mapeff, lanePos, 0, Ntime, Ptime);
@@ -744,7 +744,7 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *
 	rec_play_xy_set_t camera;
 	RecPlayGetCameraPos(&camera.x, &camera.y);
 
-	const bool viewEn = (recfp->mapeff.viewLine.searchDataFront(Ymove[iDraw].Stime) == 1);
+	const bool viewEn = recfp->mapeff.viewLine.searchDataFront(Ymove[iDraw].Stime);
 
 	// color code
 	switch (Line) {
