@@ -98,7 +98,7 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->chamo[0].num = 0;
 	mapeff->chamo[1].num = 0;
 	mapeff->chamo[2].num = 0;
-	mapeff->fall.num = 0;
+	mapeff->fall.resetNo();
 	mapeff->lock.x.num = 0;
 	mapeff->lock.y.num = 0;
 	mapeff->viewT.resetNo();
@@ -286,12 +286,6 @@ static void RecPlayStepCharaMotionNum(rec_chara_gra_data_t chamo, DxTime_t Ntime
 	return;
 }
 
-static void RecPlayStepSpeedtNum(
-	datacur_cursor_vector<rec_mapeff_speedt_st> &speedt, DxTime_t Ntime
-) {
-	while (!speedt.isEndNo() && IS_BETWEEN(0, speedt.offsetData(1).time, Ntime)) { speedt.stepNo(); }
-}
-
 static void RecPlayStepViewBpmNum(rec_view_bpm_set_t *v_BPM, DxTime_t Ntime) {
 	while (IS_BETWEEN_LEFT_LESS(-1000, v_BPM->data[v_BPM->num + 1].time, Ntime)) {
 		v_BPM->num++;
@@ -316,12 +310,6 @@ static void RecPlayStepScroolNum(rec_scrool_set_t *scrool, DxTime_t Ntime) {
 static void RecPlayStepMovieNum(const item_box movie[], short *movieN, DxTime_t Ntime) {
 	if (optiondata.backbright == 0) { return; }
 	while (IS_BETWEEN_LESS(-500, movie[*movieN].endtime, Ntime)) { (*movieN)++;}
-	return;
-}
-
-static void RecPlayStepFallNum(rec_fall_data_t *fall, DxTime_t Ntime) {
-	if (optiondata.backbright == 0) { return; }
-	while (IS_BETWEEN(0, fall->d[fall->num + 1].time, Ntime)) { fall->num++; }
 	return;
 }
 
@@ -377,7 +365,9 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	RecPlayStepCameraNum(&recfp->mapeff.camera, recfp->time.now);
 	RecPlayStepScroolNum(&recfp->mapeff.scrool, recfp->time.now);
 	RecPlayStepMovieNum(recfp->mapeff.Movie, movieN, recfp->time.now);
-	RecPlayStepFallNum(&recfp->mapeff.fall, recfp->time.now);
+	if (optiondata.backbright != 0) {
+		recfp->mapeff.fall.stepNoTime(recfp->time.now);
+	}
 	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
 	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
 	RecPlayStepLockNum(&recfp->mapeff, recfp->time.now);
@@ -1013,13 +1003,13 @@ public:
 
 static class rec_play_draw_back_c {
 private:
-	void DrawFallBack(int Yline, dxcur_pic_c item[], rec_fall_data_t *falleff) {
+	void DrawFallBack(int Yline, dxcur_pic_c item[], int itemNo) {
 		static int baseX = 0;
 		static int baseY = 0;
 		for (int ix = 0; ix < 2; ix++) {
 			for (int iy = 0; iy < 3; iy++) {
 				RecRescaleDrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
-					item[falleff->d[falleff->num].No].handle(), TRUE);
+					item[itemNo].handle(), TRUE);
 			}
 		}
 		baseX -= 5;
@@ -1063,8 +1053,8 @@ public:
 			DrawGraphRecField(loop, Yline[4] - 400, backpic->water.handle());
 		}
 		//—Ž‚¿•¨”wŒi•\Ž¦
-		if (mapeff->fall.d[mapeff->fall.num].No >= 0) {
-			DrawFallBack(Yline[3], item, &mapeff->fall);
+		if (mapeff->fall.nowData() >= 0) {
+			DrawFallBack(Yline[3], item, mapeff->fall.nowData());
 		}
 		return;
 	}

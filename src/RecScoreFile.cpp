@@ -48,15 +48,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	fread(&recfp->nameset.songN, 255, 1, fp);//曲名
 	fread(&recfp->nameset.songNE, 255, 1, fp);//曲名(英語)
 	fread(&recfp->mapdata.Lv, sizeof(short), 1, fp);//レベル
-	//fread(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
-	{
-		int buf[99][2];
-		fread(buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
-		for (int i = 0; i < 99; i++) {
-			recfp->mapeff.fall.d[i].time = buf[i][0];
-			recfp->mapeff.fall.d[i].No   = buf[i][1];
-		}
-	}
+	recfp->mapeff.fall.fread(fp); /* 落ち物背景切り替えタイミング */
 	recfp->mapeff.speedt[0].fread(fp); /* レーン速度 */
 	recfp->mapeff.speedt[1].fread(fp);
 	recfp->mapeff.speedt[2].fread(fp);
@@ -149,15 +141,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	fwrite(&recfp->nameset.songN, 255, 1, fp);//曲名
 	fwrite(&recfp->nameset.songNE, 255, 1, fp);//曲名(英語)
 	fwrite(&recfp->mapdata.Lv, sizeof(short), 1, fp);//レベル
-	//fwrite(&item, sizeof(int), 99, fp);//アイテム画像データ(動作未確認)
-	{
-		int buf[99][2];
-		for (int inum = 0; inum < 99; inum++) {
-			buf[inum][0] = recfp->mapeff.fall.d[inum].No;
-			buf[inum][1] = recfp->mapeff.fall.d[inum].time;
-		}
-		fwrite(&buf, sizeof(int), 198, fp);//落ち物背景切り替えタイミング
-	}
+	recfp->mapeff.fall.fwrite(fp); /* 落ち物背景切り替えタイミング */
 	recfp->mapeff.speedt[0].fwrite(fp); /* レーン速度 */
 	recfp->mapeff.speedt[1].fwrite(fp);
 	recfp->mapeff.speedt[2].fwrite(fp);

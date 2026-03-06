@@ -859,13 +859,15 @@ static void RecMapencSetCArrow(rec_score_file_t *recfp, rec_mapenc_data_t *mapen
 
 static void RecMapencSetFall(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	int time_buf;
+	double data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	strmods(GT1, 6);
-	recfp->mapeff.fall.d[recfp->mapeff.fall.num].No = strsans(GT1);
+	data_buf = strsans(GT1);
 	strnex(GT1);
-	recfp->mapeff.fall.d[recfp->mapeff.fall.num].time = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
-	recfp->mapeff.fall.num++;
+	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
+	recfp->mapeff.fall.push_back(time_buf, data_buf);
 	return;
 }
 
@@ -1248,7 +1250,7 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.chamo[2].gra[0] = 1;
 	recfp->mapeff.chamo[2].time[0] = 0;
 	recfp->mapeff.chamo[2].num = 1;
-	recfp->mapeff.fall.num = 1;
+	recfp->mapeff.fall.push_back(0, -1);
 	recfp->mapeff.speedt[0].push_back(0, 1.0);
 	recfp->mapeff.speedt[1].push_back(0, 1.0);
 	recfp->mapeff.speedt[2].push_back(0, 1.0);
@@ -1376,8 +1378,7 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		//落ち物背景指定
 		else if (strands_direct(GT1, L"#FALL:")) {
 			strmods(GT1, 6);
-			recfp->mapeff.fall.d[0].No = strsans(GT1);
-			recfp->mapeff.fall.d[0].time = 0;
+			recfp->mapeff.fall.push_back(0, strsans(GT1));
 		}
 		//譜面難易度フィルタのレベル
 		else if (strands_direct(GT1, L"#WANING:")) {
