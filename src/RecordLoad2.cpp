@@ -574,15 +574,16 @@ static void RecMapencSetVBpm(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 
 static void RecMapencSetChara(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	int time_buf;
+	int data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	uint lane = GT1[6] - 49;
-	int *num = &recfp->mapeff.chamo[lane].num;
 
 	strmods(GT1, 8);
-	recfp->mapeff.chamo[lane].gra[*num] = betweens(0, strsans(GT1), 2);
-	recfp->mapeff.chamo[lane].time[*num] = (int)mapenc->timer[lane];
-	(*num)++;
+	data_buf = betweens(0, strsans(GT1), 2);
+	time_buf = (int)mapenc->timer[lane];
+	recfp->mapeff.chamo[lane].push_back(time_buf, data_buf);
 	return;
 }
 
@@ -1233,23 +1234,9 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.move.x[2].d[0].Etime = 0;
 	recfp->mapeff.move.x[2].d[0].mode = 1;
 	recfp->mapeff.move.x[2].num = 1;
-	for (int inum = 0; inum < 99; inum++) {
-		recfp->mapeff.chamo[0].gra[inum] = -1000;
-		recfp->mapeff.chamo[0].time[inum] = -1000;
-		recfp->mapeff.chamo[1].gra[inum] = -1000;
-		recfp->mapeff.chamo[1].time[inum] = -1000;
-		recfp->mapeff.chamo[2].gra[inum] = -1000;
-		recfp->mapeff.chamo[2].time[inum] = -1000;
-	}
-	recfp->mapeff.chamo[0].gra[0] = 0;
-	recfp->mapeff.chamo[0].time[0] = 0;
-	recfp->mapeff.chamo[0].num = 1;
-	recfp->mapeff.chamo[1].gra[0] = 1;
-	recfp->mapeff.chamo[1].time[0] = 0;
-	recfp->mapeff.chamo[1].num = 1;
-	recfp->mapeff.chamo[2].gra[0] = 1;
-	recfp->mapeff.chamo[2].time[0] = 0;
-	recfp->mapeff.chamo[2].num = 1;
+	recfp->mapeff.chamo[0].push_back(0, 0);
+	recfp->mapeff.chamo[1].push_back(0, 1);
+	recfp->mapeff.chamo[2].push_back(0, 1);
 	recfp->mapeff.fall.push_back(0, -1);
 	recfp->mapeff.speedt[0].push_back(0, 1.0);
 	recfp->mapeff.speedt[1].push_back(0, 1.0);

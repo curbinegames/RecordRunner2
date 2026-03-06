@@ -265,12 +265,6 @@ typedef struct rec_move_all_set_s {
 	rec_move_set_t y[5];
 } rec_move_all_set_t;
 
-typedef struct rec_chara_gra_data_s {
-	int gra[99];
-	int time[99];
-	int num = 0;
-} rec_chara_gra_data_t[3];
-
 typedef struct rec_mapeff_speedt_s {
 	int time = -1; /* 適用時間 */
 	double speed = 1.0; /* 速度 */
@@ -285,7 +279,7 @@ typedef struct rec_map_eff_data_s {
 	rec_chara_arrow_t carrow;
 	rec_notelock_allset_t lock;
 	rec_move_all_set_t move;
-	rec_chara_gra_data_t chamo;
+	tvec<int> chamo[3] = { tvec<int>(99) };
 	tvec<int> fall{99}; /* 落ち者背景アイテム番号 */
 	tvec<bool> viewLine{99}; /* ガイドライン表示フラグ */
 	tvec<double> speedt[5] = { tvec<double>(99) }; /* ノーツ速度 */

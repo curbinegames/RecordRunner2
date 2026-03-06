@@ -95,9 +95,9 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->move.x[0].num = 0;
 	mapeff->move.x[1].num = 0;
 	mapeff->move.x[2].num = 0;
-	mapeff->chamo[0].num = 0;
-	mapeff->chamo[1].num = 0;
-	mapeff->chamo[2].num = 0;
+	mapeff->chamo[0].resetNo();
+	mapeff->chamo[1].resetNo();
+	mapeff->chamo[2].resetNo();
 	mapeff->fall.resetNo();
 	mapeff->lock.x.num = 0;
 	mapeff->lock.y.num = 0;
@@ -277,15 +277,6 @@ static void RecPlayStepObjectNG(short objectNG[], const note_box_2_t note[], con
 	return;
 }
 
-static void RecPlayStepCharaMotionNum(rec_chara_gra_data_t chamo, DxTime_t Ntime) {
-	for (int iLine = 0; iLine < 3; iLine++) {
-		while (IS_BETWEEN(0, chamo[iLine].time[chamo[iLine].num + 1], Ntime)) {
-			chamo[iLine].num++;
-		}
-	}
-	return;
-}
-
 static void RecPlayStepViewBpmNum(rec_view_bpm_set_t *v_BPM, DxTime_t Ntime) {
 	while (IS_BETWEEN_LEFT_LESS(-1000, v_BPM->data[v_BPM->num + 1].time, Ntime)) {
 		v_BPM->num++;
@@ -352,8 +343,13 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	short *guideN, const short *objectN)
 {
 	RecPlayStepObjectNG(objectNG, recfp->mapdata.note, objectN);
-	RecPlayStepCharaMotionNum(recfp->mapeff.chamo, recfp->time.now);
 
+	/* chamo */
+	recfp->mapeff.chamo[0].stepNoTime(recfp->time.now);
+	recfp->mapeff.chamo[1].stepNoTime(recfp->time.now);
+	recfp->mapeff.chamo[2].stepNoTime(recfp->time.now);
+
+	/* speedt */
 	recfp->mapeff.speedt[0].stepNoTime(recfp->time.now);
 	recfp->mapeff.speedt[1].stepNoTime(recfp->time.now);
 	recfp->mapeff.speedt[2].stepNoTime(recfp->time.now);
@@ -1164,7 +1160,7 @@ private:
 			drawX = lanePos->x[this->pos];
 
 			picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
-				20000 % 6 + mapeff->chamo[this->pos].gra[mapeff->chamo[this->pos].num] * 6;
+				20000 % 6 + mapeff->chamo[this->pos].nowData() * 6;
 		}
 		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
 			DrawGraphRecField(drawX - 160, drawY, this->charaimg[picID]);

@@ -54,18 +54,9 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.speedt[2].fread(fp);
 	recfp->mapeff.speedt[3].fread(fp);
 	recfp->mapeff.speedt[4].fread(fp);
-	{
-		int buf[3][99][2];
-		fread(buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
-		for (int i = 0; i < 99; i++) {
-			recfp->mapeff.chamo[0].gra[i]  = buf[0][i][0];
-			recfp->mapeff.chamo[0].time[i] = buf[0][i][1];
-			recfp->mapeff.chamo[1].gra[i]  = buf[1][i][0];
-			recfp->mapeff.chamo[1].time[i] = buf[1][i][1];
-			recfp->mapeff.chamo[2].gra[i]  = buf[2][i][0];
-			recfp->mapeff.chamo[2].time[i] = buf[2][i][1];
-		}
-	}
+	recfp->mapeff.chamo[0].fread(fp); /* キャラグラ変換タイミング */
+	recfp->mapeff.chamo[1].fread(fp);
+	recfp->mapeff.chamo[2].fread(fp);
 	fread(&recfp->mapeff.move.y[0].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
 	fread(&recfp->mapeff.move.y[1].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[1], fp);//上レーン縦位置移動タイミング
 	fread(&recfp->mapeff.move.y[2].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[2], fp);//上レーン縦位置移動タイミング
@@ -147,16 +138,9 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.speedt[2].fwrite(fp);
 	recfp->mapeff.speedt[3].fwrite(fp);
 	recfp->mapeff.speedt[4].fwrite(fp);
-	{
-		int buf[3][99][2];
-		for (int ilane = 0; ilane < 3; ilane++) {
-			for (int inum = 0; inum < 99; inum++) {
-				buf[ilane][inum][0] = recfp->mapeff.chamo[ilane].gra[inum];
-				buf[ilane][inum][1] = recfp->mapeff.chamo[ilane].time[inum];
-			}
-		}
-		fwrite(&buf, sizeof(int), 594, fp);//キャラグラ変換タイミング
-	}
+	recfp->mapeff.chamo[0].fwrite(fp); /* キャラグラ変換タイミング */
+	recfp->mapeff.chamo[1].fwrite(fp);
+	recfp->mapeff.chamo[2].fwrite(fp);
 	fwrite(&recfp->mapeff.move.y[0].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[0], fp);//上レーン縦位置移動タイミング
 	fwrite(&recfp->mapeff.move.y[1].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[1], fp);//中レーン縦位置移動タイミング
 	fwrite(&recfp->mapeff.move.y[2].d, sizeof(rec_move_data_t), recfp->allnum.Ymovenum[2], fp);//下レーン縦位置移動タイミング
