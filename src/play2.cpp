@@ -360,14 +360,6 @@ static void RecPlayStepViewTimeNum(
 	while (!viewT.isEndNo() && IS_BETWEEN(0, viewT.offsetData(1).Stime, Ntime)) { viewT.stepNo(); }
 }
 
-static void RecPlayStepViewLineNum(
-	datacur_cursor_vector<rec_mapeff_viewline_st> &viewLine, DxTime_t Ntime
-) {
-	while (!viewLine.isEndNo() && IS_BETWEEN(0, viewLine.offsetData(1).time, Ntime)) {
-		viewLine .stepNo();
-	}
-}
-
 static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *movieN,
 	short *guideN, const short *objectN)
 {
@@ -390,7 +382,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
 	RecPlayStepLockNum(&recfp->mapeff, recfp->time.now);
 	RecPlayStepViewTimeNum(recfp->mapeff.viewT, recfp->time.now);
-	RecPlayStepViewLineNum(recfp->mapeff.viewLine, recfp->time.now);
+	recfp->mapeff.viewLine.stepNoTime(recfp->time.now);
 	return;
 }
 
@@ -571,18 +563,8 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 		/* 位置計算 */
 		Ptime = recfp->time.offset + 240000 * (pnum + iNum) / recfp->mapdata.bpm;
 
-		{
-			uint ViewNoAdd = 0;
-			datacur_cursor_vector<rec_mapeff_viewline_st> &p_viewLine = recfp->mapeff.viewLine;
-			while (
-				((p_viewLine.nowNo() + ViewNoAdd + 1) != p_viewLine.size()) &&
-				IS_BETWEEN(0, p_viewLine.offsetData(ViewNoAdd + 1).time, Ptime)
-				) {
-				ViewNoAdd++;
-			}
-			if (!(p_viewLine.offsetData(ViewNoAdd).enable)) { continue; }
-			if (recfp->time.end < Ptime) { return; }
-		}
+		if (recfp->mapeff.viewLine.searchDataFront(Ptime) != 1) { continue; }
+		if (recfp->time.end < Ptime) { return; }
 
 		RecPlayGetTimeLanePos(&posX1, &posY1, &recfp->mapeff, lanePos, 0, Ntime, Ptime);
 		RecPlayGetTimeLanePos(&posX2, &posY2, &recfp->mapeff, lanePos, 1, Ntime, Ptime);
@@ -762,16 +744,7 @@ static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *
 	rec_play_xy_set_t camera;
 	RecPlayGetCameraPos(&camera.x, &camera.y);
 
-	uint ViewNoAdd = 0;
-	datacur_cursor_vector<rec_mapeff_viewline_st> &p_viewLine = recfp->mapeff.viewLine;
-	while (
-		(p_viewLine.nowNo() + ViewNoAdd + 1) != p_viewLine.size() &&
-		IS_BETWEEN(0, p_viewLine.offsetData(ViewNoAdd + 1).time, Ymove[iDraw].Stime)
-	) {
-		ViewNoAdd++;
-	}
-
-	const bool viewEn = p_viewLine.offsetData(ViewNoAdd).enable;
+	const bool viewEn = (recfp->mapeff.viewLine.searchDataFront(Ymove[iDraw].Stime) == 1);
 
 	// color code
 	switch (Line) {
@@ -1845,7 +1818,7 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
-		cal_ddif_3(mapPath);
+		// cal_ddif_3(mapPath); /* TODO: 今バグってる。どうせseekの問題 */
 	}
 	else { fclose(fp); }
 
