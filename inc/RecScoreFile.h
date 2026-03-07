@@ -168,11 +168,6 @@ typedef struct rec_camera_data_s {
 	int mode = 0;
 } rec_camera_data_t;
 
-typedef struct rec_camera_set_s {
-	rec_camera_data_t data[256];
-	uint num = 0;
-} rec_camera_set_t;
-
 typedef struct rec_scrool_data_s {
 	double basetime = -1; /* 始点となる時間 */
 	double speed = -1; /* 速度 */
@@ -227,7 +222,7 @@ typedef struct rec_move_all_set_s {
 } rec_move_all_set_t;
 
 typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
-	rec_camera_set_t camera;
+	cvec<rec_camera_data_t> camera{256}; /* カメラ移動タイミング */
 	tvec<rec_scrool_data_t> scrool{99}; /* 譜面のスクロール速度切り替えタイミング */
 	cvec<item_box> Movie{999}; /* 画像アイテムリスト */
 	tvec<double> v_BPM{99}; /* 表示上のBPM */

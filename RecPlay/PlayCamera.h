@@ -5,7 +5,7 @@
 
 /* main action */
 extern void RecPlayResetCamera(); /* TODO: ‚±‚ê—v‚é‚ñ‚¿‚á‚¤‚ñ? */
-extern void RecPlaySetCamera(rec_camera_set_t *camera, int Ntime);
+extern void RecPlaySetCamera(const cvec<rec_camera_data_t> &camera, int Ntime);
 extern void RecPlayGetCameraPos(int *retX, int *retY);
 
 /* Draw on Rec Field */

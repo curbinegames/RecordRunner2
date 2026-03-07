@@ -83,7 +83,7 @@ static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[]) 
 }
 
 static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
-	mapeff->camera.num = 0;
+	mapeff->camera.resetNo();
 	mapeff->scrool.resetNo();
 	mapeff->carrow.resetNo();
 	mapeff->move.y[0].num = 0;
@@ -275,11 +275,8 @@ static void RecPlayStepObjectNG(short objectNG[], const note_box_2_t note[], con
 	return;
 }
 
-static void RecPlayStepCameraNum(rec_camera_set_t *camera, DxTime_t Ntime) {
-	while (IS_BETWEEN_RIGHT_LESS(0, camera->data[camera->num].endtime, Ntime)) {
-		camera->num++;
-	}
-	return;
+static void RecPlayStepCameraNum(cvec<rec_camera_data_t> &camera, DxTime_t Ntime) {
+	while (IS_BETWEEN_RIGHT_LESS(0, camera.nowData().endtime, Ntime)) { camera.stepNo(); }
 }
 
 static void RecPlayStepMovieNum(cvec<item_box> &movie, DxTime_t Ntime) {
@@ -319,7 +316,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG,
 	}
 
 	recfp->mapeff.v_BPM.stepNoTime(recfp->time.now);
-	RecPlayStepCameraNum(&recfp->mapeff.camera, recfp->time.now);
+	RecPlayStepCameraNum(recfp->mapeff.camera, recfp->time.now);
 	recfp->mapeff.scrool.stepNoTime(recfp->time.now);
 	RecPlayStepMovieNum(recfp->mapeff.Movie, recfp->time.now);
 	if (optiondata.backbright != 0) {
@@ -1550,7 +1547,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		//計算
 		//カメラ移動
-		RecPlaySetCamera(&recfp.mapeff.camera, recfp.time.now);
+		RecPlaySetCamera(recfp.mapeff.camera, recfp.time.now);
 		//lanePos.x(横位置)の計算
 		recSetLine(lanePos.x, recfp.mapeff.move.x, recfp.time.now, 3);
 		//lanePos.y(縦位置)の計算

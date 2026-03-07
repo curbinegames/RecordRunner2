@@ -26,17 +26,16 @@ void RecPlayResetCamera() {
 	return;
 }
 
-void RecPlaySetCamera(rec_camera_set_t *camera, int Ntime) {
-	const     uint    num = camera->num;
-	const DxTime_t startT = camera->data[num].starttime;
-	const DxTime_t   endT = camera->data[num].endtime;
-	const      int  moveM = camera->data[num].mode;
-	const      int  nposX = camera->data[num].xpos;
-	const      int  nposY = camera->data[num].ypos;
-	const   double  nZoom = camera->data[num].zoom * 100;
-	const      int  bposX = (num == 0) ? 0 : camera->data[num - 1].xpos;
-	const      int  bposY = (num == 0) ? 0 : camera->data[num - 1].ypos;
-	const   double  bZoom = (num == 0) ? 1 : camera->data[num - 1].zoom * 100;
+void RecPlaySetCamera(const cvec<rec_camera_data_t> &camera, int Ntime) {
+	const DxTime_t startT = camera.nowData().starttime;
+	const DxTime_t   endT = camera.nowData().endtime;
+	const      int  moveM = camera.nowData().mode;
+	const      int  nposX = camera.nowData().xpos;
+	const      int  nposY = camera.nowData().ypos;
+	const   double  nZoom = camera.nowData().zoom * 100;
+	const      int  bposX = camera.offsetData(-1).xpos;
+	const      int  bposY = camera.offsetData(-1).ypos;
+	const   double  bZoom = camera.offsetData(-1).zoom * 100;
 
 	if (startT <= Ntime && Ntime <= endT) {
 		camera_pos.x    = (int)movecal(moveM, startT, bposX,       endT, nposX, Ntime);

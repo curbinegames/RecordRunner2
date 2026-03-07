@@ -1059,64 +1059,64 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 
 static void RecMapencSetCamera(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	rec_camera_data_t buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	const uint numC = recfp->mapeff.camera.num;
 	strmods(GT1, 8);
-	recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	buf.starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	buf.endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.camera.data[numC].xpos = strsans2(GT1) * 50;
+	buf.xpos = strsans2(GT1) * 50;
 	strnex(GT1);
-	recfp->mapeff.camera.data[numC].ypos = strsans2(GT1) * 50;
+	buf.ypos = strsans2(GT1) * 50;
 	strnex(GT1);
-	recfp->mapeff.camera.data[numC].zoom = strsans2(GT1);
+	buf.zoom = strsans2(GT1);
 	strnex(GT1);
-	recfp->mapeff.camera.data[numC].rot = strsans2(GT1);
+	buf.rot = strsans2(GT1);
 	strnex(GT1);
 	switch (GT1[0]) {
 	case L'a':
-		recfp->mapeff.camera.data[numC].mode = 2;
+		buf.mode = 2;
 		break;
 	case L'd':
-		recfp->mapeff.camera.data[numC].mode = 3;
+		buf.mode = 3;
 		break;
 	default:
-		recfp->mapeff.camera.data[numC].mode = 1;
+		buf.mode = 1;
 		break;
 	}
-	recfp->mapeff.camera.num++;
+	recfp->mapeff.camera.push_back(buf);
 	return;
 }
 
 static void RecMapencSetCamMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	rec_camera_data_t buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	const uint numC = recfp->mapeff.camera.num;
 	if (strands_direct(GT1, L"#CMOV:")) { strmods(GT1, 6); }
 	if (strands_direct(GT1, L"#CAMMOVE:")) { strmods(GT1, 9); }
-	recfp->mapeff.camera.data[numC].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	buf.starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.camera.data[numC].endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	buf.endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.camera.data[numC].xpos = strsans2(GT1) * 50;
+	buf.xpos = strsans2(GT1) * 50;
 	strnex(GT1);
-	recfp->mapeff.camera.data[numC].ypos = strsans2(GT1) * 50;
+	buf.ypos = strsans2(GT1) * 50;
 	strnex(GT1);
 	switch (GT1[0]) {
 	case L'a':
-		recfp->mapeff.camera.data[numC].mode = 2;
+		buf.mode = 2;
 		break;
 	case L'd':
-		recfp->mapeff.camera.data[numC].mode = 3;
+		buf.mode = 3;
 		break;
 	default:
-		recfp->mapeff.camera.data[numC].mode = 1;
+		buf.mode = 1;
 		break;
 	}
-	recfp->mapeff.camera.num++;
+	recfp->mapeff.camera.push_back(buf);
 	return;
 }
 
@@ -1168,14 +1168,7 @@ static void RecMapencSetNotes(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 #if 1 /* sub action */
 
 static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
-	recfp->mapeff.camera.data[0].starttime = 0;
-	recfp->mapeff.camera.data[0].endtime = 0;
-	recfp->mapeff.camera.data[0].xpos = 0;
-	recfp->mapeff.camera.data[0].ypos = 0;
-	recfp->mapeff.camera.data[0].zoom = 1;
-	recfp->mapeff.camera.data[0].rot = 0;
-	recfp->mapeff.camera.data[0].mode = 0;
-	recfp->mapeff.camera.num = 1;
+	recfp->mapeff.camera.push_back({ 0,0,0,0,1,0,0 });
 	recfp->mapeff.scrool.push_back(0, { 0,1 });
 	recfp->mapeff.viewT.push_back(0, 3000);
 	recfp->mapeff.carrow.push_back(0, 1);
