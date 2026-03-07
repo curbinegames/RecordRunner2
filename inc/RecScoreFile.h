@@ -210,16 +210,6 @@ typedef struct item_box {
 	int endalpha = 255;
 } item_box;
 
-typedef struct view_BPM_box {
-	int time = -1000;
-	unsigned short BPM = 1;
-} view_BPM_box;
-
-typedef struct rec_view_bpm_set_s {
-	view_BPM_box data[100];
-	int num = 0;
-} rec_view_bpm_set_t;
-
 typedef struct rec_notelock_allset_s {
 	tvec<bool> x{99};
 	tvec<bool> y{99};
@@ -246,7 +236,7 @@ typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	rec_camera_set_t camera;
 	rec_scrool_set_t scrool;
 	item_box Movie[999];
-	rec_view_bpm_set_t v_BPM;
+	tvec<double> v_BPM{99}; /* 表示上のBPM */
 	tvec<int> viewT{99}; /* ノーツの表示時間 */
 	tvec<int> carrow{99}; /* キャラの向き */ /* TODO: boolにする */
 	rec_notelock_allset_t lock;

@@ -559,16 +559,15 @@ static void RecMapencSetBpm(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, 
 
 static void RecMapencSetVBpm(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	int time_buf;
+	double data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	uint *num = &recfp->allnum.v_BPMnum;
-	view_BPM_box *dest = &recfp->mapeff.v_BPM.data[*num];
-
 	strmods(GT1, 7);
-	dest->time = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
+	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	dest->BPM = strsans(GT1);
-	(*num)++;
+	data_buf = strsans(GT1);
+	recfp->mapeff.v_BPM.push_back(time_buf, data_buf);
 	return;
 }
 
@@ -1310,8 +1309,7 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		else if (strands_direct(GT1, L"#BPM:")) {
 			strmods(GT1, 5);
 			mapenc.bpmG = recfp->mapdata.bpm = strsans2(GT1);
-			recfp->mapeff.v_BPM.data[0].time = recfp->time.offset;
-			recfp->mapeff.v_BPM.data[0].BPM = (unsigned short)recfp->mapdata.bpm;
+			recfp->mapeff.v_BPM.push_back(recfp->time.offset, recfp->mapdata.bpm);
 		}
 		//ノートのオフセットを読み込む
 		else if (strands_direct(GT1, L"#NOTEOFFSET:")) {

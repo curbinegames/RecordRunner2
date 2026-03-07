@@ -198,7 +198,6 @@ static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 	short MovieN, int Ntime, int Xmidline, dxcur_pic_c item[])
 {
-	view_BPM_box *v_BPM = &mapeff->v_BPM.data[mapeff->v_BPM.num];
 	int drawA;
 	int drawX;
 	int drawY;
@@ -232,15 +231,15 @@ static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 			drawY -= 25 + camera.y;
 		}
 		if (pMovie->eff.bpm_alphr == 1) {
-			drawA = lins(0, drawA, 60000 / v_BPM->BPM, 0,
-				(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
+			drawA = lins(0, drawA, 60000 / mapeff->v_BPM.nowData(), 0,
+				(Ntime - mapeff->v_BPM.nowDataTime()) % (int)(60000 / mapeff->v_BPM.nowData()));
 		}
 		if (pMovie->eff.chara_alphr == 1) {
 			drawA = lins(320, drawA, 60, 0, betweens(60, abss(Xmidline, drawX), 320));
 		}
 		if (pMovie->eff.bpm_size == 1) {
-			drawS = pals(60000 / v_BPM->BPM, drawS / 2, 0, drawS,
-				(Ntime - v_BPM->time) % (60000 / v_BPM->BPM));
+			drawS = pals(60000 / mapeff->v_BPM.nowData(), drawS / 2.0, 0, drawS,
+				(Ntime - mapeff->v_BPM.nowDataTime()) % (int)(60000 / mapeff->v_BPM.nowData()));
 		}
 		if (pMovie->eff.edge_size == 1) {
 			drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
@@ -273,13 +272,6 @@ static void RecPlayStepObjectNG(short objectNG[], const note_box_2_t note[], con
 		while (note[objectNG[iLine]].object == NOTE_GHOST) {
 			objectNG[iLine] = note[objectNG[iLine]].next;
 		}
-	}
-	return;
-}
-
-static void RecPlayStepViewBpmNum(rec_view_bpm_set_t *v_BPM, DxTime_t Ntime) {
-	while (IS_BETWEEN_LEFT_LESS(-1000, v_BPM->data[v_BPM->num + 1].time, Ntime)) {
-		v_BPM->num++;
 	}
 	return;
 }
@@ -334,7 +326,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 		recfp->mapeff.speedt[3].stepNoTime(recfp->time.now);
 	}
 
-	RecPlayStepViewBpmNum(&recfp->mapeff.v_BPM, recfp->time.now);
+	recfp->mapeff.v_BPM.stepNoTime(recfp->time.now);
 	RecPlayStepCameraNum(&recfp->mapeff.camera, recfp->time.now);
 	RecPlayStepScroolNum(&recfp->mapeff.scrool, recfp->time.now);
 	RecPlayStepMovieNum(recfp->mapeff.Movie, movieN, recfp->time.now);
@@ -1112,8 +1104,8 @@ private:
 		else {
 			drawX = lanePos->x[this->pos];
 
-			picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
-				20000 % 6 + mapeff->chamo[this->pos].nowData() * 6;
+			picID = (int)(Ntime * mapeff->v_BPM.nowData() / 20000) %
+				6 + mapeff->chamo[this->pos].nowData() * 6;
 		}
 		if (mapeff->carrow.nowData() == 1) {
 			DrawGraphRecField(drawX - 160, drawY, this->charaimg[picID]);
@@ -1464,7 +1456,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
 	short MovieN = 0;
-	rec_view_bpm_set_t v_BPM;
 	short objectN[3] = { 5999,5999,5999 }; //note number
 	short objectNG[3] = { 0,0,0 }; //note number without ghost note
 	rec_score_file_t recfp;
