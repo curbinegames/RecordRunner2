@@ -223,7 +223,7 @@ typedef struct rec_view_bpm_set_s {
 typedef struct rec_mapenc_viewtime_s {
 	int Stime = -10000; /* 適用時間 */
 	int Vtime = 3000; /* ノーツの表示時間 */
-} rec_mapenc_viewtime_st;
+} rec_mapenc_viewtime_st; /* TODO: 名前ミスってる。rec_mapeff_viewtime_st */
 
 typedef struct rec_chara_arrow_s {
 	struct {
@@ -233,19 +233,9 @@ typedef struct rec_chara_arrow_s {
 	int num = 0;
 } rec_chara_arrow_t;
 
-typedef struct rec_notelock_data_s {
-	bool en = true;
-	int Stime = -10000;
-} rec_notelock_data_t;
-
-typedef struct rec_notelock_set_s {
-	rec_notelock_data_t data[99];
-	uint num = 0;
-} rec_notelock_set_t;
-
 typedef struct rec_notelock_allset_s {
-	rec_notelock_set_t x;
-	rec_notelock_set_t y;
+	tvec<bool> x{99};
+	tvec<bool> y{99};
 } rec_notelock_allset_t;
 
 typedef struct rec_move_data_s {
@@ -265,12 +255,7 @@ typedef struct rec_move_all_set_s {
 	rec_move_set_t y[5];
 } rec_move_all_set_t;
 
-typedef struct rec_mapeff_speedt_s {
-	int time = -1; /* 適用時間 */
-	double speed = 1.0; /* 速度 */
-} rec_mapeff_speedt_st;
-
-typedef struct rec_map_eff_data_s {
+typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	rec_camera_set_t camera;
 	rec_scrool_set_t scrool;
 	item_box Movie[999];
@@ -279,7 +264,7 @@ typedef struct rec_map_eff_data_s {
 	rec_chara_arrow_t carrow;
 	rec_notelock_allset_t lock;
 	rec_move_all_set_t move;
-	tvec<int> chamo[3] = { tvec<int>(99) };
+	tvec<int> chamo[3] = { tvec<int>(99) }; /* キャラグラ変更タイミング */
 	tvec<int> fall{99}; /* 落ち者背景アイテム番号 */
 	tvec<bool> viewLine{99}; /* ガイドライン表示フラグ */
 	tvec<double> speedt[5] = { tvec<double>(99) }; /* ノーツ速度 */

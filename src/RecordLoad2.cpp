@@ -823,27 +823,27 @@ static void RecMapencSetGMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 
 static void RecMapencSetXLock(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	int time_buf;
+	double data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	rec_notelock_data_t *dest = &recfp->mapeff.lock.x.data[recfp->mapeff.lock.x.num];
-
 	strmods(GT1, 7);
-	dest->en    = !(dest[-1].en);
-	dest->Stime = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
-	recfp->mapeff.lock.x.num++;
+	data_buf = !(recfp->mapeff.lock.x.lastData());
+	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
+	recfp->mapeff.lock.x.push_back(time_buf, data_buf);
 	return;
 }
 
 static void RecMapencSetYLock(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	int time_buf;
+	double data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	rec_notelock_data_t *dest = &recfp->mapeff.lock.y.data[recfp->mapeff.lock.y.num];
-
 	strmods(GT1, 7);
-	dest->en    = !(dest[-1].en);
-	dest->Stime = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
-	recfp->mapeff.lock.y.num++;
+	data_buf = !(recfp->mapeff.lock.y.lastData());
+	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
+	recfp->mapeff.lock.y.push_back(time_buf, data_buf);
 	return;
 }
 
@@ -1188,12 +1188,8 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.carrow.d[0].data = 1;
 	recfp->mapeff.carrow.d[0].time = 0;
 	recfp->mapeff.carrow.num       = 1;
-	recfp->mapeff.lock.x.data[0].en    = false;
-	recfp->mapeff.lock.x.data[0].Stime = 0;
-	recfp->mapeff.lock.x.num           = 1;
-	recfp->mapeff.lock.y.data[0].en    = true;
-	recfp->mapeff.lock.y.data[0].Stime = 0;
-	recfp->mapeff.lock.y.num           = 1;
+	recfp->mapeff.lock.x.push_back(0, false);
+	recfp->mapeff.lock.y.push_back(0, true);
 	recfp->mapeff.move.y[0].d[0].Stime = 0;
 	recfp->mapeff.move.y[0].d[0].pos = 300;
 	recfp->mapeff.move.y[0].d[0].Etime = 0;
@@ -1254,10 +1250,8 @@ static void RecMapLoad_SetEndRecfp(rec_score_file_t *recfp, rec_mapenc_data_t *m
 	recfp->mapdata.note[mapenc->objectN + 1].hittime = -1;
 	recfp->mapdata.note[mapenc->objectN].object = NOTE_GHOST;
 	recfp->mapdata.note[mapenc->objectN].ypos = 1000;
-	recfp->mapeff.lock.x.data[recfp->mapeff.lock.x.num].en    =   true;
-	recfp->mapeff.lock.x.data[recfp->mapeff.lock.x.num].Stime = -10000;
-	recfp->mapeff.lock.y.data[recfp->mapeff.lock.y.num].en    =  false;
-	recfp->mapeff.lock.y.data[recfp->mapeff.lock.y.num].Stime = -10000;
+	recfp->mapeff.lock.x.push_back(mapenc->timer[0], true);
+	recfp->mapeff.lock.y.push_back(mapenc->timer[0], false);
 	recfp->allnum.notenum[1]++;
 	recfp->time.end = mapenc->timer[0];
 	return;

@@ -99,8 +99,8 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->chamo[1].resetNo();
 	mapeff->chamo[2].resetNo();
 	mapeff->fall.resetNo();
-	mapeff->lock.x.num = 0;
-	mapeff->lock.y.num = 0;
+	mapeff->lock.x.resetNo();
+	mapeff->lock.y.resetNo();
 	mapeff->viewT.resetNo();
 	mapeff->speedt[0].resetNo();
 	mapeff->speedt[1].resetNo();
@@ -323,16 +323,6 @@ static void RecPlayStepCharaArrowNum(rec_chara_arrow_t *carrow, DxTime_t Ntime) 
 	return;
 }
 
-static void RecPlayStepLockNum(rec_map_eff_data_t *mapeff, DxTime_t Ntime) {
-	while (IS_BETWEEN(0, mapeff->lock.x.data[mapeff->lock.x.num + 1].Stime, Ntime)) {
-		mapeff->lock.x.num++;
-	}
-	while (IS_BETWEEN(0, mapeff->lock.y.data[mapeff->lock.y.num + 1].Stime, Ntime)) {
-		mapeff->lock.y.num++;
-	}
-	return;
-}
-
 static void RecPlayStepViewTimeNum(
 	datacur_cursor_vector<rec_mapenc_viewtime_st> &viewT, DxTime_t Ntime
 ) {
@@ -366,7 +356,8 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	}
 	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
 	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
-	RecPlayStepLockNum(&recfp->mapeff, recfp->time.now);
+	recfp->mapeff.lock.x.stepNoTime(recfp->time.now);
+	recfp->mapeff.lock.y.stepNoTime(recfp->time.now);
 	RecPlayStepViewTimeNum(recfp->mapeff.viewT, recfp->time.now);
 	recfp->mapeff.viewLine.stepNoTime(recfp->time.now);
 	return;
@@ -504,17 +495,11 @@ static void RecPlayGetTimeLanePosBase(int *DrawX, int *DrawY, rec_move_all_set_t
 static void RecPlayGetTimeLanePos(int *retX, int *retY, rec_map_eff_data_t *mapeff,
 	const rec_play_lanepos_t *lanePos, int iLine, int Ntime, int Ptime)
 {
-	int YlockNoAdd = 0;
-
-	while (IS_BETWEEN(0, mapeff->lock.y.data[mapeff->lock.y.num + YlockNoAdd + 1].Stime, Ptime)) {
-		YlockNoAdd++;
-	}
-
-	RecPlayGetTimeLanePosBase(retX, retY, &mapeff->move, lanePos,
-		mapeff->speedt[iLine].searchDataFront(Ptime),
-		mapeff->lock.y.data[mapeff->lock.y.num + YlockNoAdd].en,
+	/* TODO: 関数まとめ */
+	RecPlayGetTimeLanePosBase(retX, retY, &mapeff->move,
+		lanePos, mapeff->speedt[iLine].searchDataFront(Ptime),
+		mapeff->lock.y.searchDataFront(Ptime),
 		&mapeff->scrool, Ntime, Ptime, iLine);
-	return;
 }
 
 void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos) {
@@ -897,21 +882,6 @@ private:
 		return 0;
 	}
 
-	void StepNoDrawNote(bool *XLockp, bool *YLockp,
-		int hit_time, const rec_map_eff_data_t *mapeff
-	) {
-		int XLockNoAdd = mapeff->lock.x.num;
-		int YLockNoAdd = mapeff->lock.y.num;
-
-		//ノーツロックナンバーを進める
-		while (IS_BETWEEN(0, mapeff->lock.x.data[XLockNoAdd + 1].Stime, hit_time)) { XLockNoAdd++; }
-		(*XLockp) = mapeff->lock.x.data[XLockNoAdd].en;
-
-		while (IS_BETWEEN(0, mapeff->lock.y.data[YLockNoAdd + 1].Stime, hit_time)) { YLockNoAdd++; }
-		(*YLockp) = mapeff->lock.y.data[YLockNoAdd].en;
-		return;
-	}
-
 	void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_t *lanePos,
 		bool XLockp, bool YLockp, const note_box_2_t *note, double speedt, const rec_scrool_set_t *scrool,
 		int Ntime, int iLine)
@@ -935,10 +905,9 @@ private:
 		int DrawY = 0;
 		int DrawC = 0;
 		int DrawID = 0;
-		bool XLockp = false;
-		bool YLockp = false;
+		bool XLockp = mapeff->lock.x.searchDataFront(note->hittime);
+		bool YLockp = mapeff->lock.y.searchDataFront(note->hittime);
 		double Speedp = mapeff->speedt[iLine].searchDataFront(note->hittime);
-		this->StepNoDrawNote(&XLockp, &YLockp, note->hittime, mapeff);
 		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp,
 			&mapeff->scrool, Ntime, iLine);
 		switch (note->object) {
