@@ -75,14 +75,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.move.x[2].num = 0;
 	recfp->mapeff.lock.x.fread(fp); /* ノーツ固定切り替えタイミング */
 	recfp->mapeff.lock.y.fread(fp);
-	{
-		int buf[2][99];
-		fread(buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
-		for (int i = 0; i < 99; i++) {
-			recfp->mapeff.carrow.d[i].data = buf[0][i];
-			recfp->mapeff.carrow.d[i].time = buf[1][i];
-		}
-	}
+	recfp->mapeff.carrow.fread(fp); /* キャラ向き切り替えタイミング */
 	recfp->mapeff.viewT.fread(fp); /* ノーツ表示時間変換タイミング */
 	fread(&recfp->mapdata.note, sizeof(note_box_2_t),
 		recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
@@ -151,14 +144,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	fwrite(&recfp->mapeff.move.x[2].d, sizeof(rec_move_data_t), recfp->allnum.Xmovenum[2], fp);//下レーン横位置移動タイミング
 	recfp->mapeff.lock.x.fwrite(fp); /* ノーツ固定切り替えタイミング */
 	recfp->mapeff.lock.y.fwrite(fp);
-	{
-		int buf[2][99];
-		for (int inum = 0; inum < 99; inum++) {
-			buf[0][inum] = recfp->mapeff.carrow.d[inum].data;
-			buf[1][inum] = recfp->mapeff.carrow.d[inum].time;
-		}
-		fwrite(&buf, sizeof(int), 198, fp);//キャラ向き切り替えタイミング
-	}
+	recfp->mapeff.carrow.fwrite(fp); /* キャラ向き切り替えタイミング */
 	recfp->mapeff.viewT.fwrite(fp); /* ノーツ表示時間変換タイミング */
 	fwrite(&recfp->mapdata.note, sizeof(note_box_2_t), recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2], fp); /* ノーツデータ */
 	fwrite(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数

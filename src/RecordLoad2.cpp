@@ -849,12 +849,14 @@ static void RecMapencSetYLock(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 
 static void RecMapencSetCArrow(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	int time_buf;
+	int data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	strmods(GT1, 8);
-	recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].data = recfp->mapeff.carrow.d[recfp->mapeff.carrow.num - 1].data * -1;
-	recfp->mapeff.carrow.d[recfp->mapeff.carrow.num].time = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
-	recfp->mapeff.carrow.num++;
+	data_buf = recfp->mapeff.carrow.lastData() * -1;
+	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
+	recfp->mapeff.carrow.push_back(time_buf, data_buf);
 	return;
 }
 
@@ -1185,9 +1187,7 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.scrool.data[0].speed     = 1;
 	recfp->mapeff.scrool.num               = 1;
 	recfp->mapeff.viewT.push_back({ 0,3000 });
-	recfp->mapeff.carrow.d[0].data = 1;
-	recfp->mapeff.carrow.d[0].time = 0;
-	recfp->mapeff.carrow.num       = 1;
+	recfp->mapeff.carrow.push_back(0, 1);
 	recfp->mapeff.lock.x.push_back(0, false);
 	recfp->mapeff.lock.y.push_back(0, true);
 	recfp->mapeff.move.y[0].d[0].Stime = 0;

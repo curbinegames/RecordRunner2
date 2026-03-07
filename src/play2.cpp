@@ -86,7 +86,7 @@ static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[], 
 static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->camera.num = 0;
 	mapeff->scrool.num = 0;
-	mapeff->carrow.num = 0;
+	mapeff->carrow.resetNo();
 	mapeff->move.y[0].num = 0;
 	mapeff->move.y[1].num = 0;
 	mapeff->move.y[2].num = 0;
@@ -316,13 +316,6 @@ static void RecPlayStepGuideLineNum(short guideN[], const rec_move_set_t ymove[]
 	return;
 }
 
-static void RecPlayStepCharaArrowNum(rec_chara_arrow_t *carrow, DxTime_t Ntime) {
-	while (IS_BETWEEN_RIGHT_LESS(0, carrow->d[carrow->num + 1].time, Ntime)) {
-		carrow->num++;
-	}
-	return;
-}
-
 static void RecPlayStepViewTimeNum(
 	datacur_cursor_vector<rec_mapenc_viewtime_st> &viewT, DxTime_t Ntime
 ) {
@@ -355,7 +348,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 		recfp->mapeff.fall.stepNoTime(recfp->time.now);
 	}
 	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
-	RecPlayStepCharaArrowNum(&recfp->mapeff.carrow, recfp->time.now);
+	recfp->mapeff.carrow.stepNoTime(recfp->time.now);
 	recfp->mapeff.lock.x.stepNoTime(recfp->time.now);
 	recfp->mapeff.lock.y.stepNoTime(recfp->time.now);
 	RecPlayStepViewTimeNum(recfp->mapeff.viewT, recfp->time.now);
@@ -1131,7 +1124,7 @@ private:
 			picID = Ntime * mapeff->v_BPM.data[mapeff->v_BPM.num].BPM /
 				20000 % 6 + mapeff->chamo[this->pos].nowData() * 6;
 		}
-		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
+		if (mapeff->carrow.nowData() == 1) {
 			DrawGraphRecField(drawX - 160, drawY, this->charaimg[picID]);
 		}
 		else {
@@ -1184,7 +1177,7 @@ public:
 		rec_play_lanepos_t *lanePos, int charahit, int Ntime)
 	{
 		// view chara pos guide
-		if (mapeff->carrow.d[mapeff->carrow.num].data == 1) {
+		if (mapeff->carrow.nowData() == 1) {
 			DrawGraphRecField(lanePos->x[this->pos] - 4, lanePos->y[this->pos] - 4, this->charaguideimg.handle());
 		}
 		else {

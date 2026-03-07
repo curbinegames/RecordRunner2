@@ -225,14 +225,6 @@ typedef struct rec_mapenc_viewtime_s {
 	int Vtime = 3000; /* ノーツの表示時間 */
 } rec_mapenc_viewtime_st; /* TODO: 名前ミスってる。rec_mapeff_viewtime_st */
 
-typedef struct rec_chara_arrow_s {
-	struct {
-		int data = 0;
-		int time = -10000;
-	} d[99];
-	int num = 0;
-} rec_chara_arrow_t;
-
 typedef struct rec_notelock_allset_s {
 	tvec<bool> x{99};
 	tvec<bool> y{99};
@@ -261,7 +253,7 @@ typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	item_box Movie[999];
 	rec_view_bpm_set_t v_BPM;
 	datacur_cursor_vector<rec_mapenc_viewtime_st> viewT{99};
-	rec_chara_arrow_t carrow;
+	tvec<int> carrow{99}; /* キャラの向き */ /* TODO: boolにする */
 	rec_notelock_allset_t lock;
 	rec_move_all_set_t move;
 	tvec<int> chamo[3] = { tvec<int>(99) }; /* キャラグラ変更タイミング */
