@@ -316,12 +316,6 @@ static void RecPlayStepGuideLineNum(short guideN[], const rec_move_set_t ymove[]
 	return;
 }
 
-static void RecPlayStepViewTimeNum(
-	datacur_cursor_vector<rec_mapenc_viewtime_st> &viewT, DxTime_t Ntime
-) {
-	while (!viewT.isEndNo() && IS_BETWEEN(0, viewT.offsetData(1).Stime, Ntime)) { viewT.stepNo(); }
-}
-
 static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *movieN,
 	short *guideN, const short *objectN)
 {
@@ -351,7 +345,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	recfp->mapeff.carrow.stepNoTime(recfp->time.now);
 	recfp->mapeff.lock.x.stepNoTime(recfp->time.now);
 	recfp->mapeff.lock.y.stepNoTime(recfp->time.now);
-	RecPlayStepViewTimeNum(recfp->mapeff.viewT, recfp->time.now);
+	recfp->mapeff.viewT.stepNoTime(recfp->time.now);
 	recfp->mapeff.viewLine.stepNoTime(recfp->time.now);
 	return;
 }
@@ -859,17 +853,14 @@ private:
 	/**
 	 * return 0 = normal, 1 = continue, 2 = break;
 	 */
-	int StepViewNoDrawNote(const datacur_cursor_vector<rec_mapenc_viewtime_st> &viewT, int hittime, int Ntime) {
-		int viewTadd = 0;
-		//表示/非表示ナンバーを進める
-		while ((viewT.nowNo() + viewTadd + 1) < viewT.size() &&
-			IS_BETWEEN(0, viewT.offsetData(viewTadd + 1).Stime, hittime)) { viewTadd++; }
+	int StepViewNoDrawNote(const tvec<int> &viewT, int hittime, int Ntime) {
+		/* TODO: 関数まとめ */
 		//3秒ブレーク
-		if (IS_BETWEEN(viewT.offsetData(viewTadd).Vtime, 3000, hittime - Ntime)) {
+		if (IS_BETWEEN(viewT.searchDataFront(hittime), 3000, hittime - Ntime)) {
 			return 2;
 		}
 		//非表示スキップ
-		if (hittime - Ntime >= viewT.offsetData(viewTadd).Vtime) {
+		if (hittime - Ntime >= viewT.searchDataFront(hittime)) {
 			return 1;
 		}
 		return 0;
