@@ -180,16 +180,6 @@ static note_material GetNoteObjMat(TCHAR code) {
 	return NOTE_NONE;
 }
 
-static void CalNoteViewTime(note_box_2_t *note, rec_scrool_set_t *scrool) {
-	int num = 0;
-	while (0 <= scrool->data[num + 1].starttime &&
-		scrool->data[num + 1].starttime <= note->hittime) {
-		num++;
-	}
-	note->viewtime = note->hittime * scrool->data[num].speed + scrool->data[num].basetime;
-	return;
-}
-
 /* Ä‹AŠÖ”‚É‚È‚Á‚Ä‚¢‚éAÅ‘å2‰ñŒÄ‚Î‚ê‚é */
 void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 	double StartTime, double MovePos, double EndTime, int MoveMode, double bpmG,
@@ -355,7 +345,9 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	strcode = RecEncNoteGetStrcode(c, mapenc->customnote);
 	notedata->object = GetNoteObjMat(strcode);
 	//viewtime‚ðŒvŽZ‚·‚é
-	CalNoteViewTime(notedata, &recfp->mapeff.scrool);
+	notedata->viewtime =
+		notedata->hittime * recfp->mapeff.scrool.searchData(notedata->hittime).speed +
+		recfp->mapeff.scrool.searchData(notedata->hittime).basetime;
 	notedata->ypos = 50 * iLine + 300;
 	notedata->xpos = 150;
 	/* cˆÊ’u‚ðŒvŽZ‚·‚é */ {
@@ -1130,20 +1122,20 @@ static void RecMapencSetCamMove(rec_score_file_t *recfp, rec_mapenc_data_t *mape
 
 static void RecMapencSetScrool(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	int time_buf;
+	rec_scrool_data_t data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	int temp = 0;
 
-	const uint numS = recfp->mapeff.scrool.num;
 	strmods(GT1, 8);
-	recfp->mapeff.scrool.data[numS].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	time_buf = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.scrool.data[numS].speed = strsans2(GT1);
-	temp = recfp->mapeff.scrool.data[numS - 1].speed *
-		recfp->mapeff.scrool.data[numS].starttime + recfp->mapeff.scrool.data[numS - 1].basetime;
-	recfp->mapeff.scrool.data[numS].basetime = temp - recfp->mapeff.scrool.data[numS].speed *
-		recfp->mapeff.scrool.data[numS].starttime;
-	recfp->mapeff.scrool.num++;
+	data_buf.speed = strsans2(GT1);
+	temp = recfp->mapeff.scrool.lastData().speed *
+		time_buf + recfp->mapeff.scrool.lastData().basetime;
+	data_buf.basetime = temp - data_buf.speed * time_buf;
+	recfp->mapeff.scrool.push_back(time_buf, data_buf);
 	return;
 }
 
@@ -1184,10 +1176,7 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.camera.data[0].rot = 0;
 	recfp->mapeff.camera.data[0].mode = 0;
 	recfp->mapeff.camera.num = 1;
-	recfp->mapeff.scrool.data[0].starttime = 0;
-	recfp->mapeff.scrool.data[0].basetime  = 0;
-	recfp->mapeff.scrool.data[0].speed     = 1;
-	recfp->mapeff.scrool.num               = 1;
+	recfp->mapeff.scrool.push_back(0, { 0,1 });
 	recfp->mapeff.viewT.push_back(0, 3000);
 	recfp->mapeff.carrow.push_back(0, 1);
 	recfp->mapeff.lock.x.push_back(0, false);

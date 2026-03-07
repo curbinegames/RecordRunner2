@@ -84,7 +84,7 @@ static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[]) 
 
 static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->camera.num = 0;
-	mapeff->scrool.num = 0;
+	mapeff->scrool.resetNo();
 	mapeff->carrow.resetNo();
 	mapeff->move.y[0].num = 0;
 	mapeff->move.y[1].num = 0;
@@ -282,15 +282,9 @@ static void RecPlayStepCameraNum(rec_camera_set_t *camera, DxTime_t Ntime) {
 	return;
 }
 
-static void RecPlayStepScroolNum(rec_scrool_set_t *scrool, DxTime_t Ntime) {
-	while (IS_BETWEEN(0, scrool->data[scrool->num + 1].starttime, Ntime)) {
-		scrool->num++;
-	}
-	return;
-}
-
 static void RecPlayStepMovieNum(cvec<item_box> &movie, DxTime_t Ntime) {
 	if (optiondata.backbright == 0) { return; }
+	if (movie.size() == 0) { return; }
 	while (IS_BETWEEN_LESS(-500, movie.nowData().endtime, Ntime)) { movie.stepNo(); }
 }
 
@@ -326,7 +320,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG,
 
 	recfp->mapeff.v_BPM.stepNoTime(recfp->time.now);
 	RecPlayStepCameraNum(&recfp->mapeff.camera, recfp->time.now);
-	RecPlayStepScroolNum(&recfp->mapeff.scrool, recfp->time.now);
+	recfp->mapeff.scrool.stepNoTime(recfp->time.now);
 	RecPlayStepMovieNum(recfp->mapeff.Movie, recfp->time.now);
 	if (optiondata.backbright != 0) {
 		recfp->mapeff.fall.stepNoTime(recfp->time.now);
@@ -455,11 +449,12 @@ static int RecMapGetPosFromMove(rec_move_set_t move[], int time, int lane) {
 }
 
 static void RecPlayGetTimeLanePosBase(int *DrawX, int *DrawY, rec_move_all_set_t *move,
-	const rec_play_lanepos_t *lanePos, double speedt, bool Ylock, rec_scrool_set_t *scrool, int Ntime, int Ptime, int lane)
-{
+	const rec_play_lanepos_t *lanePos, double speedt, bool Ylock, const rec_scrool_data_t &scrool,
+	int Ntime, int Ptime, int lane
+) {
 	/* TODO: 今後使うから消すな */
-	const double scroolSpeed = scrool->data[scrool->num].speed;
-	const double scroolBaseTime = scrool->data[scrool->num].basetime;
+	const double scroolSpeed = scrool.speed;
+	const double scroolBaseTime = scrool.basetime;
 
 	*DrawY = (Ylock ? RecMapGetPosFromMove(move->y, Ptime, lane) : lanePos->y[lane]) + 15;
 
@@ -473,10 +468,10 @@ static void RecPlayGetTimeLanePos(int *retX, int *retY, rec_map_eff_data_t *mape
 	const rec_play_lanepos_t *lanePos, int iLine, int Ntime, int Ptime)
 {
 	/* TODO: 関数まとめ */
-	RecPlayGetTimeLanePosBase(retX, retY, &mapeff->move,
-		lanePos, mapeff->speedt[iLine].searchDataFront(Ptime),
+	RecPlayGetTimeLanePosBase(retX, retY, &mapeff->move, lanePos,
+		mapeff->speedt[iLine].searchDataFront(Ptime),
 		mapeff->lock.y.searchDataFront(Ptime),
-		&mapeff->scrool, Ntime, Ptime, iLine);
+		mapeff->scrool.nowData(), Ntime, Ptime, iLine);
 }
 
 void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos) {
@@ -857,16 +852,13 @@ private:
 	}
 
 	void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_t *lanePos,
-		bool XLockp, bool YLockp, const note_box_2_t *note, double speedt, const rec_scrool_set_t *scrool,
-		int Ntime, int iLine)
+		bool XLockp, bool YLockp, const note_box_2_t *note, double speedt,
+		const rec_scrool_data_t &scrool, int Ntime, int iLine)
 	{
-		const double scroolSpeed = scrool->data[scrool->num].speed;
-		const double scroolBaseTime = scrool->data[scrool->num].basetime;
-
 		//縦位置
 		*DrawY = (YLockp ? note->ypos : lanePos->y[iLine]);
 		//横位置
-		*DrawX = (2 * speedt * (note->viewtime - scroolSpeed * Ntime - scroolBaseTime) / 5);
+		*DrawX = (2 * speedt * (note->viewtime - scrool.speed * Ntime - scrool.basetime) / 5);
 		*DrawX += (XLockp ? note->xpos : lanePos->x[iLine]);
 		//色
 		*DrawC = note->color;
@@ -882,8 +874,8 @@ private:
 		bool XLockp = mapeff->lock.x.searchDataFront(note->hittime);
 		bool YLockp = mapeff->lock.y.searchDataFront(note->hittime);
 		double Speedp = mapeff->speedt[iLine].searchDataFront(note->hittime);
-		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp, note, Speedp,
-			&mapeff->scrool, Ntime, iLine);
+		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp,
+			note, Speedp, mapeff->scrool.nowData(), Ntime, iLine);
 		switch (note->object) {
 		case 1: /* TODO: enumにする */
 		case 3:
@@ -959,7 +951,7 @@ private:
 
 	/* (ret / 100) */
 	void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, int cam) {
-		const double scrool = mapeff->scrool.data[mapeff->scrool.num].speed;
+		const double scrool = mapeff->scrool.nowData().speed;
 		double speed3 = mapeff->speedt[3].nowData();
 		double speed4 = mapeff->speedt[4].nowData();
 

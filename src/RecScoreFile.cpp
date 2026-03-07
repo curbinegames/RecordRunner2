@@ -92,7 +92,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	fread(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
 	recfp->mapeff.Movie.fread(fp); /* アイテムデータ */
 	fread(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
-	fread(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
+	recfp->mapeff.scrool.fread(fp); /* スクロールデータ */
 	recfp->mapeff.v_BPM.fread(fp); /* 見た目のBPMデータ */
 	recfp->mapeff.viewLine.fread(fp); /* ラインガイドの表示/非表示 */
 	fread(&recfp->outpoint, sizeof(int), 2, fp);//エラーデータ
@@ -157,7 +157,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	fwrite(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
 	recfp->mapeff.Movie.fwrite(fp); /* アイテムデータ */
 	fwrite(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
-	fwrite(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
+	recfp->mapeff.scrool.fwrite(fp); /* スクロールデータ */
 	recfp->mapeff.v_BPM.fwrite(fp); /* 見た目のBPMデータ */
 	recfp->mapeff.viewLine.fwrite(fp); /* ラインガイドの表示/非表示 */
 	fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
