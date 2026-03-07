@@ -90,7 +90,7 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	fread(&recfp->mapdata.ddif, sizeof(int), 25, fp);//各区間難易度データ
 	fread(&recfp->mapdata.ddifG, sizeof(int), 2, fp);//各区間難易度データ
 	fread(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
-	fread(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//アイテムデータ
+	recfp->mapeff.Movie.fread(fp); /* アイテムデータ */
 	fread(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
 	fread(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
 	recfp->mapeff.v_BPM.fread(fp); /* 見た目のBPMデータ */
@@ -155,7 +155,7 @@ int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path) {
 	fwrite(&dummy, sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&recfp->mapdata.ddifG[1], sizeof(int), 1, fp);//各区間難易度データ
 	fwrite(&recfp->nameset.DifFN, 255, 1, fp);//難易度バー名
-	fwrite(&recfp->mapeff.Movie, sizeof(item_box), recfp->allnum.movienum, fp);//動画データ
+	recfp->mapeff.Movie.fwrite(fp); /* アイテムデータ */
 	fwrite(&recfp->mapeff.camera, sizeof(rec_camera_data_t), 255, fp);//カメラデータ
 	fwrite(&recfp->mapeff.scrool, sizeof(rec_scrool_data_t), 99, fp);//スクロールデータ
 	recfp->mapeff.v_BPM.fwrite(fp); /* 見た目のBPMデータ */

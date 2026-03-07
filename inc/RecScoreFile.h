@@ -235,7 +235,7 @@ typedef struct rec_move_all_set_s {
 typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	rec_camera_set_t camera;
 	rec_scrool_set_t scrool;
-	item_box Movie[999];
+	cvec<item_box> Movie{999}; /* 画像アイテムリスト */
 	tvec<double> v_BPM{99}; /* 表示上のBPM */
 	tvec<int> viewT{99}; /* ノーツの表示時間 */
 	tvec<int> carrow{99}; /* キャラの向き */ /* TODO: boolにする */

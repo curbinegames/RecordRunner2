@@ -73,13 +73,12 @@ typedef struct note_img {
 
 #if 1 /* sub action */
 
-static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[], short *MovieN) {
+static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[]) {
 	*itemN = 0;
 	*SitemN = 0;
 	LineMoveN[0] = 0;
 	LineMoveN[1] = 0;
 	LineMoveN[2] = 0;
-	*MovieN = 0;
 	return;
 }
 
@@ -107,6 +106,7 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->speedt[2].resetNo();
 	mapeff->speedt[3].resetNo();
 	mapeff->speedt[4].resetNo();
+	mapeff->Movie.resetNo();
 	return;
 }
 
@@ -195,9 +195,7 @@ static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	return;
 }
 
-static void PlayDrawItem(rec_map_eff_data_t *mapeff,
-	short MovieN, int Ntime, int Xmidline, dxcur_pic_c item[])
-{
+static void PlayDrawItem(rec_map_eff_data_t *mapeff, int Ntime, int Xmidline, dxcur_pic_c item[]) {
 	int drawA;
 	int drawX;
 	int drawY;
@@ -205,7 +203,8 @@ static void PlayDrawItem(rec_map_eff_data_t *mapeff,
 	int drawR;
 	rec_play_xy_set_t camera;
 	RecPlayGetCameraPos(&camera.x, &camera.y);
-	for (item_box *pMovie = &mapeff->Movie[MovieN]; pMovie->endtime > -500; pMovie++) {
+	for (size_t i = mapeff->Movie.nowNo(); i < mapeff->Movie.size(); i++) {
+		const item_box *pMovie = &mapeff->Movie.at(i);
 		if ((Ntime < pMovie->starttime) || (pMovie->endtime < Ntime)) { continue; }
 		//base setting
 		drawA = (int)movecal(pMovie->movemode,
@@ -290,10 +289,9 @@ static void RecPlayStepScroolNum(rec_scrool_set_t *scrool, DxTime_t Ntime) {
 	return;
 }
 
-static void RecPlayStepMovieNum(const item_box movie[], short *movieN, DxTime_t Ntime) {
+static void RecPlayStepMovieNum(cvec<item_box> &movie, DxTime_t Ntime) {
 	if (optiondata.backbright == 0) { return; }
-	while (IS_BETWEEN_LESS(-500, movie[*movieN].endtime, Ntime)) { (*movieN)++;}
-	return;
+	while (IS_BETWEEN_LESS(-500, movie.nowData().endtime, Ntime)) { movie.stepNo(); }
 }
 
 static void RecPlayStepGuideLineNum(short guideN[], const rec_move_set_t ymove[], DxTime_t Ntime) {
@@ -308,7 +306,7 @@ static void RecPlayStepGuideLineNum(short guideN[], const rec_move_set_t ymove[]
 	return;
 }
 
-static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *movieN,
+static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG,
 	short *guideN, const short *objectN)
 {
 	RecPlayStepObjectNG(objectNG, recfp->mapdata.note, objectN);
@@ -329,7 +327,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 	recfp->mapeff.v_BPM.stepNoTime(recfp->time.now);
 	RecPlayStepCameraNum(&recfp->mapeff.camera, recfp->time.now);
 	RecPlayStepScroolNum(&recfp->mapeff.scrool, recfp->time.now);
-	RecPlayStepMovieNum(recfp->mapeff.Movie, movieN, recfp->time.now);
+	RecPlayStepMovieNum(recfp->mapeff.Movie, recfp->time.now);
 	if (optiondata.backbright != 0) {
 		recfp->mapeff.fall.stepNoTime(recfp->time.now);
 	}
@@ -344,7 +342,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG, short *m
 
 /* キー入力 */
 static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFrag, short objectN[],
-	short *itemN, short *SitemN, short LineMoveN[], short *MovieN, short *objectNG)
+	short *itemN, short *SitemN, short LineMoveN[], short *objectNG)
 {
 	InputAllKeyHold();
 	if (AutoFlag == 1) {
@@ -369,7 +367,7 @@ static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFra
 		recfp->time.now = maxs_2(recfp->time.now - 10000, 0);
 		RecResetPlayObjectNum(objectN, recfp);
 		RecResetPlayRecfpMapeffNum(&recfp->mapeff);
-		RecResetPlayPartNum(itemN, SitemN, LineMoveN, MovieN);
+		RecResetPlayPartNum(itemN, SitemN, LineMoveN);
 		for (int iLane = 0; iLane < 3; iLane++) {
 			while (recfp->mapdata.note[objectN[iLane]].hittime < recfp->time.now &&
 				recfp->mapdata.note[objectN[iLane]].next != 5999)
@@ -1455,7 +1453,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	/* struct */
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
-	short MovieN = 0;
 	short objectN[3] = { 5999,5999,5999 }; //note number
 	short objectNG[3] = { 0,0,0 }; //note number without ghost note
 	rec_score_file_t recfp;
@@ -1550,10 +1547,10 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		//キー入力
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-		RecPlayStepAllNum(&recfp, objectNG, &MovieN, LineMoveN, objectN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
+		RecPlayStepAllNum(&recfp, objectNG, LineMoveN, objectN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
 		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, objectNG, AutoFlag);
 		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, objectN, &itemN,
-			&SitemN, LineMoveN, &MovieN, objectNG);
+			&SitemN, LineMoveN, objectNG);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			RecSysBgmStop();
 			return SCENE_SERECT;
@@ -1627,7 +1624,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 		//アイテム表示
 		if (optiondata.backbright != 0) {
-			PlayDrawItem(&recfp.mapeff, MovieN, recfp.time.now, lanePos.x[1], item);
+			PlayDrawItem(&recfp.mapeff, recfp.time.now, lanePos.x[1], item);
 		}
 		// view line
 		PlayShowAllGuideLine(&recfp, &lanePos, LineMoveN);

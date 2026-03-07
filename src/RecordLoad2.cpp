@@ -903,49 +903,50 @@ static void RecMapencSetVLane(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 
 static void RecMapencSetMovie(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	item_box buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	strmods(GT1, 7);
-	recfp->mapeff.Movie[mapenc->MovieN].ID = strsans(GT1);
+	buf.ID = strsans(GT1);
 	strnex(GT1);
 	switch (GT1[0]) {
 	case L'l':
-		recfp->mapeff.Movie[mapenc->MovieN].movemode = 1;
+		buf.movemode = 1;
 		break;
 	case L'a':
-		recfp->mapeff.Movie[mapenc->MovieN].movemode = 2;
+		buf.movemode = 2;
 		break;
 	case L'd':
-		recfp->mapeff.Movie[mapenc->MovieN].movemode = 3;
+		buf.movemode = 3;
 		break;
 	}
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	buf.starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
+	buf.endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].startXpos = (int)(strsans2(GT1) * 50 + 115);
+	buf.startXpos = (int)(strsans2(GT1) * 50 + 115);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].endXpos = (int)(strsans2(GT1) * 50 + 115);
+	buf.endXpos = (int)(strsans2(GT1) * 50 + 115);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].startYpos = (int)(strsans2(GT1) * 50 + 115);
+	buf.startYpos = (int)(strsans2(GT1) * 50 + 115);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].endYpos = (int)(strsans2(GT1) * 50 + 115);
+	buf.endYpos = (int)(strsans2(GT1) * 50 + 115);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].startsize = (int)(strsans2(GT1) * 100);
+	buf.startsize = (int)(strsans2(GT1) * 100);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].endsize = (int)(strsans2(GT1) * 100);
+	buf.endsize = (int)(strsans2(GT1) * 100);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].startrot = strsans(GT1);
+	buf.startrot = strsans(GT1);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].endrot = strsans(GT1);
+	buf.endrot = strsans(GT1);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].startalpha = (int)(strsans2(GT1) * 255.0);
+	buf.startalpha = (int)(strsans2(GT1) * 255.0);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].endalpha = (int)(strsans2(GT1) * 255.0);
+	buf.endalpha = (int)(strsans2(GT1) * 255.0);
 	strnex(GT1);
-	recfp->mapeff.Movie[mapenc->MovieN].eff = set_pic_mat(GT1);
-	(mapenc->MovieN)++;
+	buf.eff = set_pic_mat(GT1);
+	recfp->mapeff.Movie.push_back(buf);
 	recfp->allnum.movienum++;
 	return;
 }
@@ -1036,28 +1037,29 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 	strnex(GT1);
 	G[13] = strsans2(GT1) * 255.0; /* ea */
 	for (uint inum = 0; inum < mapenc->item_set[itemNo].num; inum++) {
-		mapeff->Movie[mapenc->MovieN].ID = mapenc->item_set[itemNo].picID[inum].picID;
-		mapeff->Movie[mapenc->MovieN].movemode = mode;
-		mapeff->Movie[mapenc->MovieN].eff = mapenc->item_set[itemNo].picID[inum].eff;
-		mapeff->Movie[mapenc->MovieN].starttime = G[2];
-		mapeff->Movie[mapenc->MovieN].endtime = G[3];
-		mapeff->Movie[mapenc->MovieN].startXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[8] / 100;
-		mapeff->Movie[mapenc->MovieN].endXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[9] / 100;
-		mapeff->Movie[mapenc->MovieN].startYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[8] / 100;
-		mapeff->Movie[mapenc->MovieN].endYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[9] / 100;
-		rot_xy_pos(G[10], &mapeff->Movie[mapenc->MovieN].startXpos, &mapeff->Movie[mapenc->MovieN].startYpos);
-		rot_xy_pos(G[10], &mapeff->Movie[mapenc->MovieN].endXpos, &mapeff->Movie[mapenc->MovieN].endYpos);
-		mapeff->Movie[mapenc->MovieN].startXpos += G[4];
-		mapeff->Movie[mapenc->MovieN].endXpos += G[5];
-		mapeff->Movie[mapenc->MovieN].startYpos += G[6];
-		mapeff->Movie[mapenc->MovieN].endYpos += G[7];
-		mapeff->Movie[mapenc->MovieN].startsize = G[8] * mapenc->item_set[itemNo].picID[inum].size / 100;
-		mapeff->Movie[mapenc->MovieN].endsize = G[9] * mapenc->item_set[itemNo].picID[inum].size / 100;
-		mapeff->Movie[mapenc->MovieN].startrot = G[10] + mapenc->item_set[itemNo].picID[inum].rot;
-		mapeff->Movie[mapenc->MovieN].endrot = G[11] + mapenc->item_set[itemNo].picID[inum].rot;
-		mapeff->Movie[mapenc->MovieN].startalpha = G[12] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
-		mapeff->Movie[mapenc->MovieN].endalpha = G[13] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
-		mapenc->MovieN++;
+		item_box buf;
+		buf.ID = mapenc->item_set[itemNo].picID[inum].picID;
+		buf.movemode = mode;
+		buf.eff = mapenc->item_set[itemNo].picID[inum].eff;
+		buf.starttime = G[2];
+		buf.endtime = G[3];
+		buf.startXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[8] / 100;
+		buf.endXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[9] / 100;
+		buf.startYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[8] / 100;
+		buf.endYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[9] / 100;
+		rot_xy_pos(G[10], &buf.startXpos, &buf.startYpos);
+		rot_xy_pos(G[10], &buf.endXpos, &buf.endYpos);
+		buf.startXpos += G[4];
+		buf.endXpos += G[5];
+		buf.startYpos += G[6];
+		buf.endYpos += G[7];
+		buf.startsize = G[8] * mapenc->item_set[itemNo].picID[inum].size / 100;
+		buf.endsize = G[9] * mapenc->item_set[itemNo].picID[inum].size / 100;
+		buf.startrot = G[10] + mapenc->item_set[itemNo].picID[inum].rot;
+		buf.endrot = G[11] + mapenc->item_set[itemNo].picID[inum].rot;
+		buf.startalpha = G[12] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+		buf.endalpha = G[13] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+		recfp->mapeff.Movie.push_back(buf);
 		recfp->allnum.movienum++;
 	}
 	return;
