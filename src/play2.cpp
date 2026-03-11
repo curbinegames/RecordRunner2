@@ -23,7 +23,6 @@
 
 /* rec play include */
 #include <playbox.h>
-#include <PlayBonus.h>
 #include <PlayAuto.h>
 #include <PlayCamera.h>
 #include <PlayHitEff.h>
@@ -70,6 +69,388 @@ typedef struct note_img {
 } rec_play_notepic_t;
 
 #endif /* typedef group */
+
+#if 1 /* ボーナス系 */
+
+class rec_play_bonus_cover_c {
+private:
+	bool enable = false;
+	DxTime_t Stime = 0;
+	int alpha = 0;
+	dxcur_pic_c pic{_T("picture/Black.png")};
+
+public:
+	void draw(void) const {
+		if (!this->enable) { return; }
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, this->alpha);
+		RecRescaleDrawGraph(0, 0, this->pic.handle(), TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+
+	void update(void) {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (2000 < Ntime) {
+			this->enable = false;
+			return;
+		}
+		this->alpha = lins_scale(1800, 127, 2000, 0, Ntime);
+	}
+
+	/* 全ノーツを処理した瞬間だけ呼ぶ */
+	void setBonus(const rec_play_judge_t &judge) {
+		if (judge.miss > 0) { return; }
+		this->Stime = GetNowCount();
+		this->enable = true;
+	}
+};
+
+class rec_play_bonus_slight_c {
+private:
+	bool enable = false;
+	DxTime_t Stime = 0;
+
+	int posX[24];
+	int posY[24];
+	size_t count = 0;
+
+	dxcur_pic_c perfect{  _T("picture/Bonus-Smalllight3.png")};
+	dxcur_pic_c fullcombo{_T("picture/Bonus-Smalllight2.png")};
+	dxcur_pic_c nomiss{   _T("picture/Bonus-Smalllight1.png")};
+	DxPic_t using_pic = DXLIB_PIC_NULL;
+
+public:
+	void draw(void) const {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+
+		for (int i = 0; i < this->count; i++) {
+			int posX = this->posX[i];
+			int posY = this->posY[i];
+			int alpha = lins(100, 720, 1000, -240, Ntime);
+			alpha = maxs_2(pals(posY, 255, posY + 240, 0, alpha), 0);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
+			RecRescaleDrawGraph(posX, posY, using_pic, TRUE); /* TODO: 回転したい */
+		}
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+
+	void update(void) {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (2000 < Ntime) {
+			this->enable = false;
+			return;
+		}
+	}
+
+	void setBonus(const rec_play_judge_t &judge) {
+		if (judge.miss > 0) { return; }
+
+		int Bonus = -1;
+		if (judge.safe > 0) {
+			this->using_pic = this->nomiss.handle();
+			Bonus = 2;
+		}
+		else if (judge.good > 0) {
+			this->using_pic = this->fullcombo.handle();
+			Bonus = 1;
+		}
+		else {
+			this->using_pic = this->perfect.handle();
+			Bonus = 0;
+		}
+
+		this->Stime = GetNowCount();
+		this->enable = true;
+		this->count = 6 * (4 - Bonus);
+
+		for (int i = 0; i < 2; i++) {
+			for (int j = 0; j < 3; j++) {
+				for (int k = 0; k < 4 - Bonus; k++) {
+					posX[12 * i + 4 * j + k] = j * 180 + this->Stime % (57137 + 29 * i + 67 * j + 127 * k) % 180;
+					posY[12 * i + 4 * j + k] = i * 190 + this->Stime % (62843 + 37 * i + 67 * j + 157 * k) % 190;
+				}
+			}
+		}
+	}
+};
+
+class rec_play_bonus_blight_c {
+private:
+	bool enable = false;
+	DxTime_t Stime = 0;
+	int alpha = 0;
+	size_t count = 0;
+	dxcur_pic_c pic{_T("picture/Bonus-Biglight.png")};
+
+public:
+	void draw(void) const {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (Ntime < 100) { return; }
+		if (1000 < Ntime) { return; }
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, this->alpha);
+		for (int i = 0; i < this->count; i++) {
+			double angle = Ntime / 200.0;
+			angle += 3.14 * (180.0 / this->count) * i / 180.0;
+			RecRescaleDrawRotaGraph(320, 240, 1, angle, this->pic.handle(), TRUE);
+		}
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+
+	void update(void) {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (2000 < Ntime) {
+			this->enable = false;
+			return;
+		}
+
+		if (IS_BETWEEN(100, Ntime, 1000)) {
+			for (int i = 0; i < this->count; i++) {
+				this->alpha = lins(500, 255, 1000, 0, maxs_2(Ntime, 500));
+			}
+		}
+	}
+
+	void setBonus(const rec_play_judge_t &judge) {
+		if (judge.miss > 0) { return; }
+		if (judge.safe > 0) {
+			this->count = 1;
+		}
+		else if (judge.good > 0) {
+			this->count = 2;
+		}
+		else {
+			this->count = 3;
+		}
+		this->Stime = GetNowCount();
+		this->enable = true;
+	}
+};
+
+class rec_play_bonus_ring_c {
+private:
+	bool enable = false;
+	DxTime_t Stime = 0;
+
+	int LeftPos  = 0;
+	int UpPos    = 0;
+	int RightPos = 0;
+	int DownPos  = 0;
+	int alpha    = 0;
+
+	dxcur_pic_c pic{_T("picture/Bonus-Ring.png")};
+
+public:
+	void draw(void) const {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (Ntime < 100) { return; }
+		if (1000 < Ntime) { return; }
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, this->alpha);
+		RecRescaleDrawExtendGraph(this->LeftPos, this->UpPos, this->RightPos, this->DownPos, this->pic.handle(), TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+
+	void update(void) {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (2000 < Ntime) {
+			this->enable = false;
+			return;
+		}
+
+		if (IS_BETWEEN(100, Ntime, 1000)) {
+			this->LeftPos  = lins(100, 320 - 160, 1000, 320 - 240, Ntime);
+			this->UpPos    = lins(100, 240 - 160, 1000, 240 - 240, Ntime);
+			this->RightPos = lins(100, 320 + 160, 1000, 320 + 240, Ntime);
+			this->DownPos  = lins(100, 240 + 160, 1000, 240 + 240, Ntime);
+			this->alpha    = lins_scale(700, 255, 1000, 0, Ntime);
+		}
+	}
+
+	void setBonus(const rec_play_judge_t &judge) {
+		if (judge.miss > 0) { return; }
+		this->Stime = GetNowCount();
+		this->enable = true;
+	}
+};
+
+class rec_play_bonus_flash_c {
+private:
+	bool enable = false;
+	DxTime_t Stime = 0;
+	int alpha = 0;
+	dxcur_pic_c pic{_T("picture/White.png")};
+
+public:
+	void draw(void) const {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (Ntime < 100) { return; }
+		if (300 < Ntime) { return; }
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, this->alpha);
+		RecRescaleDrawGraph(0, 0, this->pic.handle(), TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+
+	void update(void) {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (2000 < Ntime) {
+			this->enable = false;
+			return;
+		}
+
+		if (IS_BETWEEN(100, Ntime, 300)) {
+			this->alpha = lins(100, 191, 300, 0, Ntime);
+		}
+	}
+
+	void setBonus(const rec_play_judge_t &judge) {
+		if (judge.miss > 0) { return; }
+		this->Stime = GetNowCount();
+		this->enable = true;
+	}
+};
+
+class rec_play_bonus_text_c {
+private:
+	const int sizeX = 319;
+	const int sizeY = 54;
+	bool enable = false;
+	DxTime_t Stime = 0;
+
+	int LeftPos  = 0;
+	int UpPos    = 0;
+	int RightPos = 0;
+	int DownPos  = 0;
+	int alpha    = 0;
+
+	dxcur_pic_c perfect{  _T("picture/PERFECT.png"  )};
+	dxcur_pic_c fullcombo{_T("picture/FULLCOMBO.png")};
+	dxcur_pic_c nomiss{   _T("picture/NOMISS.png"   )};
+	DxPic_t using_pic = DXLIB_PIC_NULL;
+
+public:
+	void draw(void) const {
+		if (!this->enable) { return; }
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, this->alpha);
+		RecRescaleDrawExtendGraph(this->LeftPos, this->UpPos, this->RightPos, this->DownPos, this->using_pic, TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
+	}
+
+	void update(void) {
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (2000 < Ntime) {
+			this->enable = false;
+			return;
+		}
+
+		if (Ntime < 1800) {
+			this->LeftPos  = lins_scale(0, 320 - sizeX * 8 / 2, 100, 320 - sizeX / 2, Ntime);
+			this->UpPos    = lins_scale(0, 240 - sizeY * 8 / 2, 100, 240 - sizeY / 2, Ntime);
+			this->RightPos = lins_scale(0, 320 + sizeX * 8 / 2, 100, 320 + sizeX / 2, Ntime);
+			this->DownPos  = lins_scale(0, 240 + sizeY * 8 / 2, 100, 240 + sizeY / 2, Ntime);
+			this->alpha    = 255;
+		}
+		else { /* (1800 <= NTime) */
+			int LeftPos  = lins_scale(2000, 320 - sizeX, 1800, 320 - sizeX / 2, Ntime);
+			int UpPos    = lins_scale(2000, 240 - sizeY, 1800, 240 - sizeY / 2, Ntime);
+			int RightPos = lins_scale(2000, 320 + sizeX, 1800, 320 + sizeX / 2, Ntime);
+			int DownPos  = lins_scale(2000, 240 + sizeY, 1800, 240 + sizeY / 2, Ntime);
+			int alpha    = lins_scale(1800, 255, 2000, 0, Ntime);
+		}
+	}
+
+	void setBonus(const rec_play_judge_t &judge) {
+		if (judge.miss > 0) { return; }
+		if (judge.safe > 0) {
+			this->using_pic = this->nomiss.handle();
+		}
+		else if (judge.good > 0) {
+			this->using_pic = this->fullcombo.handle();
+		}
+		else {
+			this->using_pic = this->perfect.handle();
+		}
+		this->Stime = GetNowCount();
+		this->enable = true;
+	}
+};
+
+class rec_play_bonus_snd_c {
+private:
+	dxcur_snd_c perfect{_T("sound/a-perfect.mp3")};
+	dxcur_snd_c fullcombo{_T("sound/a-fullcombo.mp3")};
+	dxcur_snd_c nomiss{_T("sound/a-nomiss.mp3")};
+
+public:
+	rec_play_bonus_snd_c(void) {
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->perfect.handle());
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->fullcombo.handle());
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->nomiss.handle());
+	}
+
+	void setBonus(const rec_play_judge_t &judge) {
+		if (judge.miss > 0) { return; }
+		if (judge.safe > 0) {
+			this->nomiss.PlaySound();
+		}
+		else if (judge.good > 0) {
+			this->fullcombo.PlaySound();
+		}
+		else {
+			this->perfect.PlaySound();
+		}
+	}
+};
+
+class rec_play_bonus_c {
+private:
+	rec_play_bonus_cover_c  g_bonus_cover;
+	rec_play_bonus_slight_c g_bonus_slight;
+	rec_play_bonus_blight_c g_bonus_blight;
+	rec_play_bonus_ring_c   g_bonus_ring;
+	rec_play_bonus_flash_c  g_bonus_flash;
+	rec_play_bonus_text_c   g_bonus_text;
+	rec_play_bonus_snd_c    g_bonus_snd;
+
+public:
+	/* TODO: 共通部抽出 */
+	void draw(void) const {
+		g_bonus_cover.draw();
+		g_bonus_slight.draw();
+		g_bonus_blight.draw();
+		g_bonus_ring.draw();
+		g_bonus_flash.draw();
+		g_bonus_text.draw();
+	}
+
+	void update(void) {
+		g_bonus_cover.update();
+		g_bonus_slight.update();
+		g_bonus_blight.update();
+		g_bonus_ring.update();
+		g_bonus_flash.update();
+		g_bonus_text.update();
+	}
+
+	void setBonus(const rec_play_judge_t &judge) {
+		g_bonus_snd.setBonus(judge);
+		g_bonus_cover.setBonus(judge);
+		g_bonus_slight.setBonus(judge);
+		g_bonus_blight.setBonus(judge);
+		g_bonus_ring.setBonus(judge);
+		g_bonus_flash.setBonus(judge);
+		g_bonus_text.setBonus(judge);
+	}
+};
+
+#endif /* ボーナス系 */
 
 #if 1 /* sub action */
 
@@ -1467,6 +1848,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_sound_c p_sound;
 	rec_play_runner_c runnerClass;
 	rec_play_keyview_c keyviewClass;
+	rec_play_bonus_c bonusClass;
 	rec_cutin_c cutin;
 
 	/* mat */
@@ -1483,7 +1865,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 #endif /* num define */
 
 	/* ピクチャの用意 */
-	ReadyBonusPsmat();
 	ReadyEffPicture();
 	ReadyJudgePicture();
 	/* action */
@@ -1595,6 +1976,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			Stime = GetNowCount() - recfp.time.now + optiondata.offset * 5;
 		}
 
+		bonusClass.update();
+		//オートでなく、ノーミス以上を出したら演出
+		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
+			AllNotesHitTime = 0;
+			bonusClass.setBonus(userpal.judgeCount); /* TODO: もっと内部で呼びたい */
+		}
+
 		//描画
 		ClearDrawScreen(); /* 描画エリアここから */
 		//背景表示
@@ -1684,10 +2072,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 #endif
 		if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, dropimg.handle(), TRUE); }
 		else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, dangerimg.handle(), TRUE); }
-		//オートでなく、ノーミス以上を出したら演出
-		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
-			ShowBonusEff(userpal.judgeCount, AllNotesHitTime);
-		}
+		bonusClass.draw();
 		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
 		if ((cutin.IsClosing() == 0) &&
 			(recfp.time.end + 5000 <= recfp.time.now) &&
