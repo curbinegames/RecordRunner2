@@ -357,7 +357,7 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 	result_pal->subRate         = result_pal->newRate - result_pal->oldRate; /* oldRate‚ÍƒŒ[ƒg•Û‘¶‘O‚É‘ã“ü‚µ‚Ä‚¢‚é */
 
 	result_pal->mat.clearRate.reload(RecResultLoadClearRateGraph(Clear));
-	result_pal->mat.difBer.reload(RecResultLoadDifBarGraph(dif, nameset->DifFN));
+	result_pal->mat.difBer.reload(RecResultLoadDifBarGraph(dif, nameset->DifFN.c_str()));
 	result_pal->mat.rank.reload(RecResultLoadClearRankGraph(rank));
 	result_pal->mat.chara.reload(RecResultLoadCharaGraph());
 	result_pal->mat.fontNo      = RecResultGetCurFontColor(rank);
@@ -365,8 +365,7 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 
 	RecResultSetBgm(userpal->status);
 
-	strcopy_2(nameset->songN, result_pal->songN, 64);
-
+	strcopy_2(nameset->songN.c_str(), result_pal->songN, 64);
 	return;
 }
 

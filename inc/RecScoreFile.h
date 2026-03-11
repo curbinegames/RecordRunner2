@@ -98,13 +98,13 @@ typedef struct playnum_box {
 } playnum_box;
 
 typedef struct rec_play_nameset_s {
-	wchar_t sky[255] = L"picture/backskynoamal.png";
-	wchar_t ground[255] = L"picture/groundnaturenormal.png";
-	wchar_t water[255] = L"picture/waternormal.png";
-	wchar_t mp3FN[255] = L"song/";
-	wchar_t songN[255];
-	wchar_t songNE[255];
-	wchar_t DifFN[255] = L"picture/difanother.png";
+	tstring sky = _T("picture/backskynoamal.png"); /* 空背景のファイル名 */
+	tstring ground = _T("picture/groundnaturenormal.png"); /* 地面背景のファイル名 */
+	tstring water = _T("picture/waternormal.png"); /* 水中背景のファイル名 */
+	tstring mp3FN = _T("song/"); /* 曲のファイル名 */
+	tstring songN; /* 曲名 */
+	tstring songNE; /* 曲名(英語) */
+	tstring DifFN = _T("picture/difanother.png"); /* 第4難易度バー画像のファイル名 */
 } rec_play_nameset_t;
 
 typedef struct note_box_2_s {
@@ -259,7 +259,7 @@ typedef struct rec_score_file_row_s {
 } rec_score_file_row_t;
 
 extern int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path);
-extern int rec_score_fwrite(rec_score_file_t *recfp, const TCHAR *path);
+extern int rec_score_fwrite(const rec_score_file_t *recfp, const TCHAR *path);
 extern int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path);
 extern int RecScoreReadSongName(TCHAR *songName, const TCHAR *path);
 extern int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path);

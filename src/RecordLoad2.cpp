@@ -1286,8 +1286,8 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		//音楽ファイルを読み込む
 		if (strands_direct(GT1, L"#MUSIC:")) {
 			strmods(GT1, 7);
-			strcopy_2(folderPath, recfp->nameset.mp3FN, 255);
-			strcats(recfp->nameset.mp3FN, GT1);
+			recfp->nameset.mp3FN  = folderPath;
+			recfp->nameset.mp3FN += GT1;
 		}
 		//BPMを読み込む
 		else if (strands_direct(GT1, L"#BPM:")) {
@@ -1302,37 +1302,37 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		}
 		//空の背景を読み込む
 		else if (strands_direct(GT1, L"#SKY:")) {
-			strcopy_2(L"picture/", recfp->nameset.sky, 255);
 			strmods(GT1, 5);
-			strcats(recfp->nameset.sky, GT1);
+			recfp->nameset.sky  = _T("picture/");
+			recfp->nameset.sky += GT1;
 		}
 		//地面の画像を読み込む
 		else if (strands_direct(GT1, L"#FIELD:")) {
-			strcopy_2(L"picture/", recfp->nameset.ground, 255);
 			strmods(GT1, 7);
-			strcats(recfp->nameset.ground, GT1);
+			recfp->nameset.ground  = _T("picture/");
+			recfp->nameset.ground += GT1;
 		}
 		//水中の画像を読み込む
 		else if (strands_direct(GT1, L"#WATER:")) {
-			strcopy_2(L"picture/", recfp->nameset.water, 255);
 			strmods(GT1, 7);
-			strcats(recfp->nameset.water, GT1);
+			recfp->nameset.water  = _T("picture/");
+			recfp->nameset.water += GT1;
 		}
 		//難易度バー(another)を読み込む
 		else if (strands_direct(GT1, L"#DIFBAR:")) {
-			strcopy_2(folderPath, recfp->nameset.DifFN, 255);
 			strmods(GT1, 8);
-			strcats(recfp->nameset.DifFN, GT1);
+			recfp->nameset.DifFN  = folderPath;
+			recfp->nameset.DifFN += GT1;
 		}
 		//曲名を読み込む
 		else if (strands_direct(GT1, L"#TITLE:")) {
 			strmods(GT1, 7);
-			strcopy_2(GT1, recfp->nameset.songN, 255);
+			recfp->nameset.songN = GT1;
 		}
 		//英語
 		else if (strands_direct(GT1, L"#E.TITLE:")) {
 			strmods(GT1, 7);
-			strcopy_2(GT1, recfp->nameset.songNE, 255);
+			recfp->nameset.songNE = GT1;
 		}
 		//レベルを読み込む
 		else if (strands_direct(GT1, L"#LEVEL:")) {

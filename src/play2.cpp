@@ -276,13 +276,17 @@ static void RecPlayStepObjectNG(short objectNG[], const note_box_2_t note[], con
 }
 
 static void RecPlayStepCameraNum(cvec<rec_camera_data_t> &camera, DxTime_t Ntime) {
-	while (IS_BETWEEN_RIGHT_LESS(0, camera.nowData().endtime, Ntime)) { camera.stepNo(); }
+	while (!camera.isEndNo() && IS_BETWEEN_RIGHT_LESS(0, camera.nowData().endtime, Ntime)) {
+		camera.stepNo();
+	}
 }
 
 static void RecPlayStepMovieNum(cvec<item_box> &movie, DxTime_t Ntime) {
 	if (optiondata.backbright == 0) { return; }
 	if (movie.size() == 0) { return; }
-	while (IS_BETWEEN_LESS(-500, movie.nowData().endtime, Ntime)) { movie.stepNo(); }
+	while (!movie.isEndNo() && IS_BETWEEN_LESS(-500, movie.nowData().endtime, Ntime)) {
+		movie.stepNo();
+	}
 }
 
 static void RecPlayStepGuideLineNum(short guideN[], const rec_move_set_t ymove[], DxTime_t Ntime) {
@@ -1491,9 +1495,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	if (rec_score_fread(&recfp, rrsPath) != 0) { return SCENE_EXIT; } /* TODO: EXITÇ…ÇµÇƒÇÈÇÃÇÕÅAÇ«Ç§Ç»ÇÃ? */
 
-	backpic.sky.reload(   recfp.nameset.sky);
-	backpic.ground.reload(recfp.nameset.ground);
-	backpic.water.reload( recfp.nameset.water);
+	backpic.sky.reload(   recfp.nameset.sky.c_str());
+	backpic.ground.reload(recfp.nameset.ground.c_str());
+	backpic.water.reload( recfp.nameset.water.c_str());
 
 	for (i[0] = 0; i[0] < 100; i[0]++) {
 		strcopy_2(folderPath, GT1, 255);
@@ -1519,7 +1523,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	else if (0 <= GD[0] && GD[0] < 2) { DifRate = recfp.mapdata.Lv + 0.45 * GD[0]; }
 	else { DifRate = recfp.mapdata.mdif / 100.0; }
 	RecResetPlayObjectNum(objectN, &recfp);
-	RecSysBgmSetMem(recfp.nameset.mp3FN, ARRAY_COUNT(recfp.nameset.mp3FN));
+	RecSysBgmSetMem(recfp.nameset.mp3FN.c_str(), recfp.nameset.mp3FN.size());
 	RecSysBgmPlay(true, false, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	Stime = GetNowCount();
