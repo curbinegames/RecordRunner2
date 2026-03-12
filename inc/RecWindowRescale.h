@@ -2,7 +2,6 @@
 
 #include <sancur.h>
 #include <RecSystem.h>
-#include <fontcur.h>
 
 #define RESCALE_SIZE_X ((double)WINDOW_SIZE_X / (double)OLD_WINDOW_SIZE_X)
 #define RESCALE_SIZE_Y ((double)WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y)
@@ -30,5 +29,3 @@ extern void RecRescaleDrawString(int x, int y, const TCHAR *s, uint cr);
 extern void RecRescaleAnchorDrawString(int x, int y, const TCHAR *s, uint cr, int anchor);
 extern void RecRescaleDrawFormatString(int x, int y, uint cr, const TCHAR *s, ...);
 extern void RecRescaleAnchorDrawFormatString(int x, int y, uint cr, int anchor, const TCHAR *s, ...);
-extern void RecRescaleDrawCurFont(double dn, short x, short y, int sizeY,
-	cur_font_cr_t Cr, short a = 0, int zero = 1);

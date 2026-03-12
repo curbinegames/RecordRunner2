@@ -4,7 +4,6 @@
 
 /* curbine code include */
 #include <dxcur.h>
-#include <fontcur.h>
 #include <strcur.h>
 
 /* rec system include */
@@ -28,6 +27,31 @@
 
 #define CAL_GAP_WIDTH(all_gap, count, all_d_gap)							\
 	(sanrute(DIV_AVOID_ZERO((all_d_gap) * (count) - (all_gap) * (all_gap), (count) * (count), 0)))
+
+typedef enum cur_font_id_e {
+	CUR_FONT_ID_0 = 0,
+	CUR_FONT_ID_1,
+	CUR_FONT_ID_2,
+	CUR_FONT_ID_3,
+	CUR_FONT_ID_4,
+	CUR_FONT_ID_5,
+	CUR_FONT_ID_6,
+	CUR_FONT_ID_7,
+	CUR_FONT_ID_8,
+	CUR_FONT_ID_9,
+	CUR_FONT_ID_MINUS, /* 10 */
+	CUR_FONT_ID_DOT,   /* 11 */
+} cur_font_id_t;
+
+typedef enum cur_font_cr_e {
+	CUR_FONT_COLOR_MONO = 0,
+	CUR_FONT_COLOR_RED,
+	CUR_FONT_COLOR_YELLOW,
+	CUR_FONT_COLOR_GREEN,
+	CUR_FONT_COLOR_BLUE,
+	CUR_FONT_COLOR_PURPLE,
+	CUR_FONT_COLOR_RAINBOW,
+} cur_font_cr_t;
 
 typedef struct rec_result_mat_s {
 	dxcur_pic_c clearRate;
@@ -54,13 +78,84 @@ typedef struct rec_result_pal_s {
 	rec_result_mat_t mat;
 } rec_result_pal_t;
 
+class rec_result_numfont_c {
+private:
+	dxcur_divpic_c pic[7] = {
+		dxcur_divpic_c(_T("fontcur/NumberMono.png"   ), 12, 5, 3),
+		dxcur_divpic_c(_T("fontcur/NumberRed.png"    ), 12, 5, 3),
+		dxcur_divpic_c(_T("fontcur/NumberYellow.png" ), 12, 5, 3),
+		dxcur_divpic_c(_T("fontcur/NumberGreen.png"  ), 12, 5, 3),
+		dxcur_divpic_c(_T("fontcur/NumberBlue.png"   ), 12, 5, 3),
+		dxcur_divpic_c(_T("fontcur/NumberPurple.png" ), 12, 5, 3),
+		dxcur_divpic_c(_T("fontcur/NumberRainbow.png"), 12, 5, 3)
+	};
+
+public:
+	/**
+	* 数字を書きます
+	* @param[in] dn draw number
+	* @param[in] x draw X pos
+	* @param[in] y draw Y pos
+	* @param[in] sizeY font Y size
+	* @param[in] Cr font color
+	* @param[in] a under point count (if dn = 157.423 and a = 2, draw "157.42")
+	* @param[in] zero draw "0." (if dn = 0.524 and zero = 0, draw ".524")
+	* @return なし
+	*/
+	void Draw(double dn, short x, short y, int sizeY, cur_font_cr_t Cr, short a = 0, int zero = 1) const {
+		/* int */
+		int k = 0;
+		int n;
+		int m;
+		int ZeroP = 0; /* minus flag */
+		int sizeX = sizeY * 58 / 64;
+		int width = sizeY * 46 / 64;
+		int pointX = sizeY * 17 / 64; /* dot X size */
+
+		/* cal */
+		if (dn < 0) {
+			ZeroP = 1;
+			dn *= -1;
+		}
+		for (int i = a; i > 0; i--) { dn *= 10; }
+		n = (int)dn;
+		if (n != 0) { for (int i = 10; i <= n; i *= 10) { k++; } }
+
+		/* draw */
+		for (int i = k; i >= 0; i--) {
+			m = n % 10;
+			if (a != 1 || zero == 1 || m != 0) {
+				DrawExtendGraph(x + i * width + (a > 0) * pointX + ZeroP * width, y,
+					x + sizeX + i * width + (a > 0) * pointX + ZeroP * width,
+					y + sizeY, this->pic[Cr].handle(m), TRUE);
+			}
+			n /= 10;
+			if (a == 1) {
+				DrawExtendGraph(x + i * width + ZeroP * width, y,
+					x + sizeX + i * width + ZeroP * width, y + sizeY, this->pic[Cr].handle(CUR_FONT_ID_DOT),
+					TRUE);
+			}
+			a--;
+		}
+		if (ZeroP) { DrawExtendGraph(x, y, x + sizeX, y + sizeY, this->pic[Cr].handle(CUR_FONT_ID_MINUS), TRUE); }
+		return;
+	}
+
+	void RescaleDraw(double dn, short x, short y, int sizeY, cur_font_cr_t Cr, short a = 0, int zero = 1) const {
+		int drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+		int drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+		this->Draw(dn, drawX, drawY, sizeY * RESCALE_SIZE_Y, Cr, a, zero);
+		return;
+	}
+};
+
 static now_scene_t ViewResult(const rec_result_pal_t *val) {
 	/* typedef */
 	dxcur_pic_c resultimg = dxcur_pic_c(_T("picture/result.png"));
 	/* class */
+	rec_result_numfont_c num_font;
 	rec_cutin_c cutin;
 
-	InitCurFont();
 	RecSysBgmPlay(true, true, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	cutin.SetIo(CUT_FRAG_OUT);
@@ -75,12 +170,12 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		RecRescaleDrawString(100, 13, val->songN, COLOR_WHITE);
 
 		/* 判定周り */
-		RecRescaleDrawCurFont(val->judge.just, 140,  52, 30, CUR_FONT_COLOR_BLUE);
-		RecRescaleDrawCurFont(val->judge.good, 140,  93, 30, CUR_FONT_COLOR_YELLOW);
-		RecRescaleDrawCurFont(val->judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN);
-		RecRescaleDrawCurFont(val->judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED);
-		RecRescaleDrawCurFont(val->Mcombo,     155, 215, 30, CUR_FONT_COLOR_BLUE);
-		RecRescaleDrawCurFont(val->noteCount,  265, 215, 30, CUR_FONT_COLOR_PURPLE);
+		num_font.RescaleDraw(val->judge.just, 140,  52, 30, CUR_FONT_COLOR_BLUE);
+		num_font.RescaleDraw(val->judge.good, 140,  93, 30, CUR_FONT_COLOR_YELLOW);
+		num_font.RescaleDraw(val->judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN);
+		num_font.RescaleDraw(val->judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED);
+		num_font.RescaleDraw(val->Mcombo,     155, 215, 30, CUR_FONT_COLOR_BLUE);
+		num_font.RescaleDraw(val->noteCount,  265, 215, 30, CUR_FONT_COLOR_PURPLE);
 
 		/* レート周り */
 		RecRescaleDrawFormatString(10, 320, COLOR_WHITE, L"%d.%02d", val->newRate / 100, val->newRate % 100);
@@ -88,16 +183,16 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		else { RecRescaleDrawString(10, 340, L"not rise", COLOR_WHITE); }
 
 		/* スコア周り */
-		RecRescaleDrawCurFont(val->score, 310,  75, 55, val->mat.fontNo);
-		RecRescaleDrawCurFont(val->acc,   430, 150, 30, val->mat.fontNo, 2);
-		RecRescaleDrawCurFont(val->gap,   510, 205, 20, CUR_FONT_COLOR_MONO);
-		RecRescaleDrawCurFont(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO);
+		num_font.RescaleDraw(val->score, 310,  75, 55, val->mat.fontNo);
+		num_font.RescaleDraw(val->acc,   430, 150, 30, val->mat.fontNo, 2);
+		num_font.RescaleDraw(val->gap,   510, 205, 20, CUR_FONT_COLOR_MONO);
+		num_font.RescaleDraw(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO);
 
 		/* ランク周り */
 		RecRescaleDrawGraph(140, 260, val->mat.rank.handle(),      TRUE);
 		RecRescaleDrawGraph(5,   420, val->mat.clearRate.handle(), TRUE);
 		RecRescaleDrawGraph(336, 252, val->mat.chara.handle(),     TRUE);
-		RecRescaleDrawCurFont(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, 0);
+		num_font.RescaleDraw(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, 0);
 
 		cutin.DrawCut();
 
