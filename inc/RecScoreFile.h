@@ -221,6 +221,11 @@ typedef struct rec_move_all_set_s {
 	rec_move_set_t y[5];
 } rec_move_all_set_t;
 
+typedef struct rec_move_all_set_cvec_s {
+	cvec<rec_move_data_t> x[3] = { cvec<rec_move_data_t>(999) };
+	cvec<rec_move_data_t> y[5] = { cvec<rec_move_data_t>(999) };
+} rec_move_all_set_cvec_t;
+
 typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	cvec<rec_camera_data_t> camera{256}; /* カメラ移動タイミング */
 	tvec<rec_scrool_data_t> scrool{99}; /* 譜面のスクロール速度切り替えタイミング */
@@ -230,6 +235,7 @@ typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	tvec<int> carrow{99}; /* キャラの向き */ /* TODO: boolにする */
 	rec_notelock_allset_t lock;
 	rec_move_all_set_t move;
+	rec_move_all_set_cvec_t new_move;
 	tvec<int> chamo[3] = { tvec<int>(99) }; /* キャラグラ変更タイミング */
 	tvec<int> fall{99}; /* 落ち者背景アイテム番号 */
 	tvec<bool> viewLine{99}; /* ガイドライン表示フラグ */
