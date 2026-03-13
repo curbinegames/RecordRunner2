@@ -149,7 +149,7 @@ static int strrans(const TCHAR *p1) {
 	return GetRand(b - a) + a;
 }
 
-void SETMove(rec_move_data_t *Buff, double StartTime, double MovePoint,
+void SETMove(rec_mapeff_move_st *Buff, double StartTime, double MovePoint,
 	double EndTime, double MoveType, double bpm, double NowTime)
 {
 	Buff->Stime = shifttime(StartTime, bpm, NowTime);
@@ -223,11 +223,11 @@ void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 }
 
 /* 再帰関数になっている、最大2回呼ばれる */
-void RecMapLoadSetMoveNew(cvec<rec_move_data_t> &move, unsigned int *allnum, int iLine,
+void RecMapLoadSetMoveNew(cvec<rec_mapeff_move_st> &move, unsigned int *allnum, int iLine,
 	double StartTime, double MovePos, double EndTime, int MoveMode, double bpmG,
 	double timer[])
 {
-	rec_move_data_t buf;
+	rec_mapeff_move_st buf;
 	double Spos = (move.lastData().pos - 100.0) / 50.0;
 	switch (MoveMode) {
 	case REC_MAP_MOVE_CODE_LIN:
@@ -396,7 +396,7 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	notedata->ypos = 50 * iLine + 300;
 	notedata->xpos = 150;
 	/* 縦位置を計算する */ {
-		cvec<rec_move_data_t> &temp = recfp->mapeff.new_move.y[iLine];
+		cvec<rec_mapeff_move_st> &temp = recfp->mapeff.new_move.y[iLine];
 		while (!temp.isEndNo() && (temp.offsetData(1).Stime < notedata->hittime + 5)) {
 			temp.stepNo();
 		}
@@ -409,7 +409,7 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 		else { notedata->ypos = temp.nowData().pos; } /* 移動後 */
 	}
 	/* 横位置を計算する */ {
-		cvec<rec_move_data_t> &temp = recfp->mapeff.new_move.x[iLine];
+		cvec<rec_mapeff_move_st> &temp = recfp->mapeff.new_move.x[iLine];
 		while (!temp.isEndNo() && (temp.offsetData(1).Stime < notedata->hittime + 5)) {
 			temp.stepNo();
 		}

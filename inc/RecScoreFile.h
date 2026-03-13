@@ -209,10 +209,10 @@ typedef struct rec_move_data_s {
 	int pos = -10000;
 	int Etime = -10000;
 	int mode = -10000;
-} rec_move_data_t;
+} rec_mapeff_move_st;
 
 typedef struct rec_move_set_s {
-	rec_move_data_t d[999];
+	rec_mapeff_move_st d[999];
 	int num = 0;
 } rec_move_set_t;
 
@@ -222,8 +222,8 @@ typedef struct rec_move_all_set_s {
 } rec_move_all_set_t;
 
 typedef struct rec_move_all_set_cvec_s {
-	cvec<rec_move_data_t> x[3] = { cvec<rec_move_data_t>(999) };
-	cvec<rec_move_data_t> y[5] = { cvec<rec_move_data_t>(999) };
+	cvec<rec_mapeff_move_st> x[3] = { cvec<rec_mapeff_move_st>(999) };
+	cvec<rec_mapeff_move_st> y[5] = { cvec<rec_mapeff_move_st>(999) };
 } rec_move_all_set_cvec_t;
 
 typedef struct rec_map_eff_data_s { /* TODO: íÜêgÇÃï¿Ç◊ë÷Ç¶ */

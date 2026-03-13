@@ -930,7 +930,7 @@ void RecPlayDrawGuideBorder(rec_score_file_t *recfp, const rec_play_lanepos_t *l
 #define RET_FINISH     3
 
 /* ラスライン */
-static int PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_mapeff_move_st *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
@@ -949,7 +949,7 @@ static int PlayShowLastGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data
 }
 
 /* スタートライン */
-static int PlayShowStartGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowStartGuideLine(rec_map_eff_data_t *mapeff, const rec_mapeff_move_st *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
@@ -968,7 +968,7 @@ static int PlayShowStartGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 }
 
 /* move繋ぎライン */
-static int PlayShowChainGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowChainGuideLine(rec_map_eff_data_t *mapeff, const rec_mapeff_move_st *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
@@ -985,7 +985,7 @@ static int PlayShowChainGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 }
 
 /* moveライン */
-static int PlayShowMovingGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowMovingGuideLine(rec_map_eff_data_t *mapeff, const rec_mapeff_move_st *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
@@ -1001,7 +1001,7 @@ static int PlayShowMovingGuideLine(rec_map_eff_data_t *mapeff, const rec_move_da
 }
 
 /* move後直角ライン */
-static int PlayShowOuterGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowOuterGuideLine(rec_map_eff_data_t *mapeff, const rec_mapeff_move_st *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
@@ -1017,7 +1017,7 @@ static int PlayShowOuterGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 }
 
 /* move前直角ライン */
-static int PlayShowInnerGuideLine(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowInnerGuideLine(rec_map_eff_data_t *mapeff, const rec_mapeff_move_st *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int drawLeft = 0;
@@ -1033,7 +1033,7 @@ static int PlayShowInnerGuideLine(rec_map_eff_data_t *mapeff, const rec_move_dat
 }
 
 /* 通常ライングループ */
-static int PlayShowGuideLineStandard(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowGuideLineStandard(rec_map_eff_data_t *mapeff, const rec_mapeff_move_st *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int ret = 0;
@@ -1047,7 +1047,7 @@ static int PlayShowGuideLineStandard(rec_map_eff_data_t *mapeff, const rec_move_
 }
 
 /* ラスライングループ */
-static int PlayShowLastGuideLineGroup(rec_map_eff_data_t *mapeff, const rec_move_data_t *Ymove,
+static int PlayShowLastGuideLineGroup(rec_map_eff_data_t *mapeff, const rec_mapeff_move_st *Ymove,
 	const rec_play_lanepos_t *lanePos, int Line, int iDraw, int drawC, int Ntime, bool viewEn)
 {
 	int ret = 0;
@@ -1058,7 +1058,7 @@ static int PlayShowLastGuideLineGroup(rec_map_eff_data_t *mapeff, const rec_move
 
 static int PlayShowGuideLine(rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos, int Line, int iDraw) {
 	int Ntime = recfp->time.now;
-	rec_move_data_t *Ymove = recfp->mapeff.move.y[Line].d;
+	rec_mapeff_move_st *Ymove = recfp->mapeff.move.y[Line].d;
 	rec_map_eff_data_t *mapeff = &recfp->mapeff;
 
 	int drawLeft = 0;
