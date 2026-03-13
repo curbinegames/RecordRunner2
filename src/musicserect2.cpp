@@ -82,26 +82,26 @@ typedef struct music_box_2 {
 
 class rec_serect_music_set_c {
 public:
-	MUSIC_BOX_2 base2[MapNumLim];
-	int mapping[MapNumLim];
+	std::vector<MUSIC_BOX_2> detail;
+	std::vector<uint> sort;
 	int sortMode = REC_SORT_DEFAULT;
 	int mapNum = 0;
 
 public: /* 番地検索系 */
 	MUSIC_BOX_2& operator[](int n) {
-		return this->base2[mapping[n]];
+		return this->detail[sort[n]];
 	}
 
 	const MUSIC_BOX_2& operator[](int n) const {
-		return this->base2[mapping[n]];
+		return this->detail[sort[n]];
 	}
 
 	MUSIC_BOX_2& at(int n) {
-		return this->base2[mapping[n]];
+		return this->detail[sort[n]];
 	}
 
 	const MUSIC_BOX_2& at(int n) const {
-		return this->base2[mapping[n]];
+		return this->detail[sort[n]];
 	}
 };
 typedef rec_serect_music_set_c songdata_set_t;
@@ -255,7 +255,7 @@ static void RecSerectReadMapDataOneSong(songdata_set_t *dataset,
 	TCHAR path[256];
 	TCHAR subPath[256];
 	TCHAR rrsPath[256];
-	MUSIC_BOX_2 *songdata = dataset->base2;
+	MUSIC_BOX_2 buf;
 	for (int iDif = 0; iDif < 6; iDif++) {
 		strcopy_2(L"record/", path, 255); //"record/"
 		strcats(path, packName); //"record/<パック名>"
@@ -268,10 +268,11 @@ static void RecSerectReadMapDataOneSong(songdata_set_t *dataset,
 		strcats(path, _T(".txt")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 		strcats(rrsPath, _T(".rrs")); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 		status = RecSerectReadMapDataOneDif(
-			&songdata[dataset->mapNum], path, subPath, packName, packNum, musicNo, iDif);
+			&buf, path, subPath, packName, packNum, musicNo, iDif);
 		if (status == REC_ERROR_NONE) {
-			RecScoreReadDdif(&songdata[dataset->mapNum].mpal, rrsPath);
-			RecSerectReadHighscore(&songdata[dataset->mapNum], songName, (rec_dif_t)iDif);
+			RecScoreReadDdif(&buf.mpal, rrsPath);
+			RecSerectReadHighscore(&buf, songName, (rec_dif_t)iDif);
+			dataset->detail.push_back(buf);
 			dataset->mapNum++;
 		}
 	}
@@ -444,8 +445,9 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 	int o = 0;
 	int p = 1;
 
+	songdata->sort.clear();
 	for (int i = 0; i < songdata->mapNum; i++) {
-		songdata->mapping[i] = i;
+		songdata->sort.push_back(i);
 	}
 
 	switch (mode) {
@@ -454,17 +456,17 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 			p = 0;
 			for (int i = 0; i < songdata->mapNum - 1; i += 2) {
 				if ((*songdata)[i].level > (*songdata)[i + 1].level) {
-					o = songdata->mapping[i];
-					songdata->mapping[i] = songdata->mapping[i + 1];
-					songdata->mapping[i + 1] = o;
+					o = songdata->sort[i];
+					songdata->sort[i] = songdata->sort[i + 1];
+					songdata->sort[i + 1] = o;
 					p = 1;
 				}
 			}
 			for (int i = 1; i < songdata->mapNum - 1; i += 2) {
 				if ((*songdata)[i].level > (*songdata)[i + 1].level) {
-					o = songdata->mapping[i];
-					songdata->mapping[i] = songdata->mapping[i + 1];
-					songdata->mapping[i + 1] = o;
+					o = songdata->sort[i];
+					songdata->sort[i] = songdata->sort[i + 1];
+					songdata->sort[i + 1] = o;
 					p = 1;
 				}
 			}
@@ -475,17 +477,17 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 			p = 0;
 			for (int i = 0; i < songdata->mapNum - 1; i += 2) {
 				if ((*songdata)[i].Hscore < (*songdata)[i + 1].Hscore) {
-					o = songdata->mapping[i];
-					songdata->mapping[i] = songdata->mapping[i + 1];
-					songdata->mapping[i + 1] = o;
+					o = songdata->sort[i];
+					songdata->sort[i] = songdata->sort[i + 1];
+					songdata->sort[i + 1] = o;
 					p = 1;
 				}
 			}
 			for (int i = 1; i < songdata->mapNum - 1; i += 2) {
 				if ((*songdata)[i].Hscore < (*songdata)[i + 1].Hscore) {
-					o = songdata->mapping[i];
-					songdata->mapping[i] = songdata->mapping[i + 1];
-					songdata->mapping[i + 1] = o;
+					o = songdata->sort[i];
+					songdata->sort[i] = songdata->sort[i + 1];
+					songdata->sort[i + 1] = o;
 					p = 1;
 				}
 			}
@@ -508,10 +510,10 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 static void SortSongWithSave(songdata_set_t *songdata, int mode, int dif, int *cmd) {
 	int save = 0;
 
-	save = songdata->mapping[*cmd];
+	save = songdata->sort[*cmd];
 	SortSong(songdata, mode, dif);
 	for (int i = 0; i < songdata->mapNum; i++) {
-		if (songdata->mapping[i] == save) {
+		if (songdata->sort[i] == save) {
 			*cmd = i;
 		}
 	}
