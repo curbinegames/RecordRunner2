@@ -80,28 +80,80 @@ typedef struct music_box_2 {
 	rec_ddif_pal_t mpal;
 } MUSIC_BOX_2;
 
+/* TODO: 難易度切り替えで名前解決できない。ジャケット更新されない。もっとひどいと範囲外アクセスしようとする。 */
 class rec_serect_music_set_c {
 public:
 	std::vector<MUSIC_BOX_2> detail;
 	std::vector<uint> sort;
 	int sortMode = REC_SORT_DEFAULT;
-	int mapNum = 0;
+
+public: /* 並び替え系 */
+	/**
+	 * @brief 現在の this->sort の内容をハイスコア順に並び替える
+	 * @param なし
+	 * @return なし
+	 */
+	void SortByHScore(void) {
+		if (this->sort.empty()) { return; }
+		for (int is = 0; is + 1 < (this->sort.size()); is++) {
+			for (int ie = is + 1; ie < this->sort.size(); ie++) {
+				if (this->detail[this->sort[is]].Hscore >
+					this->detail[this->sort[ie]].Hscore)
+				{
+					uint temp = this->sort[is];
+					this->sort[is] = this->sort[ie];
+					this->sort[ie] = temp;
+				}
+			}
+		}
+	}
+
+	/**
+	 * @brief 現在の this->sort の内容を難易度順に並び替える
+	 * @param なし
+	 * @return なし
+	 */
+	void SortByLevel(void) {
+		if (this->sort.empty()) { return; }
+		for (int is = 0; is + 1 < (this->sort.size()); is++) {
+			for (int ie = is + 1; ie < this->sort.size(); ie++) {
+				if (this->detail[this->sort[is]].level >
+					this->detail[this->sort[ie]].level)
+				{
+					uint temp = this->sort[is];
+					this->sort[is] = this->sort[ie];
+					this->sort[ie] = temp;
+				}
+			}
+		}
+	}
+
+public: /* 絞り込み系 */
+	void Search(bool (*filter_func)(const MUSIC_BOX_2 &detail, int view_dif), int view_dif) {
+		if (filter_func == nullptr) { return; }
+		this->sort.clear();
+		for (size_t i = 0; i < detail.size(); i++) {
+			if (filter_func(this->detail[i], view_dif)) {
+				this->sort.push_back(i);
+			}
+		}
+	}
 
 public: /* 番地検索系 */
 	MUSIC_BOX_2& operator[](int n) {
-		return this->detail[sort[n]];
+		return this->detail[sort[betweens(0, n, sort.size() - 1)]];
 	}
 
 	const MUSIC_BOX_2& operator[](int n) const {
-		return this->detail[sort[n]];
+		return this->detail[sort[betweens(0, n, sort.size() - 1)]];
 	}
 
 	MUSIC_BOX_2& at(int n) {
-		return this->detail[sort[n]];
+		return this->detail[sort[betweens(0, n, sort.size() - 1)]];
 	}
 
 	const MUSIC_BOX_2& at(int n) const {
-		return this->detail[sort[n]];
+		return this->detail[sort[betweens(0, n, sort.size() - 1)]];
 	}
 };
 typedef rec_serect_music_set_c songdata_set_t;
@@ -273,7 +325,6 @@ static void RecSerectReadMapDataOneSong(songdata_set_t *dataset,
 			RecScoreReadDdif(&buf.mpal, rrsPath);
 			RecSerectReadHighscore(&buf, songName, (rec_dif_t)iDif);
 			dataset->detail.push_back(buf);
-			dataset->mapNum++;
 		}
 	}
 	return;
@@ -433,6 +484,10 @@ static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
 }
 #endif
 
+static bool Rec_Select_DifFilter(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.LvType == view_dif);
+}
+
 /**
  * 曲リストを並び替えします
  * @param[in] songdata 曲データ
@@ -440,58 +495,13 @@ static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
  * @param[in] dif 難易度
  */
 static void SortSong(songdata_set_t *songdata, int mode, int dif) {
-	int n = 0;
-	int m = songdata->mapNum;
-	int o = 0;
-	int p = 1;
-
-	songdata->sort.clear();
-	for (int i = 0; i < songdata->mapNum; i++) {
-		songdata->sort.push_back(i);
-	}
-
+	songdata->Search(Rec_Select_DifFilter, dif);
 	switch (mode) {
 	case SORT_LEVEL:
-		while (p) {
-			p = 0;
-			for (int i = 0; i < songdata->mapNum - 1; i += 2) {
-				if ((*songdata)[i].level > (*songdata)[i + 1].level) {
-					o = songdata->sort[i];
-					songdata->sort[i] = songdata->sort[i + 1];
-					songdata->sort[i + 1] = o;
-					p = 1;
-				}
-			}
-			for (int i = 1; i < songdata->mapNum - 1; i += 2) {
-				if ((*songdata)[i].level > (*songdata)[i + 1].level) {
-					o = songdata->sort[i];
-					songdata->sort[i] = songdata->sort[i + 1];
-					songdata->sort[i + 1] = o;
-					p = 1;
-				}
-			}
-		}
+		songdata->SortByLevel();
 		break;
 	case SORT_SCORE:
-		while (p) {
-			p = 0;
-			for (int i = 0; i < songdata->mapNum - 1; i += 2) {
-				if ((*songdata)[i].Hscore < (*songdata)[i + 1].Hscore) {
-					o = songdata->sort[i];
-					songdata->sort[i] = songdata->sort[i + 1];
-					songdata->sort[i + 1] = o;
-					p = 1;
-				}
-			}
-			for (int i = 1; i < songdata->mapNum - 1; i += 2) {
-				if ((*songdata)[i].Hscore < (*songdata)[i + 1].Hscore) {
-					o = songdata->sort[i];
-					songdata->sort[i] = songdata->sort[i + 1];
-					songdata->sort[i + 1] = o;
-					p = 1;
-				}
-			}
-		}
+		songdata->SortByHScore();
 		break;
 	case REC_SORT_DEFAULT:
 		break;
@@ -510,9 +520,9 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 static void SortSongWithSave(songdata_set_t *songdata, int mode, int dif, int *cmd) {
 	int save = 0;
 
-	save = songdata->sort[*cmd];
+	save = songdata->sort[betweens(0, *cmd, songdata->sort.size() - 1)];
 	SortSong(songdata, mode, dif);
-	for (int i = 0; i < songdata->mapNum; i++) {
+	for (int i = 0; i < songdata->sort.size(); i++) {
 		if (songdata->sort[i] == save) {
 			*cmd = i;
 		}
@@ -762,7 +772,7 @@ public:
 		int moveC = 0;
 
 		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
-		picsong = (cmd[0] + songdata->mapNum - (VIEW_COUNT / 2)) % songdata->mapNum;
+		picsong = (cmd[0] + songdata->sort.size() - (VIEW_COUNT / 2)) % songdata->sort.size();
 
 		for (int count = 0; count < VIEW_COUNT; count++) {
 			slide = pals(0, 0, 250, this->UD * 80, moveC);
@@ -782,7 +792,7 @@ public:
 				this->DrawSubOne(cmd[1], BasePosX, BasePosY, &(*songdata)[picsong]);
 			}
 
-			picsong = (picsong + 1) % songdata->mapNum;
+			picsong = (picsong + 1) % songdata->sort.size();
 		}
 	}
 
@@ -1179,11 +1189,11 @@ static void RecSerectKeyActUD(int cmd[], int vect,
 	switch (vect) {
 	case REC_SERECT_VECT_UP:
 		cmd[0]--;
-		if (cmd[0] < 0) { cmd[0] = songdata->mapNum - 1; }
+		if (cmd[0] < 0) { cmd[0] = songdata->sort.size() - 1; }
 		break;
 	case REC_SERECT_VECT_DOWN:
 		cmd[0]++;
-		if (cmd[0] >= songdata->mapNum) { cmd[0] = 0; }
+		if (cmd[0] >= songdata->sort.size()) { cmd[0] = 0; }
 		break;
 	default:
 		return;
