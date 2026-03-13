@@ -396,36 +396,30 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	notedata->ypos = 50 * iLine + 300;
 	notedata->xpos = 150;
 	/* cˆÊ’u‚ğŒvZ‚·‚é */ {
-		short *YmoveN = &mapenc->YmoveN2[iLine];
-		while (IS_BETWEEN(0, recfp->mapeff.move.y[iLine].d[*YmoveN].Etime, notedata->hittime)) {
-			(*YmoveN)++;
+		cvec<rec_move_data_t> &temp = recfp->mapeff.new_move.y[iLine];
+		while (!temp.isEndNo() && (temp.offsetData(1).Stime < notedata->hittime + 5)) {
+			temp.stepNo();
 		}
-	}
-	{
-		short YmoveN = mapenc->YmoveN2[iLine];
-		rec_move_data_t *Ymove = &recfp->mapeff.move.y[iLine].d[YmoveN];
-		if (IS_BETWEEN(0, Ymove[0].Stime, notedata->hittime) && Ymove[0].Etime > notedata->hittime)
-		{
-			notedata->ypos = movecal(Ymove[0].mode, Ymove[0].Stime, Ymove[-1].pos, Ymove[0].Etime,
-				Ymove[0].pos, notedata->hittime);
+		if (notedata->hittime < temp.nowData().Etime) { /* ˆÚ“®’† */
+			notedata->ypos = movecal(
+				temp.nowData().mode, temp.nowData().Stime, temp.offsetData(-1).pos,
+				temp.nowData().Etime, temp.nowData().pos, notedata->hittime
+			);
 		}
-		else { notedata->ypos = Ymove[-1].pos; }
+		else { notedata->ypos = temp.nowData().pos; } /* ˆÚ“®Œã */
 	}
 	/* ‰¡ˆÊ’u‚ğŒvZ‚·‚é */ {
-		short *XmoveN = &mapenc->XmoveN2[iLine];
-		while (IS_BETWEEN(0, recfp->mapeff.move.x[iLine].d[*XmoveN].Etime, notedata->hittime)) {
-			(*XmoveN)++;
+		cvec<rec_move_data_t> &temp = recfp->mapeff.new_move.x[iLine];
+		while (!temp.isEndNo() && (temp.offsetData(1).Stime < notedata->hittime + 5)) {
+			temp.stepNo();
 		}
-	}
-	{
-		short XmoveN = mapenc->XmoveN2[iLine];
-		rec_move_data_t *Xmove = &recfp->mapeff.move.x[iLine].d[XmoveN];
-		if (IS_BETWEEN(0, Xmove[0].Stime, notedata->hittime) && Xmove[0].Etime > notedata->hittime)
-		{
-			notedata->xpos = movecal(Xmove[0].mode, Xmove[0].Stime, Xmove[-1].pos, Xmove[0].Etime,
-				Xmove[0].pos, notedata->hittime);
+		if (notedata->hittime < temp.nowData().Etime) { /* ˆÚ“®’† */
+			notedata->xpos = movecal(
+				temp.nowData().mode, temp.nowData().Stime, temp.offsetData(-1).pos,
+				temp.nowData().Etime, temp.nowData().pos, notedata->hittime
+			);
 		}
-		else { notedata->xpos = Xmove[-1].pos; }
+		else { notedata->xpos = temp.nowData().pos; } /* ˆÚ“®Œã */
 	}
 	//Œø‰Ê‰¹‚ğİ’è‚·‚é
 	if (L'1' <= c && c <= L'9') {
