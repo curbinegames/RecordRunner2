@@ -56,8 +56,6 @@
 #define REC_SERECT_VECT_LEFT   1
 #define REC_SERECT_VECT_RIGHT -1
 
-#define SONGDATA_FROM_MAP(songdata, mapNo) ((songdata)->base2[(songdata)->mapping[mapNo]])
-
 #endif /* define */
 
 typedef TCHAR rec_pack_name_set_t[256];
@@ -82,13 +80,31 @@ typedef struct music_box_2 {
 	rec_ddif_pal_t mpal;
 } MUSIC_BOX_2;
 
-typedef struct rec_serect_music_set_s {
+class rec_serect_music_set_c {
+public:
 	MUSIC_BOX_2 base2[MapNumLim];
 	int mapping[MapNumLim];
 	int sortMode = REC_SORT_DEFAULT;
 	int mapNum = 0;
-} rec_serect_music_set_t;
-typedef rec_serect_music_set_t songdata_set_t;
+
+public: /* î‘ínåüçıån */
+	MUSIC_BOX_2& operator[](int n) {
+		return this->base2[mapping[n]];
+	}
+
+	const MUSIC_BOX_2& operator[](int n) const {
+		return this->base2[mapping[n]];
+	}
+
+	MUSIC_BOX_2& at(int n) {
+		return this->base2[mapping[n]];
+	}
+
+	const MUSIC_BOX_2& at(int n) const {
+		return this->base2[mapping[n]];
+	}
+};
+typedef rec_serect_music_set_c songdata_set_t;
 
 #if 1 /* all relord */
 
@@ -437,7 +453,7 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 		while (p) {
 			p = 0;
 			for (int i = 0; i < songdata->mapNum - 1; i += 2) {
-				if (SONGDATA_FROM_MAP(songdata, i).level > SONGDATA_FROM_MAP(songdata, i + 1).level) {
+				if ((*songdata)[i].level > (*songdata)[i + 1].level) {
 					o = songdata->mapping[i];
 					songdata->mapping[i] = songdata->mapping[i + 1];
 					songdata->mapping[i + 1] = o;
@@ -445,7 +461,7 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 				}
 			}
 			for (int i = 1; i < songdata->mapNum - 1; i += 2) {
-				if (SONGDATA_FROM_MAP(songdata, i).level > SONGDATA_FROM_MAP(songdata, i + 1).level) {
+				if ((*songdata)[i].level > (*songdata)[i + 1].level) {
 					o = songdata->mapping[i];
 					songdata->mapping[i] = songdata->mapping[i + 1];
 					songdata->mapping[i + 1] = o;
@@ -458,7 +474,7 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 		while (p) {
 			p = 0;
 			for (int i = 0; i < songdata->mapNum - 1; i += 2) {
-				if (SONGDATA_FROM_MAP(songdata, i).Hscore < SONGDATA_FROM_MAP(songdata, i + 1).Hscore) {
+				if ((*songdata)[i].Hscore < (*songdata)[i + 1].Hscore) {
 					o = songdata->mapping[i];
 					songdata->mapping[i] = songdata->mapping[i + 1];
 					songdata->mapping[i + 1] = o;
@@ -466,7 +482,7 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 				}
 			}
 			for (int i = 1; i < songdata->mapNum - 1; i += 2) {
-				if (SONGDATA_FROM_MAP(songdata, i).Hscore < SONGDATA_FROM_MAP(songdata, i + 1).Hscore) {
+				if ((*songdata)[i].Hscore < (*songdata)[i + 1].Hscore) {
 					o = songdata->mapping[i];
 					songdata->mapping[i] = songdata->mapping[i + 1];
 					songdata->mapping[i + 1] = o;
@@ -579,13 +595,13 @@ static void RecSerectSetToPlay(rec_to_play_set_t *toPlay, int cmd[],
 	else { toPlay->shift = 0; }
 	if (CheckHitKey(KEY_INPUT_P) == 1) { toPlay->autoFg = 1; }
 	else { toPlay->autoFg = 0; }
-	toPlay->packNo  = SONGDATA_FROM_MAP(songdata, cmd[0]).packNo;
-	toPlay->musicNo = SONGDATA_FROM_MAP(songdata, cmd[0]).musicNo;
-	toPlay->dif     = SONGDATA_FROM_MAP(songdata, cmd[0]).LvType;
+	toPlay->packNo  = (*songdata)[cmd[0]].packNo;
+	toPlay->musicNo = (*songdata)[cmd[0]].musicNo;
+	toPlay->dif     = (*songdata)[cmd[0]].LvType;
 
 #if 0
 	//âBÇµã»óp
-	if (RecSerectTrySecret2(toPlay->autoFg, cmd[1], &SONGDATA_FROM_MAP(songdata, cmd[0])) == 1) {
+	if (RecSerectTrySecret2(toPlay->autoFg, cmd[1], &(*songdata)[cmd[0]]) == 1) {
 		toPlay->dif = 5;
 	}
 #endif
@@ -758,10 +774,10 @@ public:
 			BasePosX = lins(480, 80, 240, 40, BasePosY);
 
 			if (count == (VIEW_COUNT / 2)) {
-				this->DrawMainOne(cmd[1], BasePosX, BasePosY, &SONGDATA_FROM_MAP(songdata, picsong));
+				this->DrawMainOne(cmd[1], BasePosX, BasePosY, &(*songdata)[picsong]);
 			}
 			else {
-				this->DrawSubOne(cmd[1], BasePosX, BasePosY, &SONGDATA_FROM_MAP(songdata, picsong));
+				this->DrawSubOne(cmd[1], BasePosX, BasePosY, &(*songdata)[picsong]);
 			}
 
 			picsong = (picsong + 1) % songdata->mapNum;
@@ -1104,9 +1120,9 @@ public:
 		this->jacket.DrawJacket(380, 85, 500);
 		this->musicbar.DrawAll(300, cmd, songdata);
 		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
-		this->detail.DrawDetailAll(20, 60, &SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->detail.DrawDetailAll(20, 60, &(*songdata)[cmd[0]], cmd[1]);
 		this->previewSnd.CheckTime();
-		this->previewSnd.CheckSnd(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1]);
+		this->previewSnd.CheckSnd(&(*songdata)[cmd[0]], cmd[1]);
 		this->help.DrawHelp(HELP_MAT_MUSIC_SELECT);
 		this->cutin.DrawCut();
 	}
@@ -1147,7 +1163,7 @@ static void RecSerectKeyActLR(int cmd[], int vect,
 		return;
 	}
 
-	uiClass->UpdateLR(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], vect);
+	uiClass->UpdateLR(&(*songdata)[cmd[0]], cmd[1], vect);
 	if (songdata->sortMode == SORT_LEVEL || songdata->sortMode == SORT_SCORE) {
 		SortSongWithSave(songdata, songdata->sortMode, cmd[1], &cmd[0]);
 	}
@@ -1171,18 +1187,18 @@ static void RecSerectKeyActUD(int cmd[], int vect,
 		return;
 	}
 
-	uiClass->UpdateUD(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], vect);
+	uiClass->UpdateUD(&(*songdata)[cmd[0]], cmd[1], vect);
 
 #if 0
 	{
-		int diffixBuf = RecSerectFetchDif(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], songdata->sortMode);
+		int diffixBuf = RecSerectFetchDif(&(*songdata)[cmd[0]], cmd[1], songdata->sortMode);
 		if (diffixBuf < cmd[1]) {
 			cmd[1] = diffixBuf;
-			uiClass->UpdateLR(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], REC_SERECT_VECT_LEFT);
+			uiClass->UpdateLR(&(*songdata)[cmd[0]], cmd[1], REC_SERECT_VECT_LEFT);
 		}
 		else if (diffixBuf > cmd[1]) {
 			cmd[1] = diffixBuf;
-			uiClass->UpdateLR(&SONGDATA_FROM_MAP(songdata, cmd[0]), cmd[1], REC_SERECT_VECT_RIGHT);
+			uiClass->UpdateLR(&(*songdata)[cmd[0]], cmd[1], REC_SERECT_VECT_RIGHT);
 		}
 	}
 #endif
@@ -1204,12 +1220,12 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 	switch (key) {
 	case REC_SERECT_KEY_RETURN:
 		// ëIëÇ≈Ç´ÇÈã»Ç≈Ç†ÇÈÇ©Ç«Ç§Ç© (LvÇ™0à»è„Ç≈Ç†ÇÈÇ©Ç≈îªíË)
-		if (SONGDATA_FROM_MAP(songdata, cmd[0]).level < 0) { break; }
+		if ((*songdata)[cmd[0]].level < 0) { break; }
 		RecSerectSetToPlay(toPlay, cmd, PackFirstNum, songdata);
 		*next = SCENE_MUSIC;
 		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_SONG);
-		uiClass->cutin.SetCutSong(SONGDATA_FROM_MAP(songdata, cmd[0]).SongName,
-			SONGDATA_FROM_MAP(songdata, cmd[0]).jacketP);
+		uiClass->cutin.SetCutSong((*songdata)[cmd[0]].SongName,
+			(*songdata)[cmd[0]].jacketP);
 		uiClass->cutin.SetIo(CUT_FRAG_IN);
 		break;
 	case REC_SERECT_KEY_BACK:
@@ -1266,7 +1282,7 @@ static now_scene_t musicserect2(rec_to_play_set_t *toPlay) {
 	RecSerectLoadBefCmd(cmd, &songdata.sortMode);
 	RecSerectReadMapData(&songdata, PackFirstNum);
 	SortSong(&songdata, songdata.sortMode, cmd[1]);
-	uiClass.InitUi(&SONGDATA_FROM_MAP(&songdata, cmd[0]), cmd[1]);
+	uiClass.InitUi(&songdata[cmd[0]], cmd[1]);
 	AvoidKeyBug();
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
