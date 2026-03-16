@@ -181,24 +181,27 @@ static note_material GetNoteObjMat(TCHAR code) {
 }
 
 /* 再帰関数になっている、最大2回呼ばれる */
-void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
+void RecMapLoadSetMove(cvec<rec_mapeff_move_st> &move, unsigned int *allnum, int iLine,
 	double StartTime, double MovePos, double EndTime, int MoveMode, double bpmG,
 	double timer[])
 {
-	double Spos = (move->d[move->num - 1].pos - 100.0) / 50.0;
+	rec_mapeff_move_st buf;
+	double Spos = (move.lastData().pos - 100.0) / 50.0;
 	switch (MoveMode) {
 	case REC_MAP_MOVE_CODE_LIN:
 	case REC_MAP_MOVE_CODE_ACC:
 	case REC_MAP_MOVE_CODE_DEC:
-		SETMove(&move->d[move->num], StartTime, MovePos, EndTime, MoveMode, bpmG, timer[0]);
-		move->num++;
-		allnum[iLine]++;
+		SETMove(&buf, StartTime, MovePos, EndTime, MoveMode, bpmG, timer[0]);
+		move.push_back(buf);
 		break;
 	case REC_MAP_MOVE_CODE_MOM:
 		RecMapLoadSetMove(move, allnum, iLine, StartTime, MovePos,
 			EndTime, REC_MAP_MOVE_CODE_LIN, bpmG, timer);
-		move->d[move->num - 1].Stime -= 5;
-		move->d[move->num - 1].Etime -= 5;
+		buf = move.lastData();
+		move.pop_back();
+		buf.Stime -= 5;
+		buf.Etime -= 5;
+		move.push_back(buf);
 		break;
 	case REC_MAP_MOVE_CODE_SLI:
 		RecMapLoadSetMove(move, allnum, iLine, StartTime, (Spos + MovePos) / 2.0,
@@ -216,51 +219,6 @@ void RecMapLoadSetMove(rec_move_set_t *move, unsigned int *allnum, int iLine,
 		RecMapLoadSetMove(move, allnum, iLine, StartTime, MovePos,
 			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
 		RecMapLoadSetMove(move, allnum, iLine, (StartTime + EndTime) / 2.0,
-			Spos, EndTime, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
-		break;
-	}
-	return;
-}
-
-/* 再帰関数になっている、最大2回呼ばれる */
-void RecMapLoadSetMoveNew(cvec<rec_mapeff_move_st> &move, unsigned int *allnum, int iLine,
-	double StartTime, double MovePos, double EndTime, int MoveMode, double bpmG,
-	double timer[])
-{
-	rec_mapeff_move_st buf;
-	double Spos = (move.lastData().pos - 100.0) / 50.0;
-	switch (MoveMode) {
-	case REC_MAP_MOVE_CODE_LIN:
-	case REC_MAP_MOVE_CODE_ACC:
-	case REC_MAP_MOVE_CODE_DEC:
-		SETMove(&buf, StartTime, MovePos, EndTime, MoveMode, bpmG, timer[0]);
-		move.push_back(buf);
-		break;
-	case REC_MAP_MOVE_CODE_MOM:
-		RecMapLoadSetMoveNew(move, allnum, iLine, StartTime, MovePos,
-			EndTime, REC_MAP_MOVE_CODE_LIN, bpmG, timer);
-		buf = move.lastData();
-		move.pop_back();
-		buf.Stime -= 5;
-		buf.Etime -= 5;
-		move.push_back(buf);
-		break;
-	case REC_MAP_MOVE_CODE_SLI:
-		RecMapLoadSetMoveNew(move, allnum, iLine, StartTime, (Spos + MovePos) / 2.0,
-			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
-		RecMapLoadSetMoveNew(move, allnum, iLine, (StartTime + EndTime) / 2.0,
-			MovePos, EndTime, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
-		break;
-	case REC_MAP_MOVE_CODE_PAL:
-		RecMapLoadSetMoveNew(move, allnum, iLine, StartTime, MovePos,
-			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
-		RecMapLoadSetMoveNew(move, allnum, iLine, (StartTime + EndTime) / 2.0,
-			Spos, EndTime, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
-		break;
-	case REC_MAP_MOVE_CODE_EDG:
-		RecMapLoadSetMoveNew(move, allnum, iLine, StartTime, MovePos,
-			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
-		RecMapLoadSetMoveNew(move, allnum, iLine, (StartTime + EndTime) / 2.0,
 			Spos, EndTime, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
 		break;
 	}
@@ -684,9 +642,7 @@ static void RecMapencSetMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
-		RecMapLoadSetMove(&recfp->mapeff.move.y[iLane], recfp->allnum.Ymovenum, iLane, Stime,
-			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
-		RecMapLoadSetMoveNew(recfp->mapeff.new_move.y[iLane], recfp->allnum.Ymovenum, iLane, Stime,
+		RecMapLoadSetMove(recfp->mapeff.new_move.y[iLane], recfp->allnum.Ymovenum, iLane, Stime,
 			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
 	}
 	return;
@@ -759,9 +715,7 @@ static void RecMapencSetXMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
-		RecMapLoadSetMove(&recfp->mapeff.move.x[iLane], recfp->allnum.Xmovenum, iLane, Stime,
-			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
-		RecMapLoadSetMoveNew(recfp->mapeff.new_move.x[iLane], recfp->allnum.Xmovenum, iLane, Stime,
+		RecMapLoadSetMove(recfp->mapeff.new_move.x[iLane], recfp->allnum.Xmovenum, iLane, Stime,
 			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
 	}
 	return;
@@ -854,7 +808,7 @@ static void RecMapencSetGMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	else { pos = strsans2(GT1); }
 	strnex(GT1);
 	Etime = strsans2(GT1);
-	RecMapLoadSetMove(&recfp->mapeff.move.y[3], recfp->allnum.Ymovenum, 3,
+	RecMapLoadSetMove(recfp->mapeff.new_move.y[3], recfp->allnum.Ymovenum, 3,
 		Stime, pos, Etime, mode, mapenc->bpmG, mapenc->timer);
 	return;
 }
