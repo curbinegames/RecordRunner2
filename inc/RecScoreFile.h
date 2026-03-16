@@ -237,8 +237,8 @@ typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	rec_move_all_set_t move;
 	rec_move_all_set_cvec_t new_move;
 	tvec<int> chamo[3] = { tvec<int>(99) }; /* キャラグラ変更タイミング */
-	tvec<int> fall{99}; /* 落ち者背景アイテム番号 */
-	tvec<bool> viewLine{99}; /* ガイドライン表示フラグ */
+	tvec<int> fall{99}; /* 落ち物背景アイテム番号 */
+	tvec<bool> viewLine{99}; /* レーンガイド表示フラグ */
 	tvec<double> speedt[5] = { tvec<double>(99) }; /* ノーツ速度 */
 } rec_map_eff_data_t;
 

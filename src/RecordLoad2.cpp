@@ -521,7 +521,7 @@ static void RecMapencSetSpeed(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	double data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	uint lane = betweens(0, GT1[6] - 49, 4);
+	uint lane = betweens(0, GT1[6] - '1', 4);
 
 	strmods(GT1, 8);
 	data_buf = strsans2(GT1);

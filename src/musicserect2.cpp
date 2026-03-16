@@ -518,15 +518,16 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
  * @param[out] cmd command‚ÌŠi”[êŠ
  */
 static void SortSongWithSave(songdata_set_t *songdata, int mode, int dif, int *cmd) {
-	int save = 0;
+	tstring save;
 
-	save = songdata->sort[betweens(0, *cmd, songdata->sort.size() - 1)];
+	save = (*songdata)[betweens(0, *cmd, songdata->sort.size() - 1)].SongName;
 	SortSong(songdata, mode, dif);
 	for (int i = 0; i < songdata->sort.size(); i++) {
-		if (songdata->sort[i] == save) {
+		if (save == (*songdata)[i].SongName) {
 			*cmd = i;
 		}
 	}
+	(*cmd) = min(*cmd, songdata->sort.size() - 1);
 	return;
 }
 
@@ -1122,9 +1123,10 @@ public:
 		this->Update4th(songdata->jacketP);
 	}
 
-	void UpdateLR(MUSIC_BOX_2 *songdata, int dif, int vect) {
+	void UpdateLR(songdata_set_t &songdata, int *cmd, int dif, int vect) {
 		this->detail.SlideDif(vect);
-		this->Update4th(songdata->jacketP);
+		SortSongWithSave(&songdata, songdata.sortMode, dif, cmd);
+		this->Update4th(songdata[*cmd].jacketP);
 	}
 
 	void DrawUi(int cmd[], songdata_set_t *songdata) {
@@ -1175,10 +1177,7 @@ static void RecSerectKeyActLR(int cmd[], int vect,
 		return;
 	}
 
-	uiClass->UpdateLR(&(*songdata)[cmd[0]], cmd[1], vect);
-	if (songdata->sortMode == SORT_LEVEL || songdata->sortMode == SORT_SCORE) {
-		SortSongWithSave(songdata, songdata->sortMode, cmd[1], &cmd[0]);
-	}
+	uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], vect);
 
 	return;
 }
@@ -1206,11 +1205,11 @@ static void RecSerectKeyActUD(int cmd[], int vect,
 		int diffixBuf = RecSerectFetchDif(&(*songdata)[cmd[0]], cmd[1], songdata->sortMode);
 		if (diffixBuf < cmd[1]) {
 			cmd[1] = diffixBuf;
-			uiClass->UpdateLR(&(*songdata)[cmd[0]], cmd[1], REC_SERECT_VECT_LEFT);
+			uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], REC_SERECT_VECT_LEFT);
 		}
 		else if (diffixBuf > cmd[1]) {
 			cmd[1] = diffixBuf;
-			uiClass->UpdateLR(&(*songdata)[cmd[0]], cmd[1], REC_SERECT_VECT_RIGHT);
+			uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], REC_SERECT_VECT_RIGHT);
 		}
 	}
 #endif
