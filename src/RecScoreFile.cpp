@@ -110,38 +110,14 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.chamo[0].fread(fp); /* キャラグラ変換タイミング */
 	recfp->mapeff.chamo[1].fread(fp);
 	recfp->mapeff.chamo[2].fread(fp);
-	recfp->mapeff.new_move.y[0].fread(fp);
-	recfp->mapeff.new_move.y[1].fread(fp);
-	recfp->mapeff.new_move.y[2].fread(fp);
-	recfp->mapeff.new_move.y[3].fread(fp);
-	recfp->mapeff.new_move.y[4].fread(fp);
-	recfp->mapeff.new_move.x[0].fread(fp);
-	recfp->mapeff.new_move.x[1].fread(fp);
-	recfp->mapeff.new_move.x[2].fread(fp);
-	for (size_t i = 0; i < recfp->mapeff.new_move.y[0].size(); i++) {
-		recfp->mapeff.move.y[0].d[i] = recfp->mapeff.new_move.y[0].at(i);
-	}
-	for (size_t i = 0; i < recfp->mapeff.new_move.y[1].size(); i++) {
-		recfp->mapeff.move.y[1].d[i] = recfp->mapeff.new_move.y[1].at(i);
-	}
-	for (size_t i = 0; i < recfp->mapeff.new_move.y[2].size(); i++) {
-		recfp->mapeff.move.y[2].d[i] = recfp->mapeff.new_move.y[2].at(i);
-	}
-	for (size_t i = 0; i < recfp->mapeff.new_move.y[3].size(); i++) {
-		recfp->mapeff.move.y[3].d[i] = recfp->mapeff.new_move.y[3].at(i);
-	}
-	for (size_t i = 0; i < recfp->mapeff.new_move.y[4].size(); i++) {
-		recfp->mapeff.move.y[4].d[i] = recfp->mapeff.new_move.y[4].at(i);
-	}
-	for (size_t i = 0; i < recfp->mapeff.new_move.x[0].size(); i++) {
-		recfp->mapeff.move.x[0].d[i] = recfp->mapeff.new_move.x[0].at(i);
-	}
-	for (size_t i = 0; i < recfp->mapeff.new_move.x[1].size(); i++) {
-		recfp->mapeff.move.x[1].d[i] = recfp->mapeff.new_move.x[1].at(i);
-	}
-	for (size_t i = 0; i < recfp->mapeff.new_move.x[2].size(); i++) {
-		recfp->mapeff.move.x[2].d[i] = recfp->mapeff.new_move.x[2].at(i);
-	}
+	recfp->mapeff.move.y[0].fread(fp); /* 上レーン縦位置移動タイミング */
+	recfp->mapeff.move.y[1].fread(fp); /* 中レーン縦位置移動タイミング */
+	recfp->mapeff.move.y[2].fread(fp); /* 下レーン縦位置移動タイミング */
+	recfp->mapeff.move.y[3].fread(fp); /*     地面縦位置移動タイミング */
+	recfp->mapeff.move.y[4].fread(fp); /*     水面縦位置移動タイミング */
+	recfp->mapeff.move.x[0].fread(fp); /* 上レーン横位置移動タイミング */
+	recfp->mapeff.move.x[1].fread(fp); /* 中レーン横位置移動タイミング */
+	recfp->mapeff.move.x[2].fread(fp); /* 下レーン横位置移動タイミング */
 	recfp->mapeff.lock.x.fread(fp); /* ノーツ固定切り替えタイミング */
 	recfp->mapeff.lock.y.fread(fp);
 	recfp->mapeff.carrow.fread(fp); /* キャラ向き切り替えタイミング */
@@ -184,14 +160,14 @@ int rec_score_fwrite(const rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.chamo[0].fwrite(fp); /* キャラグラ変換タイミング */
 	recfp->mapeff.chamo[1].fwrite(fp);
 	recfp->mapeff.chamo[2].fwrite(fp);
-	recfp->mapeff.new_move.y[0].fwrite(fp);
-	recfp->mapeff.new_move.y[1].fwrite(fp);
-	recfp->mapeff.new_move.y[2].fwrite(fp);
-	recfp->mapeff.new_move.y[3].fwrite(fp);
-	recfp->mapeff.new_move.y[4].fwrite(fp);
-	recfp->mapeff.new_move.x[0].fwrite(fp);
-	recfp->mapeff.new_move.x[1].fwrite(fp);
-	recfp->mapeff.new_move.x[2].fwrite(fp);
+	recfp->mapeff.move.y[0].fwrite(fp); /* 上レーン縦位置移動タイミング */
+	recfp->mapeff.move.y[1].fwrite(fp); /* 中レーン縦位置移動タイミング */
+	recfp->mapeff.move.y[2].fwrite(fp); /* 下レーン縦位置移動タイミング */
+	recfp->mapeff.move.y[3].fwrite(fp); /*     地面縦位置移動タイミング */
+	recfp->mapeff.move.y[4].fwrite(fp); /*     水面縦位置移動タイミング */
+	recfp->mapeff.move.x[0].fwrite(fp); /* 上レーン横位置移動タイミング */
+	recfp->mapeff.move.x[1].fwrite(fp); /* 中レーン横位置移動タイミング */
+	recfp->mapeff.move.x[2].fwrite(fp); /* 下レーン横位置移動タイミング */
 	recfp->mapeff.lock.x.fwrite(fp); /* ノーツ固定切り替えタイミング */
 	recfp->mapeff.lock.y.fwrite(fp);
 	recfp->mapeff.carrow.fwrite(fp); /* キャラ向き切り替えタイミング */

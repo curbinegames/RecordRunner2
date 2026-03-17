@@ -354,7 +354,7 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	notedata->ypos = 50 * iLine + 300;
 	notedata->xpos = 150;
 	/* cˆÊ’u‚ğŒvZ‚·‚é */ {
-		cvec<rec_mapeff_move_st> &temp = recfp->mapeff.new_move.y[iLine];
+		cvec<rec_mapeff_move_st> &temp = recfp->mapeff.move.y[iLine];
 		while (!temp.isEndNo() && (temp.offsetData(1).Stime < notedata->hittime + 5)) {
 			temp.stepNo();
 		}
@@ -367,7 +367,7 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 		else { notedata->ypos = temp.nowData().pos; } /* ˆÚ“®Œã */
 	}
 	/* ‰¡ˆÊ’u‚ğŒvZ‚·‚é */ {
-		cvec<rec_mapeff_move_st> &temp = recfp->mapeff.new_move.x[iLine];
+		cvec<rec_mapeff_move_st> &temp = recfp->mapeff.move.x[iLine];
 		while (!temp.isEndNo() && (temp.offsetData(1).Stime < notedata->hittime + 5)) {
 			temp.stepNo();
 		}
@@ -642,7 +642,7 @@ static void RecMapencSetMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
-		RecMapLoadSetMove(recfp->mapeff.new_move.y[iLane], recfp->allnum.Ymovenum, iLane, Stime,
+		RecMapLoadSetMove(recfp->mapeff.move.y[iLane], recfp->allnum.Ymovenum, iLane, Stime,
 			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
 	}
 	return;
@@ -715,7 +715,7 @@ static void RecMapencSetXMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
-		RecMapLoadSetMove(recfp->mapeff.new_move.x[iLane], recfp->allnum.Xmovenum, iLane, Stime,
+		RecMapLoadSetMove(recfp->mapeff.move.x[iLane], recfp->allnum.Xmovenum, iLane, Stime,
 			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
 	}
 	return;
@@ -747,11 +747,11 @@ static void RecMapencSetDiv(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, 
 			rec_mapeff_move_st buf;
 			SETMove(&buf, Stime,
 				pos, Stime + Onetime, 1, mapenc->bpmG, mapenc->timer[0]);
-			recfp->mapeff.new_move.y[lane].push_back(buf);
+			recfp->mapeff.move.y[lane].push_back(buf);
 			SETMove(&buf, Stime + Onetime,
-				(recfp->mapeff.new_move.y[lane].lastData().pos - 100.0) / 50.0,
+				(recfp->mapeff.move.y[lane].lastData().pos - 100.0) / 50.0,
 				Stime + Onetime * 2, 1, mapenc->bpmG, mapenc->timer[0]);
-			recfp->mapeff.new_move.y[lane].push_back(buf);
+			recfp->mapeff.move.y[lane].push_back(buf);
 			Stime += Onetime * 2;
 			recfp->allnum.Ymovenum[lane] += 2;
 		}
@@ -761,11 +761,11 @@ static void RecMapencSetDiv(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, 
 			rec_mapeff_move_st buf;
 			SETMove(&buf, Stime,
 				pos, Stime + Onetime, 1, mapenc->bpmG, mapenc->timer[0]);
-			recfp->mapeff.new_move.x[lane].push_back(buf);
+			recfp->mapeff.move.x[lane].push_back(buf);
 			SETMove(&buf, Stime + Onetime,
-				(recfp->mapeff.new_move.x[lane].lastData().pos - 100.0) / 50.0,
+				(recfp->mapeff.move.x[lane].lastData().pos - 100.0) / 50.0,
 				Stime + Onetime * 2, 1, mapenc->bpmG, mapenc->timer[0]);
-			recfp->mapeff.new_move.x[lane].push_back(buf);
+			recfp->mapeff.move.x[lane].push_back(buf);
 			Stime += Onetime * 2;
 			recfp->allnum.Xmovenum[lane] += 2;
 		}
@@ -809,7 +809,7 @@ static void RecMapencSetGMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	else { pos = strsans2(GT1); }
 	strnex(GT1);
 	Etime = strsans2(GT1);
-	RecMapLoadSetMove(recfp->mapeff.new_move.y[3], recfp->allnum.Ymovenum, 3,
+	RecMapLoadSetMove(recfp->mapeff.move.y[3], recfp->allnum.Ymovenum, 3,
 		Stime, pos, Etime, mode, mapenc->bpmG, mapenc->timer);
 	return;
 }
@@ -1176,14 +1176,14 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.carrow.push_back(0, 1);
 	recfp->mapeff.lock.x.push_back(0, false);
 	recfp->mapeff.lock.y.push_back(0, true);
-	recfp->mapeff.new_move.y[0].push_back({ 0,300,0,1 });
-	recfp->mapeff.new_move.y[1].push_back({ 0,350,0,1 });
-	recfp->mapeff.new_move.y[2].push_back({ 0,400,0,1 });
-	recfp->mapeff.new_move.y[3].push_back({ 0,350,0,1 });
-	recfp->mapeff.new_move.y[4].push_back({ 0,600,0,1 });
-	recfp->mapeff.new_move.x[0].push_back({ 0,150,0,1 });
-	recfp->mapeff.new_move.x[1].push_back({ 0,150,0,1 });
-	recfp->mapeff.new_move.x[2].push_back({ 0,150,0,1 });
+	recfp->mapeff.move.y[0].push_back({ 0, 300, 0, 1 });
+	recfp->mapeff.move.y[1].push_back({ 0, 350, 0, 1 });
+	recfp->mapeff.move.y[2].push_back({ 0, 400, 0, 1 });
+	recfp->mapeff.move.y[3].push_back({ 0, 350, 0, 1 });
+	recfp->mapeff.move.y[4].push_back({ 0, 600, 0, 1 });
+	recfp->mapeff.move.x[0].push_back({ 0, 150, 0, 1 });
+	recfp->mapeff.move.x[1].push_back({ 0, 150, 0, 1 });
+	recfp->mapeff.move.x[2].push_back({ 0, 150, 0, 1 });
 	recfp->mapeff.chamo[0].push_back(0, 0);
 	recfp->mapeff.chamo[1].push_back(0, 1);
 	recfp->mapeff.chamo[2].push_back(0, 1);
