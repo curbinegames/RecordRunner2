@@ -467,6 +467,14 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->camera.resetNo();
 	mapeff->scrool.resetNo();
 	mapeff->carrow.resetNo();
+	mapeff->new_move.y[0].resetNo();
+	mapeff->new_move.y[1].resetNo();
+	mapeff->new_move.y[2].resetNo();
+	mapeff->new_move.y[3].resetNo();
+	mapeff->new_move.y[4].resetNo();
+	mapeff->new_move.x[0].resetNo();
+	mapeff->new_move.x[1].resetNo();
+	mapeff->new_move.x[2].resetNo();
 	mapeff->move.y[0].num = 0;
 	mapeff->move.y[1].num = 0;
 	mapeff->move.y[2].num = 0;
@@ -555,16 +563,6 @@ static void Getxxxwav(wchar_t *str, int num) {
 
 static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 	for (int iLine = 0; iLine < loop; iLine++) {
-		if (IS_BETWEEN(0, move[iLine].d[move[iLine].num].Stime, Ntime)) {
-			line[iLine] =
-				(int)movecal(
-					move[iLine].d[move[iLine].num].mode,
-					move[iLine].d[move[iLine].num].Stime,
-					move[iLine].d[move[iLine].num - 1].pos,
-					move[iLine].d[move[iLine].num].Etime,
-					move[iLine].d[move[iLine].num].pos, Ntime);
-		}
-		/* TODO: ‚±‚Ìwhile•¶‚Ì’†‚Í‚±‚ÌŠÖ”“à‚Å‚â‚é‚±‚Æ‚Å‚Í‚È‚¢‚æ‚¤‚È... */
 		while (
 			move[iLine].d[move[iLine].num].Etime <= Ntime &&
 			move[iLine].d[move[iLine].num].Stime >= 0 ||
@@ -572,6 +570,30 @@ static void recSetLine(int line[], rec_move_set_t move[], int Ntime, int loop) {
 		{
 			line[iLine] = move[iLine].d[move[iLine].num].pos;
 			move[iLine].num++;
+		}
+	}
+}
+
+static void recSetLineNew(int line[], cvec<rec_mapeff_move_st> move[], int Ntime, int loop) {
+	for (int iLine = 0; iLine < loop; iLine++) {
+		if (IS_BETWEEN(0, move[iLine].nowData().Stime, Ntime)) {
+			line[iLine] =
+				(int)movecal_scale(
+					move[iLine].nowData().mode,
+					move[iLine].nowData().Stime,
+					move[iLine].offsetData(-1).pos,
+					move[iLine].nowData().Etime,
+					move[iLine].nowData().pos, Ntime);
+		}
+		/* TODO: ‚±‚Ìwhile•¶‚Ì’†‚Í‚±‚ÌŠÖ”“à‚Å‚â‚é‚±‚Æ‚Å‚Í‚È‚¢‚æ‚¤‚È... */
+		while (
+			!move[iLine].isEndNo() &&
+			move[iLine].nowData().Etime <= Ntime &&
+			move[iLine].nowData().Stime >= 0 ||
+			move[iLine].nowData().mode == 4)
+		{
+			line[iLine] = move[iLine].nowData().pos;
+			move[iLine].stepNo();
 		}
 	}
 	return;
@@ -1936,12 +1958,15 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		RecPlaySetCamera(recfp.mapeff.camera, recfp.time.now);
 		//lanePos.x(‰¡ˆÊ’u)‚ÌŒvŽZ
 		recSetLine(lanePos.x, recfp.mapeff.move.x, recfp.time.now, 3);
+		recSetLineNew(lanePos.x, recfp.mapeff.new_move.x, recfp.time.now, 3);
 		//lanePos.y(cˆÊ’u)‚ÌŒvŽZ
 		if (optiondata.backbright == 0) {
 			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 3);
+			recSetLineNew(lanePos.y, recfp.mapeff.new_move.y, recfp.time.now, 3);
 		}
 		else {
 			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
+			recSetLineNew(lanePos.y, recfp.mapeff.new_move.y, recfp.time.now, 5);
 		}
 		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
