@@ -488,6 +488,7 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	mapeff->speedt[3].resetNo();
 	mapeff->speedt[4].resetNo();
 	mapeff->Movie.resetNo();
+	mapeff->viewLine.resetNo();
 	return;
 }
 

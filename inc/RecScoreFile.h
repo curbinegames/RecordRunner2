@@ -204,7 +204,7 @@ typedef struct rec_notelock_allset_s {
 	tvec<bool> y{99};
 } rec_notelock_allset_t;
 
-typedef struct rec_move_data_s {
+typedef struct rec_mapeff_move_s {
 	int Stime = -10000;
 	int pos = -10000;
 	int Etime = -10000;
