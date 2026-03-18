@@ -59,7 +59,9 @@ bool RecScoreWriteNameset(const rec_play_nameset_t *src, FILE *fp) {
 bool RecScoreReadMapdata(rec_map_detail_t *dest, FILE *fp, size_t notes_count) {
 	if (dest == nullptr) { return false; }
 	if (  fp == nullptr) { return false; }
-	fread(&dest->note,  sizeof(note_box_2_t), notes_count, fp); /* ノーツデータ */
+	dest->note[0].fread(fp); /* ノーツデータ */
+	dest->note[1].fread(fp);
+	dest->note[2].fread(fp);
 	fread(&dest->notes, sizeof(short),          1, fp); /* ノーツ数 */
 	fread(&dest->bpm,   sizeof(double),         1, fp); /* BPM      */
 	fread(&dest->Lv,    sizeof(short),          1, fp); /* レベル   */
@@ -74,7 +76,9 @@ bool RecScoreReadMapdata(rec_map_detail_t *dest, FILE *fp, size_t notes_count) {
 bool RecScoreWriteMapdata(const rec_map_detail_t *src, FILE *fp, size_t notes_count) {
 	if (src == nullptr) { return false; }
 	if ( fp == nullptr) { return false; }
-	fwrite(&src->note,  sizeof(note_box_2_t), notes_count, fp); /* ノーツデータ */
+	src->note[0].fwrite(fp); /* ノーツデータ */
+	src->note[1].fwrite(fp);
+	src->note[2].fwrite(fp);
 	fwrite(&src->notes, sizeof(short),          1, fp); /* ノーツ数 */
 	fwrite(&src->bpm,   sizeof(double),         1, fp); /* BPM      */
 	fwrite(&src->Lv,    sizeof(short),          1, fp); /* レベル   */
@@ -122,6 +126,10 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.lock.y.fread(fp);
 	recfp->mapeff.carrow.fread(fp); /* キャラ向き切り替えタイミング */
 	recfp->mapeff.viewT.fread(fp); /* ノーツ表示時間変換タイミング */
+	recfp->mapdata.note[0].fread(fp); /* ノーツデータ */
+	recfp->mapdata.note[1].fread(fp);
+	recfp->mapdata.note[2].fread(fp);
+	fread(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
 	fread(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
 	recfp->mapeff.Movie.fread(fp); /* アイテムデータ */
 	recfp->mapeff.camera.fread(fp); /* カメラデータ */
@@ -172,6 +180,10 @@ int rec_score_fwrite(const rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.lock.y.fwrite(fp);
 	recfp->mapeff.carrow.fwrite(fp); /* キャラ向き切り替えタイミング */
 	recfp->mapeff.viewT.fwrite(fp); /* ノーツ表示時間変換タイミング */
+	recfp->mapdata.note[0].fwrite(fp); /* ノーツデータ */
+	recfp->mapdata.note[1].fwrite(fp);
+	recfp->mapdata.note[2].fwrite(fp);
+	fwrite(&recfp->mapdata.notes, sizeof(short), 1, fp);//ノーツ数
 	fwrite(&recfp->time.end, sizeof(int), 1, fp);//曲終了時間
 	recfp->mapeff.Movie.fwrite(fp); /* アイテムデータ */
 	recfp->mapeff.camera.fwrite(fp); /* カメラデータ */

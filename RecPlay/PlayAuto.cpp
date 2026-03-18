@@ -5,7 +5,7 @@
 
 typedef rec_play_key_hold_t key_hold_t;
 
-static void AutoBeforeChain(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
+static void AutoBeforeChain(key_hold_t *key, cvec<note_box_2_t> note[], short objectNG[], int Ntime) {
 	if (IS_NEAR_NOTE_ARROW_ANYLANE(note, objectNG, Ntime, 40)) {
 		key->up = 0;
 		key->down = 0;
@@ -15,15 +15,17 @@ static void AutoBeforeChain(key_hold_t *key, note_box_2_t note[], short objectNG
 	return;
 }
 
-static void AutoHit(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
+static void AutoHit(key_hold_t *key, cvec<note_box_2_t> note[], short objectNG[], int Ntime) {
 	int hitcount = 0;
 	int G = 0;
 	for (int j = 0; j < 3; j++) {
 		G = objectNG[j];
 		for (int i = 0; i < 3; i++) {
-			if (IS_NEAR_NOTE(&note[G], NOTE_HIT, Ntime, 8)) { hitcount++; }
-			G = note[G].next;
-			if (G == -1) { break; }
+			if (IS_NEAR_NOTE(&note[j][G], NOTE_HIT, Ntime, 8)) {
+				hitcount++;
+			}
+			G++;
+			if (note[j].size() <= G + 1) { break; }
 		}
 	}
 	if (hitcount == 1) {
@@ -38,7 +40,7 @@ static void AutoHit(key_hold_t *key, note_box_2_t note[], short objectNG[], int 
 		}
 	}
 	else if (hitcount == 2) {
-		key->x = 1;
+ 		key->x = 1;
 		if (key->c == 0) {
 			key->c = 1;
 			key->z = 0;
@@ -56,19 +58,19 @@ static void AutoHit(key_hold_t *key, note_box_2_t note[], short objectNG[], int 
 	return;
 }
 
-static void AutoArrowLR(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
+static void AutoArrowLR(key_hold_t *key, cvec<note_box_2_t> note[], short objectNG[], int Ntime) {
 	if (IS_NEAR_NOTE_ANYLANE(note, objectNG, NOTE_LEFT, Ntime, 8)) { key->left = 1; }
 	if (IS_NEAR_NOTE_ANYLANE(note, objectNG, NOTE_RIGHT, Ntime, 8)) { key->right = 1; }
 	return;
 }
 
-static void AutoBomb(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
+static void AutoBomb(key_hold_t *key, cvec<note_box_2_t> note[], short objectNG[], int Ntime) {
 	if (key->down > 0) {
-		if (IS_NEAR_NOTE_BOMB(&note[objectNG[2]], Ntime)) { key->down = 0; }
-		if (IS_NEAR_NOTE_BOMB(&note[objectNG[0]], Ntime)) { key->up = 0; }
-		if (IS_NEAR_NOTE_BOMB(&note[objectNG[1]], Ntime)) {
-			if (IS_NEAR_NOTE(&note[objectNG[0]], NOTE_CATCH, Ntime, 8) ||
-				IS_NEAR_NOTE_BOMB(&note[objectNG[2]], Ntime))
+		if (IS_NEAR_NOTE_BOMB(&note[2][objectNG[2]], Ntime)) { key->down = 0; }
+		if (IS_NEAR_NOTE_BOMB(&note[0][objectNG[0]], Ntime)) { key->up = 0; }
+		if (IS_NEAR_NOTE_BOMB(&note[1][objectNG[1]], Ntime)) {
+			if (IS_NEAR_NOTE(&note[0][objectNG[0]], NOTE_CATCH, Ntime, 8) ||
+				IS_NEAR_NOTE_BOMB(&note[2][objectNG[2]], Ntime))
 			{
 				(key->up)++;
 				key->down = 0;
@@ -80,11 +82,11 @@ static void AutoBomb(key_hold_t *key, note_box_2_t note[], short objectNG[], int
 		}
 	}
 	else {
-		if (IS_NEAR_NOTE_BOMB(&note[objectNG[0]], Ntime)) { key->up = 0; }
-		if (IS_NEAR_NOTE_BOMB(&note[objectNG[2]], Ntime)) { key->down = 0; }
-		if (IS_NEAR_NOTE_BOMB(&note[objectNG[1]], Ntime)) {
-			if (IS_NEAR_NOTE_BOMB(&note[objectNG[0]], Ntime) ||
-				IS_NEAR_NOTE(&note[objectNG[2]], NOTE_CATCH, Ntime, 8))
+		if (IS_NEAR_NOTE_BOMB(&note[0][objectNG[0]], Ntime)) { key->up = 0; }
+		if (IS_NEAR_NOTE_BOMB(&note[2][objectNG[2]], Ntime)) { key->down = 0; }
+		if (IS_NEAR_NOTE_BOMB(&note[1][objectNG[1]], Ntime)) {
+			if (IS_NEAR_NOTE_BOMB(&note[0][objectNG[0]], Ntime) ||
+				IS_NEAR_NOTE(&note[2][objectNG[2]], NOTE_CATCH, Ntime, 8))
 			{
 				key->up = 0;
 				(key->down)++;
@@ -97,43 +99,43 @@ static void AutoBomb(key_hold_t *key, note_box_2_t note[], short objectNG[], int
 	}
 }
 
-static void AutoArrowUD(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
+static void AutoArrowUD(key_hold_t *key, cvec<note_box_2_t> note[], short objectNG[], int Ntime) {
 	if (IS_NEAR_NOTE_ANYLANE(note, objectNG, NOTE_UP, Ntime, 8)) {
 		key->up = 1;
-		if (IS_NEAR_NOTE_BOMB(&note[objectNG[0]], Ntime)) { key->down = 1; }
+		if (IS_NEAR_NOTE_BOMB(&note[0][objectNG[0]], Ntime)) { key->down = 1; }
 	}
 	if (IS_NEAR_NOTE_ANYLANE(note, objectNG, NOTE_DOWN, Ntime, 8)) {
 		key->down = 1;
-		if (IS_NEAR_NOTE_BOMB(&note[objectNG[2]], Ntime)) { key->up = 1; }
+		if (IS_NEAR_NOTE_BOMB(&note[2][objectNG[2]], Ntime)) { key->up = 1; }
 	}
 	return;
 }
 
-static void AutoCatch(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
+static void AutoCatch(key_hold_t *key, cvec<note_box_2_t> note[], short objectNG[], int Ntime) {
 	if (key->up > 0) {
-		if (IS_NEAR_NOTE(&note[objectNG[2]], NOTE_CATCH, Ntime, 8)) {
+		if (IS_NEAR_NOTE(&note[2][objectNG[2]], NOTE_CATCH, Ntime, 8)) {
 			key->up = 0;
 			(key->down)++;
 		}
-		if (IS_NEAR_NOTE(&note[objectNG[1]], NOTE_CATCH, Ntime, 8)) {
+		if (IS_NEAR_NOTE(&note[1][objectNG[1]], NOTE_CATCH, Ntime, 8)) {
 			key->up = 0;
 			key->down = 0;
 		}
-		if (IS_NEAR_NOTE(&note[objectNG[0]], NOTE_CATCH, Ntime, 8)) {
+		if (IS_NEAR_NOTE(&note[0][objectNG[0]], NOTE_CATCH, Ntime, 8)) {
 			(key->up)++;
 			key->down = 0;
 		}
 	}
 	else {
-		if (IS_NEAR_NOTE(&note[objectNG[0]], NOTE_CATCH, Ntime, 8)) {
+		if (IS_NEAR_NOTE(&note[0][objectNG[0]], NOTE_CATCH, Ntime, 8)) {
 			(key->up)++;
 			key->down = 0;
 		}
-		if (IS_NEAR_NOTE(&note[objectNG[1]], NOTE_CATCH, Ntime, 8)) {
+		if (IS_NEAR_NOTE(&note[1][objectNG[1]], NOTE_CATCH, Ntime, 8)) {
 			key->up = 0;
 			key->down = 0;
 		}
-		if (IS_NEAR_NOTE(&note[objectNG[2]], NOTE_CATCH, Ntime, 8)) {
+		if (IS_NEAR_NOTE(&note[2][objectNG[2]], NOTE_CATCH, Ntime, 8)) {
 			key->up = 0;
 			(key->down)++;
 		}
@@ -141,7 +143,7 @@ static void AutoCatch(key_hold_t *key, note_box_2_t note[], short objectNG[], in
 	return;
 }
 
-static void AutoReleaseKey(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
+static void AutoReleaseKey(key_hold_t *key, cvec<note_box_2_t> note[], short objectNG[], int Ntime) {
 	if (key->z > 10) { key->z = 0; }
 	if (key->x > 10) { key->x = 0; }
 	if (key->c > 10) { key->c = 0; }
@@ -153,7 +155,7 @@ static void AutoReleaseKey(key_hold_t *key, note_box_2_t note[], short objectNG[
 	}
 }
 
-void AutoAution(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntime) {
+void AutoAution(key_hold_t *key, cvec<note_box_2_t> note[], short objectNG[], int Ntime) {
 	int hitFG = 0;
 	// 押しっぱなし処理。AutoReleaseKeyでリリースするので永久ホールドはない。
 	if (key->z > 0) { (key->z)++; }
@@ -165,11 +167,11 @@ void AutoAution(key_hold_t *key, note_box_2_t note[], short objectNG[], int Ntim
 	if (key->right > 0) { (key->right)++; }
 	// ノーツ処理
 	AutoBeforeChain(key, note, objectNG, Ntime);
-	AutoHit(key, note, objectNG, Ntime);
-	AutoArrowLR(key, note, objectNG, Ntime);
-	AutoBomb(key, note, objectNG, Ntime);
-	AutoArrowUD(key, note, objectNG, Ntime);
-	AutoCatch(key, note, objectNG, Ntime);
-	AutoReleaseKey(key, note, objectNG, Ntime);
+	AutoHit(        key, note, objectNG, Ntime);
+	AutoArrowLR(    key, note, objectNG, Ntime);
+	AutoBomb(       key, note, objectNG, Ntime);
+	AutoArrowUD(    key, note, objectNG, Ntime);
+	AutoCatch(      key, note, objectNG, Ntime);
+	AutoReleaseKey( key, note, objectNG, Ntime);
 	return;
 }

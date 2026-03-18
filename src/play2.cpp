@@ -492,26 +492,10 @@ static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
 	return;
 }
 
-static void RecResetPlayObjectNum(short objectN[], const rec_score_file_t *recfp) {
-	uint allnum = recfp->allnum.notenum[0] + recfp->allnum.notenum[1] + recfp->allnum.notenum[2];
-	for (uint iView = 0; iView < allnum; iView++) {
-		if (recfp->mapdata.note[iView].lane == NOTE_LANE_UP) {
-			objectN[0] = iView;
-			break;
-		}
-	}
-	for (uint iView = 0; iView < allnum; iView++) {
-		if (recfp->mapdata.note[iView].lane == NOTE_LANE_MID) {
-			objectN[1] = iView;
-			break;
-		}
-	}
-	for (uint iView = 0; iView < allnum; iView++) {
-		if (recfp->mapdata.note[iView].lane == NOTE_LANE_LOW) {
-			objectN[2] = iView;
-			break;
-		}
-	}
+static void RecResetPlayObjectNum(rec_score_file_t *recfp) {
+	recfp->mapdata.note[0].resetNo();
+	recfp->mapdata.note[1].resetNo();
+	recfp->mapdata.note[2].resetNo();
 	return;
 }
 
@@ -647,12 +631,10 @@ static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 	return scoreBuf.score;
 }
 
-static void RecPlayStepObjectNG(short objectNG[], const note_box_2_t note[], const short objectN[]) {
+static void RecPlayStepObjectNG(short objectNG[], const cvec<note_box_2_t> note[]) {
 	for (int iLine = 0; iLine < 3; iLine++) {
-		objectNG[iLine] = maxs_2(objectNG[iLine], objectN[iLine]);
-		while (note[objectNG[iLine]].object == NOTE_GHOST) {
-			objectNG[iLine] = note[objectNG[iLine]].next;
-		}
+		objectNG[iLine] = note[iLine].nowNo();
+		while (note[iLine].at(objectNG[iLine]).object == NOTE_GHOST) { objectNG[iLine]++; }
 	}
 	return;
 }
@@ -688,9 +670,9 @@ static void RecPlayStepGuideLineNum(
 }
 
 static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG,
-	short *guideN, const short *objectN)
+	short *guideN)
 {
-	RecPlayStepObjectNG(objectNG, recfp->mapdata.note, objectN);
+	RecPlayStepObjectNG(objectNG, recfp->mapdata.note);
 
 	/* chamo */
 	recfp->mapeff.chamo[0].stepNoTime(recfp->time.now);
@@ -722,7 +704,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG,
 }
 
 /* キー入力 */
-static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFrag, short objectN[],
+static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFrag,
 	short *itemN, short *SitemN, short LineMoveN[], short *objectNG)
 {
 	InputAllKeyHold();
@@ -746,27 +728,27 @@ static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFra
 	switch (GetKeyPushOnce()) {
 	case KEY_INPUT_LEFT:
 		recfp->time.now = maxs_2(recfp->time.now - 10000, 0);
-		RecResetPlayObjectNum(objectN, recfp);
+		RecResetPlayObjectNum(recfp);
 		RecResetPlayRecfpMapeffNum(&recfp->mapeff);
 		RecResetPlayPartNum(itemN, SitemN, LineMoveN);
 		for (int iLane = 0; iLane < 3; iLane++) {
-			while (recfp->mapdata.note[objectN[iLane]].hittime < recfp->time.now &&
-				recfp->mapdata.note[objectN[iLane]].next != 5999)
+			while (recfp->mapdata.note[iLane].nowData().hittime < recfp->time.now &&
+				(recfp->mapdata.note[iLane].nowNo() + 1) < recfp->mapdata.note[iLane].size())
 			{
-				objectN[iLane] = recfp->mapdata.note[objectN[iLane]].next;
+				recfp->mapdata.note[iLane].stepNo();
 			}
-			objectNG[iLane] = objectN[iLane];
+			objectNG[iLane] = recfp->mapdata.note[iLane].nowNo();
 		}
 		break;
 	case KEY_INPUT_RIGHT:
 		recfp->time.now += 10000;
 		for (int iLane = 0; iLane < 3; iLane++) {
-			while (recfp->mapdata.note[objectN[iLane]].hittime < recfp->time.now &&
-				recfp->mapdata.note[objectN[iLane]].next != 5999)
+			while (recfp->mapdata.note[iLane].nowData().hittime < recfp->time.now &&
+				(recfp->mapdata.note[iLane].nowNo() + 1) < recfp->mapdata.note[iLane].size())
 			{
-				objectN[iLane] = recfp->mapdata.note[objectN[iLane]].next;
+				recfp->mapdata.note[iLane].stepNo();
 			}
-			objectNG[iLane] = objectN[iLane];
+			objectNG[iLane] = recfp->mapdata.note[iLane].nowNo();
 		}
 		break;
 	default:
@@ -1257,7 +1239,7 @@ private:
 		*DrawC = note->color;
 	}
 
-	void DrawNoteOne(note_box_2_t *note, rec_map_eff_data_t *mapeff,
+	void DrawNoteOne(const note_box_2_t *note, rec_map_eff_data_t *mapeff,
 		rec_play_lanepos_t *lanePos, int iLine, int Ntime, rec_play_notepic_t *noteimg)
 	{
 		int DrawX = 0;
@@ -1309,16 +1291,16 @@ private:
 	}
 
 public:
-	void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, short objectN[], note_box_2_t note[],
+	void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, cvec<note_box_2_t> note[],
 		rec_map_eff_data_t *mapeff, int Ntime, rec_play_notepic_t *noteimg)
 	{
 		for (int iLine = 0; iLine < 3; iLine++) {
-			for (int iNote = objectN[iLine]; note[iNote].hittime > 0; iNote = note[iNote].next) {
-				int ret = this->StepViewNoDrawNote(mapeff->viewT, note[iNote].hittime, Ntime);
+			for (int iNote = 0; note[iLine].offsetData(iNote).hittime > 0; iNote++) {
+				int ret = this->StepViewNoDrawNote(mapeff->viewT, note[iLine].offsetData(iNote).hittime, Ntime);
 				if (ret == 1) { continue; }
 				else if (ret == 2) { break; }
-				this->DrawNoteOne(&note[iNote], mapeff, lanePos, iLine, Ntime, noteimg);
-				if (note[iNote].next == -1) { break; }
+				this->DrawNoteOne(&note[iLine].offsetData(iNote), mapeff, lanePos, iLine, Ntime, noteimg);
+				if (note[iLine].size() <= iNote + 1) { break; }
 			}
 		}
 		return;
@@ -1499,7 +1481,7 @@ private:
 	}
 
 public:
-	void UpdateCharapos(int time, note_box_2_t note[], short int No[],
+	void UpdateCharapos(int time, cvec<note_box_2_t> note[], short int No[],
 		rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
 	{
 		int ans = CHARA_POS_MID;
@@ -1520,9 +1502,9 @@ public:
 		}
 		// near catch/bomb
 		for (int i = 0; i < 3; i++) {
-			if (note[No[i]].hittime <= time + 40 &&
-				(note[No[i]].object == NOTE_CATCH ||
-					note[No[i]].object == NOTE_BOMB))
+			if (note[i][No[i]].hittime <= time + 40 &&
+				(note[i][No[i]].object == NOTE_CATCH ||
+					note[i][No[i]].object == NOTE_BOMB))
 			{
 				this->pos = CHARA_POS_MID;
 				return;
@@ -1838,7 +1820,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	/* struct */
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
-	short objectN[3] = { 5999,5999,5999 }; //note number
 	short objectNG[3] = { 0,0,0 }; //note number without ghost note
 	rec_score_file_t recfp;
 	rec_play_userpal_t userpal;
@@ -1914,7 +1895,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	else if (2 <= GD[0]) { DifRate = recfp.mapdata.Lv + 0.9; }
 	else if (0 <= GD[0] && GD[0] < 2) { DifRate = recfp.mapdata.Lv + 0.45 * GD[0]; }
 	else { DifRate = recfp.mapdata.mdif / 100.0; }
-	RecResetPlayObjectNum(objectN, &recfp);
+	RecResetPlayObjectNum(&recfp);
 	RecSysBgmSetMem(recfp.nameset.mp3FN.c_str(), recfp.nameset.mp3FN.size());
 	RecSysBgmPlay(true, false, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
@@ -1932,9 +1913,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		//キー入力
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-		RecPlayStepAllNum(&recfp, objectNG, LineMoveN, objectN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
+		RecPlayStepAllNum(&recfp, objectNG, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
 		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, objectNG, AutoFlag);
-		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, objectN, &itemN,
+		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, &itemN,
 			&SitemN, LineMoveN, objectNG);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			RecSysBgmStop();
@@ -1969,7 +1950,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (IS_JUST_PUSH_ANY_HITKEY(&keyhold)) { charahit = GetNowCount(); }
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */
-		RecJudgeAllNotes(recfp.mapdata.note, objectN, recfp.time.now, Sitem,
+		RecJudgeAllNotes(recfp.mapdata.note, recfp.time.now, Sitem,
 			&keyhold, &hitatk, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound);
 		{
 			rec_play_score_calculator_c action;
@@ -2030,7 +2011,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		/* 音符表示 */
 		{
 			rec_play_drawnotes_c action;
-			action.RecPlayDrawNoteAll(&lanePos, objectN, recfp.mapdata.note, &recfp.mapeff,
+			action.RecPlayDrawNoteAll(&lanePos, recfp.mapdata.note, &recfp.mapeff,
 				recfp.time.now, &noteimg);
 		}
 		//ヒットエフェクト表示

@@ -694,28 +694,28 @@ static int RecDdifSetNowkeyBase(rec_ddif_data_t *Nowkey, const rec_ddif_data_t *
 	int G[4];
 	//次のノーツの時間を取得
 	G[0] = -1; //次のノーツのレーン番号
-	if (0 <= recfp->mapdata.note[objectN[0]].hittime) { G[0] = 0; }
-	else if (0 <= recfp->mapdata.note[objectN[1]].hittime) { G[0] = 1; }
-	else if (0 <= recfp->mapdata.note[objectN[2]].hittime) { G[0] = 2; }
+	if (0 <= recfp->mapdata.note[0][objectN[0]].hittime) { G[0] = 0; }
+	else if (0 <= recfp->mapdata.note[1][objectN[1]].hittime) { G[0] = 1; }
+	else if (0 <= recfp->mapdata.note[2][objectN[2]].hittime) { G[0] = 2; }
 	if (G[0] == -1) { return -1; }
 
-	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[objectN[0]].hittime, recfp->mapdata.note[objectN[G[0]]].hittime)) { G[0] = 0; }
-	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[objectN[1]].hittime, recfp->mapdata.note[objectN[G[0]]].hittime)) { G[0] = 1; }
-	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[objectN[2]].hittime, recfp->mapdata.note[objectN[G[0]]].hittime)) { G[0] = 2; }
-	Nowkey->time = recfp->mapdata.note[objectN[G[0]]].hittime;
+	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[0][objectN[0]].hittime, recfp->mapdata.note[0][objectN[G[0]]].hittime)) { G[0] = 0; }
+	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[1][objectN[1]].hittime, recfp->mapdata.note[1][objectN[G[0]]].hittime)) { G[0] = 1; }
+	if (IS_BETWEEN_RIGHT_LESS(0, recfp->mapdata.note[2][objectN[2]].hittime, recfp->mapdata.note[2][objectN[G[0]]].hittime)) { G[0] = 2; }
+	Nowkey->time = recfp->mapdata.note[G[0]][objectN[G[0]]].hittime;
 
 	//次のノーツ群を取得
 	Nowkey->note[0] = NOTE_NONE;
-	if (recfp->mapdata.note[objectN[0]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
-		Nowkey->note[0] = recfp->mapdata.note[objectN[0]].object;
+	if (recfp->mapdata.note[0][objectN[0]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+		Nowkey->note[0] = recfp->mapdata.note[0][objectN[0]].object;
 	}
 	Nowkey->note[1] = NOTE_NONE;
-	if (recfp->mapdata.note[objectN[1]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
-		Nowkey->note[1] = recfp->mapdata.note[objectN[1]].object;
+	if (recfp->mapdata.note[1][objectN[1]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+		Nowkey->note[1] = recfp->mapdata.note[1][objectN[1]].object;
 	}
 	Nowkey->note[2] = NOTE_NONE;
-	if (recfp->mapdata.note[objectN[2]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
-		Nowkey->note[2] = recfp->mapdata.note[objectN[2]].object;
+	if (recfp->mapdata.note[2][objectN[2]].hittime < Nowkey->time + REC_DDIF_GROUP_TIME) {
+		Nowkey->note[2] = recfp->mapdata.note[2][objectN[2]].object;
 	}
 
 	//hitノーツ数取得
@@ -800,19 +800,19 @@ static void RecDdifCalMax(rec_ddif_pal_t *mpal, const rec_ddif_data_t key[], uin
 	return;
 }
 
-static int RecDdifStepNote(int objectN[], const rec_ddif_data_t *Nowkey, const note_box_2_t *notedata) {
+static int RecDdifStepNote(int objectN[], const rec_ddif_data_t *Nowkey, const cvec<note_box_2_t> notedata[]) {
 	bool isExist = false;
 
-	if (Nowkey->note[0] != NOTE_NONE && notedata[objectN[0]].next != -1) {
-		objectN[0] = notedata[objectN[0]].next;
+	if (Nowkey->note[0] != NOTE_NONE && notedata[0][objectN[0]].next != -1) {
+		objectN[0] = notedata[0][objectN[0]].next;
 		isExist = true;
 	}
-	if (Nowkey->note[1] != NOTE_NONE && notedata[objectN[1]].next != -1) {
-		objectN[1] = notedata[objectN[1]].next;
+	if (Nowkey->note[1] != NOTE_NONE && notedata[1][objectN[1]].next != -1) {
+		objectN[1] = notedata[1][objectN[1]].next;
 		isExist = true;
 	}
-	if (Nowkey->note[2] != NOTE_NONE && notedata[objectN[2]].next != -1) {
-		objectN[2] = notedata[objectN[2]].next;
+	if (Nowkey->note[2] != NOTE_NONE && notedata[2][objectN[2]].next != -1) {
+		objectN[2] = notedata[2][objectN[2]].next;
 		isExist = true;
 	}
 
@@ -821,26 +821,26 @@ static int RecDdifStepNote(int objectN[], const rec_ddif_data_t *Nowkey, const n
 	//GHOSTノーツ,連actをスキップ
 	for (uint iLane = 0; iLane < 3; iLane++) {
 		if (Nowkey->note[iLane] == NOTE_CATCH) {
-			while ((notedata[objectN[iLane]].object == NOTE_GHOST ||
-				notedata[objectN[iLane]].object == NOTE_CATCH) &&
-				notedata[objectN[iLane]].next != -1)
+			while ((notedata[iLane][objectN[iLane]].object == NOTE_GHOST ||
+				notedata[iLane][objectN[iLane]].object == NOTE_CATCH) &&
+				notedata[iLane][objectN[iLane]].next != -1)
 			{
-				objectN[iLane] = notedata[objectN[iLane]].next;
+				objectN[iLane] = notedata[iLane][objectN[iLane]].next;
 			}
 		}
 		else if (Nowkey->note[iLane] == NOTE_BOMB) {
-			while ((notedata[objectN[iLane]].object == NOTE_GHOST ||
-				notedata[objectN[iLane]].object == NOTE_BOMB) &&
-				notedata[objectN[iLane]].next != -1)
+			while ((notedata[iLane][objectN[iLane]].object == NOTE_GHOST ||
+				notedata[iLane][objectN[iLane]].object == NOTE_BOMB) &&
+				notedata[iLane][objectN[iLane]].next != -1)
 			{
-				objectN[iLane] = notedata[objectN[iLane]].next;
+				objectN[iLane] = notedata[iLane][objectN[iLane]].next;
 			}
 		}
 		else {
-			while (notedata[objectN[iLane]].object == NOTE_GHOST &&
-				notedata[objectN[iLane]].next != -1)
+			while (notedata[iLane][objectN[iLane]].object == NOTE_GHOST &&
+				notedata[iLane][objectN[iLane]].next != -1)
 			{
-				objectN[iLane] = notedata[objectN[iLane]].next;
+				objectN[iLane] = notedata[iLane][objectN[iLane]].next;
 			}
 		}
 	}
@@ -856,26 +856,16 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	rec_score_file_row_t recfp;
 	rec_ddif_data_t key[REC_DDIF_BUF_NUM];
 	uint keyN = 0;
-	int objectN[3] = { 5999,5999,5999 }; //↑の番号
+	int objectN[3] = { 0,0,0 }; //↑の番号
 
 	if (RecScoreReadForDdif(&recfp, esc_path) != 0) { return -1; }
 
-	//各初期値
-	for (uint iLane = 0; iLane < 3; iLane++) {
-		for (uint iNum = 0; iNum < recfp.allnum.notenum[iLane]; iNum++) {
-			if ((int)recfp.mapdata.note[iNum].lane == iLane) {
-				objectN[iLane] = iNum;
-				break;
-			}
-		}
-	}
-
 	//GHOSTノーツをスキップ
 	for (uint iLane = 0; iLane < 3; iLane++) {
-		while (recfp.mapdata.note[objectN[iLane]].object == NOTE_GHOST &&
-			0 <= recfp.mapdata.note[objectN[iLane]].hittime)
+		while (recfp.mapdata.note[iLane][objectN[iLane]].object == NOTE_GHOST &&
+			0 <= recfp.mapdata.note[iLane][objectN[iLane]].hittime)
 		{
-			objectN[iLane] = recfp.mapdata.note[objectN[iLane]].next;
+			objectN[iLane] = recfp.mapdata.note[iLane][objectN[iLane]].next;
 		}
 	}
 

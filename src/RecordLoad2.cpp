@@ -325,71 +325,57 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	int iLine, int BlockNoteNum)
 {
 	int objectN = mapenc->objectN;
-	note_box_2_t *notedata = &recfp->mapdata.note[objectN];
+	note_box_2_t buf;
 
 	TCHAR strcode = REC_MAPENC_BLANK_CHAR;
 	if (IsNoteCode(c) == 0) { return -1; }
-	if (0 <= mapenc->noteLaneNo[iLine]) {
-		recfp->mapdata.note[mapenc->noteLaneNo[iLine]].next = objectN;
-	}
 	mapenc->noteLaneNo[iLine] = objectN;
-	switch (iLine) {
-	case 0:
-		notedata->lane = NOTE_LANE_UP;
-		break;
-	case 1:
-		notedata->lane = NOTE_LANE_MID;
-		break;
-	case 2:
-		notedata->lane = NOTE_LANE_LOW;
-		break;
-	}
-	notedata->hittime = mapenc->timer[iLine] + 240000 * istr / (mapenc->bpmG * BlockNoteNum);
+	buf.hittime = mapenc->timer[iLine] + 240000 * istr / (mapenc->bpmG * BlockNoteNum);
 	strcode = RecEncNoteGetStrcode(c, mapenc->customnote);
-	notedata->object = GetNoteObjMat(strcode);
+	buf.object = GetNoteObjMat(strcode);
 	//viewtimeを計算する
-	notedata->viewtime =
-		notedata->hittime * recfp->mapeff.scrool.searchData(notedata->hittime).speed +
-		recfp->mapeff.scrool.searchData(notedata->hittime).basetime;
-	notedata->ypos = 50 * iLine + 300;
-	notedata->xpos = 150;
+	buf.viewtime =
+		buf.hittime * recfp->mapeff.scrool.searchData(buf.hittime).speed +
+		recfp->mapeff.scrool.searchData(buf.hittime).basetime;
+	buf.ypos = 50 * iLine + 300;
+	buf.xpos = 150;
 	/* 縦位置を計算する */ {
 		cvec<rec_mapeff_move_st> &temp = recfp->mapeff.move.y[iLine];
-		while (!temp.isEndNo() && (temp.offsetData(1).Stime < notedata->hittime + 5)) {
+		while (!temp.isEndNo() && (temp.offsetData(1).Stime < buf.hittime + 5)) {
 			temp.stepNo();
 		}
-		if (notedata->hittime < temp.nowData().Etime) { /* 移動中 */
-			notedata->ypos = movecal(
+		if (buf.hittime < temp.nowData().Etime) { /* 移動中 */
+			buf.ypos = movecal(
 				temp.nowData().mode, temp.nowData().Stime, temp.offsetData(-1).pos,
-				temp.nowData().Etime, temp.nowData().pos, notedata->hittime
+				temp.nowData().Etime, temp.nowData().pos, buf.hittime
 			);
 		}
-		else { notedata->ypos = temp.nowData().pos; } /* 移動後 */
+		else { buf.ypos = temp.nowData().pos; } /* 移動後 */
 	}
 	/* 横位置を計算する */ {
 		cvec<rec_mapeff_move_st> &temp = recfp->mapeff.move.x[iLine];
-		while (!temp.isEndNo() && (temp.offsetData(1).Stime < notedata->hittime + 5)) {
+		while (!temp.isEndNo() && (temp.offsetData(1).Stime < buf.hittime + 5)) {
 			temp.stepNo();
 		}
-		if (notedata->hittime < temp.nowData().Etime) { /* 移動中 */
-			notedata->xpos = movecal(
+		if (buf.hittime < temp.nowData().Etime) { /* 移動中 */
+			buf.xpos = movecal(
 				temp.nowData().mode, temp.nowData().Stime, temp.offsetData(-1).pos,
-				temp.nowData().Etime, temp.nowData().pos, notedata->hittime
+				temp.nowData().Etime, temp.nowData().pos, buf.hittime
 			);
 		}
-		else { notedata->xpos = temp.nowData().pos; } /* 移動後 */
+		else { buf.xpos = temp.nowData().pos; } /* 移動後 */
 	}
 	//効果音を設定する
 	if (L'1' <= c && c <= L'9') {
-		notedata->sound  = mapenc->customnote[c - L'1'].sound;
-		notedata->melody = mapenc->customnote[c - L'1'].melody;
+		buf.sound  = mapenc->customnote[c - L'1'].sound;
+		buf.melody = mapenc->customnote[c - L'1'].melody;
 	}
-	else { notedata->sound = 0; }
+	else { buf.sound = 0; }
 	//色を設定する
-	if (L'1' <= c && c <= L'9') { notedata->color = mapenc->customnote[c - L'1'].color; }
-	else { notedata->color = 0; }
-	if (notedata->object != 8) { (recfp->mapdata.notes)++; }
-	mapenc->objectN++;
+	if (L'1' <= c && c <= L'9') { buf.color = mapenc->customnote[c - L'1'].color; }
+	else { buf.color = 0; }
+	if (buf.object != 8) { (recfp->mapdata.notes)++; }
+	recfp->mapdata.note[iLine].push_back(buf);
 	recfp->allnum.notenum[iLine]++;
 	return 0;
 }
@@ -1198,12 +1184,16 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 }
 
 static void RecMapLoad_SetEndRecfp(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc) {
-	//譜面の最後にgoustを置く
-	recfp->mapdata.note[mapenc->objectN].lane = NOTE_LANE_MID;
-	recfp->mapdata.note[mapenc->objectN].hittime = mapenc->timer[0];
-	recfp->mapdata.note[mapenc->objectN + 1].hittime = -1;
-	recfp->mapdata.note[mapenc->objectN].object = NOTE_GHOST;
-	recfp->mapdata.note[mapenc->objectN].ypos = 1000;
+	//譜面の最後にendを置く
+	recfp->mapdata.note[0].push_back({
+		(int)mapenc->timer[0], -1, NOTE_END, NOTE_LANE_MID, -1, 1000, 0, MELODYSOUND_NONE, 0, 0}
+	);
+	recfp->mapdata.note[1].push_back({
+		(int)mapenc->timer[0], -1, NOTE_END, NOTE_LANE_MID, -1, 1000, 0, MELODYSOUND_NONE, 0, 0}
+	);
+	recfp->mapdata.note[2].push_back({
+		(int)mapenc->timer[0], -1, NOTE_END, NOTE_LANE_MID, -1, 1000, 0, MELODYSOUND_NONE, 0, 0}
+	);
 	recfp->mapeff.lock.x.push_back(mapenc->timer[0], true);
 	recfp->mapeff.lock.y.push_back(mapenc->timer[0], false);
 	recfp->allnum.notenum[1]++;

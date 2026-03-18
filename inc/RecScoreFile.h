@@ -44,7 +44,8 @@ typedef enum note_material {
 	NOTE_LEFT,
 	NOTE_RIGHT,
 	NOTE_BOMB,
-	NOTE_GHOST
+	NOTE_GHOST,
+	NOTE_END
 } note_material;
 #define IS_NOTE_ARROW_GROUP(mat) ((mat) == NOTE_UP || (mat) == NOTE_DOWN || (mat) == NOTE_LEFT || (mat) == NOTE_RIGHT)
 
@@ -57,9 +58,9 @@ typedef enum note_material {
 
 /* 指定のノーツがgap[ms]以内にどこかのレーンにあったらtrue */
 #define IS_NEAR_NOTE_ANYLANE(notedata, num, mat, Ntime, gap) \
-	(IS_NEAR_NOTE(&(notedata)[(num)[0]], mat, Ntime, gap) || \
-	 IS_NEAR_NOTE(&(notedata)[(num)[1]], mat, Ntime, gap) || \
-	 IS_NEAR_NOTE(&(notedata)[(num)[2]], mat, Ntime, gap))
+	(IS_NEAR_NOTE(&(notedata[0]).at((num)[0]), mat, Ntime, gap) || \
+	 IS_NEAR_NOTE(&(notedata[1]).at((num)[1]), mat, Ntime, gap) || \
+	 IS_NEAR_NOTE(&(notedata[2]).at((num)[2]), mat, Ntime, gap))
 
 /* arrowノーツがgap[ms]以内にどこかのレーンにあったらtrue */
 #define IS_NEAR_NOTE_ARROW_ANYLANE(notedata, num, Ntime, gap)       \
@@ -147,7 +148,7 @@ typedef struct rec_ddif_pal_s {
 typedef struct rec_map_detail_s {
 	double bpm = 120;
 	short Lv = 0;
-	note_box_2_t note[6000];
+	cvec<note_box_2_t> note[3] = { cvec<note_box_2_t>(2000) };
 	short notes = 0;
 	intx100_t mdif = 0;
 	int ldif = 0;
