@@ -491,12 +491,12 @@ static bool Rec_Select_DifFilter(const MUSIC_BOX_2 &detail, int view_dif) {
 /**
  * 曲リストを並び替えします
  * @param[in] songdata 曲データ
- * @param[in] mode 並び替えの方法
  * @param[in] dif 難易度
+ * TODO: songdata_set_tの中に入れる。
  */
-static void SortSong(songdata_set_t *songdata, int mode, int dif) {
+static void SortSong(songdata_set_t *songdata, int dif) {
 	songdata->Search(Rec_Select_DifFilter, dif);
-	switch (mode) {
+	switch (songdata->sortMode) {
 	case SORT_LEVEL:
 		songdata->SortByLevel();
 		break;
@@ -506,7 +506,6 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
 	case REC_SORT_DEFAULT:
 		break;
 	}
-	songdata->sortMode = mode;
 	return;
 }
 
@@ -517,11 +516,11 @@ static void SortSong(songdata_set_t *songdata, int mode, int dif) {
  * @param[in] dif 難易度
  * @param[out] cmd commandの格納場所
  */
-static void SortSongWithSave(songdata_set_t *songdata, int mode, int dif, int *cmd) {
+static void SortSongWithSave(songdata_set_t *songdata, int dif, int *cmd) {
 	tstring save;
 
 	save = (*songdata)[betweens(0, *cmd, songdata->sort.size() - 1)].SongName;
-	SortSong(songdata, mode, dif);
+	SortSong(songdata, dif);
 	for (int i = 0; i < songdata->sort.size(); i++) {
 		if (save == (*songdata)[i].SongName) {
 			*cmd = i;
@@ -1125,7 +1124,7 @@ public:
 
 	void UpdateLR(songdata_set_t &songdata, int *cmd, int dif, int vect) {
 		this->detail.SlideDif(vect);
-		SortSongWithSave(&songdata, songdata.sortMode, dif, cmd);
+		SortSongWithSave(&songdata, dif, cmd);
 		this->Update4th(songdata[*cmd].jacketP);
 	}
 
@@ -1259,7 +1258,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		break;
 	case REC_SERECT_KEY_SORT:
 		ChangeSortMode(&songdata->sortMode);
-		SortSongWithSave(songdata, songdata->sortMode, cmd[1], &cmd[0]);
+		SortSongWithSave(songdata, cmd[1], &cmd[0]);
 		break;
 	case REC_SERECT_KEY_RELORD:
 		*next = SCENE_RELOAD;
@@ -1292,7 +1291,7 @@ static now_scene_t musicserect2(rec_to_play_set_t *toPlay) {
 
 	RecSerectLoadBefCmd(cmd, &songdata.sortMode);
 	RecSerectReadMapData(&songdata, PackFirstNum);
-	SortSong(&songdata, songdata.sortMode, cmd[1]);
+	SortSong(&songdata, cmd[1]);
 	uiClass.InitUi(&songdata[cmd[0]], cmd[1]);
 	AvoidKeyBug();
 	GetMouseWheelRotVol();
