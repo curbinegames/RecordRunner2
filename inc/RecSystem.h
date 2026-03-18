@@ -2,6 +2,7 @@
 
 #include "DxLib.h"
 #include <sancur.h>
+#include <stdcur.h>
 #include "recr_cutin.h"
 #include "helpBar.h"
 
@@ -104,13 +105,26 @@ typedef struct rec_system_s {
 	int judgePos = 0;
 } rec_system_t;
 
+class rec_system_langstr_c {
+private:
+	tstring jp;
+	tstring en;
+
+public:
+	rec_system_langstr_c(void) = delete;
+	rec_system_langstr_c(tstring a_jp, tstring a_en);
+
+	const tstring &get_str(void) const;
+};
+
 extern int RecPlayDebug[3];
 
 extern int SmallFontData;
 extern int LargeFontData;
 
-/* これらの関数は、呼ばれるたびにリソースを全探索するので、 */
+/* これらの関数は、呼ばれるたびにリソースを全探索する(o(n)である)ので、*/
 /* for文などで曲の全探索をするとo(n^2)になって処理が遅くなる。やめてね */
+/* TODO: 多分vector<string>でo(n)にできる */
 extern rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo);
 extern rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo);
 extern rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo);

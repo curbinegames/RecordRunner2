@@ -22,6 +22,16 @@ static DxSnd_t s_bgm = DXLIB_SND_NULL;
 static TCHAR s_bgmName[256] = _T("");
 static int s_totalVolume = 255;
 
+#if 1 /* rec_system_langstr_c */
+
+rec_system_langstr_c::rec_system_langstr_c(tstring a_jp, tstring a_en) : jp(std::move(a_jp)), en(std::move(a_en)) {}
+
+const tstring &rec_system_langstr_c::get_str(void) const {
+	return (optiondata.lang == 0) ? this->jp : this->en;
+}
+
+#endif /* rec_system_langstr_c */
+
 /* TODO: 各呼び元での戻り値チェック */
 /**
 * packNoからパックフォルダパスを取得する

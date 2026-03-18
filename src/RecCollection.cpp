@@ -453,8 +453,13 @@ public:
 		int sub1[4];
 		int sub2[6];
 		const int StoryUpper[5] = { 10,10,10,4,2 };
-		const wchar_t chan[5][9] = { L"ピッカー",L"マップゲーター",L"テイラー",L"サブストーリー1",L"EX ミッション" };
-		const wchar_t chanE[5][12] = { L"Picker",L"Mapgator",L"Taylor",L"Sub Story 1",L"EX mission" };
+		rec_system_langstr_c chan[5] = {
+			rec_system_langstr_c(_T("ピッカー"),        _T("Picker")),
+			rec_system_langstr_c(_T("マップゲーター"),  _T("Mapgator")),
+			rec_system_langstr_c(_T("テイラー"),        _T("Taylor")),
+			rec_system_langstr_c(_T("サブストーリー1"), _T("Sub Story 1")),
+			rec_system_langstr_c(_T("EX ミッション"),   _T("EX mission"))
+		};
 		TCHAR GT1[256] = _T("");
 		unsigned int Cr;
 		rec_helpbar_c help;
@@ -510,7 +515,7 @@ public:
 
 			// ストーリーのタイトル/解放条件を表示
 			RecRescaleDrawFormatString(5, 5, Cr, L"%d/%d", command[0], command[1]);
-			RecRescaleDrawFormatString(330, 220, Cr, L"%s", REC_STR_LANG(chan[command[1]], chanE[command[1]]));
+			RecRescaleDrawFormatString(330, 220, Cr, L"%s", chan[command[1]].get_str());
 			if (command[1] <= 2) {
 				openFg = RecClctCheckOpenMainStory(command[0], command[1], chac);
 				RecClctDrawMainStoryTitle(command[0], command[1], openFg);

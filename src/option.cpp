@@ -35,14 +35,8 @@ typedef void (*rec_opt_action_t)(TCHAR *ret, int pal);
 
 typedef struct rec_opt_text_s {
 	const rec_opt_action_t action;
-	const struct {
-		wchar_t jp[12];
-		wchar_t en[30];
-	} title;
-	const struct {
-		wchar_t jp[64];
-		wchar_t en[64];
-	} detail;
+	rec_system_langstr_c title;
+	rec_system_langstr_c detail;
 	const int min;
 	const int max;
 	const int loop;
@@ -131,13 +125,12 @@ void RecOpenOptionFileSystem() {
 #if 1 /* option_data */
 
 static void RecOptionChar(TCHAR *ret, int pal) {
-	const TCHAR jp[3][20] = {
-		L"ピッカー", L"マップゲーター", L"テイラー"
+	rec_system_langstr_c str[3] = {
+		rec_system_langstr_c(_T("ピッカー"),       _T("Picker")),
+		rec_system_langstr_c(_T("マップゲーター"), _T("MapGator")),
+		rec_system_langstr_c(_T("テイラー"),       _T("Taylor"))
 	};
-	const TCHAR en[3][10] = {
-		L"Picker", L"MapGator", L"Taylor"
-	};
-	strcopy_2(REC_STR_LANG(jp[pal], en[pal]), ret, 32);
+	strcopy_2(str[pal].get_str().c_str(), ret, 32);
 	return;
 }
 
@@ -153,13 +146,13 @@ static void RecOptionSE(TCHAR *ret, int pal) {
 }
 
 static void RecOptionBackBright(TCHAR *ret, int pal) {
-	wchar_t jp[4][10] = {
-		L"真っ黒", L"暗い", L"中間", L"明るい"
+	rec_system_langstr_c str[4] = {
+		rec_system_langstr_c(_T("真っ黒"), _T("Black") ),
+		rec_system_langstr_c(_T("暗い"),   _T("Dark")  ),
+		rec_system_langstr_c(_T("中間"),   _T("Middle")),
+		rec_system_langstr_c(_T("明るい"), _T("Bright"))
 	};
-	wchar_t en[4][10] = {
-		L"Black", L"Dark", L"Middle", L"Bright"
-	};
-	strcopy_2(REC_STR_LANG(jp[pal], en[pal]), ret, 32);
+	strcopy_2(str[pal].get_str().c_str(), ret, 32);
 	return;
 }
 
@@ -175,13 +168,15 @@ static void RecOptionButtonDet(TCHAR *ret, int pal) {
 }
 
 static void RecOptionComboPos(TCHAR *ret, int pal) {
-	wchar_t jp[6][10] = {
-		L"中央の上", L"左上", L"右上", L"中央", L"キャラの上", L"表示しない"
+	rec_system_langstr_c str[6] = {
+		rec_system_langstr_c(_T("中央の上"),   _T("top centre")),
+		rec_system_langstr_c(_T("左上"),       _T("top left")  ),
+		rec_system_langstr_c(_T("右上"),       _T("top right") ),
+		rec_system_langstr_c(_T("中央"),       _T("centre")    ),
+		rec_system_langstr_c(_T("キャラの上"), _T("near chara")),
+		rec_system_langstr_c(_T("表示しない"), _T("none")      )
 	};
-	wchar_t en[6][12] = {
-		L"top centre", L"top left", L"top right", L"centre", L"near chara", L"nope"
-	};
-	strcopy_2(REC_STR_LANG(jp[pal], en[pal]), ret, 32);
+	strcopy_2(str[pal].get_str().c_str(), ret, 32);
 	return;
 }
 
@@ -210,69 +205,70 @@ static void RecOptionLaneMeasureThick(TCHAR *ret, int pal) {
 static rec_opt_text_t optionstr[]{
 	{
 		RecOptionChar,
-		L"キャラクター", L"Character",
-		L"使用するキャラクターを変えます。",
-		L"Choose the character you use.",
+		rec_system_langstr_c(_T("キャラクター"), _T("Character")),
+		rec_system_langstr_c(_T("使用するキャラクターを変えます。"), _T("Choose the character you use.")),
 		0, 2, TRUE, &optiondata.chara
 	}, {
 		RecOptionOffset,
-		L"オフセット", L"Offset",
-		L"音符が流れてくるタイミングを変えます。\n増やすと遅れて、減らすと早めに流れます。",
-		L"Change the timing of note. Increase to late, Decrease to early.",
+		rec_system_langstr_c(_T("オフセット"), _T("Offset")),
+		rec_system_langstr_c(
+			_T("音符が流れてくるタイミングを変えます。\nFASTが多いなら減らして、LATEが多いなら増やしてください。"),
+			_T("Change the timing of note. Increase to late, Decrease to early.")
+		),
 		-2000, 2000, FALSE, &optiondata.offset
 	}, {
 		RecOptionSE,
-		L"効果音", L"SE",
-		L"音符をたたいた時の効果音を鳴らすかどうかを変えます",
-		L"Choose whether to sound of hitting notes.",
+		rec_system_langstr_c(_T("効果音"), _T("SE")),
+		rec_system_langstr_c(
+			_T("音符をたたいた時の効果音を鳴らすかどうかを変えます"),
+			_T("Choose whether to sound of hitting notes.")
+		),
 		0, 1, TRUE, &optiondata.SEenable
 	}, {
 		RecOptionBackBright,
-		L"背景の明るさ", L"Background Brightness",
-		L"背景の明るさを変えます。",
-		L"Choose brightness of background.",
+		rec_system_langstr_c(_T("背景の明るさ"), _T("Background Brightness")),
+		rec_system_langstr_c(_T("背景の明るさを変えます。"), _T("Choose brightness of background.")),
 		0, 3, TRUE, &optiondata.backbright
 	}, {
 		RecOptionLang,
-		L"言語 Language", L"言語 Language",
-		L"ゲームで使う言語を変えます。\nChoose the lunguage in this game.",
-		L"ゲームで使う言語を変えます。\nChoose the lunguage in this game.",
+		rec_system_langstr_c(_T("言語 Language"), _T("言語 Language")),
+		rec_system_langstr_c(
+			_T("ゲームで使う言語を変えます。\nChoose the lunguage in this game."),
+			_T("ゲームで使う言語を変えます。\nChoose the lunguage in this game.")
+		),
 		0, 1, TRUE, &optiondata.lang
 	}, {
 		RecOptionButtonDet,
-		L"ボタン表示", L"Button Guide",
-		L"ボタンの押し状況をプレイ画面に表示します。",
-		L"Choose whether to display the key states on playing mode.",
+		rec_system_langstr_c(_T("ボタン表示"), _T("Button Guide")),
+		rec_system_langstr_c(
+			_T("ボタンの押し状況をプレイ画面に表示します。"),
+			_T("Choose whether to display the key states on playing mode.")
+		),
 		0, 1, TRUE, &optiondata.keydetail
 	}, {
 		RecOptionComboPos,
-		L"判定表示位置", L"Judge Position",
-		L"判定の表示場所を決めます。",
-		L"Choose judge position.",
+		rec_system_langstr_c(_T("判定表示位置"), _T("Judge Position")),
+		rec_system_langstr_c(_T("判定の表示場所を決めます。"), _T("Choose judge position.")),
 		0, 5, TRUE, &optiondata.combopos
 	}, {
 		RecOptionBGMVolume,
-		L"BGMの音量", L"BGM Volume",
-		L"BGMの音量を決めます。",
-		L"Choose BGM volume.",
+		rec_system_langstr_c(_T("BGMの音量"), _T("BGM Volume")),
+		rec_system_langstr_c(_T("BGMの音量を決めます。"), _T("Choose BGM volume.")),
 		0, 10, FALSE, &optiondata.BGMvolume
 	}, {
 		RecOptionSEVolume,
-		L"SEの音量", L"SE Volume",
-		L"SEの音量を決めます。",
-		L"Choose SE volume.",
+		rec_system_langstr_c(_T("SEの音量"), _T("SE Volume")),
+		rec_system_langstr_c(_T("SEの音量を決めます。"), _T("Choose SE volume.")),
 		0, 10, FALSE, &optiondata.SEvolume
 	}, {
 		RecOptionLaneGuideThick,
-		L"レーンガイドの太さ", L"Lane Guide Line Thickness",
-		L"レーンガイドの太さを決めます。",
-		L"Choose lane guide line thickness.",
+		rec_system_langstr_c(_T("レーンガイドの太さ"), _T("Lane Guide Line Thickness")),
+		rec_system_langstr_c(_T("レーンガイドの太さを決めます。"), _T("Choose lane guide line thickness.")),
 		0, 30, FALSE, &optiondata.lineThick
 	}, {
 		RecOptionLaneMeasureThick,
-		L"小節線の太さ", L"Measure Line Thickness",
-		L"小節線の太さを決めます。",
-		L"Choose measure line thickness.",
+		rec_system_langstr_c(_T("小節線の太さ"), _T("Measure Line Thickness")),
+		rec_system_langstr_c(_T("小節線の太さを決めます。"), _T("Choose measure line thickness.")),
 		0, 30, FALSE, &optiondata.barThick
 	}
 };
@@ -477,12 +473,12 @@ now_scene_t option(void) {
 
 			optionstr[i].action(buf, *optionstr[i].val_p);
 			DrawFormatString(title_txposx, title_txposy + title_txgapy * i, COLOR_WHITE, L"%s: %s",
-				REC_STR_LANG(optionstr[i].title.jp, optionstr[i].title.en), buf);
+				optionstr[i].title.get_str().c_str(), buf);
 		}
 
 		/* 説明 */
 		DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s",
-			REC_STR_LANG(optionstr[command].detail.jp, optionstr[command].detail.en));
+			optionstr[command].detail.get_str().c_str());
 
 		help.DrawHelp(HELP_MAT_OPTION); /* 操作方法 */
 
