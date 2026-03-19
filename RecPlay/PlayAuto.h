@@ -2,5 +2,4 @@
 
 #include <playbox.h>
 
-extern void AutoAution(rec_play_key_hold_t *key, cvec<note_box_2_t> note[],
-	short objectNG[], int Ntime);
+extern void AutoAution(rec_play_key_hold_t *key, cvec<note_box_2_t> note[], int Ntime);

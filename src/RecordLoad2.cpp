@@ -330,6 +330,17 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	TCHAR strcode = REC_MAPENC_BLANK_CHAR;
 	if (IsNoteCode(c) == 0) { return -1; }
 	mapenc->noteLaneNo[iLine] = objectN;
+	switch (iLine) {
+	case 0:
+		buf.lane = NOTE_LANE_UP;
+		break;
+	case 1:
+		buf.lane = NOTE_LANE_MID;
+		break;
+	case 2:
+		buf.lane = NOTE_LANE_LOW;
+		break;
+	}
 	buf.hittime = mapenc->timer[iLine] + 240000 * istr / (mapenc->bpmG * BlockNoteNum);
 	strcode = RecEncNoteGetStrcode(c, mapenc->customnote);
 	buf.object = GetNoteObjMat(strcode);
@@ -375,7 +386,8 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	if (L'1' <= c && c <= L'9') { buf.color = mapenc->customnote[c - L'1'].color; }
 	else { buf.color = 0; }
 	if (buf.object != 8) { (recfp->mapdata.notes)++; }
-	recfp->mapdata.note[iLine].push_back(buf);
+	if (buf.object != 8) { recfp->mapdata.note[iLine].push_back(buf); }
+	else { recfp->mapeff.gnote.push_back(buf.hittime, buf); }
 	recfp->allnum.notenum[iLine]++;
 	return 0;
 }

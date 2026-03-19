@@ -631,14 +631,6 @@ static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 	return scoreBuf.score;
 }
 
-static void RecPlayStepObjectNG(short objectNG[], const cvec<note_box_2_t> note[]) {
-	for (int iLine = 0; iLine < 3; iLine++) {
-		objectNG[iLine] = note[iLine].nowNo();
-		while (note[iLine].at(objectNG[iLine]).object == NOTE_GHOST) { objectNG[iLine]++; }
-	}
-	return;
-}
-
 static void RecPlayStepCameraNum(cvec<rec_camera_data_t> &camera, DxTime_t Ntime) {
 	while (!camera.isEndNo() && IS_BETWEEN_RIGHT_LESS(0, camera.nowData().endtime, Ntime)) {
 		camera.stepNo();
@@ -669,10 +661,8 @@ static void RecPlayStepGuideLineNum(
 	return;
 }
 
-static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG,
-	short *guideN)
-{
-	RecPlayStepObjectNG(objectNG, recfp->mapdata.note);
+static void RecPlayStepAllNum(rec_score_file_t *recfp, short *guideN) {
+	recfp->mapeff.gnote.stepNoTime(recfp->time.now);
 
 	/* chamo */
 	recfp->mapeff.chamo[0].stepNoTime(recfp->time.now);
@@ -705,7 +695,7 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *objectNG,
 
 /* キー入力 */
 static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFrag,
-	short *itemN, short *SitemN, short LineMoveN[], short *objectNG)
+	short *itemN, short *SitemN, short LineMoveN[])
 {
 	InputAllKeyHold();
 	if (AutoFlag == 1) {
@@ -737,7 +727,6 @@ static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFra
 			{
 				recfp->mapdata.note[iLane].stepNo();
 			}
-			objectNG[iLane] = recfp->mapdata.note[iLane].nowNo();
 		}
 		break;
 	case KEY_INPUT_RIGHT:
@@ -748,7 +737,6 @@ static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFra
 			{
 				recfp->mapdata.note[iLane].stepNo();
 			}
-			objectNG[iLane] = recfp->mapdata.note[iLane].nowNo();
 		}
 		break;
 	default:
@@ -1112,7 +1100,7 @@ static void PlayShowAllGuideLine(rec_score_file_t *recfp, const rec_play_lanepos
 #if 1 /* control */
 
 static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyhold, int *holdG,
-	short *objectNG, bool AutoFlag)
+	bool AutoFlag)
 {
 	char key[256];
 
@@ -1120,7 +1108,7 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyh
 	if (AutoFlag) {
 		if (key[KEY_INPUT_G] == 0) { *holdG = 0; }
 		else if (key[KEY_INPUT_G] == 1) { (*holdG)++; }
-		AutoAution(keyhold, recfp->mapdata.note, objectNG, recfp->time.now);
+		AutoAution(keyhold, recfp->mapdata.note, recfp->time.now);
 	}
 	else {
 		if (key[KEY_INPUT_Z] == 0) keyhold->z = 0;
@@ -1294,6 +1282,15 @@ public:
 	void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, cvec<note_box_2_t> note[],
 		rec_map_eff_data_t *mapeff, int Ntime, rec_play_notepic_t *noteimg)
 	{
+		/* TODO: ゴーストノーツは全表示で良いかも */
+		/* TODO: てかレーンアイテム作りたい */
+		for (size_t i = mapeff->gnote.nowNo(); i < mapeff->gnote.size(); i++) {
+			int ret = this->StepViewNoDrawNote(mapeff->viewT, mapeff->gnote.at(i).hittime, Ntime);
+			if (ret == 1) { continue; }
+			else if (ret == 2) { break; }
+
+			this->DrawNoteOne(&mapeff->gnote.at(i), mapeff, lanePos, mapeff->gnote.at(i).lane, Ntime, noteimg);
+		}
 		for (int iLine = 0; iLine < 3; iLine++) {
 			for (int iNote = 0; note[iLine].offsetData(iNote).hittime > 0; iNote++) {
 				int ret = this->StepViewNoDrawNote(mapeff->viewT, note[iLine].offsetData(iNote).hittime, Ntime);
@@ -1481,7 +1478,7 @@ private:
 	}
 
 public:
-	void UpdateCharapos(int time, cvec<note_box_2_t> note[], short int No[],
+	void UpdateCharapos(int time, cvec<note_box_2_t> note[],
 		rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
 	{
 		int ans = CHARA_POS_MID;
@@ -1502,9 +1499,9 @@ public:
 		}
 		// near catch/bomb
 		for (int i = 0; i < 3; i++) {
-			if (note[i][No[i]].hittime <= time + 40 &&
-				(note[i][No[i]].object == NOTE_CATCH ||
-					note[i][No[i]].object == NOTE_BOMB))
+			if (note[i].nowData().hittime <= time + 40 &&
+				(note[i].nowData().object == NOTE_CATCH ||
+					note[i].nowData().object == NOTE_BOMB))
 			{
 				this->pos = CHARA_POS_MID;
 				return;
@@ -1820,7 +1817,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	/* struct */
 	rec_play_key_hold_t keyhold;
 	rec_system_t system;
-	short objectNG[3] = { 0,0,0 }; //note number without ghost note
 	rec_score_file_t recfp;
 	rec_play_userpal_t userpal;
 
@@ -1913,10 +1909,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		//キー入力
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-		RecPlayStepAllNum(&recfp, objectNG, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
-		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, objectNG, AutoFlag);
-		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, &itemN,
-			&SitemN, LineMoveN, objectNG);
+		RecPlayStepAllNum(&recfp, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
+		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, AutoFlag);
+		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, &itemN, &SitemN, LineMoveN);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			RecSysBgmStop();
 			return SCENE_SERECT;
@@ -1934,7 +1929,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		else {
 			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
-		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, objectNG, &keyhold, &hitatk);
+		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, &keyhold, &hitatk);
 		if ((GetNowCount() - charahit > 50) &&
 			IS_JUST_PUSH_ANY_ARROWKEY(&keyhold))
 		{

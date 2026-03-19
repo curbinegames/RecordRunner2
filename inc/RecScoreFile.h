@@ -57,22 +57,22 @@ typedef enum note_material {
 #define IS_NEAR_NOTE_BOMB(notedata, Ntime) IS_NEAR_NOTE(notedata, NOTE_BOMB, Ntime, 40)
 
 /* 指定のノーツがgap[ms]以内にどこかのレーンにあったらtrue */
-#define IS_NEAR_NOTE_ANYLANE(notedata, num, mat, Ntime, gap) \
-	(IS_NEAR_NOTE(&(notedata[0]).at((num)[0]), mat, Ntime, gap) || \
-	 IS_NEAR_NOTE(&(notedata[1]).at((num)[1]), mat, Ntime, gap) || \
-	 IS_NEAR_NOTE(&(notedata[2]).at((num)[2]), mat, Ntime, gap))
+#define IS_NEAR_NOTE_ANYLANE(notedata, mat, Ntime, gap)         \
+	(IS_NEAR_NOTE(&(notedata[0]).nowData(), mat, Ntime, gap) || \
+	 IS_NEAR_NOTE(&(notedata[1]).nowData(), mat, Ntime, gap) || \
+	 IS_NEAR_NOTE(&(notedata[2]).nowData(), mat, Ntime, gap))
 
 /* arrowノーツがgap[ms]以内にどこかのレーンにあったらtrue */
-#define IS_NEAR_NOTE_ARROW_ANYLANE(notedata, num, Ntime, gap)       \
-	(IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_UP,    Ntime, gap) || \
-	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_DOWN,  Ntime, gap) || \
-	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_LEFT,  Ntime, gap) || \
-	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_RIGHT, Ntime, gap))
+#define IS_NEAR_NOTE_ARROW_ANYLANE(notedata, Ntime, gap)       \
+	(IS_NEAR_NOTE_ANYLANE(notedata, NOTE_UP,    Ntime, gap) || \
+	 IS_NEAR_NOTE_ANYLANE(notedata, NOTE_DOWN,  Ntime, gap) || \
+	 IS_NEAR_NOTE_ANYLANE(notedata, NOTE_LEFT,  Ntime, gap) || \
+	 IS_NEAR_NOTE_ANYLANE(notedata, NOTE_RIGHT, Ntime, gap))
 
 /* actorノーツがgap[ms]以内にどこかのレーンにあったらtrue */
-#define IS_NEAR_NOTE_ACTOR_ANYLANE(notedata, num, Ntime, gap)       \
-	(IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_CATCH, Ntime, gap) || \
-	 IS_NEAR_NOTE_ANYLANE(notedata, num, NOTE_BOMB,  Ntime, gap))
+#define IS_NEAR_NOTE_ACTOR_ANYLANE(notedata, Ntime, gap)       \
+	(IS_NEAR_NOTE_ANYLANE(notedata, NOTE_CATCH, Ntime, gap) || \
+	 IS_NEAR_NOTE_ANYLANE(notedata, NOTE_BOMB,  Ntime, gap))
 
 #endif /* note_material */
 
@@ -230,6 +230,7 @@ typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	tvec<int> fall{99}; /* 落ち物背景アイテム番号 */
 	tvec<bool> viewLine{99}; /* レーンガイド表示フラグ */
 	tvec<double> speedt[5] = { tvec<double>(99) }; /* ノーツ速度 */
+	tvec<note_box_2_t> gnote{999}; /* ゴーストノート */
 } rec_map_eff_data_t;
 
 #endif /* rec_map_eff_data_t */

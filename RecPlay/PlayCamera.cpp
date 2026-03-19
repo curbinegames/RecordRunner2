@@ -26,6 +26,7 @@ void RecPlayResetCamera() {
 	return;
 }
 
+/* TODO: ƒJƒƒ‰‚Ì––”öƒoƒO‚Á‚Ä‚é */
 void RecPlaySetCamera(const cvec<rec_camera_data_t> &camera, int Ntime) {
 	const DxTime_t startT = camera.nowData().starttime;
 	const DxTime_t   endT = camera.nowData().endtime;

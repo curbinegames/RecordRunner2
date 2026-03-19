@@ -136,6 +136,8 @@ int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.scrool.fread(fp); /* スクロールデータ */
 	recfp->mapeff.v_BPM.fread(fp); /* 見た目のBPMデータ */
 	recfp->mapeff.viewLine.fread(fp); /* ラインガイドの表示/非表示 */
+	recfp->mapeff.gnote.fread(fp); /* ゴーストノート */
+	/* TODO: 譜面エラーはログにしたい */
 	fread(&recfp->outpoint, sizeof(int), 2, fp);//エラーデータ
 
 	fclose(fp);
@@ -190,6 +192,7 @@ int rec_score_fwrite(const rec_score_file_t *recfp, const TCHAR *path) {
 	recfp->mapeff.scrool.fwrite(fp); /* スクロールデータ */
 	recfp->mapeff.v_BPM.fwrite(fp); /* 見た目のBPMデータ */
 	recfp->mapeff.viewLine.fwrite(fp); /* ラインガイドの表示/非表示 */
+	recfp->mapeff.gnote.fwrite(fp); /* ゴーストノート */
 	fwrite(&recfp->outpoint, sizeof(int), 2, fp);//譜面エラー
 
 	fclose(fp);
