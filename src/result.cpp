@@ -63,7 +63,7 @@ typedef struct rec_result_mat_s {
 } rec_result_mat_t;
 
 typedef struct rec_result_pal_s {
-	TCHAR songN[64];
+	tstring songN;
 	rec_play_judge_t judge;
 	int Mcombo = 0;
 	int noteCount = 0;
@@ -167,7 +167,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		
 		/* ‹Èî•ñ */
 		RecRescaleDrawGraph( 460, 20, val->mat.difBer.handle(), TRUE);
-		RecRescaleDrawString(100, 13, val->songN, COLOR_WHITE);
+		RecRescaleDrawString(100, 13, val->songN.c_str(), COLOR_WHITE);
 
 		/* ”»’èŽü‚è */
 		num_font.RescaleDraw(val->judge.just, 140,  52, 30, CUR_FONT_COLOR_BLUE);
@@ -460,7 +460,7 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 
 	RecResultSetBgm(userpal->status);
 
-	strcopy_2(nameset->songN.c_str(), result_pal->songN, 64);
+	result_pal->songN = nameset->songN;
 	return;
 }
 
