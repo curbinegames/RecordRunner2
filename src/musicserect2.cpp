@@ -709,6 +709,9 @@ private:
 	dxcur_pic_c bar[2] = {
 		dxcur_pic_c(L"picture/songbarB.png"), dxcur_pic_c(L"picture/songbarY.png")
 	};
+	dxcur_pic_c folder_bar[2] = {
+		dxcur_pic_c(L"picture/songbarB.png"), dxcur_pic_c(L"picture/songbarY.png") /* TODO: âÊëúçÏÇÈ */
+	};
 	dxcur_pic_c CRate[5] = {
 		dxcur_pic_c(L"picture/MarkD.png"),
 		dxcur_pic_c(L"picture/MarkC.png"),
@@ -724,38 +727,50 @@ private:
 		dxcur_pic_c(L"picture/MiniC.png"),
 		dxcur_pic_c(L"picture/MiniD.png")
 	};
+public:
+	std::vector<tstring> folder_str;
 
 private:
-	void DrawClear(int x, int y, int clearNo) {
+	void DrawClear(int x, int y, int clearNo) const {
 		if (0 <= clearNo && clearNo <= 4) {
 			DrawGraph(x, y, this->CRate[clearNo].handle(), TRUE);
 		}
 	}
 
-	void DrawRack(int x, int y, int rankNo) {
+	void DrawRack(int x, int y, int rankNo) const {
 		if (0 <= rankNo && rankNo <= 5) {
 			DrawGraph(x, y, this->rankP[rankNo].handle(), TRUE);
 		}
 	}
 
-	void DrawMainOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX_2 *songdata) {
+	void DrawMainFolderOne(int dif, int BasePosX, int BasePosY, const TCHAR *str) const {
+		DrawGraph(BasePosX - 120, BasePosY - 170, this->folder_bar[1].handle(), TRUE);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, str , COLOR_BLACK, SmallFontData);
+	}
+
+	void DrawSubFolderOne(int dif, int BasePosX, int BasePosY, const TCHAR *str) const {
+		DrawGraph(BasePosX - 120, BasePosY - 170, this->folder_bar[0].handle(), TRUE);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, str, COLOR_WHITE, SmallFontData);
+	}
+
+	void DrawMainOne(int dif, int BasePosX, int BasePosY, const MUSIC_BOX_2 &songdata) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName, COLOR_BLACK, SmallFontData);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist, COLOR_BLACK, SmallFontData);
-		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata->ClearRank - 1);
-		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata->ScoreRate);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName, COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist, COLOR_BLACK, SmallFontData);
+		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata.ClearRank - 1);
+		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata.ScoreRate);
 		for (int idif = 0; idif < 3; idif++) {
 			DrawFormatStringToHandle(BasePosX - 25 + idif * 70, BasePosY - 97,
-				COLOR_BLACK, SmallFontData, L"%2d", songdata->level);
+				COLOR_BLACK, SmallFontData, L"%2d", songdata.level);
 		}
 	}
 
-	void DrawSubOne(int dif, int BasePosX, int BasePosY, MUSIC_BOX_2 *songdata) {
+	void DrawSubOne(int dif, int BasePosX, int BasePosY, const MUSIC_BOX_2 &songdata) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata->SongName, COLOR_WHITE, SmallFontData);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata->artist, COLOR_WHITE, SmallFontData);
-		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata->ClearRank - 1);
-		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata->ScoreRate);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName, COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist, COLOR_WHITE, SmallFontData);
+		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata.ClearRank - 1);
+		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata.ScoreRate);
 	}
 
 public:
@@ -764,7 +779,7 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawAll(int Ypos, int cmd[], songdata_set_t *songdata) {
+	void DrawAll(int Ypos, int cmd[], const songdata_set_t &songdata, bool is_folder) const {
 		int BasePosX = 0;
 		int BasePosY = 0;
 		int slide = 0;
@@ -772,7 +787,7 @@ public:
 		int moveC = 0;
 
 		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
-		picsong = (cmd[0] + songdata->sort.size() - (VIEW_COUNT / 2)) % songdata->sort.size();
+		picsong = (cmd[0] + songdata.sort.size() - (VIEW_COUNT / 2)) % songdata.sort.size();
 
 		for (int count = 0; count < VIEW_COUNT; count++) {
 			slide = pals(0, 0, 250, this->UD * 80, moveC);
@@ -786,13 +801,23 @@ public:
 			BasePosX = lins(480, 80, 240, 40, BasePosY);
 
 			if (count == (VIEW_COUNT / 2)) {
-				this->DrawMainOne(cmd[1], BasePosX, BasePosY, &(*songdata)[picsong]);
+				if (is_folder) {
+					this->DrawMainFolderOne(cmd[1], BasePosX, BasePosY, this->folder_str[picsong].c_str());
+				}
+				else {
+					this->DrawMainOne(cmd[1], BasePosX, BasePosY, songdata[picsong]);
+				}
 			}
 			else {
-				this->DrawSubOne(cmd[1], BasePosX, BasePosY, &(*songdata)[picsong]);
+				if (is_folder) {
+					this->DrawSubFolderOne(cmd[1], BasePosX, BasePosY, this->folder_str[picsong].c_str());
+				}
+				else {
+					this->DrawSubOne(cmd[1], BasePosX, BasePosY, songdata[picsong]);
+				}
 			}
 
-			picsong = (picsong + 1) % songdata->sort.size();
+			picsong = (picsong + 1) % songdata.sort.size();
 		}
 	}
 
@@ -1131,7 +1156,7 @@ public:
 	void DrawUi(int cmd[], songdata_set_t *songdata) {
 		this->backpic.DrawBackPic();
 		this->jacket.DrawJacket(380, 85, 500);
-		this->musicbar.DrawAll(300, cmd, songdata);
+		this->musicbar.DrawAll(300, cmd, *songdata, false);
 		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
 		this->detail.DrawDetailAll(20, 60, &(*songdata)[cmd[0]], cmd[1]);
 		this->previewSnd.CheckTime();
