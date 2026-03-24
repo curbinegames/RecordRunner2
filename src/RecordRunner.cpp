@@ -34,30 +34,30 @@ static void GameMain() {
 		//ï\é¶Ç∑ÇÈâÊñ ÇëIëÇ∑ÇÈ
 		switch (next) {
 		case SCENE_TITLE:
-			RecSysBgmDelete();
+			rec_bgm_system_g.Delete();
 			next = title();
 			break;
 		case SCENE_MENU:
-			RecSysBgmSetMem(_T("song/LetÅfs_be_happy.mp3"), sizeof(_T("song/LetÅfs_be_happy.mp3")));
-			RecSysBgmPlay(false, true, true);
+			rec_bgm_system_g.SetMem(_T("song/LetÅfs_be_happy.mp3"));
+			rec_bgm_system_g.Play(false, true, true);
 			next = menu();
 			break;
 		case SCENE_SERECT:
-			RecSysBgmDelete();
+			rec_bgm_system_g.Delete();
 			next = musicserect(&ps);
 			break;
 		case SCENE_COLLECTION:
-			RecSysBgmSetMem(_T("song/LetÅfs_be_happy.mp3"), sizeof(_T("song/LetÅfs_be_happy.mp3")));
-			RecSysBgmPlay(false, true, true);
+			rec_bgm_system_g.SetMem(_T("song/LetÅfs_be_happy.mp3"));
+			rec_bgm_system_g.Play(false, true, true);
 			next = collection();
 			break;
 		case SCENE_OPTION:
-			RecSysBgmSetMem(_T("song/LetÅfs_be_happy.mp3"), sizeof(_T("song/LetÅfs_be_happy.mp3")));
-			RecSysBgmPlay(false, true, true);
+			rec_bgm_system_g.SetMem(_T("song/LetÅfs_be_happy.mp3"));
+			rec_bgm_system_g.Play(false, true, true);
 			next = option();
 			break;
 		case SCENE_MUSIC:
-			RecSysBgmDelete();
+			rec_bgm_system_g.Delete();
 			next = play3(ps.packNo, ps.musicNo, ps.dif, ps.shift, ps.autoFg);
 			break;
 		default:

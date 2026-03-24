@@ -156,7 +156,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 	rec_result_numfont_c num_font;
 	rec_cutin_c cutin;
 
-	RecSysBgmPlay(true, true, true);
+	rec_bgm_system_g.Play(true, true, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	cutin.SetIo(CUT_FRAG_OUT);
 	while (1) {
@@ -205,7 +205,7 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 			cutin.SetIo(CUT_FRAG_IN);
 		}
 		if (cutin.IsEndAnim()) {
-			RecSysBgmStop();
+			rec_bgm_system_g.Stop();
 			break;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
@@ -423,10 +423,10 @@ static cur_font_cr_t RecResultGetFlortCurFontColor(rec_score_rate_t rank) {
 
 static void RecResultSetBgm(rec_play_status_t status) {
 	if (status == REC_PLAY_STATUS_DROPED) {
-		RecSysBgmSetMem(_T("song/Regret.mp3"), sizeof(_T("song/Regret.mp3")));
+		rec_bgm_system_g.SetMem(_T("song/Regret.mp3"));
 	}
 	else {
-		RecSysBgmSetMem(_T("song/Balloon Art.mp3"), sizeof(_T("song/Balloon Art.mp3")));
+		rec_bgm_system_g.SetMem(_T("song/Balloon Art.mp3"));
 	}
 	return;
 }

@@ -18,9 +18,55 @@ int LargeFontData = 0;
 
 int RecPlayDebug[3] = { 0,0,0 };
 
-static DxSnd_t s_bgm = DXLIB_SND_NULL;
-static TCHAR s_bgmName[256] = _T("");
-static int s_totalVolume = 255;
+rec_sys_bgm rec_bgm_system_g;
+
+#if 1 /* rec_sys_bgm */
+
+void rec_sys_bgm::SetVolume(int val) {
+	s_totalVolume = val * optiondata.BGMvolume / 10;
+	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
+}
+
+void rec_sys_bgm::SetMem(const tstring &sndPath) {
+	if (s_bgmName == sndPath) { return; }
+	s_bgmName = sndPath;
+	StopSoundMem(s_bgm);
+	DeleteSoundMem(s_bgm);
+	s_bgm = LoadSoundMem(sndPath.c_str());
+	this->SetVolume(255);
+}
+
+bool rec_sys_bgm::RecCheckSoundMem(void) const {
+	return CheckSoundMem(s_bgm);
+}
+
+void rec_sys_bgm::Play(bool force, bool loop, bool top_position) {
+	if (!(force) && CheckSoundMem(s_bgm) == 1) { return; }
+	if (force) { StopSoundMem(s_bgm); }
+	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
+	if (loop) {
+		PlaySoundMem(s_bgm, DX_PLAYTYPE_LOOP, top_position);
+	}
+	else {
+		PlaySoundMem(s_bgm, DX_PLAYTYPE_BACK, top_position);
+	}
+}
+
+void rec_sys_bgm::Delete(void) {
+	StopSoundMem(s_bgm);
+	DeleteSoundMem(s_bgm);
+	s_bgmName.clear();
+}
+
+void rec_sys_bgm::Stop(void) {
+	StopSoundMem(s_bgm);
+}
+
+void rec_sys_bgm::SetCurrentPosition(int val) {
+	SetCurrentPositionSoundMem(val, s_bgm);
+}
+
+#endif /* rec_sys_bgm */
 
 #if 1 /* rec_system_langstr_c */
 
@@ -162,56 +208,4 @@ rec_error_t RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint son
 	stradds_2(ret, size, (TCHAR)((int)_T('0') + (int)difNo));
 	strcats_2(ret, size, _T(".txt"));
 	return REC_ERROR_NONE;
-}
-
-void RecSysBgmChangeVolume(int val) {
-	s_totalVolume = val * optiondata.BGMvolume / 10;
-	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
-	return;
-}
-
-void RecSysBgmSetMem(const TCHAR *sndPath, size_t size) {
-	if (strands_2(s_bgmName, size, sndPath, ARRAY_COUNT(s_bgmName))) { return; }
-
-	strcopy_2(sndPath, s_bgmName, ARRAY_COUNT(s_bgmName));
-	StopSoundMem(s_bgm);
-	DeleteSoundMem(s_bgm);
-	s_bgm = LoadSoundMem(sndPath);
-	RecSysBgmChangeVolume(255);
-
-	return;
-}
-
-bool RecSysBgmCheckSoundMem(void) {
-	return CheckSoundMem(s_bgm);
-}
-
-void RecSysBgmPlay(bool force, bool loop, bool top_position) {
-	if (!(force) && CheckSoundMem(s_bgm) == 1) { return; }
-	if (force) { StopSoundMem(s_bgm); }
-	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
-	if (loop) {
-		PlaySoundMem(s_bgm, DX_PLAYTYPE_LOOP, top_position);
-	}
-	else {
-		PlaySoundMem(s_bgm, DX_PLAYTYPE_BACK, top_position);
-	}
-	return;
-}
-
-void RecSysBgmDelete(void) {
-	StopSoundMem(s_bgm);
-	DeleteSoundMem(s_bgm);
-	s_bgmName[0] = _T('\0');
-	return;
-}
-
-void RecSysBgmStop(void) {
-	StopSoundMem(s_bgm);
-	return;
-}
-
-void RecSysBgmSetCurrentPosition(int val) {
-	SetCurrentPositionSoundMem(val, s_bgm);
-	return;
 }

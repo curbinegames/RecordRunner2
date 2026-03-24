@@ -182,7 +182,7 @@ static void RecOptionComboPos(TCHAR *ret, int pal) {
 
 static void RecOptionBGMVolume(TCHAR *ret, int pal) {
 	strnums(ret, pal, 32);
-	RecSysBgmChangeVolume(255);
+	rec_bgm_system_g.SetVolume(255);
 	return;
 }
 

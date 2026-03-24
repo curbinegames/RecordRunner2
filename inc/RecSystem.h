@@ -117,10 +117,27 @@ public:
 	const tstring &get_str(void) const;
 };
 
+class rec_sys_bgm {
+	int s_totalVolume = 255;
+	DxSnd_t s_bgm = DXLIB_SND_NULL;
+	tstring s_bgmName = _T("");
+
+public:
+	void SetVolume(int val);
+	void SetMem(const tstring &sndPath);
+	bool RecCheckSoundMem(void) const;
+	void Play(bool force, bool loop, bool top_position);
+	void Delete(void);
+	void Stop(void);
+	void SetCurrentPosition(int val);
+};
+
 extern int RecPlayDebug[3];
 
 extern int SmallFontData;
 extern int LargeFontData;
+
+extern rec_sys_bgm rec_bgm_system_g;
 
 /* これらの関数は、呼ばれるたびにリソースを全探索する(o(n)である)ので、*/
 /* for文などで曲の全探索をするとo(n^2)になって処理が遅くなる。やめてね */
@@ -132,11 +149,3 @@ extern rec_error_t RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, u
 	rec_dif_t difNo);
 extern rec_error_t RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
 	rec_dif_t difNo);
-
-extern void RecSysBgmChangeVolume(int val);
-extern void RecSysBgmSetMem(const TCHAR *sndPath, size_t size);
-extern bool RecSysBgmCheckSoundMem(void);
-extern void RecSysBgmPlay(bool force, bool loop, bool top_position);
-extern void RecSysBgmDelete(void);
-extern void RecSysBgmStop(void);
-extern void RecSysBgmSetCurrentPosition(int val);

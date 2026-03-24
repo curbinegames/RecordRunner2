@@ -702,10 +702,10 @@ static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFra
 		switch (GetKeyPushOnce()) {
 		case KEY_INPUT_SPACE:
 			(*StopFrag) *= -1;
-			if (*StopFrag == 1) { RecSysBgmStop(); }
+			if (*StopFrag == 1) { rec_bgm_system_g.Stop(); }
 			else {
-				RecSysBgmSetCurrentPosition((int)((double)recfp->time.now / 1000.0 * 44100.0));
-				RecSysBgmPlay(true, false, false);
+				rec_bgm_system_g.SetCurrentPosition((int)((double)recfp->time.now / 1000.0 * 44100.0));
+				rec_bgm_system_g.Play(true, false, false);
 			}
 			break;
 		default:
@@ -1892,8 +1892,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	else if (0 <= GD[0] && GD[0] < 2) { DifRate = recfp.mapdata.Lv + 0.45 * GD[0]; }
 	else { DifRate = recfp.mapdata.mdif / 100.0; }
 	RecResetPlayObjectNum(&recfp);
-	RecSysBgmSetMem(recfp.nameset.mp3FN.c_str(), recfp.nameset.mp3FN.size());
-	RecSysBgmPlay(true, false, true);
+	rec_bgm_system_g.SetMem(recfp.nameset.mp3FN);
+	rec_bgm_system_g.Play(true, false, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	Stime = GetNowCount();
 	cutin.SetIo(CUT_FRAG_OUT);
@@ -1903,7 +1903,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//終了判定
 		//カットイン再生から2秒以上たったら抜ける。
 		if (cutin.IsEndAnim()) {
-			RecSysBgmStop();
+			rec_bgm_system_g.Stop();
 			break;
 		}
 
@@ -1913,7 +1913,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, AutoFlag);
 		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, &itemN, &SitemN, LineMoveN);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
-			RecSysBgmStop();
+			rec_bgm_system_g.Stop();
 			return SCENE_SERECT;
 		}
 
@@ -2063,7 +2063,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
 		if ((cutin.IsClosing() == 0) &&
 			(recfp.time.end + 5000 <= recfp.time.now) &&
-			(RecSysBgmCheckSoundMem() == 0))
+			(rec_bgm_system_g.RecCheckSoundMem() == 0))
 		{
 			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
 			cutin.SetIo(CUT_FRAG_IN);

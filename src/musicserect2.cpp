@@ -647,9 +647,9 @@ private:
 
 public:
 	void StartSnd() {
-		RecSysBgmSetCurrentPosition(this->preTime[this->SongPrePat]);
-		RecSysBgmChangeVolume(0);
-		RecSysBgmPlay(true, false, false);
+		rec_bgm_system_g.SetCurrentPosition(this->preTime[this->SongPrePat]);
+		rec_bgm_system_g.SetVolume(0);
+		rec_bgm_system_g.Play(true, false, false);
 		WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 		this->SongPreSTime = GetNowCount();
 	}
@@ -660,9 +660,9 @@ public:
 		{
 			return 0;
 		}
-		RecSysBgmDelete();
+		rec_bgm_system_g.Delete();
 		strcopy_2(songdata->SongFileName, this->playingsong, 255);
-		RecSysBgmSetMem(this->playingsong, ARRAY_COUNT(this->playingsong));
+		rec_bgm_system_g.SetMem(this->playingsong);
 		this->SongPrePat = 0;
 		this->preTime[0] = songdata->preview[0];
 		this->preTime[1] = songdata->preview[1];
@@ -672,16 +672,16 @@ public:
 	void CheckTime(void) {
 		int Ntime = GetNowCount();
 		if (Ntime - this->SongPreSTime < 500) {
-			RecSysBgmChangeVolume(lins(0, 0, 500, 255, Ntime - this->SongPreSTime));
+			rec_bgm_system_g.SetVolume(lins(0, 0, 500, 255, Ntime - this->SongPreSTime));
 		}
 		else if (IS_BETWEEN_RIGHT_LESS(500, Ntime - this->SongPreSTime, 14500)) {
-			RecSysBgmChangeVolume(255);
+			rec_bgm_system_g.SetVolume(255);
 		}
 		else if (IS_BETWEEN_RIGHT_LESS(14500, Ntime - this->SongPreSTime, 15000)) {
-			RecSysBgmChangeVolume(lins(14500, 255, 15000, 0, Ntime - this->SongPreSTime));
+			rec_bgm_system_g.SetVolume(lins(14500, 255, 15000, 0, Ntime - this->SongPreSTime));
 		}
 		else if (15000 <= Ntime - this->SongPreSTime) {
-			RecSysBgmStop();
+			rec_bgm_system_g.Stop();
 			this->SongPrePat = (this->SongPrePat + 1) % 2;
 			this->StartSnd();
 		}
