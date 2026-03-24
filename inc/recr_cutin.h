@@ -17,7 +17,7 @@ private:
 public:
 	rec_cutin_c();
 	~rec_cutin_c();
-	void SetCutSong(TCHAR *songName, TCHAR *picName);
+	void SetCutSong(const tstring &songName, const tstring &picName);
 	void SetCutTipFg(cutin_tips_e Fg);
 	void SetTipNo();
 	void DrawCut();

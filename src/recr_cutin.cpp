@@ -5,6 +5,7 @@
 /* curbine code include */
 #include <sancur.h>
 #include <strcur.h>
+#include <stdcur.h>
 
 /* rec system include */
 #include <option.h>
@@ -20,8 +21,8 @@ static dxcur_pic_c pic_cutin[5];
 static int snd_cutin[2];
 static int CutInSndLastPlayTime = 0;
 static int CutOutSndLastPlayTime = 0;
-static wchar_t SongJucketName[256] = { L"NULL" };
-static wchar_t CutSongName[256] = { L"NULL" };
+static tstring SongJucketName = _T("NULL");
+static tstring CutSongName    = _T("NULL");
 static cutin_tips_e CutFg = CUTIN_TIPS_NONE;
 static int s_cutIoFg = CUT_FRAG_OUT;
 static int s_cutStime = 0;
@@ -116,7 +117,7 @@ void CutinReadyPic() {
 	pic_cutin[0].reload(L"picture/cutin/cutinU.png");
 	pic_cutin[1].reload(L"picture/cutin/cutinD.png");
 	pic_cutin[2].reload(L"picture/cutin/cutinDisk.png");
-	pic_cutin[3].reload(SongJucketName);
+	pic_cutin[3].reload(SongJucketName.c_str());
 	pic_cutin[4].reload(L"picture/cutin/cutinS.png");
 }
 
@@ -125,12 +126,6 @@ void CutinReadySnd() {
 	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
 	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[0]);
 	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[1]);
-}
-
-void SetCutSong(wchar_t* songName, wchar_t* picName) {
-	strcopy_2(songName, CutSongName, 255);
-	strcopy_2(picName, SongJucketName, 255);
-	pic_cutin[3].reload(picName);
 }
 
 void SetCutTipFg(cutin_tips_e Fg) {
@@ -258,7 +253,7 @@ static void ViewCutIn(int Stime) {
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
 			DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3].handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-			RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, COLOR_BLACK);
+			RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName.c_str(), COLOR_BLACK);
 		}
 		break;
 	default:
@@ -300,7 +295,7 @@ static void ViewCutOut(int Stime) {
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, Alpha);
 			DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic_cutin[3].handle(), TRUE);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-			RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName, COLOR_BLACK);
+			RecRescaleDrawString(CUT_MES_POSX + PosY * 640 / 360, 430, CutSongName.c_str(), COLOR_BLACK);
 		}
 		break;
 	default:
@@ -322,7 +317,7 @@ void RecViewCut3() {
 	RecCutDrawDisk(EffTime);
 	if (CutFg == CUTIN_TIPS_SONG) {
 		RecCutDrawJacket(EffTime);
-		RecCutDrawTips(EffTime, CutSongName);
+		RecCutDrawTips(EffTime, CutSongName.c_str());
 	}
 	else {
 		RecCutDrawTips(EffTime, tip[TipNo]);
@@ -340,7 +335,7 @@ rec_cutin_c::rec_cutin_c() {
 	pic_cutin[0].reload(L"picture/cutin/cutinU.png");
 	pic_cutin[1].reload(L"picture/cutin/cutinD.png");
 	pic_cutin[2].reload(L"picture/cutin/cutinDisk.png");
-	pic_cutin[3].reload(SongJucketName);
+	pic_cutin[3].reload(SongJucketName.c_str());
 	pic_cutin[4].reload(L"picture/cutin/cutinS.png");
 	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
 	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
@@ -353,10 +348,10 @@ rec_cutin_c::~rec_cutin_c() {
 	DeleteSoundMem(snd_cutin[1]);
 }
 
-void rec_cutin_c::SetCutSong(TCHAR *songName, TCHAR *picName) {
-	strcopy_2(songName, CutSongName, 255);
-	strcopy_2(picName, SongJucketName, 255);
-	pic_cutin[3].reload(picName);
+void rec_cutin_c::SetCutSong(const tstring &songName, const tstring &picName) {
+	CutSongName    = songName;
+	SongJucketName = picName;
+	pic_cutin[3].reload(SongJucketName.c_str());
 	return;
 }
 
