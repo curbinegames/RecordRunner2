@@ -1119,22 +1119,6 @@ public:
 
 static class rec_play_drawnotes_c {
 private:
-	/**
-	 * return 0 = normal, 1 = continue, 2 = break;
-	 */
-	int StepViewNoDrawNote(const tvec<int> &viewT, int hittime, int Ntime) {
-		/* TODO: 関数まとめ */
-		//3秒ブレーク
-		if (IS_BETWEEN(viewT.searchDataFront(hittime), 3000, hittime - Ntime)) {
-			return 2;
-		}
-		//非表示スキップ
-		if (hittime - Ntime >= viewT.searchDataFront(hittime)) {
-			return 1;
-		}
-		return 0;
-	}
-
 	void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_t *lanePos,
 		bool XLockp, bool YLockp, const note_box_2_t *note, double speedt,
 		const rec_scrool_data_t &scrool, int Ntime, int iLine)
@@ -1206,19 +1190,28 @@ public:
 		/* TODO: ゴーストノーツは全表示で良いかも */
 		/* TODO: てかレーンアイテム作りたい */
 		for (size_t i = mapeff->gnote.nowNo(); i < mapeff->gnote.size(); i++) {
-			int ret = this->StepViewNoDrawNote(mapeff->viewT, mapeff->gnote.at(i).hittime, Ntime);
-			if (ret == 1) { continue; }
-			else if (ret == 2) { break; }
-
 			this->DrawNoteOne(&mapeff->gnote.at(i), mapeff, lanePos, mapeff->gnote.at(i).lane, Ntime, noteimg);
 		}
 		for (int iLine = 0; iLine < 3; iLine++) {
 			for (int iNote = 0; note[iLine].offsetData(iNote).hittime > 0; iNote++) {
-				int ret = this->StepViewNoDrawNote(mapeff->viewT, note[iLine].offsetData(iNote).hittime, Ntime);
-				if (ret == 1) { continue; }
-				else if (ret == 2) { break; }
-				this->DrawNoteOne(&note[iLine].offsetData(iNote), mapeff, lanePos, iLine, Ntime, noteimg);
-				if (note[iLine].size() <= iNote + 1) { break; }
+				/* 3秒ブレーク */
+				if (IS_BETWEEN(
+					mapeff->viewT.searchDataFront(note[iLine].offsetData(iNote).hittime),
+					3000, note[iLine].offsetData(iNote).hittime - Ntime
+				)) {
+					break;
+				}
+				/* 非表示スキップ */
+				if (
+					(mapeff->viewT.searchDataFront(note[iLine].offsetData(iNote).hittime) + Ntime) <=
+					note[iLine].offsetData(iNote).hittime
+				) {
+					continue;
+				}
+				this->DrawNoteOne(
+					&note[iLine].offsetData(iNote), mapeff, lanePos, iLine, Ntime, noteimg
+				);
+				if (note[iLine].size() <= note[iLine].nowNo() + iNote + 1) { break; }
 			}
 		}
 		return;
