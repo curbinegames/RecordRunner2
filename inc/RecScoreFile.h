@@ -223,7 +223,7 @@ typedef struct rec_map_eff_data_s { /* TODO: 中身の並べ替え */
 	cvec<item_box> Movie{999}; /* 画像アイテムリスト */
 	tvec<double> v_BPM{99}; /* 表示上のBPM */
 	tvec<int> viewT{99}; /* ノーツの表示時間 */
-	tvec<int> carrow{99}; /* キャラの向き */ /* TODO: boolにする */
+	tvec<bool> carrow{99}; /* キャラの向き */ /* TODO: boolにする */
 	rec_notelock_allset_t lock;
 	rec_move_all_set_t move;
 	tvec<int> chamo[3] = { tvec<int>(99) }; /* キャラグラ変更タイミング */

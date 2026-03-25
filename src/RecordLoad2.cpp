@@ -845,7 +845,7 @@ static void RecMapencSetCArrow(rec_score_file_t *recfp, rec_mapenc_data_t *mapen
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	strmods(GT1, 8);
-	data_buf = recfp->mapeff.carrow.lastData() * -1;
+	data_buf = !(recfp->mapeff.carrow.lastData());
 	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
 	recfp->mapeff.carrow.push_back(time_buf, data_buf);
 	return;
@@ -1171,7 +1171,7 @@ static void RecMapLoad_SetInitRecfp(rec_score_file_t *recfp) {
 	recfp->mapeff.camera.push_back({ 0,0,0,0,1,0,0 });
 	recfp->mapeff.scrool.push_back(0, { 0,1 });
 	recfp->mapeff.viewT.push_back(0, 3000);
-	recfp->mapeff.carrow.push_back(0, 1);
+	recfp->mapeff.carrow.push_back(0, true);
 	recfp->mapeff.lock.x.push_back(0, false);
 	recfp->mapeff.lock.y.push_back(0, true);
 	recfp->mapeff.move.y[0].push_back({ 0, 300, 0, 1 });

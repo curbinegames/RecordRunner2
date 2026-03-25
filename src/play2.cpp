@@ -1469,7 +1469,7 @@ private:
 			picID = (int)(Ntime * mapeff->v_BPM.nowData() / 20000) %
 				6 + mapeff->chamo[this->pos].nowData() * 6;
 		}
-		if (mapeff->carrow.nowData() == 1) {
+		if (mapeff->carrow.nowData()) {
 			DrawGraphRecField(drawX - 160, drawY, this->charaimg[picID]);
 		}
 		else {
@@ -1522,7 +1522,7 @@ public:
 		rec_play_lanepos_t *lanePos, int charahit, int Ntime)
 	{
 		// view chara pos guide
-		if (mapeff->carrow.nowData() == 1) {
+		if (mapeff->carrow.nowData()) {
 			DrawGraphRecField(lanePos->x[this->pos] - 4, lanePos->y[this->pos] - 4, this->charaguideimg.handle());
 		}
 		else {
