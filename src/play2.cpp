@@ -74,54 +74,43 @@ typedef struct note_img {
 
 class rec_play_bonus_cover_c {
 private:
-	bool enable = false;
 	DxTime_t Stime = 0;
 	int alpha = 0;
 	dxcur_pic_c pic{_T("picture/Black.png")};
 
 public:
 	void draw(void) const {
-		if (!this->enable) { return; }
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, this->alpha);
 		RecRescaleDrawGraph(0, 0, this->pic.handle(), TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 
-	void update(void) {
-		if (!this->enable) { return; }
-		DxTime_t Ntime = GetNowCount() - this->Stime;
-		if (2000 < Ntime) {
-			this->enable = false;
-			return;
-		}
+	void update(DxTime_t Ntime) {
 		this->alpha = lins_scale(1800, 127, 2000, 0, Ntime);
 	}
 
-	/* 全ノーツを処理した瞬間だけ呼ぶ */
-	void setBonus(const rec_play_judge_t &judge) {
-		if (judge.miss > 0) { return; }
+	void setBonus(void) {
 		this->Stime = GetNowCount();
-		this->enable = true;
 	}
 };
 
 class rec_play_bonus_slight_c {
 private:
-	bool enable = false;
 	DxTime_t Stime = 0;
 
 	int posX[24];
 	int posY[24];
 	size_t count = 0;
 
-	dxcur_pic_c perfect{  _T("picture/Bonus-Smalllight3.png")};
-	dxcur_pic_c fullcombo{_T("picture/Bonus-Smalllight2.png")};
-	dxcur_pic_c nomiss{   _T("picture/Bonus-Smalllight1.png")};
+	dxcur_pic_c pic_list[3] = {
+		dxcur_pic_c(_T("picture/Bonus-Smalllight3.png")),
+		dxcur_pic_c(_T("picture/Bonus-Smalllight2.png")),
+		dxcur_pic_c(_T("picture/Bonus-Smalllight1.png"))
+	};
 	DxPic_t using_pic = DXLIB_PIC_NULL;
 
 public:
 	void draw(void) const {
-		if (!this->enable) { return; }
 		DxTime_t Ntime = GetNowCount() - this->Stime;
 
 		for (int i = 0; i < this->count; i++) {
@@ -135,34 +124,10 @@ public:
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 
-	void update(void) {
-		if (!this->enable) { return; }
-		DxTime_t Ntime = GetNowCount() - this->Stime;
-		if (2000 < Ntime) {
-			this->enable = false;
-			return;
-		}
-	}
-
-	void setBonus(const rec_play_judge_t &judge) {
-		if (judge.miss > 0) { return; }
-
+	void setBonus(int mat) {
 		int Bonus = -1;
-		if (judge.safe > 0) {
-			this->using_pic = this->nomiss.handle();
-			Bonus = 2;
-		}
-		else if (judge.good > 0) {
-			this->using_pic = this->fullcombo.handle();
-			Bonus = 1;
-		}
-		else {
-			this->using_pic = this->perfect.handle();
-			Bonus = 0;
-		}
-
+		this->using_pic = this->pic_list[mat - 1].handle();
 		this->Stime = GetNowCount();
-		this->enable = true;
 		this->count = 6 * (4 - Bonus);
 
 		for (int i = 0; i < 2; i++) {
@@ -178,7 +143,6 @@ public:
 
 class rec_play_bonus_blight_c {
 private:
-	bool enable = false;
 	DxTime_t Stime = 0;
 	int alpha = 0;
 	size_t count = 0;
@@ -186,7 +150,6 @@ private:
 
 public:
 	void draw(void) const {
-		if (!this->enable) { return; }
 		DxTime_t Ntime = GetNowCount() - this->Stime;
 		if (Ntime < 100) { return; }
 		if (1000 < Ntime) { return; }
@@ -199,14 +162,7 @@ public:
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 
-	void update(void) {
-		if (!this->enable) { return; }
-		DxTime_t Ntime = GetNowCount() - this->Stime;
-		if (2000 < Ntime) {
-			this->enable = false;
-			return;
-		}
-
+	void update(DxTime_t Ntime) {
 		if (IS_BETWEEN(100, Ntime, 1000)) {
 			for (int i = 0; i < this->count; i++) {
 				this->alpha = lins(500, 255, 1000, 0, maxs_2(Ntime, 500));
@@ -214,25 +170,14 @@ public:
 		}
 	}
 
-	void setBonus(const rec_play_judge_t &judge) {
-		if (judge.miss > 0) { return; }
-		if (judge.safe > 0) {
-			this->count = 1;
-		}
-		else if (judge.good > 0) {
-			this->count = 2;
-		}
-		else {
-			this->count = 3;
-		}
+	void setBonus(int mat) {
+		this->count = mat;
 		this->Stime = GetNowCount();
-		this->enable = true;
 	}
 };
 
 class rec_play_bonus_ring_c {
 private:
-	bool enable = false;
 	DxTime_t Stime = 0;
 
 	int LeftPos  = 0;
@@ -245,7 +190,6 @@ private:
 
 public:
 	void draw(void) const {
-		if (!this->enable) { return; }
 		DxTime_t Ntime = GetNowCount() - this->Stime;
 		if (Ntime < 100) { return; }
 		if (1000 < Ntime) { return; }
@@ -254,14 +198,7 @@ public:
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 
-	void update(void) {
-		if (!this->enable) { return; }
-		DxTime_t Ntime = GetNowCount() - this->Stime;
-		if (2000 < Ntime) {
-			this->enable = false;
-			return;
-		}
-
+	void update(DxTime_t Ntime) {
 		if (IS_BETWEEN(100, Ntime, 1000)) {
 			this->LeftPos  = lins(100, 320 - 160, 1000, 320 - 240, Ntime);
 			this->UpPos    = lins(100, 240 - 160, 1000, 240 - 240, Ntime);
@@ -271,23 +208,19 @@ public:
 		}
 	}
 
-	void setBonus(const rec_play_judge_t &judge) {
-		if (judge.miss > 0) { return; }
+	void setBonus(void) {
 		this->Stime = GetNowCount();
-		this->enable = true;
 	}
 };
 
 class rec_play_bonus_flash_c {
 private:
-	bool enable = false;
 	DxTime_t Stime = 0;
 	int alpha = 0;
 	dxcur_pic_c pic{_T("picture/White.png")};
 
 public:
 	void draw(void) const {
-		if (!this->enable) { return; }
 		DxTime_t Ntime = GetNowCount() - this->Stime;
 		if (Ntime < 100) { return; }
 		if (300 < Ntime) { return; }
@@ -296,23 +229,14 @@ public:
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 
-	void update(void) {
-		if (!this->enable) { return; }
-		DxTime_t Ntime = GetNowCount() - this->Stime;
-		if (2000 < Ntime) {
-			this->enable = false;
-			return;
-		}
-
+	void update(DxTime_t Ntime) {
 		if (IS_BETWEEN(100, Ntime, 300)) {
 			this->alpha = lins(100, 191, 300, 0, Ntime);
 		}
 	}
 
-	void setBonus(const rec_play_judge_t &judge) {
-		if (judge.miss > 0) { return; }
+	void setBonus(void) {
 		this->Stime = GetNowCount();
-		this->enable = true;
 	}
 };
 
@@ -320,7 +244,6 @@ class rec_play_bonus_text_c {
 private:
 	const int sizeX = 319;
 	const int sizeY = 54;
-	bool enable = false;
 	DxTime_t Stime = 0;
 
 	int LeftPos  = 0;
@@ -329,27 +252,21 @@ private:
 	int DownPos  = 0;
 	int alpha    = 0;
 
-	dxcur_pic_c perfect{  _T("picture/PERFECT.png"  )};
-	dxcur_pic_c fullcombo{_T("picture/FULLCOMBO.png")};
-	dxcur_pic_c nomiss{   _T("picture/NOMISS.png"   )};
+	dxcur_pic_c pic_list[3] = {
+		dxcur_pic_c(_T("picture/NOMISS.png"   )),
+		dxcur_pic_c(_T("picture/FULLCOMBO.png")),
+		dxcur_pic_c(_T("picture/PERFECT.png"  ))
+	};
 	DxPic_t using_pic = DXLIB_PIC_NULL;
 
 public:
 	void draw(void) const {
-		if (!this->enable) { return; }
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, this->alpha);
 		RecRescaleDrawExtendGraph(this->LeftPos, this->UpPos, this->RightPos, this->DownPos, this->using_pic, TRUE);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 255);
 	}
 
-	void update(void) {
-		if (!this->enable) { return; }
-		DxTime_t Ntime = GetNowCount() - this->Stime;
-		if (2000 < Ntime) {
-			this->enable = false;
-			return;
-		}
-
+	void update(DxTime_t Ntime) {
 		if (Ntime < 1800) {
 			this->LeftPos  = lins_scale(0, 320 - sizeX * 8 / 2, 100, 320 - sizeX / 2, Ntime);
 			this->UpPos    = lins_scale(0, 240 - sizeY * 8 / 2, 100, 240 - sizeY / 2, Ntime);
@@ -366,51 +283,37 @@ public:
 		}
 	}
 
-	void setBonus(const rec_play_judge_t &judge) {
-		if (judge.miss > 0) { return; }
-		if (judge.safe > 0) {
-			this->using_pic = this->nomiss.handle();
-		}
-		else if (judge.good > 0) {
-			this->using_pic = this->fullcombo.handle();
-		}
-		else {
-			this->using_pic = this->perfect.handle();
-		}
+	void setBonus(int mat) {
+		this->using_pic = this->pic_list[mat - 1].handle();
 		this->Stime = GetNowCount();
-		this->enable = true;
 	}
 };
 
 class rec_play_bonus_snd_c {
 private:
-	dxcur_snd_c perfect{_T("sound/a-perfect.mp3")};
-	dxcur_snd_c fullcombo{_T("sound/a-fullcombo.mp3")};
-	dxcur_snd_c nomiss{_T("sound/a-nomiss.mp3")};
+	dxcur_snd_c snd[3] = {
+		dxcur_snd_c(_T("sound/a-nomiss.mp3"   )),
+		dxcur_snd_c(_T("sound/a-fullcombo.mp3")),
+		dxcur_snd_c(_T("sound/a-perfect.mp3"  ))
+	};
 
 public:
 	rec_play_bonus_snd_c(void) {
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->perfect.handle());
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->fullcombo.handle());
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->nomiss.handle());
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->snd[0].handle());
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->snd[1].handle());
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->snd[2].handle());
 	}
 
-	void setBonus(const rec_play_judge_t &judge) {
-		if (judge.miss > 0) { return; }
-		if (judge.safe > 0) {
-			this->nomiss.PlaySound();
-		}
-		else if (judge.good > 0) {
-			this->fullcombo.PlaySound();
-		}
-		else {
-			this->perfect.PlaySound();
-		}
+	void setBonus(int mat) {
+		this->snd[mat - 1].PlaySound();
 	}
 };
 
 class rec_play_bonus_c {
 private:
+	bool enable = false;
+	DxTime_t Stime = 0;
+
 	rec_play_bonus_cover_c  g_bonus_cover;
 	rec_play_bonus_slight_c g_bonus_slight;
 	rec_play_bonus_blight_c g_bonus_blight;
@@ -420,8 +323,8 @@ private:
 	rec_play_bonus_snd_c    g_bonus_snd;
 
 public:
-	/* TODO: 共通部抽出 */
 	void draw(void) const {
+		if (!this->enable) { return; }
 		g_bonus_cover.draw();
 		g_bonus_slight.draw();
 		g_bonus_blight.draw();
@@ -431,22 +334,40 @@ public:
 	}
 
 	void update(void) {
-		g_bonus_cover.update();
-		g_bonus_slight.update();
-		g_bonus_blight.update();
-		g_bonus_ring.update();
-		g_bonus_flash.update();
-		g_bonus_text.update();
+		if (!this->enable) { return; }
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		if (2000 < Ntime) {
+			this->enable = false;
+			return;
+		}
+		g_bonus_cover.update(Ntime);
+		g_bonus_blight.update(Ntime);
+		g_bonus_ring.update(Ntime);
+		g_bonus_flash.update(Ntime);
+		g_bonus_text.update(Ntime);
 	}
 
 	void setBonus(const rec_play_judge_t &judge) {
-		g_bonus_snd.setBonus(judge);
-		g_bonus_cover.setBonus(judge);
-		g_bonus_slight.setBonus(judge);
-		g_bonus_blight.setBonus(judge);
-		g_bonus_ring.setBonus(judge);
-		g_bonus_flash.setBonus(judge);
-		g_bonus_text.setBonus(judge);
+		int mat = 0;
+		if (judge.miss > 0) { return; }
+		if (judge.safe > 0) {
+			mat = 1;
+		}
+		else if (judge.good > 0) {
+			mat = 2;
+		}
+		else {
+			mat = 3;
+		}
+		this->Stime = GetNowCount();
+		this->enable = true;
+		g_bonus_snd.setBonus(mat);
+		g_bonus_cover.setBonus();
+		g_bonus_slight.setBonus(mat);
+		g_bonus_blight.setBonus(mat);
+		g_bonus_ring.setBonus();
+		g_bonus_flash.setBonus();
+		g_bonus_text.setBonus(mat);
 	}
 };
 
@@ -2081,6 +2002,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	return AutoFlag == 1 ? SCENE_SERECT : SCENE_RESULT;
 }
+
+/* TODO: カメラの末尾がバグってる */
+/* TODO: 水中レーンの末尾がバグってる */
 
 /**
 * @param[in] packNo パックナンバー
