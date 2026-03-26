@@ -181,9 +181,9 @@ static note_material GetNoteObjMat(TCHAR code) {
 }
 
 /* çƒãAä÷êîÇ…Ç»Ç¡ÇƒÇ¢ÇÈÅAç≈ëÂ2âÒåƒÇŒÇÍÇÈ */
-void RecMapLoadSetMove(cvec<rec_mapeff_move_st> &move, unsigned int *allnum, int iLine,
+void RecMapLoadSetMove(cvec<rec_mapeff_move_st> &move,
 	double StartTime, double MovePos, double EndTime, int MoveMode, double bpmG,
-	double timer[])
+	double timer)
 {
 	rec_mapeff_move_st buf;
 	double Spos = (move.lastData().pos - 100.0) / 50.0;
@@ -191,11 +191,11 @@ void RecMapLoadSetMove(cvec<rec_mapeff_move_st> &move, unsigned int *allnum, int
 	case REC_MAP_MOVE_CODE_LIN:
 	case REC_MAP_MOVE_CODE_ACC:
 	case REC_MAP_MOVE_CODE_DEC:
-		SETMove(&buf, StartTime, MovePos, EndTime, MoveMode, bpmG, timer[0]);
+		SETMove(&buf, StartTime, MovePos, EndTime, MoveMode, bpmG, timer);
 		move.push_back(buf);
 		break;
 	case REC_MAP_MOVE_CODE_MOM:
-		RecMapLoadSetMove(move, allnum, iLine, StartTime, MovePos,
+		RecMapLoadSetMove(move, StartTime, MovePos,
 			EndTime, REC_MAP_MOVE_CODE_LIN, bpmG, timer);
 		buf = move.lastData();
 		move.pop_back();
@@ -204,21 +204,21 @@ void RecMapLoadSetMove(cvec<rec_mapeff_move_st> &move, unsigned int *allnum, int
 		move.push_back(buf);
 		break;
 	case REC_MAP_MOVE_CODE_SLI:
-		RecMapLoadSetMove(move, allnum, iLine, StartTime, (Spos + MovePos) / 2.0,
+		RecMapLoadSetMove(move, StartTime, (Spos + MovePos) / 2.0,
 			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
-		RecMapLoadSetMove(move, allnum, iLine, (StartTime + EndTime) / 2.0,
+		RecMapLoadSetMove(move, (StartTime + EndTime) / 2.0,
 			MovePos, EndTime, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
 		break;
 	case REC_MAP_MOVE_CODE_PAL:
-		RecMapLoadSetMove(move, allnum, iLine, StartTime, MovePos,
+		RecMapLoadSetMove(move, StartTime, MovePos,
 			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
-		RecMapLoadSetMove(move, allnum, iLine, (StartTime + EndTime) / 2.0,
+		RecMapLoadSetMove(move, (StartTime + EndTime) / 2.0,
 			Spos, EndTime, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
 		break;
 	case REC_MAP_MOVE_CODE_EDG:
-		RecMapLoadSetMove(move, allnum, iLine, StartTime, MovePos,
+		RecMapLoadSetMove(move, StartTime, MovePos,
 			(StartTime + EndTime) / 2.0, REC_MAP_MOVE_CODE_ACC, bpmG, timer);
-		RecMapLoadSetMove(move, allnum, iLine, (StartTime + EndTime) / 2.0,
+		RecMapLoadSetMove(move, (StartTime + EndTime) / 2.0,
 			Spos, EndTime, REC_MAP_MOVE_CODE_DEC, bpmG, timer);
 		break;
 	}
@@ -640,8 +640,8 @@ static void RecMapencSetMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
-		RecMapLoadSetMove(recfp->mapeff.move.y[iLane], recfp->allnum.Ymovenum, iLane, Stime,
-			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
+		RecMapLoadSetMove(recfp->mapeff.move.y[iLane], Stime,
+			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer[0]);
 	}
 	return;
 }
@@ -713,8 +713,8 @@ static void RecMapencSetXMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	strnex(GT1);
 	Etime = strsans2(GT1);
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
-		RecMapLoadSetMove(recfp->mapeff.move.x[iLane], recfp->allnum.Xmovenum, iLane, Stime,
-			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer);
+		RecMapLoadSetMove(recfp->mapeff.move.x[iLane], Stime,
+			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer[0]);
 	}
 	return;
 }
@@ -739,34 +739,26 @@ static void RecMapencSetDiv(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, 
 	Onetime = strsans2(GT1) / 2.0;//âùïúéûä‘
 	strnex(GT1);
 	count = strsans2(GT1);//âùïúâÒêî
+
+	cvec<rec_mapeff_move_st> &dest = recfp->mapeff.move.y[lane];
 	if (Yflag) {
-		for (uint inum = 0; inum < count; inum++) {
-			/* TODO: RecMapLoadSetMoveÇ≈èëÇØÇ»Ç¢? */
-			rec_mapeff_move_st buf;
-			SETMove(&buf, Stime,
-				pos, Stime + Onetime, 1, mapenc->bpmG, mapenc->timer[0]);
-			recfp->mapeff.move.y[lane].push_back(buf);
-			SETMove(&buf, Stime + Onetime,
-				(recfp->mapeff.move.y[lane].lastData().pos - 100.0) / 50.0,
-				Stime + Onetime * 2, 1, mapenc->bpmG, mapenc->timer[0]);
-			recfp->mapeff.move.y[lane].push_back(buf);
-			Stime += Onetime * 2;
-			recfp->allnum.Ymovenum[lane] += 2;
-		}
+		dest = recfp->mapeff.move.y[lane];
 	}
 	else {
-		for (uint inum = 0; inum < count; inum++) {
-			rec_mapeff_move_st buf;
-			SETMove(&buf, Stime,
-				pos, Stime + Onetime, 1, mapenc->bpmG, mapenc->timer[0]);
-			recfp->mapeff.move.x[lane].push_back(buf);
-			SETMove(&buf, Stime + Onetime,
-				(recfp->mapeff.move.x[lane].lastData().pos - 100.0) / 50.0,
-				Stime + Onetime * 2, 1, mapenc->bpmG, mapenc->timer[0]);
-			recfp->mapeff.move.x[lane].push_back(buf);
-			Stime += Onetime * 2;
-			recfp->allnum.Xmovenum[lane] += 2;
-		}
+		dest = recfp->mapeff.move.x[lane];
+	}
+
+	int bpos = dest.lastData().pos;
+	for (uint inum = 0; inum < count; inum++) {
+		RecMapLoadSetMove(
+			dest, Stime, pos,
+			Stime + Onetime, 1, mapenc->bpmG, mapenc->timer[0]
+		);
+		RecMapLoadSetMove(
+			dest, Stime + Onetime, (bpos - 100.0) / 50.0,
+			Stime + Onetime * 2, 1, mapenc->bpmG, mapenc->timer[0]
+		);
+		Stime += Onetime * 2;
 	}
 	return;
 }
@@ -807,8 +799,8 @@ static void RecMapencSetGMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	else { pos = strsans2(GT1); }
 	strnex(GT1);
 	Etime = strsans2(GT1);
-	RecMapLoadSetMove(recfp->mapeff.move.y[3], recfp->allnum.Ymovenum, 3,
-		Stime, pos, Etime, mode, mapenc->bpmG, mapenc->timer);
+	RecMapLoadSetMove(recfp->mapeff.move.y[3],
+		Stime, pos, Etime, mode, mapenc->bpmG, mapenc->timer[0]);
 	return;
 }
 
