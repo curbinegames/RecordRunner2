@@ -47,6 +47,7 @@ typedef enum note_material {
 	NOTE_GHOST,
 	NOTE_END
 } note_material;
+#define IS_NOTE_HITTING_GROUP(mat) ((mat) == NOTE_HIT || (mat) == NOTE_UP || (mat) == NOTE_DOWN || (mat) == NOTE_LEFT || (mat) == NOTE_RIGHT)
 #define IS_NOTE_ARROW_GROUP(mat) ((mat) == NOTE_UP || (mat) == NOTE_DOWN || (mat) == NOTE_LEFT || (mat) == NOTE_RIGHT)
 
 /* éwíËÇÃÉmÅ[ÉcÇ™gap[ms]à»ì‡Ç…Ç†Ç¡ÇΩÇÁtrue */
