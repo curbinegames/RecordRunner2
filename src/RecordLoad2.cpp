@@ -387,7 +387,7 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	else { buf.color = 0; }
 	if (buf.object != 8) { (recfp->mapdata.notes)++; }
 	if (buf.object != 8) { recfp->mapdata.note[iLine].push_back(buf); }
-	else { recfp->mapeff.gnote.push_back(buf.hittime, buf); }
+	else { recfp->mapeff.gnote.insert(buf.hittime, buf); }
 	recfp->allnum.notenum[iLine]++;
 	return 0;
 }

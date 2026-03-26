@@ -103,9 +103,9 @@ private:
 	size_t count = 0;
 
 	dxcur_pic_c pic_list[3] = {
-		dxcur_pic_c(_T("picture/Bonus-Smalllight3.png")),
+		dxcur_pic_c(_T("picture/Bonus-Smalllight1.png")),
 		dxcur_pic_c(_T("picture/Bonus-Smalllight2.png")),
-		dxcur_pic_c(_T("picture/Bonus-Smalllight1.png"))
+		dxcur_pic_c(_T("picture/Bonus-Smalllight3.png"))
 	};
 	DxPic_t using_pic = DXLIB_PIC_NULL;
 
@@ -1190,6 +1190,20 @@ public:
 		/* TODO: ゴーストノーツは全表示で良いかも */
 		/* TODO: てかレーンアイテム作りたい */
 		for (size_t i = mapeff->gnote.nowNo(); i < mapeff->gnote.size(); i++) {
+			/* 3秒ブレーク */
+			if (IS_BETWEEN(
+				mapeff->viewT.searchDataFront(mapeff->gnote[i].hittime),
+				3000, mapeff->gnote[i].hittime - Ntime
+			)) {
+				break;
+			}
+			/* 非表示スキップ */
+			if (
+				(mapeff->viewT.searchDataFront(mapeff->gnote[i].hittime) + Ntime) <=
+				mapeff->gnote[i].hittime
+			) {
+				continue;
+			}
 			this->DrawNoteOne(&mapeff->gnote.at(i), mapeff, lanePos, mapeff->gnote.at(i).lane, Ntime, noteimg);
 		}
 		for (int iLine = 0; iLine < 3; iLine++) {
