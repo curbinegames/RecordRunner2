@@ -13,12 +13,11 @@
 #include <strcur.h>
 
 /* rec system include */
-#include <option.h>
 #include <RecSystem.h>
+#include <option.h>
 #include <recr_cutin.h>
 #include <RecSave.h>
 #include <RecScoreFile.h>
-#include <RecSystem.h>
 #include <RecWindowRescale.h>
 
 /* rec play include */

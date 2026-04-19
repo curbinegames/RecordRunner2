@@ -11,15 +11,14 @@
 #include <strcur.h>
 
 /* rec system include */
+#include <RecSystem.h>
 #include <helpBar.h>
 #include <option.h>
 #include <playbox.h>
 #include <recr_cutin.h>
 #include <RecSave.h>
 #include <RecScoreFile.h>
-#include <RecSystem.h>
 #include <RecWindowRescale.h>
-#include <RecSystem.h>
 
 /* others include */
 #include <RecordLoad2.h>

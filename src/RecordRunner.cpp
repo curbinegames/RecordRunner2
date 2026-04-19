@@ -7,7 +7,6 @@
 
 /* rec system include */
 #include <RecSystem.h>
-#include <RecSystem.h>
 
 /* rec sub include */
 #include <menu.h>

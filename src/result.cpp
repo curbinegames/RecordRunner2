@@ -7,13 +7,12 @@
 #include <strcur.h>
 
 /* rec system include */
+#include <RecSystem.h>
 #include <option.h>
 #include <playbox.h>
 #include <RecSave.h>
 #include <RecScoreFile.h>
-#include <RecSystem.h>
 #include <RecWindowRescale.h>
-#include <RecSystem.h>
 
 /* TODO: クリア状況はclearrank、スコア評価はscorerateに改名しよう */
 

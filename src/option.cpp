@@ -9,10 +9,9 @@
 #include <strcur.h>
 
 /* rec system include */
+#include <RecSystem.h>
 #include <helpBar.h>
-#include <RecSystem.h>
 #include <RecWindowRescale.h>
-#include <RecSystem.h>
 
 /* own include */
 #include <option.h>
