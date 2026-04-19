@@ -1,3 +1,4 @@
+/* TODO: Dogbite, 末尾のノーツ位置がバグってる */
 
 /* base include */
 #include <DxLib.h>

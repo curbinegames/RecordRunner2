@@ -2,9 +2,10 @@
 
 #include <dxcur.h>
 
-/* TODO: enum‰» */
-#define CUT_FRAG_OUT 0
-#define CUT_FRAG_IN  1
+typedef enum cutin_io_e {
+	CUT_FRAG_OUT = 0,
+	CUT_FRAG_IN
+} cutin_io_t;
 
 typedef enum cutin_tips_e {
 	CUTIN_TIPS_NONE = 0,
@@ -21,7 +22,7 @@ public:
 	void SetCutTipFg(cutin_tips_e Fg);
 	void SetTipNo();
 	void DrawCut();
-	void SetIo(int val);
+	void SetIo(cutin_io_t val);
 	int IsClosing();
 	int IsEndAnim();
 };

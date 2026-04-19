@@ -24,7 +24,7 @@ static int CutOutSndLastPlayTime = 0;
 static tstring SongJucketName = _T("NULL");
 static tstring CutSongName    = _T("NULL");
 static cutin_tips_e CutFg = CUTIN_TIPS_NONE;
-static int s_cutIoFg = CUT_FRAG_OUT;
+static cutin_io_t s_cutIoFg = CUT_FRAG_OUT;
 static int s_cutStime = 0;
 
 /* TODO: ï“èWÇ¢ÇÈÇÊ(1.5.5Ç≈Ç‡Ç¢Ç¢ÇÀ) */
@@ -371,7 +371,7 @@ void rec_cutin_c::DrawCut() {
 	return;
 }
 
-void rec_cutin_c::SetIo(int val) {
+void rec_cutin_c::SetIo(cutin_io_t val) {
 	s_cutIoFg = val;
 	s_cutStime = GetNowCount();
 	if (val == CUT_FRAG_IN) {
