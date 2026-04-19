@@ -71,7 +71,7 @@ void RecPlayInitMelodySnd() {
 	return;
 }
 
-static void PlayNoteHitSound(const note_box_2_t *note, rec_play_sound_c *p_sound, int soundItem[]) {
+static void PlayNoteHitSound(const note_box_2_t *note, rec_play_sound_c *p_sound, const std::vector<DxSnd_t> &soundItem) {
 	if (note->melody != MELODYSOUND_NONE) {
 		PlaySoundMem(MelodySnd[note->melody], DX_PLAYTYPE_BACK);
 	}
@@ -85,7 +85,7 @@ static void PlayNoteHitSound(const note_box_2_t *note, rec_play_sound_c *p_sound
 }
 
 static void PlayNoteHitSoundGeneral(
-	note_judge judge, const note_box_2_t *noteinfo, rec_play_sound_c *p_sound, int soundItem[]
+	note_judge judge, const note_box_2_t *noteinfo, rec_play_sound_c *p_sound, const std::vector<DxSnd_t> soundItem
 ) {
 	if (optiondata.SEenable != 0) { return; }
 
@@ -439,7 +439,7 @@ static void RecJudgeBombNote(
 	return;
 }
 
-static void RecJudgeGhostNote(cvec<note_box_2_t> note[], rec_play_sound_c *p_sound, int soundItem[])
+static void RecJudgeGhostNote(cvec<note_box_2_t> note[], rec_play_sound_c *p_sound, const std::vector<DxSnd_t> &soundItem)
 {
 	for (int iLine = 0; iLine < 3; iLine++) {
 		while (IS_BETWEEN(0, note[iLine].nowData().hittime, s_Ntime) &&
@@ -471,7 +471,7 @@ static void RecJudgeSlowMiss(
 	return;
 }
 
-void RecJudgeAllNotes(cvec<note_box_2_t> note[], int Ntime, int *Sitem,
+void RecJudgeAllNotes(cvec<note_box_2_t> note[], int Ntime, const std::vector<DxSnd_t> &Sitem,
 	key_hold_t *keyhold, hitatt_t *hitatk, int LaneTrack[], int *charahit, short charaput,
 	userpal_t *userpal, rec_play_sound_c *p_sound)
 {

@@ -374,9 +374,7 @@ public:
 
 #if 1 /* sub action */
 
-static void RecResetPlayPartNum(short *itemN, short *SitemN, short LineMoveN[]) {
-	*itemN = 0;
-	*SitemN = 0;
+static void RecResetPlayPartNum(short LineMoveN[]) {
 	LineMoveN[0] = 0;
 	LineMoveN[1] = 0;
 	LineMoveN[2] = 0;
@@ -419,42 +417,18 @@ static void RecResetPlayObjectNum(rec_score_file_t *recfp) {
 	return;
 }
 
-static void Getxxxpng(wchar_t *str, int num) {
-	*str = num / 100 + '0';
-	str++;
-	*str = num / 10 % 10 + '0';
-	str++;
-	*str = num % 10 + '0';
-	str++;
-	*str = '.';
-	str++;
-	*str = 'p';
-	str++;
-	*str = 'n';
-	str++;
-	*str = 'g';
-	str++;
-	*str = '\0';
-	return;
+static void Getxxxpng(tstring &str, int num) {
+	str += num / 100 + '0';
+	str += num / 10 % 10 + '0';
+	str += num % 10 + '0';
+	str += _T(".png");
 }
 
-static void Getxxxwav(wchar_t *str, int num) {
-	*str = num / 100 + '0';
-	str++;
-	*str = num / 10 % 10 + '0';
-	str++;
-	*str = num % 10 + '0';
-	str++;
-	*str = '.';
-	str++;
-	*str = 'w';
-	str++;
-	*str = 'a';
-	str++;
-	*str = 'v';
-	str++;
-	*str = '\0';
-	return;
+static void Getxxxwav(tstring &str, int num) {
+	str += num / 100 + '0';
+	str += num / 10 % 10 + '0';
+	str += num % 10 + '0';
+	str += _T(".wav");
 }
 
 static void recSetLine(int line[], cvec<rec_mapeff_move_st> move[], int Ntime, int loop) {
@@ -481,7 +455,7 @@ static void recSetLine(int line[], cvec<rec_mapeff_move_st> move[], int Ntime, i
 	}
 }
 
-static void PlayDrawItem(rec_map_eff_data_t *mapeff, int Ntime, int Xmidline, dxcur_pic_c item[]) {
+static void PlayDrawItem(rec_map_eff_data_t *mapeff, int Ntime, int Xmidline, const std::vector<DxPic_t> &item) {
 	int drawA;
 	int drawX;
 	int drawY;
@@ -536,7 +510,7 @@ static void PlayDrawItem(rec_map_eff_data_t *mapeff, int Ntime, int Xmidline, dx
 		drawS = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawS);
 		//drawing
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-		DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID].handle());
+		DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}
 }
@@ -614,9 +588,9 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *guideN) {
 }
 
 /* キー入力 */
-static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFrag,
-	short *itemN, short *SitemN, short LineMoveN[])
-{
+static void RecPlayActSubKey(
+	rec_score_file_t *recfp, int AutoFlag, int *StopFrag, short LineMoveN[]
+) {
 	InputAllKeyHold();
 	if (AutoFlag == 1) {
 		switch (GetKeyPushOnce()) {
@@ -640,7 +614,7 @@ static void RecPlayActSubKey(rec_score_file_t *recfp, int AutoFlag, int *StopFra
 		recfp->time.now = maxs_2(recfp->time.now - 10000, 0);
 		RecResetPlayObjectNum(recfp);
 		RecResetPlayRecfpMapeffNum(&recfp->mapeff);
-		RecResetPlayPartNum(itemN, SitemN, LineMoveN);
+		RecResetPlayPartNum(LineMoveN);
 		for (int iLane = 0; iLane < 3; iLane++) {
 			while (recfp->mapdata.note[iLane].nowData().hittime < recfp->time.now &&
 				(recfp->mapdata.note[iLane].nowNo() + 1) < recfp->mapdata.note[iLane].size())
@@ -1233,13 +1207,13 @@ public:
 
 static class rec_play_draw_back_c {
 private:
-	void DrawFallBack(int Yline, dxcur_pic_c item[], int itemNo) {
+	void DrawFallBack(int Yline, const std::vector<DxPic_t> &item, int itemNo) {
 		static int baseX = 0;
 		static int baseY = 0;
 		for (int ix = 0; ix < 2; ix++) {
 			for (int iy = 0; iy < 3; iy++) {
 				RecRescaleDrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
-					item[itemNo].handle(), TRUE);
+					item[itemNo], TRUE);
 			}
 		}
 		baseX -= 5;
@@ -1268,7 +1242,7 @@ private:
 
 public:
 	void PlayDrawBackGround(rec_map_eff_data_t *mapeff, int Yline[],
-		rec_play_back_pic_t *backpic, dxcur_pic_c *item)
+		rec_play_back_pic_t *backpic, const std::vector<DxPic_t> &item)
 	{
 		static int bgp[3] = { 0,0,0 };
 		int camX = 0;
@@ -1699,6 +1673,64 @@ public:
 	}
 };
 
+class rec_play_item_c {
+	std::vector<DxPic_t> vec;
+
+public:
+	rec_play_item_c(void) = delete;
+
+	rec_play_item_c(const tstring &folderPath) {
+		DxPic_t handbuf;
+		tstring strbuf;
+		for (size_t i = 0; i < 1000; i++) {
+			strbuf = folderPath;
+			Getxxxpng(strbuf, i);
+			handbuf = LoadGraph(strbuf.c_str());
+			if (handbuf == -1) { break; }
+			this->vec.push_back(handbuf);
+		}
+	}
+
+	~rec_play_item_c() {
+		for (size_t i = 0; i < this->vec.size(); i++) {
+			DeleteGraph(this->vec[i]);
+		}
+	}
+
+	const std::vector<DxPic_t> &GetItemList(void) const {
+		return vec;
+	}
+};
+
+class rec_play_sitem_c {
+	std::vector<DxSnd_t> vec;
+
+public:
+	rec_play_sitem_c(void) = delete;
+
+	rec_play_sitem_c(const tstring &folderPath) {
+		DxSnd_t handbuf;
+		tstring strbuf;
+		for (size_t i = 0; i < 999; i++) {
+			strbuf = folderPath;
+			Getxxxwav(strbuf, i + 1); /* 0番は未使用 */
+			handbuf = LoadSoundMem(strbuf.c_str());
+			if (handbuf == -1) { break; }
+			this->vec.push_back(handbuf);
+		}
+	}
+
+	~rec_play_sitem_c() {
+		for (size_t i = 0; i < this->vec.size(); i++) {
+			DeleteSoundMem(this->vec[i]);
+		}
+	}
+
+	const std::vector<DxSnd_t> &GetSitemList(void) const {
+		return vec;
+	}
+};
+
 #endif /* class */
 
 /* main action */
@@ -1752,10 +1784,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	double SumRate[2] = { 0,0 };
 	double DifRate; //譜面定数
 
-	/* string */
-	TCHAR GT1[255];
-	TCHAR GT2[255];
-
 	/* class */
 	rec_play_sbar_c sbarClass;
 	rec_play_combo_c comboPicClass;
@@ -1764,13 +1792,11 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_runner_c runnerClass;
 	rec_play_keyview_c keyviewClass;
 	rec_play_bonus_c bonusClass;
+	rec_play_item_c itemClass(folderPath);
+	rec_play_sitem_c sitemClass(folderPath);
 	rec_cutin_c cutin;
 
 	/* mat */
-	dxcur_pic_c item[99]; //アイテムのfd、DrawGraphで呼べる。
-	short itemN = 0; //↑の番号
-	int Sitem[99]; //サウンドアイテムのfd
-	short SitemN = 0; //↑の番号
 	rec_play_back_pic_t backpic;
 	dxcur_pic_c dangerimg = dxcur_pic_c(_T("picture/danger.png"));
 	dxcur_pic_c dropimg   = dxcur_pic_c(_T("picture/drop.png"));
@@ -1794,22 +1820,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	backpic.sky.reload(   recfp.nameset.sky.c_str());
 	backpic.ground.reload(recfp.nameset.ground.c_str());
 	backpic.water.reload( recfp.nameset.water.c_str());
-
-	for (i[0] = 0; i[0] < 100; i[0]++) {
-		strcopy_2(folderPath, GT1, 255);
-		Getxxxpng(&GT2[0], i[0]);
-		strcats(GT1, GT2);
-		item[i[0]].reload(GT1);
-		if (item[i[0]].handle() == -1) { break; }
-	}
-	for (i[0] = 1; i[0] < 100; i[0]++) {
-		strcopy_2(folderPath, GT1, 255);
-		Getxxxwav(&GT2[0], i[0]);
-		strcats(GT1, GT2);
-		Sitem[i[0] - 1] = LoadSoundMem(GT1);
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, Sitem[i[0] - 1]);
-		if (Sitem[i[0] - 1] == -1) { break; }
-	}
 
 	//ゲーム開始前の下準備
 	recfp.mapdata.notes = notzero(recfp.mapdata.notes);
@@ -1838,7 +1848,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		RecPlayStepAllNum(&recfp, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
 		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, AutoFlag);
-		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, &itemN, &SitemN, LineMoveN);
+		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, LineMoveN);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			rec_bgm_system_g.Stop();
 			return SCENE_SERECT;
@@ -1872,7 +1882,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (IS_JUST_PUSH_ANY_HITKEY(&keyhold)) { charahit = GetNowCount(); }
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */
-		RecJudgeAllNotes(recfp.mapdata.note, recfp.time.now, Sitem,
+		RecJudgeAllNotes(recfp.mapdata.note, recfp.time.now, sitemClass.GetSitemList(),
 			&keyhold, &hitatk, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound);
 		{
 			rec_play_score_calculator_c action;
@@ -1902,7 +1912,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//背景表示
 		if (optiondata.backbright != 0) {
 			rec_play_draw_back_c action;
-			action.PlayDrawBackGround(&recfp.mapeff, lanePos.y, &backpic, item);
+			action.PlayDrawBackGround(&recfp.mapeff, lanePos.y, &backpic, itemClass.GetItemList());
 		}
 		//フィルター表示
 		switch (optiondata.backbright) {
@@ -1919,7 +1929,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 		//アイテム表示
 		if (optiondata.backbright != 0) {
-			PlayDrawItem(&recfp.mapeff, recfp.time.now, lanePos.x[1], item);
+			PlayDrawItem(&recfp.mapeff, recfp.time.now, lanePos.x[1], itemClass.GetItemList());
 		}
 		// view line
 		PlayShowAllGuideLine(&recfp, &lanePos, LineMoveN);
