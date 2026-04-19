@@ -16,8 +16,6 @@
 #define REC_HELP_DRAW_X 5
 #define REC_HELP_DRAW_Y 460
 
-static dxcur_pic_c HelpBar(_T("picture/help.png"));
-
 void rec_helpbar_c::DrawHelp(help_bar_mat_t mat) {
 	int page = 0;
 	RecRescaleDrawGraph(0, 0, this->pic.handle(), TRUE);
