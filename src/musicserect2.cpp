@@ -337,35 +337,16 @@ static void RecSerectReadMapDataOneSong(songdata_set_t *dataset,
  * @param[out] Mapping ret
  */
 static void RecSerectReadMapData(songdata_set_t *songdata, int PackFirstNum[]) {
-	int packNum = 0;
-	int musicNo = 0;
-	int songCount = 0;
-	DxFile_t fd;
-	rec_pack_name_set_t PackName[PackNumLim];
-	TCHAR songName[256];
+	std::vector<tstring> packList;
+	if (!GetFolderListWchar(packList, _T("record"))) { return; }
 
-	fd = FileRead_open(L"RecordPack.txt");
-	while (FileRead_eof(fd) == 0) {
-		FileRead_gets(songName, 256, fd);
-		strcopy_2(songName, PackName[packNum], 255);
-		packNum++;
-	}
-	FileRead_close(fd);
-
-	songCount = 0;
-	for (int i = 0; i < packNum; i++) {
-		strcopy_2(L"record/", songName, 255); //"record/"
-		strcats(songName, PackName[i]); //"record/<パック名>"
-		strcats(songName, L"/list.txt"); //"record/<パック名>/list.txt"
-		fd = FileRead_open(songName);
-		PackFirstNum[i] = songCount;
-		musicNo = 0;
-		while (FileRead_eof(fd) == 0) {
-			FileRead_gets(songName, 256, fd);
-			RecSerectReadMapDataOneSong(songdata, PackName[i], songName, i, musicNo);
-			musicNo++;
+	for (int il = 0; il < packList.size(); il++) {
+		std::vector<tstring> musicList;
+		if (!GetFolderListWchar(musicList, _T("record/") + packList[il])) { return; }
+		PackFirstNum[il] = 0;
+		for (int im = 0; im < musicList.size(); im++) {
+			RecSerectReadMapDataOneSong(songdata, packList[il].c_str(), musicList[im].c_str(), il, im);
 		}
-		FileRead_close(fd);
 	}
 
 	return;

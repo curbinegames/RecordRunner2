@@ -139,6 +139,13 @@ extern int LargeFontData;
 
 extern rec_sys_bgm rec_bgm_system_g;
 
+#if 1 /* dirent系 */
+
+extern bool GetFolderList(std::vector<std::string> &list, const std::string &path);
+extern bool GetFolderListWchar(std::vector<std::wstring> &list, const std::wstring &path);
+
+#endif /* dirent系 */
+
 /* これらの関数は、呼ばれるたびにリソースを全探索する(o(n)である)ので、*/
 /* for文などで曲の全探索をするとo(n^2)になって処理が遅くなる。やめてね */
 /* TODO: 多分vector<string>でo(n)にできる */

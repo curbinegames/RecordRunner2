@@ -1,6 +1,7 @@
 
 /* base include */
 #include <stdio.h>
+#include <dirent.h>
 
 /* curbine code include */
 #include <dxcur.h>
@@ -78,6 +79,53 @@ const tstring &rec_system_langstr_c::get_str(void) const {
 
 #endif /* rec_system_langstr_c */
 
+#if 1 /* dirent系 */
+
+bool GetFolderList(std::vector<std::string> &list, const std::string &path) {
+	struct dirent *dirs = NULL;
+	DIR *dir = NULL;
+	list.clear();
+
+	dir = opendir(path.c_str());
+	if (dir == NULL) { return false; }
+
+	while (1) {
+		dirs = readdir(dir);
+		if (dirs == NULL) { break; }
+		if (dirs->d_name[0] == '.') { continue; }
+		list.push_back(dirs->d_name);
+	}
+	closedir(dir);
+
+	return true;
+}
+
+bool GetFolderListWchar(std::vector<std::wstring> &list, const std::wstring &path) {
+	std::vector<std::string> buf;
+
+	int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, path.c_str(), path.size(), NULL, 0, NULL, NULL);
+	std::string u8path;
+	u8path.resize(sizeNeeded);
+	WideCharToMultiByte(CP_UTF8, 0, path.c_str(), path.size(), &u8path[0], sizeNeeded, NULL, NULL);
+
+	if (!GetFolderList(buf, u8path)) { return false; }
+
+	for (size_t i = 0; i < buf.size(); i++) {
+		sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, buf[i].c_str(), buf[i].size(), NULL, 0);
+		std::wstring wname;
+		wname.resize(sizeNeeded);
+		MultiByteToWideChar(CP_UTF8, 0, buf[i].c_str(), buf[i].size(), &wname[0], sizeNeeded);
+		if (sizeNeeded <= wname.size()) {
+			wname[sizeNeeded] = L'\0';
+		}
+		list.push_back(wname);
+	}
+
+	return true;
+}
+
+#endif /* dirent系 */
+
 /* TODO: 各呼び元での戻り値チェック */
 /**
 * packNoからパックフォルダパスを取得する
@@ -87,22 +135,14 @@ const tstring &rec_system_langstr_c::get_str(void) const {
 * @return rec_error_t
 */
 rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
-	TCHAR buf[256];
-	DxFile_t fd;
+	std::vector<tstring> list;
 
 	strcopy_2(_T("record/"), ret, size); // ret = "record/"
 
-	fd = FileRead_open(_T("RecordPack.txt"));
-	if (fd == DXLIB_FILE_HAND_DEFAULT) { return REC_ERROR_FILE_EXIST; }
+	if (!GetFolderListWchar(list, _T("record"))) { return REC_ERROR_FILE_EXIST; }
 
-	for (int i = 0; i <= packNo; i++) {
-		if (FileRead_eof(fd) != 0) { return REC_ERROR_FILE_NUM; }
-		FileRead_gets(buf, 256, fd);
-	} // buf = "<パック名>"
-	FileRead_close(fd);
-
-	strcats_2(ret, size, buf);           // ret = "record/<パック名>"
-	stradds_2(ret, size, _T('/'));       // ret = "record/<パック名>/"
+	strcats_2(ret, size, list[packNo].c_str()); // ret = "record/<パック名>"
+	stradds_2(ret, size, _T('/'));              // ret = "record/<パック名>/"
 
 	return REC_ERROR_NONE;
 }
@@ -117,26 +157,18 @@ rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
 */
 rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo) {
 	rec_error_t status = REC_ERROR_NONE;
-	TCHAR buf[256];
-	DxFile_t fd;
+	tstring packPath;
+	std::vector<tstring> list;
 
 	status = RecGetPackFolderPath(ret, size, packNo); // ret = "record/<パック名>/"
 	if (status != REC_ERROR_NONE) { return status; }
 
-	strcopy_2(ret, buf, 256);            // buf = "record/<パック名>/"
-	strcats_2(buf, 256, _T("list.txt")); // buf = "record/<パック名>/list.txt"
+	packPath = ret;      // packPath = "record/<パック名>/"
+	packPath.pop_back(); // packPath = "record/<パック名>"
+	if (!GetFolderListWchar(list, packPath)) { return REC_ERROR_FILE_EXIST; }
 
-	fd = FileRead_open(buf);
-	if (fd == DXLIB_FILE_HAND_DEFAULT) { return REC_ERROR_FILE_EXIST; }
-
-	for (int i = 0; i <= songNo; i++) {
-		if (FileRead_eof(fd) != 0) { return REC_ERROR_FILE_NUM; }
-		FileRead_gets(buf, 256, fd);
-	} // buf = "<曲名>"
-	FileRead_close(fd);
-
-	strcats_2(ret, size, buf);     // ret = "record/<パック名>/<曲名>"
-	stradds_2(ret, size, _T('/')); // ret = "record/<パック名>/<曲名>/"
+	strcats_2(ret, size, list[songNo].c_str()); // ret = "record/<パック名>/<曲名>"
+	stradds_2(ret, size, _T('/'));              // ret = "record/<パック名>/<曲名>/"
 
 	return REC_ERROR_NONE;
 }
@@ -151,25 +183,18 @@ rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint son
 */
 rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo) {
 	rec_error_t status = REC_ERROR_NONE;
-	TCHAR GT1[256];
-	TCHAR GT2[256];
-	DxFile_t fd;
+	TCHAR packPath[256];
+	tstring packPathStr;
+	std::vector<tstring> list;
 
-	status = RecGetPackFolderPath(GT2, size, packNo); // GT2 = "record/<パック名>/"
+	status = RecGetPackFolderPath(packPath, 256, packNo); // ret = "record/<パック名>/"
 	if (status != REC_ERROR_NONE) { return status; }
 
-	strcats_2(GT2, 256, _T("list.txt")); // GT2 = "record/<パック名>/list.txt"
+	packPathStr = packPath; // packPathStr = "record/<パック名>/"
+	packPathStr.pop_back(); // packPathStr = "record/<パック名>"
+	if (!GetFolderListWchar(list, packPathStr)) { return REC_ERROR_FILE_EXIST; }
 
-	fd = FileRead_open(GT2);
-	if (fd == DXLIB_FILE_HAND_DEFAULT) { return REC_ERROR_FILE_EXIST; }
-
-	for (int i = 0; i <= songNo; i++) {
-		if (FileRead_eof(fd) != 0) { return REC_ERROR_FILE_NUM; }
-		FileRead_gets(GT1, 256, fd);
-	} // GT1 = "<曲名>"
-	FileRead_close(fd);
-
-	strcopy_2(GT1, ret, size);
+	strcopy_2(list[songNo].c_str(), ret, size);
 
 	return REC_ERROR_NONE;
 }
