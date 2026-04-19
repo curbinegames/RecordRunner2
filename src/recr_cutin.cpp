@@ -113,29 +113,6 @@ static char const tipNum = ARRAY_COUNT(tip);
 
 #if 1 /* action */
 
-void CutinReadyPic() {
-	pic_cutin[0].reload(L"picture/cutin/cutinU.png");
-	pic_cutin[1].reload(L"picture/cutin/cutinD.png");
-	pic_cutin[2].reload(L"picture/cutin/cutinDisk.png");
-	pic_cutin[3].reload(SongJucketName.c_str());
-	pic_cutin[4].reload(L"picture/cutin/cutinS.png");
-}
-
-void CutinReadySnd() {
-	snd_cutin[0] = LoadSoundMem(L"sound/IN.wav");
-	snd_cutin[1] = LoadSoundMem(L"sound/OUT.wav");
-	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[0]);
-	ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, snd_cutin[1]);
-}
-
-void SetCutTipFg(cutin_tips_e Fg) {
-	CutFg = Fg;
-}
-
-void SetTipNo() {
-	TipNo = (char)GetRand(tipNum - 1);
-}
-
 static void RecCutDrawShut(int EffTime) {
 	int PosY = 0;
 	if (s_cutIoFg == CUT_FRAG_OUT) {
@@ -303,27 +280,6 @@ static void ViewCutOut(int Stime) {
 		break;
 	}
 	RecCutDrawSide(EffTime);
-	return;
-}
-
-void RecViewCut3() {
-	int EffTime = mins_2(GetNowCount() - s_cutStime, 500);
-
-	if (s_cutIoFg == CUT_FRAG_OUT && 500 <= EffTime) {
-		return;
-	}
-
-	RecCutDrawShut(EffTime);
-	RecCutDrawDisk(EffTime);
-	if (CutFg == CUTIN_TIPS_SONG) {
-		RecCutDrawJacket(EffTime);
-		RecCutDrawTips(EffTime, CutSongName.c_str());
-	}
-	else {
-		RecCutDrawTips(EffTime, tip[TipNo]);
-	}
-	RecCutDrawSide(EffTime);
-
 	return;
 }
 

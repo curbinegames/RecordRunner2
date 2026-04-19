@@ -19,8 +19,6 @@
 
 #define INIT_SND() InitSoundMem()
 
-#define SWITCH_NOTE_BOX_2 1
-
 /* debug */
 #if 0
 #define RECR_DEBUG(ofs, data)											\
