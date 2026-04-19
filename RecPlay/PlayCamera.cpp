@@ -26,7 +26,6 @@ void RecPlayResetCamera() {
 	return;
 }
 
-/* TODO: ÉJÉÅÉâÇÃññîˆÉoÉOÇ¡ÇƒÇÈ */
 void RecPlaySetCamera(const cvec<rec_camera_data_t> &camera, int Ntime) {
 	const DxTime_t startT = camera.nowData().starttime;
 	const DxTime_t   endT = camera.nowData().endtime;
@@ -44,9 +43,9 @@ void RecPlaySetCamera(const cvec<rec_camera_data_t> &camera, int Ntime) {
 		camera_pos.zoom = (int)movecal(moveM, startT, bZoom, endT, nZoom, Ntime);
 	}
 	else {
-		camera_pos.x    = bposX;
-		camera_pos.y    = bposY;
-		camera_pos.zoom = bZoom;
+		camera_pos.x    = nposX;
+		camera_pos.y    = nposY;
+		camera_pos.zoom = nZoom;
 	}
 	return;
 }

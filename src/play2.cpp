@@ -553,7 +553,7 @@ static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 }
 
 static void RecPlayStepCameraNum(cvec<rec_camera_data_t> &camera, DxTime_t Ntime) {
-	while (!camera.isEndNo() && IS_BETWEEN_RIGHT_LESS(0, camera.nowData().endtime, Ntime)) {
+	while (!camera.isEndNo() && camera.offsetData(1).starttime <= Ntime) {
 		camera.stepNo();
 	}
 }
@@ -2009,9 +2009,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	return AutoFlag == 1 ? SCENE_SERECT : SCENE_RESULT;
 }
-
-/* TODO: カメラの末尾がバグってる */
-/* TODO: 水中レーンの末尾がバグってる */
 
 /**
 * @param[in] packNo パックナンバー
