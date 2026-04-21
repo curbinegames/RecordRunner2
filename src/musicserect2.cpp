@@ -375,114 +375,6 @@ static void RecSelectAllRelord(void) {
 
 #endif
 
-#if 1 /* read map data */
-
-static rec_error_t RecSerectReadMapDataOneDif(MUSIC_BOX_2 *songdata, const TCHAR *path,
-	const TCHAR *subpath, const TCHAR *packName, int packNum, int musicNo, int dif)
-{
-	DxFile_t fd;
-	TCHAR buf[256];
-	int lang = optiondata.lang;
-
-	fd = FileRead_open(path);
-
-	if (fd == 0) { return REC_ERROR_FILE_EXIST; }
-
-	//初期値定義
-	songdata->LvType     =     dif;
-	songdata->level      =      -1;
-	songdata->preview[0] =  441000;
-	songdata->preview[1] = 2646000;
-	songdata->packNo     = packNum;
-	songdata->musicNo    = musicNo;
-	strcopy_2(L"NULL",                    songdata->SongName,      64);
-	strcopy_2(L"NULL",                    songdata->artist,        64);
-	strcopy_2(L"NULL",                    songdata->SongFileName, 255);
-	strcopy_2(L"picture/NULL jucket.png", songdata->jacketP,      255);
-	strcopy_2(packName,                   songdata->packName,      64);
-
-	while (FileRead_eof(fd) == 0) {
-		FileRead_gets(buf, 256, fd);
-		//曲名を読み込む
-		if (strands_direct(buf, L"#TITLE:")) {
-			strmods(buf, 7);
-			if ((lang == 0) || strands_direct(songdata->SongName, L"NULL")) {
-				strcopy_2(buf, songdata->SongName, 64);
-			}
-		}
-		else if (strands_direct(buf, L"#E.TITLE:")) {
-			strmods(buf, 9);
-			if ((lang == 1) || strands_direct(songdata->SongName, L"NULL")) {
-				strcopy_2(buf, songdata->SongName, 64);
-			}
-		}
-		//作曲者を読み込む
-		else if (strands_direct(buf, L"#ARTIST:")) {
-			strmods(buf, 8);
-			if ((lang == 0) || strands_direct(songdata->artist, L"NULL")) {
-				strcopy_2(buf, songdata->artist, 64);
-			}
-		}
-		else if (strands_direct(buf, L"#E.ARTIST:")) {
-			strmods(buf, 10);
-			if ((lang == 1) || strands_direct(songdata->artist, L"NULL")) {
-				strcopy_2(buf, songdata->artist, 64);
-			}
-		}
-		//曲ファイル名を読み込む
-		else if (strands_direct(buf, L"#MUSIC:")) {
-			strmods(buf, 7);
-			strcopy_2(subpath, songdata->SongFileName, 255);
-			strcats(songdata->SongFileName, buf);
-		}
-		//難易度を読み込む
-		else if (strands_direct(buf, L"#LEVEL:")) {
-			strmods(buf, 7);
-			songdata->level = strsans(buf);
-		}
-		//プレビュー時間を読み込む
-		else if (strands_direct(buf, L"#PREVIEW:")) {
-			strmods(buf, 9);
-			songdata->preview[0] = (int)((double)strsans(buf) / 1000.0 * 44100.0);
-			strnex(buf);
-			if (L'0' <= buf[1] && buf[1] <= L'9') {
-				songdata->preview[1] = (int)((double)strsans(buf) / 1000.0 * 44100.0);
-			}
-		}
-		//ジャケット写真を読み込む
-		else if (strands_direct(buf, L"#JACKET:")) {
-			strmods(buf, 8);
-			strcopy_2(subpath, songdata->jacketP, 255);
-			strcats(songdata->jacketP, buf);
-		}
-		//差し替えAnotherバーを読み込む
-		else if (strands_direct(buf, L"#DIFBAR:")) {
-			strmods(buf, 8);
-			strcopy_2(subpath, songdata->difP, 255);
-			strcats(songdata->difP, buf);
-		}
-		//マップに入ったら抜ける
-		else if (strands_direct(buf, L"#MAP:")) { break; }
-	}
-	FileRead_close(fd);
-
-	return REC_ERROR_NONE;
-}
-
-/* TODO: 初期値が正しく代入されない */
-static void RecSerectReadHighscore(MUSIC_BOX_2 *songdata, const TCHAR *songName, rec_dif_t dif) {
-	rec_save_score_t score;
-	RecSaveReadScoreOneDif(&score, songName, dif);
-	songdata->Hscore    = score.score;
-	songdata->Hacc      = score.acc;
-	songdata->Hdis      = score.dist;
-	songdata->ScoreRate = score.scoreRate;
-	songdata->ClearRank = score.clearRank;
-	return;
-}
-
-#endif /* read map data */
-
 #if 1 /* sub action */
 
 static void ChangeSortMode(int *mode) {
@@ -1427,7 +1319,6 @@ static now_scene_t musicserect2(rec_to_play_set_t *toPlay) {
 	RecSerectLoadBefCmd(cmd, &songdata.sortMode);
 	SortSong(&songdata, cmd[1]);
 	uiClass.InitUi(&songdata[cmd[0]], cmd[1]);
-	AvoidKeyBug();
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
 	uiClass.cutin.SetIo(CUT_FRAG_OUT);
