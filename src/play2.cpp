@@ -1,3 +1,4 @@
+/* TODO:効果音アイテムの音がでかい */
 
 #if 1 /* define group */
 
@@ -1380,7 +1381,7 @@ private:
 
 public:
 	void UpdateCharapos(int time, cvec<note_box_2_t> note[],
-		rec_play_key_hold_t *keyhold, rec_play_chara_hit_attack_t *hitatk)
+		rec_play_key_hold_t *keyhold, const rec_play_chara_hit_attack_t *hitatk)
 	{
 		int ans = CHARA_POS_MID;
 		// push up
@@ -1881,10 +1882,29 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//ヒット
 		if (IS_JUST_PUSH_ANY_HITKEY(&keyhold)) { charahit = GetNowCount(); }
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
-		/* ノーツ判定 */
-		RecJudgeAllNotes(recfp.mapdata.note, recfp.time.now, sitemClass.GetSitemList(),
-			&keyhold, &hitatk, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound);
-		{
+		/* ノーツ判定 */ {
+			rec_hitatk_event_ec hitatk_ev = REC_HITATK_EVENT_NONE;
+			RecJudgeAllNotes(recfp.mapdata.note, recfp.time.now, sitemClass.GetSitemList(),
+				&keyhold, hitatk_ev, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound);
+			switch (hitatk_ev) {
+			case REC_HITATK_EVENT_RESET:
+				hitatk.time = -1000;
+				break;
+			case REC_HITATK_EVENT_UP:
+				hitatk.pos  = 0;
+				hitatk.time = recfp.time.now;
+				break;
+			case REC_HITATK_EVENT_MID:
+				hitatk.pos  = 1;
+				hitatk.time = recfp.time.now;
+				break;
+			case REC_HITATK_EVENT_DOWN:
+				hitatk.pos  = 2;
+				hitatk.time = recfp.time.now;
+				break;
+			}
+		}
+		/* スコア計算 */ {
 			rec_play_score_calculator_c action;
 			action.RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
 		}

@@ -34,6 +34,14 @@ typedef enum rec_play_status_e {
 	REC_PLAY_STATUS_DROPED,
 } rec_play_status_t;
 
+typedef enum rec_hitatk_event_e {
+	REC_HITATK_EVENT_NONE,  /* 変更なし */
+	REC_HITATK_EVENT_RESET, /* 解除 */
+	REC_HITATK_EVENT_UP,    /* 上ヒット */
+	REC_HITATK_EVENT_MID,   /* 中ヒット */
+	REC_HITATK_EVENT_DOWN   /* 下ヒット */
+} rec_hitatk_event_ec;
+
 #if 1 /* struct */
 
 typedef struct judge_box {

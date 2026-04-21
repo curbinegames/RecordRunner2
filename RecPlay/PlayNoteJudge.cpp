@@ -171,7 +171,7 @@ static bool CheckArrowInJudge(note_material mat, key_hold_t *key) {
 	return false;
 }
 
-static void SetHitPosByHit(hitatt_t *hitatk, const char hitflag) {
+static void SetHitPosByHit(rec_hitatk_event_ec &hitatk, const char hitflag) {
 	int n = 0;
 	int ret = 0;
 	for (int i = 0; i < 3; i++) {
@@ -182,22 +182,20 @@ static void SetHitPosByHit(hitatt_t *hitatk, const char hitflag) {
 	}
 	if (n == 0) { return; }
 	if (n >= 2) {
-		hitatk->pos = RECR_CHARP_M;
-		hitatk->time = s_Ntime;
+		hitatk = REC_HITATK_EVENT_MID;
 		return;
 	}
 	switch (ret) {
 	case 0:
-		hitatk->pos = RECR_CHARP_U;
+		hitatk = REC_HITATK_EVENT_UP;
 		break;
 	case 1:
-		hitatk->pos = RECR_CHARP_M;
+		hitatk = REC_HITATK_EVENT_MID;
 		break;
 	case 2:
-		hitatk->pos = RECR_CHARP_D;
+		hitatk = REC_HITATK_EVENT_DOWN;
 		break;
 	}
-	hitatk->time = s_Ntime;
 	return;
 }
 
@@ -312,7 +310,7 @@ static void RecNoteJudgeEventAll(
 
 static void RecJudgeHitNote(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[],
-	hitatt_t *hitatk, int push_key_count, rec_play_sound_c *p_sound)
+	rec_hitatk_event_ec &hitatk, int push_key_count, rec_play_sound_c *p_sound)
 {
 	int near_lane = -1;
 	char hitflag = 0; //hit event, bit unit: 0: upper hit, 1: middle hit, 2: lower hit, 3~7: reserved
@@ -400,7 +398,7 @@ static void RecJudgeArrowNote(
 
 static void RecJudgeCatchNote(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[],
-	hitatt_t *hitatk, int *charahit, int LaneTrack[])
+	rec_hitatk_event_ec &hitatk, int *charahit, int LaneTrack[])
 {
 	int GapTime = 0;
 
@@ -412,7 +410,7 @@ static void RecJudgeCatchNote(
 		{
 			RecNoteJudgeEventAll(event_queue, NOTE_JUDGE_PJUST, note, iLine);
 			*charahit = 0;
-			hitatk->time = -1000;
+			hitatk = REC_HITATK_EVENT_RESET;
 		}
 	}
 	return;
@@ -420,7 +418,7 @@ static void RecJudgeCatchNote(
 
 static void RecJudgeBombNote(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[],
-	hitatt_t *hitatk, int *charahit, short charaput)
+	rec_hitatk_event_ec &hitatk, int *charahit, short charaput)
 {
 	int GapTime = 0;
 
@@ -433,7 +431,7 @@ static void RecJudgeBombNote(
 				(iLine == charaput && GapTime <= 0) ? NOTE_JUDGE_MISS : NOTE_JUDGE_PJUST;
 			RecNoteJudgeEventAll(event_queue, b_judge, note, iLine);
 			*charahit = 0;
-			hitatk->time = -1000;
+			hitatk = REC_HITATK_EVENT_RESET;
 		}
 	}
 	return;
@@ -472,7 +470,7 @@ static void RecJudgeSlowMiss(
 }
 
 void RecJudgeAllNotes(cvec<note_box_2_t> note[], int Ntime, const std::vector<DxSnd_t> &Sitem,
-	key_hold_t *keyhold, hitatt_t *hitatk, int LaneTrack[], int *charahit, short charaput,
+	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[], int *charahit, short charaput,
 	userpal_t *userpal, rec_play_sound_c *p_sound)
 {
 	int push_key_count = RecLPlayGetHitKeyPushCount(keyhold);
