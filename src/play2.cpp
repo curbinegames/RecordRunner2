@@ -434,25 +434,13 @@ static void Getxxxwav(tstring &str, int num) {
 
 static void recSetLine(int line[], cvec<rec_mapeff_move_st> move[], int Ntime, int loop) {
 	for (int iLine = 0; iLine < loop; iLine++) {
-		if (IS_BETWEEN(0, move[iLine].nowData().Stime, Ntime)) {
-			line[iLine] =
-				(int)movecal_scale(
-					move[iLine].nowData().mode,
-					move[iLine].nowData().Stime,
-					move[iLine].offsetData(-1).pos,
-					move[iLine].nowData().Etime,
-					move[iLine].nowData().pos, Ntime);
-		}
-		/* TODO: ‚±‚Ìwhile•¶‚Ì’†‚Í‚±‚ÌŠÖ”“à‚Å‚â‚é‚±‚Æ‚Å‚Í‚È‚¢‚æ‚¤‚È... */
-		while (
-			!move[iLine].isEndNo() &&
-			move[iLine].nowData().Etime <= Ntime &&
-			move[iLine].nowData().Stime >= 0 ||
-			move[iLine].nowData().mode == 4)
-		{
-			line[iLine] = move[iLine].nowData().pos;
-			move[iLine].stepNo();
-		}
+		line[iLine] =
+			(int)movecal_scale(
+				move[iLine].nowData().mode,
+				move[iLine].nowData().Stime,
+				move[iLine].offsetData(-1).pos,
+				move[iLine].nowData().Etime,
+				move[iLine].nowData().pos, Ntime);
 	}
 }
 
@@ -535,9 +523,7 @@ static void RecPlayStepCameraNum(cvec<rec_camera_data_t> &camera, DxTime_t Ntime
 static void RecPlayStepMovieNum(cvec<item_box> &movie, DxTime_t Ntime) {
 	if (optiondata.backbright == 0) { return; }
 	if (movie.size() == 0) { return; }
-	while (!movie.isEndNo() && IS_BETWEEN_LESS(-500, movie.nowData().endtime, Ntime)) {
-		movie.stepNo();
-	}
+	while (!movie.isEndNo() && movie.nowData().endtime <= Ntime) { movie.stepNo(); }
 }
 
 static void RecPlayStepGuideLineNum(
@@ -556,6 +542,10 @@ static void RecPlayStepGuideLineNum(
 	return;
 }
 
+static void RecPlayStepMoveNum(cvec<rec_mapeff_move_st> &move, DxTime_t Ntime) {
+	while (!move.isEndNo() && move.nowData().Etime <= Ntime) { move.stepNo(); }
+}
+
 static void RecPlayStepAllNum(rec_score_file_t *recfp, short *guideN) {
 	recfp->mapeff.gnote.stepNoTime(recfp->time.now);
 
@@ -568,23 +558,30 @@ static void RecPlayStepAllNum(rec_score_file_t *recfp, short *guideN) {
 	recfp->mapeff.speedt[0].stepNoTime(recfp->time.now);
 	recfp->mapeff.speedt[1].stepNoTime(recfp->time.now);
 	recfp->mapeff.speedt[2].stepNoTime(recfp->time.now);
-	if (optiondata.backbright != 0) {
-		recfp->mapeff.speedt[3].stepNoTime(recfp->time.now);
-	}
 
 	recfp->mapeff.v_BPM.stepNoTime(recfp->time.now);
 	RecPlayStepCameraNum(recfp->mapeff.camera, recfp->time.now);
 	recfp->mapeff.scrool.stepNoTime(recfp->time.now);
 	RecPlayStepMovieNum(recfp->mapeff.Movie, recfp->time.now);
-	if (optiondata.backbright != 0) {
-		recfp->mapeff.fall.stepNoTime(recfp->time.now);
-	}
 	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
 	recfp->mapeff.carrow.stepNoTime(recfp->time.now);
 	recfp->mapeff.lock.x.stepNoTime(recfp->time.now);
 	recfp->mapeff.lock.y.stepNoTime(recfp->time.now);
 	recfp->mapeff.viewT.stepNoTime(recfp->time.now);
 	recfp->mapeff.viewLine.stepNoTime(recfp->time.now);
+	RecPlayStepMoveNum(recfp->mapeff.move.y[0], recfp->time.now);
+	RecPlayStepMoveNum(recfp->mapeff.move.y[1], recfp->time.now);
+	RecPlayStepMoveNum(recfp->mapeff.move.y[2], recfp->time.now);
+	RecPlayStepMoveNum(recfp->mapeff.move.x[0], recfp->time.now);
+	RecPlayStepMoveNum(recfp->mapeff.move.x[1], recfp->time.now);
+	RecPlayStepMoveNum(recfp->mapeff.move.x[2], recfp->time.now);
+
+	if (optiondata.backbright != 0) {
+		recfp->mapeff.speedt[3].stepNoTime(recfp->time.now);
+		recfp->mapeff.fall.stepNoTime(recfp->time.now);
+		RecPlayStepMoveNum(recfp->mapeff.move.y[3], recfp->time.now);
+		RecPlayStepMoveNum(recfp->mapeff.move.y[4], recfp->time.now);
+	}
 	return;
 }
 
