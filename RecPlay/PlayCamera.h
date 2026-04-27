@@ -5,7 +5,8 @@
 
 /* main action */
 extern void RecPlaySetCamera(
-    dxcur_camera_c &camera_pos, const cvec<rec_camera_data_t> &camera, int Ntime
+	dxcur_camera_c &camera_pos, dxcur_camera_c &skycam_pos, const cvec<rec_camera_data_t> &camera,
+	int Ntime
 );
 
 /* Draw on Rec Field */

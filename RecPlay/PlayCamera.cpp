@@ -13,7 +13,10 @@
 /* own include */
 #include <PlayCamera.h>
 
-void RecPlaySetCamera(dxcur_camera_c &camera_pos, const cvec<rec_camera_data_t> &camera, int Ntime) {
+void RecPlaySetCamera(
+	dxcur_camera_c &camera_pos, dxcur_camera_c &skycam_pos, const cvec<rec_camera_data_t> &camera,
+	int Ntime
+) {
 	const DxTime_t startT = camera.nowData().starttime;
 	const DxTime_t   endT = camera.nowData().endtime;
 	const      int  moveM = camera.nowData().mode;
@@ -30,29 +33,40 @@ void RecPlaySetCamera(dxcur_camera_c &camera_pos, const cvec<rec_camera_data_t> 
 	int    setY    = 0;
 	double setZoom = 1.0;
 	double setRot  = 0.0;
+	int    skysetX = 0;
+	int    skysetY = 0;
 
 	/* ãåâÊñ î‰ó¶ï‚ê≥ */
 	setX    -= (WINDOW_SIZE_Y - OLD_WINDOW_SIZE_Y);
 	setY    -= (WINDOW_SIZE_Y - OLD_WINDOW_SIZE_Y) / 2;
 	setZoom *=  WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y;
+	skysetX = setX;
+	skysetY = setY;
 
 	if (startT <= Ntime && Ntime <= endT) {
 		setX    -= movecal(moveM, startT, bposX, endT, nposX, Ntime);
 		setY    -= movecal(moveM, startT, bposY, endT, nposY, Ntime);
 		setZoom *= movecal(moveM, startT, bZoom, endT, nZoom, Ntime);
 		setRot  += movecal(moveM, startT, bRot , endT, nRot , Ntime);
+		skysetX -= movecal(moveM, startT, bposX, endT, nposX, Ntime) / 5;
+		skysetY -= movecal(moveM, startT, bposY, endT, nposY, Ntime) / 5;
 	}
 	else {
 		setX    -= nposX;
 		setY    -= nposY;
 		setZoom *= nZoom;
 		setRot  += nRot;
+		skysetX -= nposX / 5;
+		skysetY -= nposY / 5;
 	}
 
 	camera_pos.setX(       setX   );
 	camera_pos.setY(       setY   );
 	camera_pos.setZoom(    setZoom);
 	camera_pos.setAngleDeg(setRot );
+	skycam_pos.setX(       skysetX);
+	skycam_pos.setY(       skysetY);
+	skycam_pos.setZoom(WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y);
 }
 
 void DrawStringRecField(

@@ -1,6 +1,4 @@
 /* TODO:効果音アイテムの音がでかい */
-/* TODO:背景の左端が切れてる */
-/* TODO:sky背景の追従が/5になってない */
 
 #if 1 /* define group */
 
@@ -44,11 +42,6 @@
 typedef rec_map_eff_data_t mapeff_t;
 
 /* struct */
-typedef struct rec_play_back_pic_s {
-	dxcur_pic_c sky;
-	dxcur_pic_c ground;
-	dxcur_pic_c water;
-} rec_play_back_pic_t;
 
 typedef struct note_img {
 	dxcur_pic_c notebase = dxcur_pic_c(L"picture/hit.png");
@@ -70,6 +63,75 @@ typedef struct note_img {
 } rec_play_notepic_t;
 
 #endif /* typedef group */
+
+class rec_play_back_pic_c {
+private:
+	int sky_baseX = 0;
+	int ground_baseX = 0;
+	dxcur_pic_c sky;
+	dxcur_pic_c ground;
+	dxcur_pic_c water;
+
+public:
+	rec_play_back_pic_c(void) = delete;
+
+	rec_play_back_pic_c(const rec_score_file_t &recfp) {
+		sky.reload(   recfp.nameset.sky.c_str()   );
+		ground.reload(recfp.nameset.ground.c_str());
+		water.reload( recfp.nameset.water.c_str() );
+	}
+
+	rec_play_back_pic_c(const tstring &sky, const tstring &ground, const tstring &water) :
+		sky(sky.c_str()), ground(ground.c_str()), water(water.c_str())
+	{}
+
+	/* (ret / 100) */
+	void update(
+		const rec_map_eff_data_t &mapeff, const dxcur_camera_c &cam, const dxcur_camera_c &skycam
+	) {
+		double camX = 0;
+		double camY = 0;
+		double scrool = mapeff.scrool.nowData().speed;
+		double speed3 = mapeff.speedt[3].nowData();
+		double speed4 = mapeff.speedt[4].nowData();
+
+		this->sky_baseX -= (int)(100 * speed3 * scrool);
+		while (1) {
+			camX = this->sky_baseX / 100;
+			skycam.WorldToScreen(camX, camY);
+			if (IS_BETWEEN(-WINDOW_SIZE_X * skycam.getZoom(), camX, 0)) { break; }
+			if (camX > 0) {
+				this->sky_baseX -= WINDOW_SIZE_X * 100;
+			}
+			if (camX < -WINDOW_SIZE_X * skycam.getZoom()) {
+				this->sky_baseX += WINDOW_SIZE_X * 100;
+			}
+		}
+
+		this->ground_baseX -= (int)(500 * speed4 * scrool);
+		while (1) {
+			camX = this->ground_baseX / 100;
+			cam.WorldToScreen(camX, camY);
+			if (IS_BETWEEN(-WINDOW_SIZE_X * cam.getZoom(), camX, 0)) { break; }
+			if (camX > 0) {
+				this->ground_baseX -= WINDOW_SIZE_X * 100;
+			}
+			if (camX < -WINDOW_SIZE_X * cam.getZoom()) {
+				this->ground_baseX += WINDOW_SIZE_X * 100;
+			}
+		}
+	}
+
+	void draw(int Yline[], const dxcur_camera_c &cam, const dxcur_camera_c &skycam) const {
+		for (int loop = this->sky_baseX / 100; loop + skycam.getX() / 5 < 70000; loop += 640) {
+			skycam.drawpic(loop, Yline[3] / 5 - 160, this->sky.handle());
+		}
+		for (int loop = this->ground_baseX / 100; loop + cam.getX() < 70000; loop += 640) {
+			cam.drawpic(loop, Yline[3] - 400, this->ground.handle());
+			cam.drawpic(loop, Yline[4] - 400, this->water.handle());
+		}
+	}
+};
 
 #if 1 /* ボーナス系 */
 
@@ -644,10 +706,31 @@ static void RecPlayActSubKey(
 }
 
 static void RacPlayDrawFieldGrid(const dxcur_camera_c &camera) {
-	for (int inum = -5; inum < 10; inum++) {
-		TCHAR str[5];
-		_stprintf_s(str, _T("%d"), inum);
-		DrawStringRecField(camera, 30, 50 * inum + 8 + 100, str, COLOR_WHITE);
+	double worldLeft  = -50;
+	double worldUp    = -50;
+	double worldRight = WINDOW_SIZE_X + 50;
+	double worldDown  = WINDOW_SIZE_Y + 50;
+	int leftNum  = 0;
+	int upNum    = 0;
+	int rightNum = 0;
+	int downNum  = 0;
+	camera.ScreenToWorld(worldLeft,  worldUp);
+	camera.ScreenToWorld(worldRight, worldDown);
+	leftNum  = (worldLeft  - 160) / 50;
+	upNum    = (worldUp    - 108) / 50;
+	rightNum = (worldRight - 160) / 50;
+	downNum  = (worldDown  - 108) / 50;
+	for (int inum = upNum; inum <= downNum; inum++) {
+		double drawX = 30;
+		double drawY = 50 * inum + 8 + 100;
+		camera.WorldToScreen(drawX, drawY);
+		DrawFormatString(30 * WINDOW_SIZE_X / OLD_WINDOW_SIZE_X, drawY, COLOR_WHITE, _T("%d"), inum);
+	}
+	for (int inum = leftNum; inum <= rightNum; inum++) {
+		double drawX = 50 * inum + 160;
+		double drawY = 108;
+		camera.WorldToScreen(drawX, drawY);
+		DrawFormatString(drawX, 108 * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y, COLOR_WHITE, _T("%d"), inum);
 	}
 	return;
 }
@@ -1373,44 +1456,14 @@ private:
 		if (baseY >= 640) { baseY -= 480; }
 	}
 
-	/* (ret / 100) */
-	void cal_back_x(int *xpos, rec_map_eff_data_t *mapeff, int cam) {
-		const double scrool = mapeff->scrool.nowData().speed;
-		double speed3 = mapeff->speedt[3].nowData();
-		double speed4 = mapeff->speedt[4].nowData();
-
-		xpos[0] -= (int)(100 * speed3 * scrool);
-		while (xpos[0] + 100 * cam / 5 > 0)      { xpos[0] -= 64000; }
-		while (xpos[0] + 100 * cam / 5 < -64000) { xpos[0] += 64000; }
-
-		xpos[1] -= (int)(500 * speed4 * scrool);
-		while (xpos[1] + 100 * cam > 0)      { xpos[1] -= 64000; }
-		while (xpos[1] + 100 * cam < -64000) { xpos[1] += 64000; }
-
-		xpos[2] = xpos[1];
-		return;
-	}
-
 public:
-	void PlayDrawBackGround(rec_map_eff_data_t *mapeff, int Yline[],
-		const dxcur_camera_c &camera, const rec_play_back_pic_t *backpic, const std::vector<DxPic_t> &item)
-	{
-		static int bgp[3] = { 0,0,0 };
-		int camX = camera.getX();
-		cal_back_x(bgp, mapeff, camX);
-		//draw background picture
-		for (int loop = bgp[0] / 100; loop + camX / 5 < 70000; loop += 640) {
-			DrawGraphRecBackField(camera, loop, Yline[3] / 5 - 160, backpic->sky.handle());
-		}
-		for (int loop = bgp[1] / 100; loop + camX < 70000; loop += 640) {
-			camera.drawpic(loop, Yline[3] - 400, backpic->ground.handle());
-			camera.drawpic(loop, Yline[4] - 400, backpic->water.handle());
-		}
-		//落ち物背景表示
+	//落ち物背景表示
+	void PlayDrawBackGround(
+		rec_map_eff_data_t *mapeff, int Yline[], const std::vector<DxPic_t> &item
+	) {
 		if (mapeff->fall.nowData() >= 0) {
 			DrawFallBack(Yline[3], item, mapeff->fall.nowData());
 		}
-		return;
 	}
 };
 
@@ -1961,6 +2014,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_sound_c p_sound;
 	rec_play_runner_c runnerClass;
 	dxcur_camera_c cameraClass;
+	dxcur_camera_c cameraSkyClass;
 	rec_play_keyview_c keyviewClass;
 	rec_play_bonus_c bonusClass;
 	rec_play_item_c itemClass(folderPath);
@@ -1968,7 +2022,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_cutin_c cutin;
 
 	/* mat */
-	rec_play_back_pic_t backpic;
 	dxcur_pic_c dangerimg = dxcur_pic_c(_T("picture/danger.png"));
 	dxcur_pic_c dropimg   = dxcur_pic_c(_T("picture/drop.png"));
 	dxcur_pic_c filterimg = dxcur_pic_c(_T("picture/Black.png"));
@@ -1987,9 +2040,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	if (rec_score_fread(&recfp, rrsPath) != 0) { return SCENE_EXIT; } /* TODO: EXITにしてるのは、どうなの? */
 
-	backpic.sky.reload(   recfp.nameset.sky.c_str());
-	backpic.ground.reload(recfp.nameset.ground.c_str());
-	backpic.water.reload( recfp.nameset.water.c_str());
+	rec_play_back_pic_c backpic{recfp};
 
 	//ゲーム開始前の下準備
 	recfp.mapdata.notes = notzero(recfp.mapdata.notes);
@@ -2026,7 +2077,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		//計算
 		//カメラ移動
-		RecPlaySetCamera(cameraClass, recfp.mapeff.camera, recfp.time.now);
+		RecPlaySetCamera(cameraClass, cameraSkyClass, recfp.mapeff.camera, recfp.time.now);
 		//lanePos.x(横位置)の計算
 		recSetLine(lanePos.x, recfp.mapeff.move.x, recfp.time.now, 3);
 		//lanePos.y(縦位置)の計算
@@ -2103,6 +2154,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		bonusClass.update();
 		runnerClass.updateHiteff();
+		if (optiondata.backbright != 0) {
+			backpic.update(recfp.mapeff, cameraClass, cameraSkyClass);
+		}
 		//オートでなく、ノーミス以上を出したら演出
 		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
 			AllNotesHitTime = 0;
@@ -2114,7 +2168,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//背景表示
 		if (optiondata.backbright != 0) {
 			rec_play_draw_back_c action;
-			action.PlayDrawBackGround(&recfp.mapeff, lanePos.y, cameraClass, &backpic, itemClass.GetItemList());
+			backpic.draw(lanePos.y, cameraClass, cameraSkyClass);
+			action.PlayDrawBackGround(&recfp.mapeff, lanePos.y, itemClass.GetItemList());
 		}
 		//フィルター表示
 		switch (optiondata.backbright) {
