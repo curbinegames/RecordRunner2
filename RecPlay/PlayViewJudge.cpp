@@ -32,7 +32,7 @@ void PlaySetJudge(note_judge judge) {
 	return;
 }
 
-void PlayShowJudge(rec_play_lanepos_t *lanePos, int charaput) {
+void PlayShowJudge(const dxcur_camera_c &camera, rec_play_lanepos_t *lanePos, int charaput) {
 	int BaseDrawX = 0;
 	int BaseDrawY = 0;
 	int drawY = 0;
@@ -54,9 +54,8 @@ void PlayShowJudge(rec_play_lanepos_t *lanePos, int charaput) {
 		BaseDrawY = 260;
 		break;
 	case 4:
-		RecPlayGetCameraPos(&BaseDrawX, &BaseDrawY);
-		BaseDrawX += lanePos->x[charaput] - 120;
-		BaseDrawY += lanePos->y[charaput] - 100;
+		BaseDrawX = camera.getX() + lanePos->x[charaput] - 120;
+		BaseDrawY = camera.getY() + lanePos->y[charaput] - 100;
 		break;
 	default:
 		return;

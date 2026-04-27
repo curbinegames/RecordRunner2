@@ -59,7 +59,9 @@ void PlayCheckHitEffect() {
 	return;
 }
 
-static void PlayShowHitEffectCap1(rec_play_lanepos_t *lanePos, int lineNo) {
+static void PlayShowHitEffectCap1(
+	const dxcur_camera_c &camera_pos, rec_play_lanepos_t *lanePos, int lineNo
+) {
 	note_material notemat = NOTE_NONE;
 	int *img = NULL;
 	int frame = 0;
@@ -145,13 +147,13 @@ static void PlayShowHitEffectCap1(rec_play_lanepos_t *lanePos, int lineNo) {
 
 	frame = (GetNowCount() - EffState[lineNo].time + 250) / 50 % 5;
 
-	DrawGraphRecField(xpos, ypos, img[frame]);
+	camera_pos.drawpic(xpos, ypos, img[frame]);
 	return;
 }
 
-void PlayShowHitEffect(rec_play_lanepos_t *lanePos) {
-	PlayShowHitEffectCap1(lanePos, 0);
-	PlayShowHitEffectCap1(lanePos, 1);
-	PlayShowHitEffectCap1(lanePos, 2);
+void PlayShowHitEffect(const dxcur_camera_c &camera_pos, rec_play_lanepos_t *lanePos) {
+	PlayShowHitEffectCap1(camera_pos, lanePos, 0);
+	PlayShowHitEffectCap1(camera_pos, lanePos, 1);
+	PlayShowHitEffectCap1(camera_pos, lanePos, 2);
 	return;
 }

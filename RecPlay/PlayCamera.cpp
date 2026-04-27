@@ -13,218 +13,99 @@
 /* own include */
 #include <PlayCamera.h>
 
-static struct {
-	int x = 320;
-	int y = 240;
-	intx100_t zoom = 100;
-} camera_pos;
-
-void RecPlayResetCamera() {
-	camera_pos.x = 320;
-	camera_pos.y = 240;
-	camera_pos.zoom = 100;
-	return;
-}
-
-void RecPlaySetCamera(const cvec<rec_camera_data_t> &camera, int Ntime) {
+void RecPlaySetCamera(dxcur_camera_c &camera_pos, const cvec<rec_camera_data_t> &camera, int Ntime) {
 	const DxTime_t startT = camera.nowData().starttime;
 	const DxTime_t   endT = camera.nowData().endtime;
 	const      int  moveM = camera.nowData().mode;
 	const      int  nposX = camera.nowData().xpos;
 	const      int  nposY = camera.nowData().ypos;
-	const   double  nZoom = camera.nowData().zoom * 100;
+	const   double  nZoom = camera.nowData().zoom;
+	const   double  nRot  = camera.nowData().rot;
 	const      int  bposX = camera.offsetData(-1).xpos;
 	const      int  bposY = camera.offsetData(-1).ypos;
-	const   double  bZoom = camera.offsetData(-1).zoom * 100;
+	const   double  bZoom = camera.offsetData(-1).zoom;
+	const   double  bRot  = camera.offsetData(-1).rot;
+
+	int    setX    = 0;
+	int    setY    = 0;
+	double setZoom = 1.0;
+	double setRot  = 0.0;
+
+	/* 旧画面比率補正 */
+	setX    -= (WINDOW_SIZE_Y - OLD_WINDOW_SIZE_Y);
+	setY    -= (WINDOW_SIZE_Y - OLD_WINDOW_SIZE_Y) / 2;
+	setZoom *=  WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y;
 
 	if (startT <= Ntime && Ntime <= endT) {
-		camera_pos.x    = (int)movecal(moveM, startT, bposX,       endT, nposX, Ntime);
-		camera_pos.y    = (int)movecal(moveM, startT, bposY,       endT, nposY, Ntime);
-		camera_pos.zoom = (int)movecal(moveM, startT, bZoom, endT, nZoom, Ntime);
+		setX    -= movecal(moveM, startT, bposX, endT, nposX, Ntime);
+		setY    -= movecal(moveM, startT, bposY, endT, nposY, Ntime);
+		setZoom *= movecal(moveM, startT, bZoom, endT, nZoom, Ntime);
+		setRot  += movecal(moveM, startT, bRot , endT, nRot , Ntime);
 	}
 	else {
-		camera_pos.x    = nposX;
-		camera_pos.y    = nposY;
-		camera_pos.zoom = nZoom;
+		setX    -= nposX;
+		setY    -= nposY;
+		setZoom *= nZoom;
+		setRot  += nRot;
 	}
-	return;
+
+	camera_pos.setX(       setX   );
+	camera_pos.setY(       setY   );
+	camera_pos.setZoom(    setZoom);
+	camera_pos.setAngleDeg(setRot );
 }
 
-void RecPlayGetCameraPos(int *retX, int *retY) {
-	if (retX != NULL) { *retX = camera_pos.x; }
-	if (retY != NULL) { *retY = camera_pos.y; }
-	return;
+void DrawStringRecField(
+	const dxcur_camera_c &camera_pos, int xpos, int ypos, const tstring &str, DxColor_t cr
+) {
+	double drawX = xpos;
+	double drawY = ypos;
+	camera_pos.WorldToScreen(drawX, drawY);
+	DrawString(drawX, drawY, str.c_str(), cr);
 }
 
-void DrawStringRecField(int xpos, int ypos, TCHAR *str, DxColor_t cr) {
-	int drawX = 0;
-	int drawY = 0;
-
-	/* Xpos */
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos + camera_pos.x);
-
-	/* Ypos */
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos + camera_pos.y);
-
-	/* draw */
-	DrawString(drawX, drawY, str, cr);
-	return;
-}
-
-/**
- * プレイ中のメイン画面、item、レーン、キャラにあたる場所に描画します。カメラの影響を受けます。
- */
-void DrawGraphRecField(int xpos, int ypos, int pic) {
-	int drawX = 0;
-	int drawY = 0;
-	int drawX2 = 0;
-	int drawY2 = 0;
-	int sizeX = 0;
-	int sizeY = 0;
-
-	GetGraphSize(pic, &sizeX, &sizeY);
-
-	/* Xpos */
-	drawX  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos + camera_pos.x);
-	drawX2 = drawX + sizeX * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-
-	/* Ypos */
-	drawY  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos + camera_pos.y);
-	drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-
-	/* zoom */
-	drawX  = (drawX  - WINDOW_SIZE_X) * camera_pos.zoom / 100 + WINDOW_SIZE_X;
-	drawX2 = (drawX2 - WINDOW_SIZE_X) * camera_pos.zoom / 100 + WINDOW_SIZE_X;
-	drawY  = (drawY  - WINDOW_SIZE_Y) * camera_pos.zoom / 100 + WINDOW_SIZE_Y;
-	drawY2 = (drawY2 - WINDOW_SIZE_Y) * camera_pos.zoom / 100 + WINDOW_SIZE_Y;
-
-	/* draw */
-	DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic, TRUE);
-	return;
-}
-
-/**
- * プレイ中のメイン画面、item、レーン、キャラにあたる場所に描画します。カメラの影響を受けます。
- */
-void DrawTurnGraphRecField(int xpos, int ypos, int pic) {
-	int drawX = 0;
-	int drawY = 0;
-	int drawX2 = 0;
-	int drawY2 = 0;
-	int sizeX = 0;
-	int sizeY = 0;
-
-	GetGraphSize(pic, &sizeX, &sizeY);
-
-	/* Xpos */
-	drawX  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos + camera_pos.x);
-	drawX2 = drawX + sizeX * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-
-	/* Ypos */
-	drawY  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos + camera_pos.y);
-	drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-
-	/* zoom */
-	drawX  = (drawX  - WINDOW_SIZE_X) * camera_pos.zoom / 100 + WINDOW_SIZE_X;
-	drawX2 = (drawX2 - WINDOW_SIZE_X) * camera_pos.zoom / 100 + WINDOW_SIZE_X;
-	drawY  = (drawY  - WINDOW_SIZE_Y) * camera_pos.zoom / 100 + WINDOW_SIZE_Y;
-	drawY2 = (drawY2 - WINDOW_SIZE_Y) * camera_pos.zoom / 100 + WINDOW_SIZE_Y;
-
-	/* draw */
-	DrawExtendGraph(drawX2, drawY, drawX, drawY2, pic, TRUE);
-	return;
-}
-
-/**
- * プレイ中のメイン画面、item、レーン、キャラにあたる場所に描画します。カメラの影響を受けます。
- */
-void DrawLineRecField(int posx1, int posy1, int posx2, int posy2, unsigned int color, int thick) {
-	int drawX = 0;
-	int drawY = 0;
-	int drawX2 = 0;
-	int drawY2 = 0;
-
-	/* Xpos */
-	drawX  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posx1 + camera_pos.x);
-	drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posx2 + camera_pos.x);
-
-	/* Ypos */
-	drawY  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posy1 + camera_pos.y);
-	drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posy2 + camera_pos.y);
-
-	/* zoom */
-	drawX  = (drawX  - WINDOW_SIZE_X) * camera_pos.zoom / 100 + WINDOW_SIZE_X;
-	drawX2 = (drawX2 - WINDOW_SIZE_X) * camera_pos.zoom / 100 + WINDOW_SIZE_X;
-	drawY  = (drawY  - WINDOW_SIZE_Y) * camera_pos.zoom / 100 + WINDOW_SIZE_Y;
-	drawY2 = (drawY2 - WINDOW_SIZE_Y) * camera_pos.zoom / 100 + WINDOW_SIZE_Y;
-
+void DrawLineRecField(
+	const dxcur_camera_c &camera_pos, int posx1, int posy1, int posx2, int posy2,
+	unsigned int color, int thick
+) {
+	double drawX  = posx1;
+	double drawY  = posy1;
+	double drawX2 = posx2;
+	double drawY2 = posy2;
+	camera_pos.WorldToScreen(drawX , drawY );
+	camera_pos.WorldToScreen(drawX2, drawY2);
 	DrawLine(drawX, drawY, drawX2, drawY2, color, thick);
-	return;
 }
 
-void DrawLineCurveRecField(int posx1, int posy1, int posx2, int posy2, int mode, unsigned int color, int thick) {
-	int drawX = 0;
-	int drawY = 0;
-	int drawX2 = 0;
-	int drawY2 = 0;
-
-	drawX  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posx1 + camera_pos.x);
-	drawY  = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posy1 + camera_pos.y);
-	drawX2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posx2 + camera_pos.x);
-	drawY2 = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, posy2 + camera_pos.y);
-
+void DrawLineCurveRecField(
+	const dxcur_camera_c &camera_pos, int posx1, int posy1, int posx2, int posy2,
+	int mode, DxColor_t color, int thick
+) {
+	double drawX  = posx1;
+	double drawY  = posy1;
+	double drawX2 = posx2;
+	double drawY2 = posy2;
+	camera_pos.WorldToScreen(drawX , drawY );
+	camera_pos.WorldToScreen(drawX2, drawY2);
 	DrawLineCurve(drawX, drawY, drawX2, drawY2, mode, color, thick);
-	return;
 }
 
-/**
- * プレイ中のメイン画面、item、レーン、キャラにあたる場所に描画します。カメラの影響を受けます。
- */
-void DrawDeformationPicRecField(int xpos, int ypos, intx100_t size, int rot, int alpha, DxPic_t pic) {
-	int drawX = 0;
-	int drawY = 0;
-	int drawS = 0;
-
-	//rescale
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos);
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos);
-	drawS = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, size);
-
-	/* zoom */
-	drawX = (drawX - WINDOW_SIZE_X) * camera_pos.zoom / 100 + WINDOW_SIZE_X;
-	drawY = (drawY - WINDOW_SIZE_Y) * camera_pos.zoom / 100 + WINDOW_SIZE_Y;
-	drawS = drawS * camera_pos.zoom / 100;
-
-	//drawing
+void DrawDeformationPicRecField(
+	const dxcur_camera_c &camera_pos, int xpos, int ypos,
+	intx100_t size, int rot, int alpha, DxPic_t pic
+) {
+	double drawX = xpos;
+	double drawY = ypos;
+	double drawS = size * camera_pos.getZoom() / 100.0;
+	double drawR = rot  - camera_pos.getAngleDeg();
+	camera_pos.WorldToScreen(drawX, drawY);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
 	DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, rot, pic);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-
-	return;
 }
 
-/**
- * プレイ中の背景、back skyにあたる場所に描画します。カメラの影響を受けます。
- */
-void DrawGraphRecBackField(int xpos, int ypos, int pic) {
-	int drawX = 0;
-	int drawY = 0;
-	int drawX2 = 0;
-	int drawY2 = 0;
-	int sizeX = 0;
-	int sizeY = 0;
-
-	GetGraphSize(pic, &sizeX, &sizeY);
-
-	/* Xpos */
-	drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, xpos + camera_pos.x / 5);
-	drawX2 = drawX + sizeX * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-
-	/* Ypos */
-	drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, ypos + camera_pos.y / 5);
-	drawY2 = drawY + sizeY * WINDOW_SIZE_Y / OLD_WINDOW_SIZE_Y;
-
-	/* draw */
-	DrawExtendGraph(drawX, drawY, drawX2, drawY2, pic, TRUE);
-	return;
+void DrawGraphRecBackField(const dxcur_camera_c &camera_pos, int xpos, int ypos, DxPic_t pic) {
+	double drawX = xpos + camera_pos.getX() / 5;
+	double drawY = ypos + camera_pos.getY() / 5;
+	camera_pos.drawpic(drawX, drawY, pic);
 }

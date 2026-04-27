@@ -166,7 +166,7 @@ typedef struct rec_camera_data_s {
 	int xpos = 0;
 	int ypos = 0;
 	double zoom = 1.0;
-	int rot = 0;
+	double rot  = 0.0;
 	int mode = 0;
 } rec_camera_data_t;
 
