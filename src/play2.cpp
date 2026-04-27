@@ -1,6 +1,5 @@
 /* TODO:効果音アイテムの音がでかい */
 /* TODO:背景の左端が切れてる */
-/* TODO:アイテムが位置ずれしてる */
 /* TODO:sky背景の追従が/5になってない */
 
 #if 1 /* define group */
@@ -28,7 +27,6 @@
 #include <playbox.h>
 #include <PlayAuto.h>
 #include <PlayCamera.h>
-#include <PlayHitEff.h>
 #include <PlayNoteJudge.h>
 #include <PlayViewJudge.h>
 
@@ -447,6 +445,7 @@ static void recSetLine(int line[], cvec<rec_mapeff_move_st> move[], int Ntime, i
 	}
 }
 
+/* TODO:アイテムが位置ずれしてる */
 static void PlayDrawItem(
 	rec_map_eff_data_t *mapeff, int Ntime, int Xmidline,
 	const dxcur_camera_c &camera_c, const std::vector<DxPic_t> &item
@@ -506,7 +505,7 @@ static void PlayDrawItem(
 		drawS = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawS);
 		//drawing
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-		DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]);
+		DrawDeformationPicRecField(camera_c, drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}
 }
@@ -1044,6 +1043,138 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyh
 
 #if 1 /* class */
 
+class rec_play_hiteff_c {
+private:
+	struct {
+		dxcur_divpic_c   hit{_T("picture/hiteff.png"  ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c    up{_T("picture/upeff.png"   ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c  down{_T("picture/downeff.png" ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c  left{_T("picture/lefteff.png" ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c right{_T("picture/righteff.png"), 5, 5, 1, 50, 50};
+		dxcur_divpic_c  bomb{_T("picture/bombeff.png" ), 5, 5, 1, 50, 50};
+	} pic;
+
+	struct {
+		DxTime_t time = 0;
+		note_judge judge = NOTE_JUDGE_NONE;
+		note_material note = NOTE_NONE;
+	} state[3];
+
+public:
+	void update(void) {
+		for (int lineNo = 0; lineNo < 3; lineNo++) {
+			if (this->state[lineNo].time + 750 < GetNowCount()) {
+				this->state[lineNo].time = 0;
+				this->state[lineNo].judge = NOTE_JUDGE_NONE;
+				this->state[lineNo].note = NOTE_NONE;
+			}
+		}
+	}
+
+	void drawOne(
+		const dxcur_camera_c &camera_pos, const rec_play_lanepos_t &lanePos, int lineNo
+	) const {
+		note_material notemat = NOTE_NONE;
+		DxPic_t img = 0;
+		int frame = 0;
+		int xpos = lanePos.x[lineNo] - 10;
+		int ypos = lanePos.y[lineNo] - 10;
+
+		switch (this->state[lineNo].note - 1) {
+		case 0:
+			notemat = NOTE_HIT;
+			break;
+		case 1:
+			notemat = NOTE_CATCH;
+			break;
+		case 2:
+			notemat = NOTE_UP;
+			break;
+		case 3:
+			notemat = NOTE_DOWN;
+			break;
+		case 4:
+			notemat = NOTE_LEFT;
+			break;
+		case 5:
+			notemat = NOTE_RIGHT;
+			break;
+		case 6:
+			notemat = NOTE_BOMB;
+			break;
+		default:
+			return;
+		}
+
+		if (this->state[lineNo].time + 250 <= GetNowCount()) {
+			return;
+		}
+
+		switch (notemat) {
+		case NOTE_HIT:
+		case NOTE_CATCH:
+		case NOTE_UP:
+		case NOTE_DOWN:
+		case NOTE_LEFT:
+		case NOTE_RIGHT:
+			if ((this->state[lineNo].judge < NOTE_JUDGE_JUST ||
+				this->state[lineNo].judge > NOTE_JUDGE_SAFE) &&
+				this->state[lineNo].judge != NOTE_JUDGE_PJUST)
+			{
+				return;
+			}
+			break;
+		case NOTE_BOMB:
+			if (this->state[lineNo].judge != NOTE_JUDGE_MISS) {
+				return;
+			}
+			break;
+		default:
+			return;
+		}
+
+		frame = (GetNowCount() - this->state[lineNo].time + 250) / 50 % 5;
+
+		switch (notemat) {
+		case NOTE_HIT:
+		case NOTE_CATCH:
+			img = this->pic.hit.handle(frame);
+			break;
+		case NOTE_UP:
+			img = this->pic.up.handle(frame);
+			break;
+		case NOTE_DOWN:
+			img = this->pic.down.handle(frame);
+			break;
+		case NOTE_LEFT:
+			img = this->pic.left.handle(frame);
+			break;
+		case NOTE_RIGHT:
+			img = this->pic.right.handle(frame);
+			break;
+		case NOTE_BOMB:
+			img = this->pic.bomb.handle(frame);
+			break;
+		default:
+			return;
+		}
+
+		camera_pos.drawpic(xpos, ypos, img);
+	}
+
+	void draw(const dxcur_camera_c &camera_pos, const rec_play_lanepos_t &lanePos) const {
+		this->drawOne(camera_pos, lanePos, 0);
+		this->drawOne(camera_pos, lanePos, 1);
+		this->drawOne(camera_pos, lanePos, 2);
+	}
+
+	void setEff(note_judge judge, note_material mat, int LineNo) {
+		this->state[LineNo].time  = GetNowCount();
+		this->state[LineNo].judge = judge;
+		this->state[LineNo].note  = mat;
+	}
+};
+
 /* TODO: miss判定でもスコアスリップが発生する */
 /* TODO: そもそもスコアフリップいる? */
 static class rec_play_score_calculator_c {
@@ -1334,6 +1465,7 @@ private:
 	DxPic_t	charaimg[PIC_NUM];
 	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/Cguide.png"));
 	dxcur_pic_c judghimg      = dxcur_pic_c(_T("picture/Marker.png"));
+	rec_play_hiteff_c hiteff;
 
 public:
 	int pos = 1; //キャラの今の位置[0で上,1で中,2で下]
@@ -1461,6 +1593,18 @@ public:
 		}
 		/* キャラ表示 */
 		this->PlayDrawChara(keyhold, lanePos, camera_pos, charahit, Ntime, mapeff);
+	}
+
+	void drawHiteff(const dxcur_camera_c &camera_pos, const rec_play_lanepos_t &lanePos) {
+		this->hiteff.draw(camera_pos, lanePos);
+	}
+
+	void updateHiteff(void) {
+		this->hiteff.update();
+	}
+
+	void setHiteff(note_judge judge, note_material mat, int LineNo) {
+		this->hiteff.setEff(judge, mat, LineNo);
 	}
 
 #undef DIV_X
@@ -1833,7 +1977,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 #endif /* num define */
 
 	/* ピクチャの用意 */
-	ReadyEffPicture();
 	ReadyJudgePicture();
 	/* action */
 	for (i[0] = 0; i[0] <= 59; i[0]++) { fps[i[0]] = 17; }
@@ -1910,8 +2053,20 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */ {
 			rec_hitatk_event_ec hitatk_ev = REC_HITATK_EVENT_NONE;
-			RecJudgeAllNotes(recfp.mapdata.note, recfp.time.now, sitemClass.GetSitemList(),
-				&keyhold, hitatk_ev, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound);
+			{
+				std::queue<rec_judge_event_st> event_queue;
+				RecJudgeAllNotes(
+					event_queue, recfp.mapdata.note, recfp.time.now, sitemClass.GetSitemList(),
+					&keyhold, hitatk_ev, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound
+				);
+				while (!event_queue.empty()) {
+					runnerClass.setHiteff(
+						event_queue.front().judge, event_queue.front().mat,
+						event_queue.front().lineNo
+					);
+					event_queue.pop();
+				}
+			}
 			switch (hitatk_ev) {
 			case REC_HITATK_EVENT_RESET:
 				hitatk.time = -1000;
@@ -1947,6 +2102,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		}
 
 		bonusClass.update();
+		runnerClass.updateHiteff();
 		//オートでなく、ノーミス以上を出したら演出
 		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
 			AllNotesHitTime = 0;
@@ -1982,6 +2138,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		RecPlayDrawGuideBorder(&recfp, cameraClass, &lanePos);
 		/* キャラ周り表示 */
 		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, cameraClass, charahit, recfp.time.now);
+		runnerClass.drawHiteff(cameraClass, lanePos);
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
@@ -1992,9 +2149,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			action.RecPlayDrawNoteAll(&lanePos, recfp.mapdata.note, &recfp.mapeff,
 				cameraClass, recfp.time.now, &noteimg);
 		}
-		//ヒットエフェクト表示
-		PlayShowHitEffect(cameraClass, &lanePos);
-		PlayCheckHitEffect();
 		//スコアバー表示
 		sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighScore, holdG);
 		//判定ずれバー表示

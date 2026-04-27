@@ -107,5 +107,5 @@ void DrawDeformationPicRecField(
 void DrawGraphRecBackField(const dxcur_camera_c &camera_pos, int xpos, int ypos, DxPic_t pic) {
 	double drawX = xpos + camera_pos.getX() / 5;
 	double drawY = ypos + camera_pos.getY() / 5;
-	camera_pos.drawpic(drawX, drawY, pic);
+	DrawRotaGraph2(drawX, drawY, 0, 0, camera_pos.getZoom(), 0, pic, TRUE, FALSE);
 }

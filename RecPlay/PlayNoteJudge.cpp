@@ -11,7 +11,6 @@
 /* rec system include */
 #include <option.h>
 #include <playbox.h>
-#include <PlayHitEff.h>
 #include <PlayViewJudge.h>
 #include <RecScoreFile.h>
 
@@ -284,14 +283,6 @@ static void note_judge_event(note_judge judge, userpal_t *userpal) {
 	return;
 }
 
-typedef struct rec_judge_event_s {
-	note_material mat = NOTE_NONE;
-	int gaptime = 0;
-	note_box_2_t noteinfo;
-	note_judge judge;
-	int lineNo;
-} rec_judge_event_st;
-
 /* TODO: 目標の関数の形: RecNoteJudgeEventAll(判定, ノーツの種類); */
 static void RecNoteJudgeEventAll(
 	std::queue<rec_judge_event_st> &event_queue,
@@ -469,25 +460,28 @@ static void RecJudgeSlowMiss(
 	return;
 }
 
-void RecJudgeAllNotes(cvec<note_box_2_t> note[], int Ntime, const std::vector<DxSnd_t> &Sitem,
-	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[], int *charahit, short charaput,
-	userpal_t *userpal, rec_play_sound_c *p_sound)
-{
+void RecJudgeGetEventQueue(
+	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
+	const std::vector<DxSnd_t> &Sitem, key_hold_t *keyhold, rec_hitatk_event_ec &hitatk,
+	int LaneTrack[], int *charahit, short charaput, rec_play_sound_c *p_sound
+) {
 	int push_key_count = RecLPlayGetHitKeyPushCount(keyhold);
-	std::queue<rec_judge_event_st> event_queue;
 	s_Ntime = Ntime;
-	
 	RecJudgeHitNote(  event_queue, note, hitatk, push_key_count, p_sound);
 	RecJudgeArrowNote(event_queue, note, keyhold);
 	RecJudgeCatchNote(event_queue, note, hitatk, charahit, LaneTrack);
 	RecJudgeBombNote( event_queue, note, hitatk, charahit, charaput);
 	RecJudgeGhostNote(             note, p_sound, Sitem);
 	RecJudgeSlowMiss( event_queue, note);
+}
+
+void RecJudgeEventAction(
+	std::queue<rec_judge_event_st> &event_queue, const std::vector<DxSnd_t> &Sitem,
+	userpal_t *userpal, rec_play_sound_c *p_sound
+) {
 	while (!event_queue.empty()) {
 		/* 判定表示のセット */
 		PlaySetJudge(event_queue.front().judge);
-		/* エフェクトのセット */
-		PlaySetHitEffect(event_queue.front().judge, event_queue.front().mat, event_queue.front().lineNo);
 		/* ユーザーデータの更新 */
 		note_judge_event(event_queue.front().judge, userpal);
 		/* 効果音 */
@@ -500,7 +494,17 @@ void RecJudgeAllNotes(cvec<note_box_2_t> note[], int Ntime, const std::vector<Dx
 		}
 		event_queue.pop();
 	}
-	return;
+}
+
+void RecJudgeAllNotes(
+	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
+	const std::vector<DxSnd_t> &Sitem, key_hold_t *keyhold, rec_hitatk_event_ec &hitatk,
+	int LaneTrack[], int *charahit, short charaput, userpal_t *userpal, rec_play_sound_c *p_sound
+) {
+	std::queue<rec_judge_event_st> event_queue_in_this;
+	RecJudgeGetEventQueue(event_queue, note, Ntime, Sitem, keyhold, hitatk, LaneTrack, charahit, charaput, p_sound);
+	event_queue_in_this = event_queue;
+	RecJudgeEventAction(event_queue_in_this, Sitem, userpal, p_sound);
 }
 
 #endif /* RecJudge */
