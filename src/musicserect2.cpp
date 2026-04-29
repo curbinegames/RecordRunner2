@@ -359,12 +359,23 @@ static void RecSelectAllRelordDrawInfo(uint iPack, uint iSong, uint iDif) {
 
 static void RecSelectAllRelord(void) {
 	TCHAR path[255];
+	DxTime_t next_time = 0;
+	std::vector<tstring> pack_list;
+	GetFolderListWchar(pack_list, L"record");
 
-	for (uint iPack = 0; iPack < 10; iPack++) {
-		for (uint iSong = 0; iSong < 20; iSong++) {
+	for (uint iPack = 0; iPack < pack_list.size(); iPack++) {
+		tstring pack_path = L"record/" + pack_list[iPack];
+		std::vector<tstring> music_list;
+		GetFolderListWchar(music_list, pack_path);
+		for (uint iSong = 0; iSong < music_list.size(); iSong++) {
 			for (uint iDif = 0; iDif < 5; iDif++) {
-				RecSelectAllRelordDrawInfo(iPack, iSong, iDif);
-				RecordLoad2(iPack, iSong, iDif);
+				if (next_time <= GetNowCount()) {
+					RecSelectAllRelordDrawInfo(iPack, iSong, iDif);
+					next_time = GetNowCount() + 100;
+				}
+				if (RecordLoad2(iPack, iSong, iDif) != REC_ERROR_NONE) {
+					continue;
+				}
 				if (RecGetMusicMapRrsPath(path, 255, iPack, iSong, (rec_dif_t)iDif) != 0) { continue; }
 				cal_ddif_3(path);
 			}
