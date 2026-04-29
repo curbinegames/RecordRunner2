@@ -487,13 +487,6 @@ static void Getxxxpng(tstring &str, int num) {
 	str += _T(".png");
 }
 
-static void Getxxxwav(tstring &str, int num) {
-	str += num / 100 + '0';
-	str += num / 10 % 10 + '0';
-	str += num % 10 + '0';
-	str += _T(".wav");
-}
-
 static void recSetLine(int line[], cvec<rec_mapeff_move_st> move[], int Ntime, int loop) {
 	for (int iLine = 0; iLine < loop; iLine++) {
 		line[iLine] =
@@ -1982,35 +1975,6 @@ public:
 	}
 };
 
-class rec_play_sitem_c {
-	std::vector<DxSnd_t> vec;
-
-public:
-	rec_play_sitem_c(void) = delete;
-
-	rec_play_sitem_c(const tstring &folderPath) {
-		DxSnd_t handbuf;
-		tstring strbuf;
-		for (size_t i = 0; i < 999; i++) {
-			strbuf = folderPath;
-			Getxxxwav(strbuf, i + 1); /* 0”Ô‚Í–¢Žg—p */
-			handbuf = LoadSoundMem(strbuf.c_str());
-			if (handbuf == -1) { break; }
-			this->vec.push_back(handbuf);
-		}
-	}
-
-	~rec_play_sitem_c() {
-		for (size_t i = 0; i < this->vec.size(); i++) {
-			DeleteSoundMem(this->vec[i]);
-		}
-	}
-
-	const std::vector<DxSnd_t> &GetSitemList(void) const {
-		return vec;
-	}
-};
-
 #endif /* class */
 
 /* main action */
@@ -2068,7 +2032,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_sbar_c sbarClass;
 	rec_play_combo_c comboPicClass;
 	rec_play_gapbar_c gapbarClass;
-	rec_play_sound_c p_sound;
 	rec_play_runner_c runnerClass;
 	dxcur_camera_c cameraClass;
 	dxcur_camera_c cameraSkyClass;
@@ -2076,7 +2039,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_bonus_c bonusClass;
 	rec_play_judge_pic_c judgepicClass;
 	rec_play_item_c itemClass(folderPath);
-	rec_play_sitem_c sitemClass(folderPath);
 	rec_cutin_c cutin;
 
 	/* mat */
@@ -2084,6 +2046,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	dxcur_pic_c dropimg   = dxcur_pic_c(_T("picture/drop.png"));
 	dxcur_pic_c filterimg = dxcur_pic_c(_T("picture/Black.png"));
 	rec_play_notepic_t noteimg;
+	rec_play_snditem_all_c snd_set_class(folderPath);
 
 #endif /* num define */
 
@@ -2091,8 +2054,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	for (i[0] = 0; i[0] <= 59; i[0]++) { fps[i[0]] = 17; }
 	fps[60] = 0;
 	fps[61] = 0;
-
-	if (optiondata.SEenable == 0) { RecPlayInitMelodySnd(); }
 
 	if (rec_score_fread(&recfp, rrsPath) != 0) { return SCENE_EXIT; } /* TODO: EXIT‚É‚µ‚Ä‚é‚Ì‚ÍA‚Ç‚¤‚È‚Ì? */
 
@@ -2163,8 +2124,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			{
 				std::queue<rec_judge_event_st> event_queue;
 				RecJudgeAllNotes(
-					event_queue, recfp.mapdata.note, recfp.time.now, sitemClass.GetSitemList(),
-					&keyhold, hitatk_ev, LaneTrack, &charahit, runnerClass.pos, &userpal, &p_sound
+					event_queue, recfp.mapdata.note, recfp.time.now, &keyhold, hitatk_ev,
+					LaneTrack, &charahit, runnerClass.pos, &userpal, snd_set_class
 				);
 				while (!event_queue.empty()) {
 					runnerClass.setHiteff(

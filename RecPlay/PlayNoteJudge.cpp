@@ -1,12 +1,9 @@
 
 /* base include */
 #include <queue>
-#include <DxLib.h>
 
 /* curbine code include */
 #include <dxcur.h>
-#include <sancur.h>
-#include <RecSystem.h>
 
 /* rec system include */
 #include <option.h>
@@ -24,70 +21,76 @@
 
 #define AVOID_ARROW_DIV_TIME 10
 
-typedef rec_play_chara_hit_attack_t hitatt_t;
 typedef rec_play_key_hold_t key_hold_t;
 typedef rec_play_userpal_t userpal_t;
 
-typedef enum chara_pos_e {
-	RECR_CHARP_U = 0,
-	RECR_CHARP_M,
-	RECR_CHARP_D
-} chara_pos_t;
-
-/* DOTO: 効果音系を別ファイルに移動する */
-static int MelodySnd[24];
 static int s_Ntime = 0;
 
-void RecPlayInitMelodySnd() {
-	MelodySnd[0] = LoadSoundMem(L"sound/melody/lowF.wav");
-	MelodySnd[1] = LoadSoundMem(L"sound/melody/lowF#.wav");
-	MelodySnd[2] = LoadSoundMem(L"sound/melody/lowG.wav");
-	MelodySnd[3] = LoadSoundMem(L"sound/melody/lowG#.wav");
-	MelodySnd[4] = LoadSoundMem(L"sound/melody/lowA.wav");
-	MelodySnd[5] = LoadSoundMem(L"sound/melody/lowA#.wav");
-	MelodySnd[6] = LoadSoundMem(L"sound/melody/lowB.wav");
-	MelodySnd[7] = LoadSoundMem(L"sound/melody/lowC.wav");
-	MelodySnd[8] = LoadSoundMem(L"sound/melody/lowC#.wav");
-	MelodySnd[9] = LoadSoundMem(L"sound/melody/lowD.wav");
-	MelodySnd[10] = LoadSoundMem(L"sound/melody/lowD#.wav");
-	MelodySnd[11] = LoadSoundMem(L"sound/melody/lowE.wav");
-	MelodySnd[12] = LoadSoundMem(L"sound/melody/highF.wav");
-	MelodySnd[13] = LoadSoundMem(L"sound/melody/highF#.wav");
-	MelodySnd[14] = LoadSoundMem(L"sound/melody/highG.wav");
-	MelodySnd[15] = LoadSoundMem(L"sound/melody/highG#.wav");
-	MelodySnd[16] = LoadSoundMem(L"sound/melody/highA.wav");
-	MelodySnd[17] = LoadSoundMem(L"sound/melody/highA#.wav");
-	MelodySnd[18] = LoadSoundMem(L"sound/melody/highB.wav");
-	MelodySnd[19] = LoadSoundMem(L"sound/melody/highC.wav");
-	MelodySnd[20] = LoadSoundMem(L"sound/melody/highC#.wav");
-	MelodySnd[21] = LoadSoundMem(L"sound/melody/highD.wav");
-	MelodySnd[22] = LoadSoundMem(L"sound/melody/highD#.wav");
-	MelodySnd[23] = LoadSoundMem(L"sound/melody/highE.wav");
-	for (uint inum = 0; inum < 24; inum++) {
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, MelodySnd[inum]);
-	}
-	return;
+#if 1 /* rec_play_sound_c */
+
+rec_play_sound_c::rec_play_sound_c(void) {
+	this->att.SetVolume(optiondata.SEvolume * 255 / 10);
+	this->cat.SetVolume(optiondata.SEvolume * 255 / 10);
+	this->arw.SetVolume(optiondata.SEvolume * 255 / 10);
+	this->bom.SetVolume(optiondata.SEvolume * 255 / 10);
+	this->swi.SetVolume(optiondata.SEvolume * 255 / 10);
 }
 
-static void PlayNoteHitSound(const note_box_2_t *note, rec_play_sound_c *p_sound, const std::vector<DxSnd_t> &soundItem) {
-	if (note->melody != MELODYSOUND_NONE) {
-		PlaySoundMem(MelodySnd[note->melody], DX_PLAYTYPE_BACK);
+void rec_play_sound_c::PlayNoteSound(note_material mat) {
+	switch (mat) {
+	case NOTE_HIT:
+		this->att.PlaySound();
+		break;
+	case NOTE_CATCH:
+		this->cat.PlaySound();
+		break;
+	case NOTE_UP:
+	case NOTE_DOWN:
+	case NOTE_LEFT:
+	case NOTE_RIGHT:
+		this->arw.PlaySound();
+		break;
+	case NOTE_BOMB:
+		this->bom.PlaySound();
+		break;
 	}
-	else if (note->sound != 0) {
-		PlaySoundMem(soundItem[note->sound - 1], DX_PLAYTYPE_BACK);
+}
+
+void rec_play_sound_c::PlaySwing(void) {
+	this->swi.PlaySound();
+}
+
+#endif /* rec_play_sound_c */
+
+#if 1 /* rec_play_snditem_def_c */
+
+rec_play_snditem_def_c::rec_play_snditem_def_c(void) {
+	for (uint inum = 0; inum < 24; inum++) {
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->snd[inum].handle());
+	}
+}
+
+void rec_play_snditem_def_c::PlaySoundDataBase(
+	const note_box_2_t &note, rec_play_sound_c &p_sound, const std::vector<DxSnd_t> &soundItem
+) {
+	if (note.melody != MELODYSOUND_NONE) {
+		PlaySoundMem(this->snd[note.melody].handle(), DX_PLAYTYPE_BACK);
+	}
+	else if (note.sound != 0) {
+		PlaySoundMem(soundItem[note.sound - 1], DX_PLAYTYPE_BACK);
 	}
 	else {
-		p_sound->PlayNoteSound(note->object);
+		p_sound.PlayNoteSound(note.object);
 	}
-	return;
 }
 
-static void PlayNoteHitSoundGeneral(
-	note_judge judge, const note_box_2_t *noteinfo, rec_play_sound_c *p_sound, const std::vector<DxSnd_t> soundItem
+void rec_play_snditem_def_c::PlaySoundData(
+	note_judge judge, const note_box_2_t &note, rec_play_sound_c &p_sound,
+	const std::vector<DxSnd_t> &soundItem
 ) {
 	if (optiondata.SEenable != 0) { return; }
 
-	switch (noteinfo->object) {
+	switch (note.object) {
 	case NOTE_HIT:
 	case NOTE_CATCH:
 	case NOTE_UP:
@@ -95,19 +98,53 @@ static void PlayNoteHitSoundGeneral(
 	case NOTE_LEFT:
 	case NOTE_RIGHT:
 		if (judge != NOTE_JUDGE_MISS) {
-			PlayNoteHitSound(noteinfo, p_sound, soundItem);
+			this->PlaySoundDataBase(note, p_sound, soundItem);
 		}
 		break;
 	case NOTE_BOMB:
 		if (judge == NOTE_JUDGE_MISS) {
-			PlayNoteHitSound(noteinfo, p_sound, soundItem);
+			this->PlaySoundDataBase(note, p_sound, soundItem);
 		}
 		break;
 	}
 	return;
 }
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+#endif /* rec_play_snditem_def_c */
+
+#if 1 /* rec_play_sitem_c */
+
+rec_play_sitem_c::rec_play_sitem_c(const tstring &folderPath) {
+	DxSnd_t handbuf;
+	tstring strbuf;
+	for (size_t i = 0; i < 999; i++) {
+		strbuf = folderPath;
+		this->Getxxxwav(strbuf, i + 1); /* 0番は未使用 */
+		handbuf = LoadSoundMem(strbuf.c_str());
+		if (handbuf == -1) { break; }
+		this->vec.push_back(handbuf);
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->vec[i]);
+	}
+}
+
+rec_play_sitem_c::~rec_play_sitem_c() {
+	for (size_t i = 0; i < this->vec.size(); i++) {
+		DeleteSoundMem(this->vec[i]);
+	}
+}
+
+void rec_play_sitem_c::Getxxxwav(tstring &str, int num) {
+	str += num / 100 + '0';
+	str += num / 10 % 10 + '0';
+	str += num % 10 + '0';
+	str += _T(".wav");
+}
+
+const std::vector<DxSnd_t> &rec_play_sitem_c::GetSitemList(void) const {
+	return vec;
+}
+
+#endif /* rec_play_sitem_c */
 
 /**
  * HITノートがどのレーンにあるかを調べる
@@ -300,8 +337,8 @@ static void RecNoteJudgeEventAll(
 
 static void RecJudgeHitNote(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[],
-	rec_hitatk_event_ec &hitatk, int push_key_count, rec_play_sound_c *p_sound)
-{
+	rec_hitatk_event_ec &hitatk, int push_key_count, bool &swingFg
+) {
 	int near_lane = -1;
 	char hitflag = 0; //hit event, bit unit: 0: upper hit, 1: middle hit, 2: lower hit, 3~7: reserved
 	int gap = 0;
@@ -311,7 +348,7 @@ static void RecJudgeHitNote(
 		near_lane = RecPlayFindNearHitNote(note);
 		if (near_lane == -1) {
 			if (iPush == 0) {
-				p_sound->PlaySwing();
+				swingFg = true;
 			}
 			break;
 		}
@@ -319,7 +356,7 @@ static void RecJudgeHitNote(
 		hitflag |= (1 << near_lane);
 		NJ = CheckJudge(gap);
 		if (NJ == NOTE_JUDGE_MISS) {
-			p_sound->PlaySwing();
+			swingFg = true;
 		}
 		RecNoteJudgeEventAll(event_queue, NJ, note, near_lane);
 	}
@@ -427,13 +464,12 @@ static void RecJudgeBombNote(
 	return;
 }
 
-static void RecJudgeGhostNote(cvec<note_box_2_t> note[], rec_play_sound_c *p_sound, const std::vector<DxSnd_t> &soundItem)
-{
+static void RecJudgeGhostNote(cvec<note_box_2_t> note[], rec_play_snditem_all_c &rec_snd) {
 	for (int iLine = 0; iLine < 3; iLine++) {
 		while (IS_BETWEEN(0, note[iLine].nowData().hittime, s_Ntime) &&
 			note[iLine].nowData().object == NOTE_GHOST)
 		{
-			PlayNoteHitSound(&note[iLine].nowData(), p_sound, soundItem);
+			rec_snd.PlaySoundDataBase(note[iLine].nowData());
 			note[iLine].stepNo();
 		}
 	}
@@ -459,30 +495,29 @@ static void RecJudgeSlowMiss(
 	return;
 }
 
-void RecJudgeGetEventQueue(
+static void RecJudgeGetEventQueue(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
-	const std::vector<DxSnd_t> &Sitem, key_hold_t *keyhold, rec_hitatk_event_ec &hitatk,
-	int LaneTrack[], int *charahit, short charaput, rec_play_sound_c *p_sound
+	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[], int *charahit,
+	short charaput, bool &swingFg
 ) {
 	int push_key_count = RecLPlayGetHitKeyPushCount(keyhold);
 	s_Ntime = Ntime;
-	RecJudgeHitNote(  event_queue, note, hitatk, push_key_count, p_sound);
+	RecJudgeHitNote(  event_queue, note, hitatk, push_key_count, swingFg);
 	RecJudgeArrowNote(event_queue, note, keyhold);
 	RecJudgeCatchNote(event_queue, note, hitatk, charahit, LaneTrack);
 	RecJudgeBombNote( event_queue, note, hitatk, charahit, charaput);
-	RecJudgeGhostNote(             note, p_sound, Sitem);
 	RecJudgeSlowMiss( event_queue, note);
 }
 
-void RecJudgeEventAction(
-	std::queue<rec_judge_event_st> &event_queue, const std::vector<DxSnd_t> &Sitem,
-	userpal_t *userpal, rec_play_sound_c *p_sound
+static void RecJudgeEventAction(
+	std::queue<rec_judge_event_st> &event_queue, userpal_t *userpal,
+	rec_play_snditem_all_c &rec_snd
 ) {
 	while (!event_queue.empty()) {
 		/* ユーザーデータの更新 */
 		note_judge_event(event_queue.front().judge, userpal);
 		/* 効果音 */
-		PlayNoteHitSoundGeneral(event_queue.front().judge, &event_queue.front().noteinfo, p_sound, Sitem);
+		rec_snd.PlaySoundData(event_queue.front().judge, event_queue.front().noteinfo);
 		/* gapのデータ(ズレの平均と偏差値)を更新する */
 		if (IS_NOTE_HITTING_GROUP(event_queue.front().mat)) {
 			if ((-SAFE_TIME) <= event_queue.front().gaptime) {
@@ -495,13 +530,18 @@ void RecJudgeEventAction(
 
 void RecJudgeAllNotes(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
-	const std::vector<DxSnd_t> &Sitem, key_hold_t *keyhold, rec_hitatk_event_ec &hitatk,
-	int LaneTrack[], int *charahit, short charaput, userpal_t *userpal, rec_play_sound_c *p_sound
+	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[], int *charahit,
+	short charaput, userpal_t *userpal, rec_play_snditem_all_c &rec_snd
 ) {
+	bool swingFg = false;
 	std::queue<rec_judge_event_st> event_queue_in_this;
-	RecJudgeGetEventQueue(event_queue, note, Ntime, Sitem, keyhold, hitatk, LaneTrack, charahit, charaput, p_sound);
+	RecJudgeGetEventQueue(
+		event_queue, note, Ntime, keyhold, hitatk, LaneTrack, charahit, charaput, swingFg
+	);
+	if (swingFg) { rec_snd.PlaySwing(); }
 	event_queue_in_this = event_queue;
-	RecJudgeEventAction(event_queue_in_this, Sitem, userpal, p_sound);
+	RecJudgeEventAction(event_queue_in_this, userpal, rec_snd);
+	RecJudgeGhostNote(note, rec_snd);
 }
 
 #endif /* RecJudge */
