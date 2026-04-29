@@ -11,7 +11,6 @@
 /* rec system include */
 #include <option.h>
 #include <playbox.h>
-#include <PlayViewJudge.h>
 #include <RecScoreFile.h>
 
 /* own include */
@@ -480,8 +479,6 @@ void RecJudgeEventAction(
 	userpal_t *userpal, rec_play_sound_c *p_sound
 ) {
 	while (!event_queue.empty()) {
-		/* 判定表示のセット */
-		PlaySetJudge(event_queue.front().judge);
 		/* ユーザーデータの更新 */
 		note_judge_event(event_queue.front().judge, userpal);
 		/* 効果音 */

@@ -26,7 +26,6 @@
 #include <PlayAuto.h>
 #include <PlayCamera.h>
 #include <PlayNoteJudge.h>
-#include <PlayViewJudge.h>
 
 /* rec sub include */
 #include <RecordLoad2.h>
@@ -1126,6 +1125,64 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyh
 
 #if 1 /* class */
 
+class rec_play_judge_pic_c {
+private:
+	dxcur_pic_c pic[4] = {
+		dxcur_pic_c(_T("picture/judge-just.png")),
+		dxcur_pic_c(_T("picture/judge-good.png")),
+		dxcur_pic_c(_T("picture/judge-safe.png")),
+		dxcur_pic_c(_T("picture/judge-miss.png"))
+	};
+
+	DxTime_t state[4];
+
+public:
+	void draw(const dxcur_camera_c &camera, rec_play_lanepos_t *lanePos, int charaput) {
+		int BaseDrawX = 0;
+		int BaseDrawY = 0;
+		int drawY = 0;
+		switch (optiondata.combopos) {
+		case 0:
+			BaseDrawX = 270;
+			BaseDrawY = 100;
+			break;
+		case 1:
+			BaseDrawX = 10;
+			BaseDrawY = 100;
+			break;
+		case 2:
+			BaseDrawX = 530;
+			BaseDrawY = 100;
+			break;
+		case 3:
+			BaseDrawX = 270;
+			BaseDrawY = 260;
+			break;
+		case 4:
+			BaseDrawX = camera.getX() + lanePos->x[charaput] - 120;
+			BaseDrawY = camera.getY() + lanePos->y[charaput] - 100;
+			break;
+		default:
+			return;
+		}
+		for (int i = 0; i < 4; i++) {
+			if (GetNowCount() - this->state[i] < 750) {
+				drawY = BaseDrawY + pals(250, 0, 0, 25, mins_2(GetNowCount() - this->state[i], 250));
+				RecRescaleDrawGraph(BaseDrawX, drawY, this->pic[i].handle(), TRUE);
+			}
+		}
+	}
+
+	void setJudge(note_judge judge) {
+		if (judge == NOTE_JUDGE_PJUST) {
+			this->state[0] = GetNowCount();
+		}
+		else {
+			this->state[judge] = GetNowCount();
+		}
+	}
+};
+
 class rec_play_hiteff_c {
 private:
 	struct {
@@ -2017,6 +2074,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	dxcur_camera_c cameraSkyClass;
 	rec_play_keyview_c keyviewClass;
 	rec_play_bonus_c bonusClass;
+	rec_play_judge_pic_c judgepicClass;
 	rec_play_item_c itemClass(folderPath);
 	rec_play_sitem_c sitemClass(folderPath);
 	rec_cutin_c cutin;
@@ -2029,8 +2087,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 #endif /* num define */
 
-	/* ピクチャの用意 */
-	ReadyJudgePicture();
 	/* action */
 	for (i[0] = 0; i[0] <= 59; i[0]++) { fps[i[0]] = 17; }
 	fps[60] = 0;
@@ -2115,6 +2171,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 						event_queue.front().judge, event_queue.front().mat,
 						event_queue.front().lineNo
 					);
+					judgepicClass.setJudge(event_queue.front().judge);
 					event_queue.pop();
 				}
 			}
@@ -2197,7 +2254,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
-		PlayShowJudge(cameraClass, &lanePos, runnerClass.pos);
+		judgepicClass.draw(cameraClass, &lanePos, runnerClass.pos);
 		/* 音符表示 */
 		{
 			rec_play_drawnotes_c action;
