@@ -1566,6 +1566,7 @@ static class rec_play_runner_c {
 
 private:
 	DxPic_t	charaimg[PIC_NUM];
+	rec_play_chara_hit_attack_t hitatk;
 	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/Cguide.png"));
 	dxcur_pic_c judghimg      = dxcur_pic_c(_T("picture/Marker.png"));
 	rec_play_hiteff_c hiteff;
@@ -1634,9 +1635,14 @@ private:
 	}
 
 public:
-	void UpdateCharapos(int time, cvec<note_box_2_t> note[],
-		rec_play_key_hold_t *keyhold, const rec_play_chara_hit_attack_t *hitatk)
-	{
+	/**
+	 * 上下キー入力があったらそれに準ずる
+	 * 上記以外で、左右キー入力があったらmid
+	 * 上記以外で、近くにactノーツがあったらmid
+	 * 上記以外で、HITノーツを叩いた後だったら叩いた場所
+	 * 上記以外ならmid
+	 */
+	void UpdateCharapos(int time, cvec<note_box_2_t> note[], rec_play_key_hold_t *keyhold) {
 		int ans = CHARA_POS_MID;
 		// push up
 		if (1 <= keyhold->up && 0 == keyhold->down) {
@@ -1653,25 +1659,50 @@ public:
 			this->pos = CHARA_POS_MID;
 			return;
 		}
-		// near catch/bomb
-		for (int i = 0; i < 3; i++) {
-			if (note[i].nowData().hittime <= time + 40 &&
-				(note[i].nowData().object == NOTE_CATCH ||
-					note[i].nowData().object == NOTE_BOMB))
-			{
-				this->pos = CHARA_POS_MID;
-				return;
-			}
+		// push left or right
+		if (1 <= keyhold->left || 1 <= keyhold->right) {
+			this->pos = CHARA_POS_MID;
+			return;
+		}
+		// near catch or bomb
+		if (IS_NEAR_NOTE_ACTOR_ANYLANE(note, time, 100)) {
+			this->pos = CHARA_POS_MID;
+			return;
 		}
 		// hit note
-		if (keyhold->up != 1 && keyhold->down != 1 &&
-			keyhold->left != 1 && keyhold->right != 1 && hitatk->time != -1000)
-		{
-			this->pos = hitatk->pos;
+		if (this->hitatk.time != -1000) {
+			this->pos = this->hitatk.pos;
 			return;
 		}
 		this->pos = CHARA_POS_MID;
 		return;
+	}
+
+	/* Hitatkの更新。時間切れ解除が主 */
+	void UpdateHitatk(const rec_play_key_hold_t &keyhold, int Ntime) {
+		if (IS_JUST_PUSH_ANY_ARROWKEY(&keyhold) || ((this->hitatk.time + 750) < Ntime)) {
+			this->hitatk.time = -1000;
+		}
+	}
+
+	void SetHitatkByEvent(rec_hitatk_event_ec event, int Ntime) {
+		switch (event) {
+		case REC_HITATK_EVENT_RESET:
+			this->hitatk.time = -1000;
+			break;
+		case REC_HITATK_EVENT_UP:
+			this->hitatk.pos  = 0;
+			this->hitatk.time = Ntime;
+			break;
+		case REC_HITATK_EVENT_MID:
+			this->hitatk.pos  = 1;
+			this->hitatk.time = Ntime;
+			break;
+		case REC_HITATK_EVENT_DOWN:
+			this->hitatk.pos  = 2;
+			this->hitatk.time = Ntime;
+			break;
+		}
 	}
 
 	void ViewRunner(rec_map_eff_data_t *mapeff, rec_play_key_hold_t *keyhold,
@@ -2006,7 +2037,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int AllNotesHitTime = -1;
 	int LaneTrack[3] = { -150,-150,-150 };
 	int StopFrag = -1;
-	rec_play_chara_hit_attack_t hitatk;
 	int fps[62];//0～59=1フレーム間隔の時間,60=次の代入先,61=前回の時間
 	short LineMoveN[3] = { 0,0,0 }; //↑のライン表示番号
 	rec_play_lanepos_t lanePos;
@@ -2104,16 +2134,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		else {
 			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
-		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, &keyhold, &hitatk);
+		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, &keyhold);
 		if ((GetNowCount() - charahit > 50) &&
 			IS_JUST_PUSH_ANY_ARROWKEY(&keyhold))
 		{
 			charahit = 0;
 		}
-		//キー押しヒット解除
-		if (IS_JUST_PUSH_ANY_ARROWKEY(&keyhold) || ((hitatk.time + 750) < recfp.time.now)) {
-			hitatk.time = -1000;
-		}
+		runnerClass.UpdateHitatk(keyhold, recfp.time.now);
 		//キャッチ判定に使う数値を計算
 		RecPlayCalLaneTrack(LaneTrack, &keyhold, runnerClass.pos, recfp.time.now);
 		//ヒット
@@ -2121,38 +2148,20 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */ {
 			rec_hitatk_event_ec hitatk_ev = REC_HITATK_EVENT_NONE;
-			{
-				std::queue<rec_judge_event_st> event_queue;
-				RecJudgeAllNotes(
-					event_queue, recfp.mapdata.note, recfp.time.now, &keyhold, hitatk_ev,
-					LaneTrack, &charahit, runnerClass.pos, &userpal, snd_set_class
+			std::queue<rec_judge_event_st> event_queue;
+			RecJudgeAllNotes(
+				event_queue, recfp.mapdata.note, recfp.time.now, &keyhold, hitatk_ev,
+				LaneTrack, &charahit, runnerClass.pos, &userpal, snd_set_class
+			);
+			while (!event_queue.empty()) {
+				runnerClass.setHiteff(
+					event_queue.front().judge, event_queue.front().mat,
+					event_queue.front().lineNo
 				);
-				while (!event_queue.empty()) {
-					runnerClass.setHiteff(
-						event_queue.front().judge, event_queue.front().mat,
-						event_queue.front().lineNo
-					);
-					judgepicClass.setJudge(event_queue.front().judge);
-					event_queue.pop();
-				}
+				judgepicClass.setJudge(event_queue.front().judge);
+				event_queue.pop();
 			}
-			switch (hitatk_ev) {
-			case REC_HITATK_EVENT_RESET:
-				hitatk.time = -1000;
-				break;
-			case REC_HITATK_EVENT_UP:
-				hitatk.pos  = 0;
-				hitatk.time = recfp.time.now;
-				break;
-			case REC_HITATK_EVENT_MID:
-				hitatk.pos  = 1;
-				hitatk.time = recfp.time.now;
-				break;
-			case REC_HITATK_EVENT_DOWN:
-				hitatk.pos  = 2;
-				hitatk.time = recfp.time.now;
-				break;
-			}
+			runnerClass.SetHitatkByEvent(hitatk_ev, recfp.time.now);
 		}
 		/* スコア計算 */ {
 			rec_play_score_calculator_c action;
