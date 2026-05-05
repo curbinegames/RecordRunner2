@@ -1,4 +1,4 @@
-/* TODO:効果音アイテムの音がでかい */
+/* TODO:アイテムが表示されない */
 
 #if 1 /* define group */
 
@@ -1565,6 +1565,7 @@ static class rec_play_runner_c {
 #define CHARA_POS_DOWN 2
 
 private:
+	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	DxPic_t	charaimg[PIC_NUM];
 	rec_play_chara_hit_attack_t hitatk;
 	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/Cguide.png"));
@@ -1685,10 +1686,19 @@ public:
 		}
 	}
 
+	void UpdateCharahit(const rec_play_key_hold_t &keyhold) {
+		if ((GetNowCount() - this->charahit > 50) && IS_JUST_PUSH_ANY_ARROWKEY(&keyhold)) {
+			this->charahit = 0;
+		}
+		if (IS_JUST_PUSH_ANY_HITKEY(&keyhold)) { this->charahit = GetNowCount(); }
+		if (this->charahit + 750 < GetNowCount()) { this->charahit = 0; }
+	}
+
 	void SetHitatkByEvent(rec_hitatk_event_ec event, int Ntime) {
 		switch (event) {
 		case REC_HITATK_EVENT_RESET:
 			this->hitatk.time = -1000;
+			this->charahit    = 0;
 			break;
 		case REC_HITATK_EVENT_UP:
 			this->hitatk.pos  = 0;
@@ -1706,7 +1716,7 @@ public:
 	}
 
 	void ViewRunner(rec_map_eff_data_t *mapeff, rec_play_key_hold_t *keyhold,
-		rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera_pos, int charahit, int Ntime)
+		rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera_pos, int Ntime)
 	{
 		// view chara pos guide
 		if (mapeff->carrow.nowData()) {
@@ -1726,7 +1736,7 @@ public:
 			camera_pos.drawpic(lanePos->x[i], lanePos->y[i], this->judghimg.handle());
 		}
 		/* キャラ表示 */
-		this->PlayDrawChara(keyhold, lanePos, camera_pos, charahit, Ntime, mapeff);
+		this->PlayDrawChara(keyhold, lanePos, camera_pos, this->charahit, Ntime, mapeff);
 	}
 
 	void drawHiteff(const dxcur_camera_c &camera_pos, const rec_play_lanepos_t &lanePos) {
@@ -2031,7 +2041,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	short i[3];
 
 	/* int */
-	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int G[20];
 	int holdG = 0;
 	int AllNotesHitTime = -1;
@@ -2135,23 +2144,16 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
 		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, &keyhold);
-		if ((GetNowCount() - charahit > 50) &&
-			IS_JUST_PUSH_ANY_ARROWKEY(&keyhold))
-		{
-			charahit = 0;
-		}
 		runnerClass.UpdateHitatk(keyhold, recfp.time.now);
+		runnerClass.UpdateCharahit(keyhold);
 		//キャッチ判定に使う数値を計算
 		RecPlayCalLaneTrack(LaneTrack, &keyhold, runnerClass.pos, recfp.time.now);
-		//ヒット
-		if (IS_JUST_PUSH_ANY_HITKEY(&keyhold)) { charahit = GetNowCount(); }
-		if (charahit + 750 < GetNowCount()) { charahit = 0; }
 		/* ノーツ判定 */ {
 			rec_hitatk_event_ec hitatk_ev = REC_HITATK_EVENT_NONE;
 			std::queue<rec_judge_event_st> event_queue;
 			RecJudgeAllNotes(
 				event_queue, recfp.mapdata.note, recfp.time.now, &keyhold, hitatk_ev,
-				LaneTrack, &charahit, runnerClass.pos, &userpal, snd_set_class
+				LaneTrack, runnerClass.pos, &userpal, snd_set_class
 			);
 			while (!event_queue.empty()) {
 				runnerClass.setHiteff(
@@ -2219,7 +2221,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowAllGuideLine(&recfp, &lanePos, cameraClass, LineMoveN);
 		RecPlayDrawGuideBorder(&recfp, cameraClass, &lanePos);
 		/* キャラ周り表示 */
-		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, cameraClass, charahit, recfp.time.now);
+		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, cameraClass, recfp.time.now);
 		runnerClass.drawHiteff(cameraClass, lanePos);
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);

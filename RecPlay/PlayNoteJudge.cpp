@@ -425,8 +425,8 @@ static void RecJudgeArrowNote(
 
 static void RecJudgeCatchNote(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[],
-	rec_hitatk_event_ec &hitatk, int *charahit, int LaneTrack[])
-{
+	rec_hitatk_event_ec &hitatk, int LaneTrack[]
+) {
 	int GapTime = 0;
 
 	for (int iLine = 0; iLine < 3; iLine++) {
@@ -436,7 +436,6 @@ static void RecJudgeCatchNote(
 			note[iLine].nowData().object == NOTE_CATCH)
 		{
 			RecNoteJudgeEventAll(event_queue, NOTE_JUDGE_PJUST, note, iLine);
-			*charahit = 0;
 			hitatk = REC_HITATK_EVENT_RESET;
 		}
 	}
@@ -445,8 +444,8 @@ static void RecJudgeCatchNote(
 
 static void RecJudgeBombNote(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[],
-	rec_hitatk_event_ec &hitatk, int *charahit, short charaput)
-{
+	rec_hitatk_event_ec &hitatk, short charaput
+) {
 	int GapTime = 0;
 
 	for (int iLine = 0; iLine < 3; iLine++) {
@@ -457,7 +456,6 @@ static void RecJudgeBombNote(
 			note_judge b_judge =
 				(iLine == charaput && GapTime <= 0) ? NOTE_JUDGE_MISS : NOTE_JUDGE_PJUST;
 			RecNoteJudgeEventAll(event_queue, b_judge, note, iLine);
-			*charahit = 0;
 			hitatk = REC_HITATK_EVENT_RESET;
 		}
 	}
@@ -497,15 +495,15 @@ static void RecJudgeSlowMiss(
 
 static void RecJudgeGetEventQueue(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
-	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[], int *charahit,
+	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[],
 	short charaput, bool &swingFg
 ) {
 	int push_key_count = RecLPlayGetHitKeyPushCount(keyhold);
 	s_Ntime = Ntime;
 	RecJudgeHitNote(  event_queue, note, hitatk, push_key_count, swingFg);
 	RecJudgeArrowNote(event_queue, note, keyhold);
-	RecJudgeCatchNote(event_queue, note, hitatk, charahit, LaneTrack);
-	RecJudgeBombNote( event_queue, note, hitatk, charahit, charaput);
+	RecJudgeCatchNote(event_queue, note, hitatk, LaneTrack);
+	RecJudgeBombNote( event_queue, note, hitatk, charaput);
 	RecJudgeSlowMiss( event_queue, note);
 }
 
@@ -530,14 +528,12 @@ static void RecJudgeEventAction(
 
 void RecJudgeAllNotes(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
-	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[], int *charahit,
+	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[],
 	short charaput, userpal_t *userpal, rec_play_snditem_all_c &rec_snd
 ) {
 	bool swingFg = false;
 	std::queue<rec_judge_event_st> event_queue_in_this;
-	RecJudgeGetEventQueue(
-		event_queue, note, Ntime, keyhold, hitatk, LaneTrack, charahit, charaput, swingFg
-	);
+	RecJudgeGetEventQueue(event_queue, note, Ntime, keyhold, hitatk, LaneTrack, charaput, swingFg);
 	if (swingFg) { rec_snd.PlaySwing(); }
 	event_queue_in_this = event_queue;
 	RecJudgeEventAction(event_queue_in_this, userpal, rec_snd);
