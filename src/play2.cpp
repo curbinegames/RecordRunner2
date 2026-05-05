@@ -499,7 +499,6 @@ static void recSetLine(int line[], cvec<rec_mapeff_move_st> move[], int Ntime, i
 	}
 }
 
-/* TODO:アイテムが位置ずれしてる */
 static void PlayDrawItem(
 	rec_map_eff_data_t *mapeff, int Ntime, int Xmidline,
 	const dxcur_camera_c &camera_c, const std::vector<DxPic_t> &item
@@ -521,10 +520,10 @@ static void PlayDrawItem(
 			pMovie->endtime, pMovie->endalpha, Ntime);
 		drawX = (int)movecal(pMovie->movemode,
 			pMovie->starttime, pMovie->startXpos,
-			pMovie->endtime, pMovie->endXpos, Ntime) + camera.x;
+			pMovie->endtime, pMovie->endXpos, Ntime);
 		drawY = (int)movecal(pMovie->movemode,
 			pMovie->starttime, pMovie->startYpos,
-			pMovie->endtime, pMovie->endYpos, Ntime) + camera.y;
+			pMovie->endtime, pMovie->endYpos, Ntime);
 		drawS = (int)movecal(pMovie->movemode,
 			pMovie->starttime, pMovie->startsize,
 			pMovie->endtime, pMovie->endsize, Ntime);
@@ -532,12 +531,7 @@ static void PlayDrawItem(
 			pMovie->starttime, pMovie->startrot,
 			pMovie->endtime, pMovie->endrot, Ntime);
 		//material setting
-		if (pMovie->eff.lock == 1) {
-			drawX -= camera.x;
-		}
-		if (pMovie->eff.lock == 1) {
-			drawY -= 25 + camera.y;
-		}
+		if (pMovie->eff.lock == 1) { drawY -= 25; }
 		if (pMovie->eff.bpm_alphr == 1) {
 			drawA = lins(0, drawA, 60000 / mapeff->v_BPM.nowData(), 0,
 				(Ntime - mapeff->v_BPM.nowDataTime()) % (int)(60000 / mapeff->v_BPM.nowData()));
@@ -553,13 +547,16 @@ static void PlayDrawItem(
 			drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
 			drawS = betweens(0, lins(100, drawS, 0, 0, drawX), drawS);
 		}
-		//rescale
-		drawX = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawX);
-		drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawY);
-		drawS = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, drawS);
 		//drawing
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-		DrawDeformationPicRecField(camera_c, drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]);
+		if (pMovie->eff.lock == 1) {
+			RecRescaleDrawDeformationPic(
+				drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]
+			);
+		}
+		else {
+			camera_c.drawpicDeformationDeg(drawX, drawY, drawS / 100.0, drawR, item[pMovie->ID]);
+		}
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}
 }
@@ -2241,9 +2238,26 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		keyviewClass.ViewKeyview(&keyhold);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバッグ表示
+		if (AutoFlag == 1) {
+			fps[fps[60]++] = recfp.time.now - fps[61];
+			if (fps[60] > 59)fps[60] -= 60;
+			fps[61] = recfp.time.now;
+			G[0] = 0;
+			for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
+			RecRescaleDrawFormatString(
+				20, 80, Cr, L"FPS: %.1f", DIV_AVOID_ZERO((double)60000, (double)G[0], (double)0)
+			);
+			RecRescaleDrawFormatString(20, 100, Cr, L"Autoplay");
+		}
 		if (holdG >= 1) {
-			RecRescaleDrawFormatString(490, 80, Cr, L"mdif:%.2f", recfp.mapdata.mpal.mdif / 100.0);
+			RecRescaleDrawFormatString(20, 120, Cr, L"mdif: %.2f", recfp.mapdata.mpal.mdif / 100.0);
 			RacPlayDrawFieldGrid(cameraClass);
+			RecRescaleDrawFormatString(
+				20, 140, COLOR_WHITE,
+				_T("camera: x=%d, y=%d,\n        zoom=%.2f, rot=%.1f"),
+				cameraClass.getX(), cameraClass.getY(),
+				cameraClass.getZoom(), cameraClass.getAngleDeg()
+			);
 #if 0
 			/* エラー表示 */
 			if (recfp.outpoint[1] != 0) {
@@ -2252,15 +2266,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 					lins(recfp.time.offset, 175, recfp.time.end, 465, recfp.outpoint[0]), 38, CrR);
 			}
 #endif
-		}
-		if (AutoFlag == 1) {
-			fps[fps[60]++] = recfp.time.now - fps[61];
-			if (fps[60] > 59)fps[60] -= 60;
-			fps[61] = recfp.time.now;
-			G[0] = 0;
-			for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
-			RecRescaleDrawFormatString(20, 80, Cr, L"FPS: %.1f", DIV_AVOID_ZERO((double)60000, (double)G[0], (double)0));
-			RecRescaleDrawFormatString(20, 100, Cr, L"Autoplay");
 		}
 		RECR_DEBUG(0, RecPlayDebug[0]);
 		RECR_DEBUG(1, RecPlayDebug[1]);

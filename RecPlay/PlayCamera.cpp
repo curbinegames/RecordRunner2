@@ -114,7 +114,7 @@ void DrawDeformationPicRecField(
 	double drawR = rot  - camera_pos.getAngleDeg();
 	camera_pos.WorldToScreen(drawX, drawY);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
-	DrawDeformationPic(drawX, drawY, drawS / 100.0, drawS / 100.0, rot, pic);
+	DrawDeformationPic(drawX, drawY, drawS, drawS, rot, pic);
 	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 }
 
