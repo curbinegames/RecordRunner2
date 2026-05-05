@@ -1,4 +1,3 @@
-/* TODO:アイテムが表示されない */
 
 #if 1 /* define group */
 
@@ -1563,14 +1562,12 @@ static class rec_play_runner_c {
 
 private:
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
+	int pos = 1; //キャラの今の位置[0で上,1で中,2で下]
 	DxPic_t	charaimg[PIC_NUM];
 	rec_play_chara_hit_attack_t hitatk;
 	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/Cguide.png"));
 	dxcur_pic_c judghimg      = dxcur_pic_c(_T("picture/Marker.png"));
 	rec_play_hiteff_c hiteff;
-
-public:
-	int pos = 1; //キャラの今の位置[0で上,1で中,2で下]
 
 public:
 	rec_play_runner_c(void) {
@@ -1746,6 +1743,10 @@ public:
 
 	void setHiteff(note_judge judge, note_material mat, int LineNo) {
 		this->hiteff.setEff(judge, mat, LineNo);
+	}
+
+	int getCharaPos(void) const {
+		return this->pos;
 	}
 
 #undef DIV_X
@@ -2144,13 +2145,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		runnerClass.UpdateHitatk(keyhold, recfp.time.now);
 		runnerClass.UpdateCharahit(keyhold);
 		//キャッチ判定に使う数値を計算
-		RecPlayCalLaneTrack(LaneTrack, &keyhold, runnerClass.pos, recfp.time.now);
+		RecPlayCalLaneTrack(LaneTrack, &keyhold, runnerClass.getCharaPos(), recfp.time.now);
 		/* ノーツ判定 */ {
 			rec_hitatk_event_ec hitatk_ev = REC_HITATK_EVENT_NONE;
 			std::queue<rec_judge_event_st> event_queue;
 			RecJudgeAllNotes(
 				event_queue, recfp.mapdata.note, recfp.time.now, &keyhold, hitatk_ev,
-				LaneTrack, runnerClass.pos, &userpal, snd_set_class
+				LaneTrack, runnerClass.getCharaPos(), &userpal, snd_set_class
 			);
 			while (!event_queue.empty()) {
 				runnerClass.setHiteff(
@@ -2223,7 +2224,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
 		//判定表示
-		judgepicClass.draw(cameraClass, &lanePos, runnerClass.pos);
+		judgepicClass.draw(cameraClass, &lanePos, runnerClass.getCharaPos());
 		/* 音符表示 */
 		{
 			rec_play_drawnotes_c action;
