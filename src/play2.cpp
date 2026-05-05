@@ -724,11 +724,11 @@ static void RacPlayDrawFieldGrid(const dxcur_camera_c &camera) {
 }
 
 /* キャッチ判定に使う数値を計算 */
-static void RecPlayCalLaneTrack(int LaneTrack[], const rec_play_key_hold_t *keyhold, int charaput, int Ntime) {
+static void RecPlayCalLaneTrack(int LaneTrack[], const rec_play_key_hold_c &keyhold, int charaput, int Ntime) {
 	LaneTrack[charaput] = Ntime;
-	if (keyhold->up == 0 && keyhold->down == 0 || keyhold->up > 0 && keyhold->down > 0) { LaneTrack[1] = Ntime; }
-	else if (keyhold->up > 0 && keyhold->down == 0) { LaneTrack[0] = Ntime; }
-	else if (keyhold->up == 0 && keyhold->down > 0) { LaneTrack[2] = Ntime; }
+	if (keyhold.IsMidAction()) { LaneTrack[1] = Ntime; }
+	else if (keyhold.IsUpAction()) { LaneTrack[0] = Ntime; }
+	else if (keyhold.IsDownAction()) { LaneTrack[2] = Ntime; }
 	if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[0]); }
 	else { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[2]); } 
 	return;
@@ -1081,7 +1081,7 @@ static void PlayShowAllGuideLine(rec_score_file_t *recfp, const rec_play_lanepos
 
 #if 1 /* control */
 
-static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyhold, int *holdG,
+static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_c &keyhold, int *holdG,
 	bool AutoFlag)
 {
 	char key[256];
@@ -1093,20 +1093,20 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_t *keyh
 		AutoAution(keyhold, recfp->mapdata.note, recfp->time.now);
 	}
 	else {
-		if (key[KEY_INPUT_Z] == 0) keyhold->z = 0;
-		else if (key[KEY_INPUT_Z] == 1) keyhold->z++;
-		if (key[KEY_INPUT_X] == 0) keyhold->x = 0;
-		else if (key[KEY_INPUT_X] == 1) keyhold->x++;
-		if (key[KEY_INPUT_C] == 0) keyhold->c = 0;
-		else if (key[KEY_INPUT_C] == 1) keyhold->c++;
-		if (key[KEY_INPUT_UP] == 0) keyhold->up = 0;
-		else if (key[KEY_INPUT_UP] == 1) keyhold->up++;
-		if (key[KEY_INPUT_LEFT] == 0) keyhold->left = 0;
-		else if (key[KEY_INPUT_LEFT] == 1) keyhold->left++;
-		if (key[KEY_INPUT_RIGHT] == 0) keyhold->right = 0;
-		else if (key[KEY_INPUT_RIGHT] == 1) keyhold->right++;
-		if (key[KEY_INPUT_DOWN] == 0) keyhold->down = 0;
-		else if (key[KEY_INPUT_DOWN] == 1) keyhold->down++;
+		if (key[KEY_INPUT_Z]          == 0) keyhold.z = 0;
+		else if (key[KEY_INPUT_Z]     == 1) keyhold.z++;
+		if (key[KEY_INPUT_X]          == 0) keyhold.x = 0;
+		else if (key[KEY_INPUT_X]     == 1) keyhold.x++;
+		if (key[KEY_INPUT_C]          == 0) keyhold.c = 0;
+		else if (key[KEY_INPUT_C]     == 1) keyhold.c++;
+		if (key[KEY_INPUT_UP]         == 0) keyhold.up = 0;
+		else if (key[KEY_INPUT_UP]    == 1) keyhold.up++;
+		if (key[KEY_INPUT_LEFT]       == 0) keyhold.left = 0;
+		else if (key[KEY_INPUT_LEFT]  == 1) keyhold.left++;
+		if (key[KEY_INPUT_RIGHT]      == 0) keyhold.right = 0;
+		else if (key[KEY_INPUT_RIGHT] == 1) keyhold.right++;
+		if (key[KEY_INPUT_DOWN]       == 0) keyhold.down = 0;
+		else if (key[KEY_INPUT_DOWN]  == 1) keyhold.down++;
 	}
 }
 
@@ -1594,7 +1594,7 @@ public:
 	}
 
 private:
-	void PlayDrawChara(rec_play_key_hold_t *key, rec_play_lanepos_t *lanePos,
+	void PlayDrawChara(const rec_play_key_hold_c &key, rec_play_lanepos_t *lanePos,
 		const dxcur_camera_c &camera_pos, int charahit,
 		int Ntime, rec_map_eff_data_t *mapeff)
 	{
@@ -1604,9 +1604,8 @@ private:
 		int hitoffset = 0;
 		int picID = 0;
 
-		if (key->z == 1) { hitpose = (hitpose + 1) % 2; }
-		if (key->x == 1) { hitpose = (hitpose + 1) % 2; }
-		if (key->c == 1) { hitpose = (hitpose + 1) % 2; }
+		hitpose = (hitpose + key.GetHitPushCount()) % 2;
+
 		if (GetNowCount() - charahit > 250) { hitoffset = 0; }
 		else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
 		drawY = lanePos->y[this->pos] - 75;
@@ -1637,25 +1636,18 @@ public:
 	 * 上記以外で、HITノーツを叩いた後だったら叩いた場所
 	 * 上記以外ならmid
 	 */
-	void UpdateCharapos(int time, cvec<note_box_2_t> note[], rec_play_key_hold_t *keyhold) {
+	void UpdateCharapos(int time, cvec<note_box_2_t> note[], const rec_play_key_hold_c &keyhold) {
 		int ans = CHARA_POS_MID;
-		// push up
-		if (1 <= keyhold->up && 0 == keyhold->down) {
+		// key action
+		if (keyhold.IsUpAction()) {
 			this->pos = CHARA_POS_UP;
 			return;
 		}
-		// push down
-		if (0 == keyhold->up && 1 <= keyhold->down) {
+		if (keyhold.IsDownAction()) {
 			this->pos = CHARA_POS_DOWN;
 			return;
 		}
-		// push up and down
-		if (1 <= keyhold->up && 1 <= keyhold->down) {
-			this->pos = CHARA_POS_MID;
-			return;
-		}
-		// push left or right
-		if (1 <= keyhold->left || 1 <= keyhold->right) {
+		if (keyhold.IsMidAction()) {
 			this->pos = CHARA_POS_MID;
 			return;
 		}
@@ -1674,17 +1666,19 @@ public:
 	}
 
 	/* Hitatkの更新。時間切れ解除が主 */
-	void UpdateHitatk(const rec_play_key_hold_t &keyhold, int Ntime) {
-		if (IS_JUST_PUSH_ANY_ARROWKEY(&keyhold) || ((this->hitatk.time + 750) < Ntime)) {
+	void UpdateHitatk(const rec_play_key_hold_c &keyhold, int Ntime) {
+		if (
+			keyhold.IsJustPushAnyArrow() || ((this->hitatk.time + 750) < Ntime)
+		) {
 			this->hitatk.time = -1000;
 		}
 	}
 
-	void UpdateCharahit(const rec_play_key_hold_t &keyhold) {
-		if ((GetNowCount() - this->charahit > 50) && IS_JUST_PUSH_ANY_ARROWKEY(&keyhold)) {
+	void UpdateCharahit(const rec_play_key_hold_c &keyhold) {
+		if ((GetNowCount() - this->charahit > 50) && keyhold.IsJustPushAnyArrow()) {
 			this->charahit = 0;
 		}
-		if (IS_JUST_PUSH_ANY_HITKEY(&keyhold)) { this->charahit = GetNowCount(); }
+		if (keyhold.IsJustPushAnyHit()) { this->charahit = GetNowCount(); }
 		if (this->charahit + 750 < GetNowCount()) { this->charahit = 0; }
 	}
 
@@ -1709,7 +1703,7 @@ public:
 		}
 	}
 
-	void ViewRunner(rec_map_eff_data_t *mapeff, rec_play_key_hold_t *keyhold,
+	void ViewRunner(rec_map_eff_data_t *mapeff, const rec_play_key_hold_c &keyhold,
 		rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera_pos, int Ntime)
 	{
 		// view chara pos guide
@@ -1951,22 +1945,22 @@ public:
 		}
 	}
 
-	void ViewKeyview(rec_play_key_hold_t *keyhold) {
+	void ViewKeyview(const rec_play_key_hold_c &keyhold) {
 		if (this->enable) {
-			if (keyhold->z == 1) { this->count[0]++; }
-			if (keyhold->x == 1) { this->count[1]++; }
-			if (keyhold->c == 1) { this->count[2]++; }
-			if (keyhold->up == 1) { this->count[3]++; }
-			if (keyhold->down == 1) { this->count[4]++; }
-			if (keyhold->left == 1) { this->count[5]++; }
-			if (keyhold->right == 1) { this->count[6]++; }
-			RecRescaleDrawGraph(5, 445, this->KeyViewimg[mins_2(keyhold->z, 1)].handle(), REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(40, 445, this->KeyViewimg[mins_2(keyhold->x, 1)].handle(), REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(75, 445, this->KeyViewimg[mins_2(keyhold->c, 1)].handle(), REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(570, 410, this->KeyViewimg[mins_2(keyhold->up, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(570, 445, this->KeyViewimg[mins_2(keyhold->down, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(535, 445, this->KeyViewimg[mins_2(keyhold->left, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(605, 445, this->KeyViewimg[mins_2(keyhold->right, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+			if (keyhold.z     == 1) { this->count[0]++; }
+			if (keyhold.x     == 1) { this->count[1]++; }
+			if (keyhold.c     == 1) { this->count[2]++; }
+			if (keyhold.up    == 1) { this->count[3]++; }
+			if (keyhold.down  == 1) { this->count[4]++; }
+			if (keyhold.left  == 1) { this->count[5]++; }
+			if (keyhold.right == 1) { this->count[6]++; }
+			RecRescaleDrawGraph(  5, 445, this->KeyViewimg[mins_2(keyhold.z,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph( 40, 445, this->KeyViewimg[mins_2(keyhold.x,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph( 75, 445, this->KeyViewimg[mins_2(keyhold.c,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+			RecRescaleDrawGraph(570, 410, this->KeyViewimg[mins_2(keyhold.up,    1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(570, 445, this->KeyViewimg[mins_2(keyhold.down,  1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(535, 445, this->KeyViewimg[mins_2(keyhold.left,  1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+			RecRescaleDrawGraph(605, 445, this->KeyViewimg[mins_2(keyhold.right, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
 			if (this->count[0] == 0) { RecRescaleAnchorDrawString(10, 450, L"Z", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
 			else { RecRescaleAnchorDrawFormatString(10, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[0] % 100); }
 			if (this->count[1] == 0) { RecRescaleAnchorDrawString(45, 450, L"X", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
@@ -2055,7 +2049,6 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int max_adif = 0;
 
 	/* struct */
-	rec_play_key_hold_t keyhold;
 	rec_system_t system;
 	rec_score_file_t recfp;
 	rec_play_userpal_t userpal;
@@ -2066,6 +2059,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	double DifRate; //譜面定数
 
 	/* class */
+	rec_play_key_hold_c keyhold;
 	rec_play_sbar_c sbarClass;
 	rec_play_combo_c comboPicClass;
 	rec_play_gapbar_c gapbarClass;
@@ -2122,7 +2116,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//キー入力
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		RecPlayStepAllNum(&recfp, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
-		RecPlayGetKeyhold(&recfp, &keyhold, &holdG, AutoFlag);
+		RecPlayGetKeyhold(&recfp, keyhold, &holdG, AutoFlag);
 		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, LineMoveN);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			rec_bgm_system_g.Stop();
@@ -2141,16 +2135,16 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		else {
 			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
 		}
-		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, &keyhold);
+		runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, keyhold);
 		runnerClass.UpdateHitatk(keyhold, recfp.time.now);
 		runnerClass.UpdateCharahit(keyhold);
 		//キャッチ判定に使う数値を計算
-		RecPlayCalLaneTrack(LaneTrack, &keyhold, runnerClass.getCharaPos(), recfp.time.now);
+		RecPlayCalLaneTrack(LaneTrack, keyhold, runnerClass.getCharaPos(), recfp.time.now);
 		/* ノーツ判定 */ {
 			rec_hitatk_event_ec hitatk_ev = REC_HITATK_EVENT_NONE;
 			std::queue<rec_judge_event_st> event_queue;
 			RecJudgeAllNotes(
-				event_queue, recfp.mapdata.note, recfp.time.now, &keyhold, hitatk_ev,
+				event_queue, recfp.mapdata.note, recfp.time.now, keyhold, hitatk_ev,
 				LaneTrack, runnerClass.getCharaPos(), &userpal, snd_set_class
 			);
 			while (!event_queue.empty()) {
@@ -2219,7 +2213,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowAllGuideLine(&recfp, &lanePos, cameraClass, LineMoveN);
 		RecPlayDrawGuideBorder(&recfp, cameraClass, &lanePos);
 		/* キャラ周り表示 */
-		runnerClass.ViewRunner(&recfp.mapeff, &keyhold, &lanePos, cameraClass, recfp.time.now);
+		runnerClass.ViewRunner(&recfp.mapeff, keyhold, &lanePos, cameraClass, recfp.time.now);
 		runnerClass.drawHiteff(cameraClass, lanePos);
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
@@ -2236,7 +2230,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//判定ずれバー表示
 		gapbarClass.ViewGapBar(&userpal.gap);
 		//キー押し状況表示(オプション)
-		keyviewClass.ViewKeyview(&keyhold);
+		keyviewClass.ViewKeyview(keyhold);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバッグ表示
 		if (AutoFlag == 1) {

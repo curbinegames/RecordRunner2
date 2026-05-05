@@ -21,7 +21,7 @@
 
 #define AVOID_ARROW_DIV_TIME 10
 
-typedef rec_play_key_hold_t key_hold_t;
+typedef rec_play_key_hold_c key_hold_t;
 typedef rec_play_userpal_t userpal_t;
 
 static int s_Ntime = 0;
@@ -188,19 +188,19 @@ static note_judge CheckJudge(int gap) {
  * @param[in] key 押しているキーの情報
  * @return たたいていたらtrue, たたいていなかったらfalse
  */
-static bool CheckArrowInJudge(note_material mat, key_hold_t *key) {
+static bool CheckArrowInJudge(note_material mat, const key_hold_t &key) {
 	switch (mat) {
 	case NOTE_UP:
-		if (key->up == 1) { return true; }
+		if (key.up == 1) { return true; }
 		break;
 	case NOTE_DOWN:
-		if (key->down == 1) { return true; }
+		if (key.down == 1) { return true; }
 		break;
 	case NOTE_LEFT:
-		if (key->left == 1) { return true; }
+		if (key.left == 1) { return true; }
 		break;
 	case NOTE_RIGHT:
-		if (key->right == 1) { return true; }
+		if (key.right == 1) { return true; }
 		break;
 	}
 	return false;
@@ -232,20 +232,6 @@ static void SetHitPosByHit(rec_hitatk_event_ec &hitatk, const char hitflag) {
 		break;
 	}
 	return;
-}
-
-/**
- * Hitキーが押された個数を返す
- * @param[in] keyhold 押しているキーの情報
- * @return Hitキーが押された個数
- */
-static uint RecLPlayGetHitKeyPushCount(const key_hold_t *keyhold) {
-	uint ret = 0;
-	if (keyhold == NULL) { return 0; }
-	if (keyhold->z == 1) { ret++; }
-	if (keyhold->x == 1) { ret++; }
-	if (keyhold->c == 1) { ret++; }
-	return ret;
 }
 
 #if 1 /* RecNoteJudgeEventAll */
@@ -364,7 +350,8 @@ static void RecJudgeHitNote(
 }
 
 static void RecJudgeArrowNote(
-	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], key_hold_t *keyhold
+	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[],
+	const key_hold_t &keyhold
 ) {
 	int avoidFg[3] = { 0,0,0 };
 	note_box_2_t buf[3];
@@ -495,10 +482,10 @@ static void RecJudgeSlowMiss(
 
 static void RecJudgeGetEventQueue(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
-	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[],
+	const key_hold_t &keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[],
 	short charaput, bool &swingFg
 ) {
-	int push_key_count = RecLPlayGetHitKeyPushCount(keyhold);
+	int push_key_count = keyhold.GetHitPushCount();
 	s_Ntime = Ntime;
 	RecJudgeHitNote(  event_queue, note, hitatk, push_key_count, swingFg);
 	RecJudgeArrowNote(event_queue, note, keyhold);
@@ -528,7 +515,7 @@ static void RecJudgeEventAction(
 
 void RecJudgeAllNotes(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
-	key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[],
+	const key_hold_t &keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[],
 	short charaput, userpal_t *userpal, rec_play_snditem_all_c &rec_snd
 ) {
 	bool swingFg = false;

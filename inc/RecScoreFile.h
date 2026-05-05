@@ -77,12 +77,6 @@ typedef enum note_material {
 
 #endif /* note_material */
 
-template<typename T>
-using cvec = datacur_cursor_vector<T>;
-
-template<typename T>
-using tvec = datacur_timeline_vector<T>;
-
 typedef enum note_lane_num_e {
 	NOTE_LANE_UP = 0,
 	NOTE_LANE_MID,

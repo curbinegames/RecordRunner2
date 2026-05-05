@@ -67,24 +67,6 @@ typedef struct rec_play_xy_set_s {
 	int y;
 } rec_play_xy_set_t;
 
-/* <=-1: just release, 0: no push, 1: just push, 2<=: hold */
-typedef struct rec_play_key_hold_s {
-	int z = 0;
-	int x = 0;
-	int c = 0;
-	int up = 0;
-	int down = 0;
-	int left = 0;
-	int right = 0;
-} rec_play_key_hold_t;
-#define IS_PUSH_UPDOWN(keyhold)            ( ((keyhold)->up >= 1) && ((keyhold)->down >= 1) )
-#define IS_PUSH_ANY_ARROWKEY(keyhold)      ( ((keyhold)->up >= 1) || ((keyhold)->down >= 1) || ((keyhold)->left >= 1) || ((keyhold)->right >= 1) )
-#define IS_JUST_PUSH_ANY_ARROWKEY(keyhold) ( ((keyhold)->up == 1) || ((keyhold)->down == 1) || ((keyhold)->left == 1) || ((keyhold)->right == 1) )
-#define IS_JUST_PUSH_ANY_HITKEY(keyhold)   ( ((keyhold)->z  == 1) || ((keyhold)->x    == 1) || ((keyhold)->c    == 1) )
-#define IS_CHARAUP_KEY(keyhold)            ( ((keyhold)->up >= 1) && ((keyhold)->down == 0) )
-#define IS_CHARAMID_KEY(keyhold)           ( ((keyhold)->up == 0) && ((keyhold)->down == 0) || ((keyhold)->up >= 1) && ((keyhold)->down >= 1) )
-#define IS_CHARALOW_KEY(keyhold)           ( ((keyhold)->up == 0) && ((keyhold)->down >= 1) )
-
 typedef struct distance_score_s {
 	int add = 0;
 	int add_save = 0;
@@ -116,3 +98,25 @@ typedef struct rec_play_lanepos_s {
 } rec_play_lanepos_t;
 
 #endif /* struct */
+
+/* <=-1: just release, 0: no push, 1: just push, 2<=: hold */
+class rec_play_key_hold_c {
+public:
+	int z = 0;
+	int x = 0;
+	int c = 0;
+	int up = 0;
+	int down = 0;
+	int left = 0;
+	int right = 0;
+
+	int GetHitPushCount(void) const;
+	bool IsPushAnyHit(void) const;
+	bool IsJustPushAnyHit(void) const;
+	bool IsUpAction(void) const;
+	bool IsDownAction(void) const;
+	bool IsMidAction(void) const;
+	bool IsNoneAction(void) const;
+	bool IsPushAnyArrow(void) const;
+	bool IsJustPushAnyArrow(void) const;
+};

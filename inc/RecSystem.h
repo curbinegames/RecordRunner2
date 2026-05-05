@@ -1,10 +1,11 @@
 #pragma once
 
-#include "DxLib.h"
+#include <DxLib.h>
 #include <sancur.h>
 #include <stdcur.h>
-#include "recr_cutin.h"
-#include "helpBar.h"
+#include <datacur.h>
+#include <recr_cutin.h>
+#include <helpBar.h>
 
 #define REC_DEBUG 0 // 0or1 1でデバッグ用コードがビルドされる
 
@@ -32,6 +33,12 @@
 #define RECR_DEBUG(n, data_a, data_b)
 #define RECR_DEBUG_LOOP(n, data_a, data_b)
 #endif
+
+template<typename T>
+using cvec = datacur_cursor_vector<T>;
+
+template<typename T>
+using tvec = datacur_timeline_vector<T>;
 
 #if 1 /* enum */
 

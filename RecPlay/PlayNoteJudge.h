@@ -106,6 +106,6 @@ public:
 extern void RecPlayInitMelodySnd();
 extern void RecJudgeAllNotes(
 	std::queue<rec_judge_event_st> &event_queue, cvec<note_box_2_t> note[], int Ntime,
-	rec_play_key_hold_t *keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[],
+	const rec_play_key_hold_c &keyhold, rec_hitatk_event_ec &hitatk, int LaneTrack[],
 	short charaput, rec_play_userpal_t *userpal, rec_play_snditem_all_c &rec_snd
 );
