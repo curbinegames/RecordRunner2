@@ -79,6 +79,11 @@ typedef struct rec_result_pal_s {
 
 class rec_result_numfont_c {
 private:
+	int picgapX    = 46;
+	int picsizeX   = 58;
+	int picsizeY   = 64;
+	int pointsizeX = 17;
+
 	dxcur_divpic_c pic[7] = {
 		dxcur_divpic_c(_T("fontcur/NumberMono.png"   ), 12, 5, 3),
 		dxcur_divpic_c(_T("fontcur/NumberRed.png"    ), 12, 5, 3),
@@ -89,62 +94,77 @@ private:
 		dxcur_divpic_c(_T("fontcur/NumberRainbow.png"), 12, 5, 3)
 	};
 
-public:
-	/**
-	* 数字を書きます
-	* @param[in] dn draw number
-	* @param[in] x draw X pos
-	* @param[in] y draw Y pos
-	* @param[in] sizeY font Y size
-	* @param[in] Cr font color
-	* @param[in] a under point count (if dn = 157.423 and a = 2, draw "157.42")
-	* @param[in] zero draw "0." (if dn = 0.524 and zero = 0, draw ".524")
-	* @return なし
-	*/
-	void Draw(double dn, short x, short y, int sizeY, cur_font_cr_t Cr, short a = 0, int zero = 1) const {
-		/* int */
-		int k = 0;
-		int n;
-		int m;
-		int ZeroP = 0; /* minus flag */
-		int sizeX = sizeY * 58 / 64;
-		int width = sizeY * 46 / 64;
-		int pointX = sizeY * 17 / 64; /* dot X size */
-
-		/* cal */
-		if (dn < 0) {
-			ZeroP = 1;
-			dn *= -1;
-		}
-		for (int i = a; i > 0; i--) { dn *= 10; }
-		n = (int)dn;
-		if (n != 0) { for (int i = 10; i <= n; i *= 10) { k++; } }
-
-		/* draw */
-		for (int i = k; i >= 0; i--) {
-			m = n % 10;
-			if (a != 1 || zero == 1 || m != 0) {
-				DrawExtendGraph(x + i * width + (a > 0) * pointX + ZeroP * width, y,
-					x + sizeX + i * width + (a > 0) * pointX + ZeroP * width,
-					y + sizeY, this->pic[Cr].handle(m), TRUE);
-			}
-			n /= 10;
-			if (a == 1) {
-				DrawExtendGraph(x + i * width + ZeroP * width, y,
-					x + sizeX + i * width + ZeroP * width, y + sizeY, this->pic[Cr].handle(CUR_FONT_ID_DOT),
-					TRUE);
-			}
-			a--;
-		}
-		if (ZeroP) { DrawExtendGraph(x, y, x + sizeX, y + sizeY, this->pic[Cr].handle(CUR_FONT_ID_MINUS), TRUE); }
-		return;
+private:
+	void DrawNumOnce(int &x, int y, char num, double size, cur_font_cr_t cr) const {
+		num = betweens('0', num, '9');
+		DrawExtendGraph(
+			x, y, x + this->picsizeX * size, y + this->picsizeY * size,
+			this->pic[cr].handle(num - '0'), TRUE
+		);
+		x += this->picgapX * size;
 	}
 
-	void RescaleDraw(double dn, short x, short y, int sizeY, cur_font_cr_t Cr, short a = 0, int zero = 1) const {
+	void DrawPoint(int &x, int y, double size, cur_font_cr_t cr) const {
+		DrawExtendGraph(
+			x, y, x + this->picsizeX * size, y + this->picsizeY * size,
+			this->pic[cr].handle(11), TRUE
+		);
+		x += this->pointsizeX * size;
+	}
+
+	void DrawMinus(int &x, int y, double size, cur_font_cr_t cr) const {
+		DrawExtendGraph(
+			x, y, x + this->picsizeX * size, y + this->picsizeY * size,
+			this->pic[cr].handle(10), TRUE
+		);
+		x += this->picgapX * size;
+	}
+
+public:
+	void DrawNum(int num, int x, int y, double size, cur_font_cr_t cr) const {
+		TCHAR buf[8];
+		int DrawX = x;
+		int DrawY = y;
+		double DrawS = size / this->picsizeY;
+		if (num < 0) {
+			this->DrawMinus(DrawX, DrawY, DrawS, cr);
+		}
+		strnums(buf, num, 8);
+		for (size_t i = 0; buf[i] != '\0'; i++) {
+			this->DrawNumOnce(DrawX, DrawY, buf[i], DrawS, cr);
+		}
+	}
+
+	void DrawFloat(double num, int x, int y, double size, cur_font_cr_t cr, uint under, bool zero = TRUE) const {
+		TCHAR buf[12];
+		int DrawX = x;
+		int DrawY = y;
+		double DrawS = size / this->picsizeY;
+		if (num < 0) {
+			this->DrawMinus(DrawX, DrawY, DrawS, cr);
+		}
+		strnumsD(buf, num, 12, under);
+		for (size_t i = 0; buf[i] != '\0'; i++) {
+			if (!zero && i == 0 && buf[0] == '0') { continue; }
+			if (buf[i] == '.') {
+				this->DrawPoint(DrawX, DrawY, DrawS, cr);
+			}
+			else {
+				this->DrawNumOnce(DrawX, DrawY, buf[i], DrawS, cr);
+			}
+		}
+	}
+
+	void RescaleDrawNum(int num, int x, int y, double size, cur_font_cr_t cr) const {
 		int drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
 		int drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
-		this->Draw(dn, drawX, drawY, sizeY * RESCALE_SIZE_Y, Cr, a, zero);
-		return;
+		this->DrawNum(num, drawX, drawY, size * WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y, cr);
+	}
+
+	void RescaleDrawFloat(double num, int x, int y, double size, cur_font_cr_t cr, uint under, bool zero = TRUE) const {
+		int drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+		int drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+		this->DrawFloat(num, drawX, drawY, size * WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y, cr, under, zero);
 	}
 };
 
@@ -169,12 +189,12 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		RecRescaleDrawString(100, 13, val->songN.c_str(), COLOR_WHITE);
 
 		/* 判定周り */
-		num_font.RescaleDraw(val->judge.just, 140,  52, 30, CUR_FONT_COLOR_BLUE);
-		num_font.RescaleDraw(val->judge.good, 140,  93, 30, CUR_FONT_COLOR_YELLOW);
-		num_font.RescaleDraw(val->judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN);
-		num_font.RescaleDraw(val->judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED);
-		num_font.RescaleDraw(val->Mcombo,     155, 215, 30, CUR_FONT_COLOR_BLUE);
-		num_font.RescaleDraw(val->noteCount,  265, 215, 30, CUR_FONT_COLOR_PURPLE);
+		num_font.RescaleDrawNum(val->judge.just, 140,  52, 30, CUR_FONT_COLOR_BLUE);
+		num_font.RescaleDrawNum(val->judge.good, 140,  93, 30, CUR_FONT_COLOR_YELLOW);
+		num_font.RescaleDrawNum(val->judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN);
+		num_font.RescaleDrawNum(val->judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED);
+		num_font.RescaleDrawNum(val->Mcombo,     155, 215, 30, CUR_FONT_COLOR_BLUE);
+		num_font.RescaleDrawNum(val->noteCount,  265, 215, 30, CUR_FONT_COLOR_PURPLE);
 
 		/* レート周り */
 		RecRescaleDrawFormatString(10, 320, COLOR_WHITE, L"%d.%02d", val->newRate / 100, val->newRate % 100);
@@ -182,16 +202,16 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		else { RecRescaleDrawString(10, 340, L"not rise", COLOR_WHITE); }
 
 		/* スコア周り */
-		num_font.RescaleDraw(val->score, 310,  75, 55, val->mat.fontNo);
-		num_font.RescaleDraw(val->acc,   430, 150, 30, val->mat.fontNo, 2);
-		num_font.RescaleDraw(val->gap,   510, 205, 20, CUR_FONT_COLOR_MONO);
-		num_font.RescaleDraw(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO);
+		num_font.RescaleDrawNum(  val->score, 310,  75, 55, val->mat.fontNo);
+		num_font.RescaleDrawFloat(val->acc,   430, 150, 30, val->mat.fontNo, 2);
+		num_font.RescaleDrawFloat(val->gap,   510, 205, 20, CUR_FONT_COLOR_MONO, 2);
+		num_font.RescaleDrawFloat(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO, 2);
 
 		/* ランク周り */
 		RecRescaleDrawGraph(140, 260, val->mat.rank.handle(),      TRUE);
 		RecRescaleDrawGraph(5,   420, val->mat.clearRate.handle(), TRUE);
 		RecRescaleDrawGraph(336, 252, val->mat.chara.handle(),     TRUE);
-		num_font.RescaleDraw(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, 0);
+		num_font.RescaleDrawFloat(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, FALSE);
 
 		cutin.DrawCut();
 
