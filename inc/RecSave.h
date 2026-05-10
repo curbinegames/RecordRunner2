@@ -13,6 +13,15 @@
 #define RATE_NUM 20
 #define RATE_FILE_NAME L"save/Prate.dat" /* 名前+数値 */
 
+typedef enum rec_save_error_e {
+	REC_SAVE_ERROR_NONE,
+	REC_SAVE_ERROR_OPEN,
+	REC_SAVE_ERROR_READ,
+	REC_SAVE_ERROR_WRITE,
+	REC_SAVE_ERROR_CLOSE,
+	REC_SAVE_ERROR_OTHER
+} rec_save_error_et;
+
 typedef struct rec_score_savefile_s {
 	int score  = 0;
 	int dist   = 0;
@@ -20,6 +29,17 @@ typedef struct rec_score_savefile_s {
 	rec_clear_rank_t clearRank = REC_CLEAR_RANK_NO_PLAY;
 	rec_score_rate_t scoreRate = REC_SCORE_RATE_NO_PLAY;
 } rec_save_score_t;
+
+typedef struct rec_score_savefile2_s {
+	int score  = 0;
+	int dist   = 0;
+	double acc = 0;
+	rec_clear_type2_et clearType = REC_CLEAR_TYPE2_NO_PLAY;
+	rec_score_rate2_et scoreRate = REC_SCORE_RATE2_NO_PLAY;
+	int good   = 3000; /* 最低のgood以下の数。good+safe+miss */
+	int safe   = 3000; /* 最低のsafe以下の数。safe+miss */
+	int miss   = 3000; /* 最低のmiss数 */
+} rec_save_score2_st;
 
 typedef struct rec_user_data_s {
 	int playCount = 0;
@@ -42,6 +62,12 @@ typedef struct play_rate_s {
 	wchar_t name[255] = L"\0";
 	double num = 0;
 } play_rate_t;
+
+extern rec_save_error_et RecSaveReadScore2AllDif(rec_save_score2_st (&dest)[6], const tstring &songname);
+extern rec_save_error_et RecSaveWriteScore2AllDif(const rec_save_score2_st (&src)[6], const tstring &songname);
+extern rec_save_error_et RecSaveReadScore2OneDif(rec_save_score2_st &dest, const tstring &songname, rec_dif_t dif);
+extern rec_save_error_et RecSaveWriteScore2OneDif(const rec_save_score2_st &src, const tstring &songname, rec_dif_t dif);
+extern rec_save_error_et RecSaveUpdateScore2OneDif(const rec_save_score2_st &src, const tstring &songname, rec_dif_t dif);
 
 extern int RecSaveReadScoreAllDif(rec_save_score_t dest[], const TCHAR *songname);
 extern int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const TCHAR *songname);

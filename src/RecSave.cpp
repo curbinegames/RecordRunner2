@@ -12,9 +12,213 @@
 #include <result.h>
 #include <RecSystem.h>
 
+static void RecSaveConvScToSc2(rec_save_score2_st &dest, const rec_save_score_t &src) {
+	dest.score = src.score;
+	dest.dist  = src.dist;
+	dest.acc   = src.acc;
+	switch (src.clearRank) {
+	case REC_CLEAR_RANK_DROPED:
+		dest.clearType = REC_CLEAR_TYPE2_DROPED;
+		break;
+	case REC_CLEAR_RANK_CLEARED:
+		dest.clearType = REC_CLEAR_TYPE2_CLEARED;
+		break;
+	case REC_CLEAR_RANK_NOMISS:
+		dest.clearType = REC_CLEAR_TYPE2_NOMISS;
+		break;
+	case REC_CLEAR_RANK_FULLCOMBO:
+		dest.clearType = REC_CLEAR_TYPE2_FULLCOMBO;
+		break;
+	case REC_CLEAR_RANK_PERFECT:
+		dest.clearType = REC_CLEAR_TYPE2_PERFECT;
+		break;
+	default:
+		dest.clearType = REC_CLEAR_TYPE2_NO_PLAY;
+		break;
+	}
+	switch (src.scoreRate) {
+	case REC_SCORE_RATE_EX:
+		dest.scoreRate = REC_SCORE_RATE2_X;
+		break;
+	case REC_SCORE_RATE_S:
+		dest.scoreRate = REC_SCORE_RATE2_S;
+		break;
+	case REC_SCORE_RATE_A:
+		dest.scoreRate = REC_SCORE_RATE2_A;
+		break;
+	case REC_SCORE_RATE_B:
+		dest.scoreRate = REC_SCORE_RATE2_B;
+		break;
+	case REC_SCORE_RATE_C:
+		dest.scoreRate = REC_SCORE_RATE2_C;
+		break;
+	case REC_SCORE_RATE_D:
+		dest.scoreRate = REC_SCORE_RATE2_D;
+		break;
+	case REC_SCORE_RATE_F:
+		dest.scoreRate = REC_SCORE_RATE2_F;
+		break;
+	default:
+		dest.scoreRate = REC_SCORE_RATE2_NO_PLAY;
+		break;
+	}
+}
+
+static void RecSaveConvSc2ToSc(rec_save_score_t &dest, const rec_save_score2_st &src) {
+	dest.score = src.score;
+	dest.dist  = src.dist;
+	dest.acc   = src.acc;
+	switch (src.clearType) {
+	case REC_CLEAR_TYPE2_DROPED:
+		dest.clearRank = REC_CLEAR_RANK_DROPED;
+		break;
+	case REC_CLEAR_TYPE2_CLEARED:
+	case REC_CLEAR_TYPE2_COZYCLEAR:
+	case REC_CLEAR_TYPE2_MISSLESS:
+		dest.clearRank = REC_CLEAR_RANK_CLEARED;
+		break;
+	case REC_CLEAR_TYPE2_NOMISS:
+		dest.clearRank = REC_CLEAR_RANK_NOMISS;
+		break;
+	case REC_CLEAR_TYPE2_FULLCOMBO:
+		dest.clearRank = REC_CLEAR_RANK_FULLCOMBO;
+		break;
+	case REC_CLEAR_TYPE2_PERFECT:
+	case REC_CLEAR_TYPE2_FULLPERFECT:
+		dest.clearRank = REC_CLEAR_RANK_PERFECT;
+		break;
+	default:
+		dest.clearRank = REC_CLEAR_RANK_NO_PLAY;
+		break;
+	}
+	switch (src.scoreRate) {
+	case REC_SCORE_RATE2_X:
+		dest.scoreRate = REC_SCORE_RATE_EX;
+		break;
+	case REC_SCORE_RATE2_S:
+		dest.scoreRate = REC_SCORE_RATE_S;
+		break;
+	case REC_SCORE_RATE2_A:
+		dest.scoreRate = REC_SCORE_RATE_A;
+		break;
+	case REC_SCORE_RATE2_B:
+		dest.scoreRate = REC_SCORE_RATE_B;
+		break;
+	case REC_SCORE_RATE2_C:
+		dest.scoreRate = REC_SCORE_RATE_C;
+		break;
+	case REC_SCORE_RATE2_D:
+		dest.scoreRate = REC_SCORE_RATE_D;
+		break;
+	case REC_SCORE_RATE2_F:
+		dest.scoreRate = REC_SCORE_RATE_F;
+		break;
+	default:
+		dest.scoreRate = REC_SCORE_RATE_NO_PLAY;
+		break;
+	}
+}
+
+#if 1 /* play score 2 */
+
+rec_save_error_et RecSaveReadScore2AllDif(rec_save_score2_st (&dest)[6], const tstring &songname) {
+	tstring filename = _T("score2/");
+	FILE *fp;
+
+	filename += songname;
+	filename += _T(".dat");
+
+	if (_wfopen_s(&fp, filename.c_str(), _T("rb")) != 0) { return REC_SAVE_ERROR_OPEN; }
+	if (fp == NULL) { return REC_SAVE_ERROR_OPEN; }
+	if (fread(dest, sizeof(rec_save_score2_st), 6, fp) != 6) {
+		fclose(fp);
+		return REC_SAVE_ERROR_READ;
+	}
+	if (fclose(fp) != 0) {
+		return REC_SAVE_ERROR_CLOSE;
+	}
+
+	return REC_SAVE_ERROR_NONE;
+}
+
+rec_save_error_et RecSaveWriteScore2AllDif(const rec_save_score2_st (&src)[6], const tstring &songname) {
+	tstring filename = _T("score2/");
+	FILE *fp;
+
+	filename += songname;
+	filename += _T(".dat");
+
+	if (_wfopen_s(&fp, filename.c_str(), L"wb") != 0) { return REC_SAVE_ERROR_OPEN; }
+	if (fp == NULL) { return REC_SAVE_ERROR_OPEN; }
+	if (fwrite(src, sizeof(rec_save_score2_st), 6, fp)) {
+		fclose(fp);
+		return REC_SAVE_ERROR_WRITE;
+	}
+	if (fclose(fp) != 0) {
+		return REC_SAVE_ERROR_CLOSE;
+	}
+
+	return REC_SAVE_ERROR_NONE;
+}
+
+rec_save_error_et RecSaveReadScore2OneDif(rec_save_score2_st &dest, const tstring &songname, rec_dif_t dif) {
+	rec_save_score2_st buf[6];
+	rec_save_error_et err;
+	err = RecSaveReadScore2AllDif(buf, songname);
+	dest = buf[dif];
+	return err;
+}
+
+rec_save_error_et RecSaveWriteScore2OneDif(const rec_save_score2_st &src, const tstring &songname, rec_dif_t dif) {
+	rec_save_score2_st buf[6];
+	rec_save_error_et err;
+	err = RecSaveReadScore2AllDif(buf, songname);
+	if (err != REC_SAVE_ERROR_NONE && err != REC_SAVE_ERROR_OPEN) {
+		return err;
+	}
+	buf[dif] = src;
+	return RecSaveWriteScore2AllDif(buf, songname);
+}
+
+rec_save_error_et RecSaveUpdateScore2OneDif(const rec_save_score2_st &src, const tstring &songname, rec_dif_t dif) {
+	rec_save_score2_st buf;
+	rec_save_error_et err;
+	err = RecSaveReadScore2OneDif(buf, songname, dif);
+	if (err != REC_SAVE_ERROR_NONE && err != REC_SAVE_ERROR_OPEN) {
+		return err;
+	}
+
+#define cap(name) if (buf.name < src.name) { buf.name = src.name; }
+#define dat(name) if (buf.name > src.name) { buf.name = src.name; }
+	cap(score);
+	cap(dist);
+	cap(acc);
+	cap(clearType);
+	cap(scoreRate);
+	dat(good);
+	dat(safe);
+	dat(miss);
+#undef dat
+#undef cap
+
+	return RecSaveWriteScore2OneDif(buf, songname, dif);
+}
+
+#endif /* play score 2 */
+
 #if 1 /* play score */
 
 int RecSaveReadScoreAllDif(rec_save_score_t dest[], const TCHAR *songname) {
+	/* 新方式でトライ */
+	rec_save_score2_st data[6];
+	if (RecSaveReadScore2AllDif(data, songname) == REC_SAVE_ERROR_NONE) {
+		for (size_t idif = 0; idif < 6; idif++) {
+			RecSaveConvSc2ToSc(dest[idif], data[idif]);
+		}
+		return 0;
+	}
+
+	/* 旧方式でトライ */
 	int	score[6]     = { 0,0,0,0,0,0 };
 	int	dist[6]      = { 0,0,0,0,0,0 };
 	int	scoreRate[6] = { 6,6,6,6,6,6 };
@@ -48,6 +252,14 @@ int RecSaveReadScoreAllDif(rec_save_score_t dest[], const TCHAR *songname) {
 
 /* 同じ曲名があったら上書きしてしまう */
 int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const TCHAR *songname) {
+	/* 新方式でトライ */
+	rec_save_score2_st data[6];
+	for (size_t idif = 0; idif < 6; idif++) {
+		RecSaveConvScToSc2(data[idif], src[idif]);
+	}
+	if (RecSaveWriteScore2AllDif(data, songname) == REC_SAVE_ERROR_NONE) { return 0; }
+
+	/* 旧方式でトライ */
 	int	score[6]     = { 0,0,0,0,0,0 };
 	int	dist[6]      = { 0,0,0,0,0,0 };
 	int	scoreRate[6] = { 6,6,6,6,6,6 };

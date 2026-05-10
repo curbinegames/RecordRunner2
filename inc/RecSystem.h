@@ -53,6 +53,17 @@ typedef enum rec_play_rank_e {
 	REC_SCORE_RATE_F,
 } rec_score_rate_t;
 
+typedef enum rec_play_rank2_e {
+	REC_SCORE_RATE2_NO_PLAY,
+	REC_SCORE_RATE2_F,
+	REC_SCORE_RATE2_D,
+	REC_SCORE_RATE2_C,
+	REC_SCORE_RATE2_B,
+	REC_SCORE_RATE2_A,
+	REC_SCORE_RATE2_S,
+	REC_SCORE_RATE2_X,
+} rec_score_rate2_et;
+
 typedef enum now_scene_e {
 	SCENE_TITLE = 0,
 	SCENE_MENU,
@@ -73,6 +84,19 @@ typedef enum rec_clear_rank_e {
 	REC_CLEAR_RANK_FULLCOMBO,
 	REC_CLEAR_RANK_PERFECT,
 } rec_clear_rank_t;
+
+typedef enum rec_clear_type2_e {
+	REC_CLEAR_TYPE2_NO_PLAY = 0,
+	REC_CLEAR_TYPE2_CRASHED,
+	REC_CLEAR_TYPE2_DROPED,
+	REC_CLEAR_TYPE2_CLEARED,
+	REC_CLEAR_TYPE2_COZYCLEAR,
+	REC_CLEAR_TYPE2_MISSLESS,
+	REC_CLEAR_TYPE2_NOMISS,
+	REC_CLEAR_TYPE2_FULLCOMBO,
+	REC_CLEAR_TYPE2_PERFECT,
+	REC_CLEAR_TYPE2_FULLPERFECT
+} rec_clear_type2_et;
 
 typedef enum rec_dif_e {
 	REC_DIF_AUTO = 0,
