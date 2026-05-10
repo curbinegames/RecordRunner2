@@ -34,9 +34,6 @@
 /* TODO: レベルフィルター周りの実装 */
 #define PackNumLim 16
 #define MapNumLim  128 /* とりあえず128譜面とする、現時点収録で結構ギリギリ */
-#define REC_SORT_DEFAULT 0
-#define SORT_LEVEL 1
-#define SORT_SCORE 2
 
 #define MUSE_FADTM 250
 #define MUSE_KEYTM 500
@@ -58,6 +55,23 @@
 #endif /* define */
 
 typedef TCHAR rec_pack_name_set_t[256];
+
+enum class rec_select_sorttype_ec {
+	DEFAULT,
+	SCORE,
+	LEVEL
+};
+
+rec_select_sorttype_ec &operator++(rec_select_sorttype_ec &val) {
+    switch (val) {
+    case rec_select_sorttype_ec::LEVEL: /* 上限ループ */
+        val = rec_select_sorttype_ec::DEFAULT;
+        break;
+    default:
+        val = static_cast<rec_select_sorttype_ec>(static_cast<int>(val) + 1);
+    }
+    return val;
+}
 
 typedef struct music_box_2 {
 	int level      = -1;
@@ -274,7 +288,7 @@ class rec_serect_music_set_c {
 public:
 	rec_select_musiclist_c detail;
 	std::vector<uint> sort;
-	int sortMode = REC_SORT_DEFAULT;
+	rec_select_sorttype_ec sortMode = rec_select_sorttype_ec::DEFAULT;
 
 public: /* 並び替え系 */
 	/**
@@ -387,13 +401,6 @@ static void RecSelectAllRelord(void) {
 #endif
 
 #if 1 /* sub action */
-
-static void ChangeSortMode(int *mode) {
-	*mode = *mode + 1;
-	if (*mode >= 3) {
-		*mode = 0;
-	}
-}
 
 static int RecSerectKeyCheck() {
 	int ret = 0;
@@ -510,13 +517,13 @@ static bool Rec_Select_DifFilter(const MUSIC_BOX_2 &detail, int view_dif) {
 static void SortSong(songdata_set_t *songdata, int dif) {
 	songdata->Search(Rec_Select_DifFilter, dif);
 	switch (songdata->sortMode) {
-	case SORT_LEVEL:
+	case rec_select_sorttype_ec::LEVEL:
 		songdata->SortByLevel();
 		break;
-	case SORT_SCORE:
+	case rec_select_sorttype_ec::SCORE:
 		songdata->SortByHScore();
 		break;
-	case REC_SORT_DEFAULT:
+	case rec_select_sorttype_ec::DEFAULT:
 		break;
 	}
 	return;
@@ -587,23 +594,23 @@ static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
 }
 #endif
 
-static void RecSerectLoadBefCmd(int *cmd, int *sortMode) {
+static void RecSerectLoadBefCmd(int *cmd, rec_select_sorttype_ec *sortMode) {
 	FILE *fp;
 	_wfopen_s(&fp, L"save/SongSelect2.dat", L"rb");
 	if (fp != NULL) {
 		fread(cmd, sizeof(int), 2, fp);
-		fread(sortMode, sizeof(int), 1, fp);
+		fread(sortMode, sizeof(rec_select_sorttype_ec), 1, fp);
 		fclose(fp);
 	}
 	return;
 }
 
-static void RecSerectSaveBefCmd(int *cmd, int sortMode) {
+static void RecSerectSaveBefCmd(int *cmd, rec_select_sorttype_ec sortMode) {
 	FILE *fp;
 	_wfopen_s(&fp, L"save/SongSelect2.dat", L"wb");
 	if (fp != NULL) {
 		fwrite(cmd, sizeof(int), 2, fp);
-		fwrite(&sortMode, sizeof(int), 1, fp);
+		fwrite(&sortMode, sizeof(rec_select_sorttype_ec), 1, fp);
 		fclose(fp);
 	}
 	return;
@@ -866,15 +873,15 @@ private:
 		DrawRotaGraphAnchor(baseX, baseY, 1, this->Nrot, this->disk.handle(), DXDRAW_ANCHOR_TOP_RIGHT, TRUE);
 	}
 
-	void DrawSort(int baseX, int baseY, int mode) {
+	void DrawSort(int baseX, int baseY, rec_select_sorttype_ec mode) {
 		switch (mode) {
-		case REC_SORT_DEFAULT:
+		case rec_select_sorttype_ec::DEFAULT:
 			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("デフォルト"), _T("default")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 			break;
-		case SORT_LEVEL:
+		case rec_select_sorttype_ec::LEVEL:
 			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("レベル順"), _T("level")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 			break;
-		case SORT_SCORE:
+		case rec_select_sorttype_ec::SCORE:
 			DrawStringToHandleAnchor(baseX, baseY, REC_STR_LANG(_T("スコア順"), _T("score")), COLOR_WHITE, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT);
 			break;
 		}
@@ -930,7 +937,7 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawDiskSet(int baseX, int baseY, int mode) {
+	void DrawDiskSet(int baseX, int baseY, rec_select_sorttype_ec mode) {
 		this->DrawNamePlate(baseX - 115, baseY - 20);
 		this->DrawDisk(baseX, baseY);
 		this->DrawSort(baseX - 60, baseY + 85, mode);
@@ -1295,7 +1302,7 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		RecSerectKeyActLR(cmd, REC_SERECT_VECT_RIGHT, uiClass, songdata);
 		break;
 	case REC_SERECT_KEY_SORT:
-		ChangeSortMode(&songdata->sortMode);
+		++songdata->sortMode;
 		SortSongWithSave(songdata, cmd[1], &cmd[0]);
 		break;
 	case REC_SERECT_KEY_RELORD:
