@@ -35,32 +35,154 @@
 
 #endif /* define group */
 
-#if 1 /* typedef group */
-
 typedef rec_map_eff_data_t mapeff_t;
 
-/* struct */
+class rec_play_notepic_c {
+public:
+	struct {
+		dxcur_pic_c notebase = dxcur_pic_c(L"picture/hit.png");
+		dxcur_pic_c hitcircle[6] = {
+			dxcur_pic_c(L"picture/hitc-G.png"),
+			dxcur_pic_c(L"picture/hitc-R.png"),
+			dxcur_pic_c(L"picture/hitc-B.png"),
+			dxcur_pic_c(L"picture/hitc-Y.png"),
+			dxcur_pic_c(L"picture/hitc-X.png"),
+			dxcur_pic_c(L"picture/hitc-W.png"),
+		};
+		dxcur_pic_c catchi = dxcur_pic_c(L"picture/catch.png");
+		dxcur_pic_c up     = dxcur_pic_c(L"picture/up.png");
+		dxcur_pic_c down   = dxcur_pic_c(L"picture/down.png");
+		dxcur_pic_c left   = dxcur_pic_c(L"picture/left.png");
+		dxcur_pic_c right  = dxcur_pic_c(L"picture/right.png");
+		dxcur_pic_c bomb   = dxcur_pic_c(L"picture/bomb.png");
+		dxcur_pic_c goust  = dxcur_pic_c(L"picture/goust.png");
+	} pic;
 
-typedef struct note_img {
-	dxcur_pic_c notebase = dxcur_pic_c(L"picture/hit.png");
-	dxcur_pic_c hitcircle[6] = {
-		dxcur_pic_c(L"picture/hitc-G.png"),
-		dxcur_pic_c(L"picture/hitc-R.png"),
-		dxcur_pic_c(L"picture/hitc-B.png"),
-		dxcur_pic_c(L"picture/hitc-Y.png"),
-		dxcur_pic_c(L"picture/hitc-X.png"),
-		dxcur_pic_c(L"picture/hitc-W.png"),
-	};
-	dxcur_pic_c catchi = dxcur_pic_c(L"picture/catch.png");
-	dxcur_pic_c up     = dxcur_pic_c(L"picture/up.png");
-	dxcur_pic_c down   = dxcur_pic_c(L"picture/down.png");
-	dxcur_pic_c left   = dxcur_pic_c(L"picture/left.png");
-	dxcur_pic_c right  = dxcur_pic_c(L"picture/right.png");
-	dxcur_pic_c bomb   = dxcur_pic_c(L"picture/bomb.png");
-	dxcur_pic_c goust  = dxcur_pic_c(L"picture/goust.png");
-} rec_play_notepic_t;
+	/**
+	 * @return 0: 通常表示, 1: 非表示スキップ, 2:3秒ブレーク
+	 */
+	int CheckView(const rec_score_file_t &recfp, int Htime) const {
+		int Vtime = recfp.mapeff.viewT.searchDataFront(Htime);
+		int Ntime = recfp.time.now;
+		if (IS_BETWEEN(Vtime, 3000, Htime - Ntime)) { return 2; } /* 3秒ブレーク */
+		if ((Vtime + Ntime) <= Htime) { return 1; } /* 非表示スキップ */
+		return 0;
+	}
 
-#endif /* typedef group */
+	/**
+	 * @brief 描画するX位置を計算する
+	 */
+	int CalXpos(
+		const rec_score_file_t &recfp, const rec_play_lanepos_t &lanePos,
+		const note_box_2_t &note, int iLine
+	) const {
+		bool   XLockp = recfp.mapeff.lock.x.searchDataFront(note.hittime);
+		int    Ntime  = recfp.time.now;
+		double Speedp = recfp.mapeff.speedt[iLine].searchDataFront(note.hittime);
+		const rec_map_eff_data_t &mapeff = recfp.mapeff;
+		const rec_scrool_data_t &scrool = recfp.mapeff.scrool.nowData();
+
+		int DrawX = 0;
+		DrawX  = (2 * Speedp * (note.viewtime - scrool.speed * Ntime - scrool.basetime) / 5);
+		DrawX += (XLockp ? note.xpos : lanePos.x[iLine]);
+		return DrawX;
+	}
+
+	void DrawNotesBase(int x, int y, int cr, const dxcur_camera_c &camera, note_material mat) const {
+		DxPic_t DrawID = 0;
+		switch (mat) {
+		case 1: /* TODO: enumにする */
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+			camera.drawpic(x, y, this->pic.notebase.handle());
+			break;
+		}
+		switch (mat) {
+		case 1:
+			DrawID = this->pic.hitcircle[cr].handle();
+			break;
+		case 2:
+			DrawID = this->pic.catchi.handle();
+			break;
+		case 3:
+			DrawID = this->pic.up.handle();
+			break;
+		case 4:
+			DrawID = this->pic.down.handle();
+			break;
+		case 5:
+			DrawID = this->pic.left.handle();
+			break;
+		case 6:
+			DrawID = this->pic.right.handle();
+			break;
+		case 7:
+			DrawID = this->pic.bomb.handle();
+			break;
+		case 8:
+			DrawID = this->pic.goust.handle();
+			break;
+		}
+		camera.drawpic(x, y, DrawID);
+	}
+
+	/**
+	 * @return false: 3秒ブレーク判定, true: 継続判定
+	 */
+	bool DrawNoteOne(
+		const rec_score_file_t &recfp, const rec_play_lanepos_t &lanePos,
+		const dxcur_camera_c &camera, const note_box_2_t &note, int iLine
+	) const {
+		int ret = this->CheckView(recfp, note.hittime);
+		if (ret == 2) { return false; } /* 3秒ブレーク */
+		if (ret == 1) { return true;  } /* 非表示スキップ */
+
+		bool YLockp = recfp.mapeff.lock.y.searchDataFront(note.hittime);
+		int  DrawX  = this->CalXpos(recfp, lanePos, note, iLine);
+		int  DrawY  = (YLockp ? note.ypos : lanePos.y[iLine]);
+
+		this->DrawNotesBase(DrawX, DrawY, note.color, camera, note.object);
+		return true;
+	}
+
+	void DrawNotesAll(
+		const rec_score_file_t &recfp, const rec_play_lanepos_t &lanePos,
+		const dxcur_camera_c &camera
+	) const {
+		for (int iLine = 0; iLine < 3; iLine++) {
+			const cvec<note_box_2_t> &note = recfp.mapdata.note[iLine];
+			for (size_t i = note.nowNo(); i < note.size(); i++) {
+				if (!this->DrawNoteOne(recfp, lanePos, camera, note[i], iLine)) {
+					break;
+				}
+			}
+		}
+	}
+
+	void DrawGhostAll(
+		const rec_score_file_t &recfp, const rec_play_lanepos_t &lanePos,
+		const dxcur_camera_c &camera
+	) const {
+		const cvec<note_box_2_t> &gnote = recfp.mapeff.gnote;
+		for (size_t i = gnote.nowNo(); i < gnote.size(); i++) {
+			if (!this->DrawNoteOne(recfp, lanePos, camera, gnote[i], gnote[i].lane)) {
+				break;
+			}
+		}
+	}
+
+	/* TODO: ゴーストノーツは全表示で良いかも */
+	/* TODO: てかレーンアイテム作りたい */
+	void draw(
+		const rec_score_file_t &recfp, const rec_play_lanepos_t &lanePos,
+		const dxcur_camera_c &camera
+	) const {
+		this->DrawGhostAll(recfp, lanePos, camera);
+		this->DrawNotesAll(recfp, lanePos, camera);
+	}
+};
 
 class rec_play_back_pic_c {
 private:
@@ -1368,123 +1490,6 @@ public:
 	}
 };
 
-static class rec_play_drawnotes_c {
-private:
-	void CalPalCrawNote(int *DrawX, int *DrawY, int *DrawC, rec_play_lanepos_t *lanePos,
-		bool XLockp, bool YLockp, const note_box_2_t *note, double speedt,
-		const rec_scrool_data_t &scrool, int Ntime, int iLine)
-	{
-		//縦位置
-		*DrawY = (YLockp ? note->ypos : lanePos->y[iLine]);
-		//横位置
-		*DrawX = (2 * speedt * (note->viewtime - scrool.speed * Ntime - scrool.basetime) / 5);
-		*DrawX += (XLockp ? note->xpos : lanePos->x[iLine]);
-		//色
-		*DrawC = note->color;
-	}
-
-	void DrawNoteOne(const note_box_2_t *note, rec_map_eff_data_t *mapeff,
-		rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera_pos,
-		int iLine, int Ntime, rec_play_notepic_t *noteimg)
-	{
-		int DrawX = 0;
-		int DrawY = 0;
-		int DrawC = 0;
-		int DrawID = 0;
-		bool XLockp = mapeff->lock.x.searchDataFront(note->hittime);
-		bool YLockp = mapeff->lock.y.searchDataFront(note->hittime);
-		double Speedp = mapeff->speedt[iLine].searchDataFront(note->hittime);
-		this->CalPalCrawNote(&DrawX, &DrawY, &DrawC, lanePos, XLockp, YLockp,
-			note, Speedp, mapeff->scrool.nowData(), Ntime, iLine);
-		switch (note->object) {
-		case 1: /* TODO: enumにする */
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-			camera_pos.drawpic(DrawX, DrawY, noteimg->notebase.handle());
-			break;
-		}
-		switch (note->object) {
-		case 1:
-			DrawID = noteimg->hitcircle[DrawC].handle();
-			break;
-		case 2:
-			DrawID = noteimg->catchi.handle();
-			break;
-		case 3:
-			DrawID = noteimg->up.handle();
-			break;
-		case 4:
-			DrawID = noteimg->down.handle();
-			break;
-		case 5:
-			DrawID = noteimg->left.handle();
-			break;
-		case 6:
-			DrawID = noteimg->right.handle();
-			break;
-		case 7:
-			DrawID = noteimg->bomb.handle();
-			break;
-		case 8:
-			DrawID = noteimg->goust.handle();
-			break;
-		}
-		camera_pos.drawpic(DrawX, DrawY, DrawID);
-		return;
-	}
-
-public:
-	void RecPlayDrawNoteAll(rec_play_lanepos_t *lanePos, cvec<note_box_2_t> note[],
-		rec_map_eff_data_t *mapeff, const dxcur_camera_c &camera_pos, int Ntime,
-		rec_play_notepic_t *noteimg
-	) {
-		/* TODO: ゴーストノーツは全表示で良いかも */
-		/* TODO: てかレーンアイテム作りたい */
-		for (size_t i = mapeff->gnote.nowNo(); i < mapeff->gnote.size(); i++) {
-			/* 3秒ブレーク */
-			if (IS_BETWEEN(
-				mapeff->viewT.searchDataFront(mapeff->gnote[i].hittime),
-				3000, mapeff->gnote[i].hittime - Ntime
-			)) {
-				break;
-			}
-			/* 非表示スキップ */
-			if (
-				(mapeff->viewT.searchDataFront(mapeff->gnote[i].hittime) + Ntime) <=
-				mapeff->gnote[i].hittime
-			) {
-				continue;
-			}
-			this->DrawNoteOne(&mapeff->gnote.at(i), mapeff, lanePos, camera_pos, mapeff->gnote.at(i).lane, Ntime, noteimg);
-		}
-		for (int iLine = 0; iLine < 3; iLine++) {
-			for (int iNote = 0; note[iLine].offsetData(iNote).hittime > 0; iNote++) {
-				/* 3秒ブレーク */
-				if (IS_BETWEEN(
-					mapeff->viewT.searchDataFront(note[iLine].offsetData(iNote).hittime),
-					3000, note[iLine].offsetData(iNote).hittime - Ntime
-				)) {
-					break;
-				}
-				/* 非表示スキップ */
-				if (
-					(mapeff->viewT.searchDataFront(note[iLine].offsetData(iNote).hittime) + Ntime) <=
-					note[iLine].offsetData(iNote).hittime
-				) {
-					continue;
-				}
-				this->DrawNoteOne(
-					&note[iLine].offsetData(iNote), mapeff, lanePos, camera_pos, iLine, Ntime, noteimg
-				);
-				if (note[iLine].size() <= note[iLine].nowNo() + iNote + 1) { break; }
-			}
-		}
-		return;
-	}
-};
-
 static class rec_play_draw_back_c {
 private:
 	void DrawFallBack(int Yline, const std::vector<DxPic_t> &item, int itemNo) {
@@ -2076,7 +2081,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	dxcur_pic_c dangerimg = dxcur_pic_c(_T("picture/danger.png"));
 	dxcur_pic_c dropimg   = dxcur_pic_c(_T("picture/drop.png"));
 	dxcur_pic_c filterimg = dxcur_pic_c(_T("picture/Black.png"));
-	rec_play_notepic_t noteimg;
+	rec_play_notepic_c noteimg;
 	rec_play_snditem_all_c snd_set_class(folderPath);
 
 #endif /* num define */
@@ -2220,11 +2225,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//判定表示
 		judgepicClass.draw(cameraClass, &lanePos, runnerClass.getCharaPos());
 		/* 音符表示 */
-		{
-			rec_play_drawnotes_c action;
-			action.RecPlayDrawNoteAll(&lanePos, recfp.mapdata.note, &recfp.mapeff,
-				cameraClass, recfp.time.now, &noteimg);
-		}
+		noteimg.draw(recfp, lanePos, cameraClass);
 		//スコアバー表示
 		sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighScore, holdG);
 		//判定ずれバー表示
