@@ -10,6 +10,7 @@
 
 /* rec system include */
 #include <option.h>
+#include <RecWindowRescale.h>
 
 /* own include */
 #include <RecSystem.h>
@@ -20,6 +21,46 @@ int LargeFontData = 0;
 int RecPlayDebug[3] = { 0,0,0 };
 
 rec_sys_bgm rec_bgm_system_g;
+
+#if 1 /* helpbar */
+
+tstring rec_helpbar_c::GetStr(rec_helpbar_type_ec type) const {
+	int page = (int)(GetNowCount() / 10000);
+	tstring str;
+#define cap(name) this->name[page % this->name.size()].get_str()
+	switch (type) {
+	case rec_helpbar_type_ec::MENU:
+		str = cap(str_menu);
+		break;
+	case rec_helpbar_type_ec::SELECT:
+		str = cap(str_select);
+		break;
+	case rec_helpbar_type_ec::COLLECT:
+		str = cap(str_collect);
+		break;
+	case rec_helpbar_type_ec::COLLECT_ITEM:
+		str = cap(str_collect_item);
+		break;
+	case rec_helpbar_type_ec::COLLECT_STORY:
+		str = cap(str_collect_story);
+		break;
+	case rec_helpbar_type_ec::COLLECT_STORY_READ:
+		str = cap(str_collect_story_read);
+		break;
+	case rec_helpbar_type_ec::OPTION:
+		str = cap(str_option);
+		break;
+	}
+#undef cap
+	return str;
+}
+
+void rec_helpbar_c::DrawHelp(rec_helpbar_type_ec type) const {
+	RecRescaleDrawGraph(0, 0, this->pic.handle(), TRUE);
+	RecRescaleDrawString(this->draw_strX, this->draw_strY, this->GetStr(type).c_str(), COLOR_WHITE);
+}
+
+#endif /* helpbar */
 
 #if 1 /* rec_sys_bgm */
 

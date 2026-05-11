@@ -163,7 +163,7 @@ public:
 			this->RecClctDrawItemPictureLine(110, 260, 7, 3, command[0], command[1]);
 			this->RecClctDrawItemDetail(command[0], command[1]);
 
-			help.DrawHelp(HELP_MAT_COLLECTION_ITEM);
+			help.DrawHelp(rec_helpbar_type_ec::COLLECT_ITEM);
 			ScreenFlip();
 
 			WaitTimer(WAIT_TIME_ON_GAMELOOP);
@@ -409,7 +409,7 @@ private:
 			RecCollectDrawStory(10 * a + 1000 * b + com); /* secret function */
 			RecRescaleDrawGraph(0, 405, pageimg, TRUE);
 			RecRescaleDrawFormatString(15, 420, Cr, L"%d / 3", com + 1);
-			help.DrawHelp(HELP_MAT_COLLECTION);
+			help.DrawHelp(rec_helpbar_type_ec::COLLECT);
 			ScreenFlip();
 			if (CheckHitKey(KEY_INPUT_UP)) {
 				//ç∂Ç™âüÇ≥ÇÍÇΩ
@@ -530,7 +530,7 @@ public:
 				RecClctDrawExStoryTitle(command[0], openWay);
 			}
 
-			help.DrawHelp(HELP_MAT_COLLECTION_STORY);
+			help.DrawHelp(rec_helpbar_type_ec::COLLECT_STORY);
 			ScreenFlip();
 		}
 		return 0;
@@ -559,7 +559,7 @@ now_scene_t collection(void) {
 		RecRescaleDrawGraph(0, 0, backimg, TRUE);
 		RecRescaleDrawGraph(70, 130, icon[0 + command], TRUE);
 		RecRescaleDrawGraph(350, 130, icon[2 + command], TRUE);
-		help.DrawHelp(HELP_MAT_COLLECTION);
+		help.DrawHelp(rec_helpbar_type_ec::COLLECT);
 		ScreenFlip();
 
 		/* ÉLÅ[ì¸óÕ */

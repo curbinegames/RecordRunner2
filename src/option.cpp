@@ -10,7 +10,6 @@
 
 /* rec system include */
 #include <RecSystem.h>
-#include <helpBar.h>
 #include <RecWindowRescale.h>
 
 /* own include */
@@ -479,7 +478,7 @@ now_scene_t option(void) {
 		DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s",
 			optionstr[command].detail.get_str().c_str());
 
-		help.DrawHelp(HELP_MAT_OPTION); /* 操作方法 */
+		help.DrawHelp(rec_helpbar_type_ec::OPTION); /* 操作方法 */
 
 		ScreenFlip(); /* 描画エリアここまで */
 

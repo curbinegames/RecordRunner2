@@ -5,7 +5,6 @@
 #include <stdcur.h>
 #include <datacur.h>
 #include <recr_cutin.h>
-#include <helpBar.h>
 
 #define REC_DEBUG 0 // 0or1 1でデバッグ用コードがビルドされる
 
@@ -145,6 +144,93 @@ public:
 
 	const tstring &get_str(void) const;
 };
+
+#if 1 /* helpbar */
+
+enum class rec_helpbar_type_ec {
+	NONE,
+	MENU,
+	SELECT,
+	COLLECT,
+	COLLECT_ITEM,
+	COLLECT_STORY,
+	COLLECT_STORY_READ,
+	OPTION
+};
+
+class rec_helpbar_c {
+private:
+	const int draw_strX =   5;
+	const int draw_strY = 460;
+
+#if 1 /* str系 */
+	const std::vector<rec_system_langstr_c> str_menu = {
+		rec_system_langstr_c{
+			_T("左右キー:選択   Enterキー:決定"),
+			_T("←→key:choose   Enter key:enter")
+		}
+	};
+
+	const std::vector<rec_system_langstr_c> str_select = {
+		rec_system_langstr_c{
+			_T("Enterキー: 決定, BackSpaceキー: 戻る"),
+			_T("Enter key: start, BackSpace key: back to menu")
+		},
+		rec_system_langstr_c{
+			_T("上下キー: 曲選択, 左右キー: 難易度選択"),
+			_T("↑↓key: music select, ←→key: dif select")
+		},
+		rec_system_langstr_c{
+			_T("Zキー: 楽曲を並び替える, Pキー+Enterキー: オートプレイ"),
+			_T("Z key: Sort Songs, P and Enter key: Auto Play")
+		}
+	};
+
+	const std::vector<rec_system_langstr_c> str_collect = {
+		rec_system_langstr_c{
+			_T("左右キー:選択   Enterキー:決定   BackSpaceキー:戻る"),
+			_T("←→key:select   Enter key:enter   BackSpace key:back to menu")
+		}
+	};
+
+	const std::vector<rec_system_langstr_c> str_collect_item = {
+		rec_system_langstr_c{
+			_T("上下左右キー:選択   BackSpaceキー:戻る"),
+			_T("←↓↑→key:select   BackSpace key:back")
+		}
+	};
+
+	const std::vector<rec_system_langstr_c> str_collect_story = {
+		rec_system_langstr_c{
+			_T("上下左右キー:選択   Enterキー:決定   BackSpaceキー:戻る"),
+			_T("←↓↑→key:select   Enter key:enter   BackSpace key:back")
+		}
+	};
+
+	const std::vector<rec_system_langstr_c> str_collect_story_read = {
+		rec_system_langstr_c{
+			_T("上下キー:ページ選択   BackSpaceキー:戻る"),
+			_T("↑↓key:select   BackSpace key:back")
+		}
+	};
+
+	const std::vector<rec_system_langstr_c> str_option = {
+		rec_system_langstr_c{
+			_T("上下左右キー:選択   BackSpaceキー:保存して戻る"),
+			_T("←↓↑→ key:choose   BackSpace key:save the option and return")
+		}
+	};
+#endif /* str系 */
+
+	dxcur_pic_c pic = dxcur_pic_c(_T("picture/help.png"));
+
+	tstring GetStr(rec_helpbar_type_ec type) const;
+
+public:
+	void DrawHelp(rec_helpbar_type_ec type) const;
+};
+
+#endif /* helpbar */
 
 class rec_sys_bgm {
 	int s_totalVolume = 255;

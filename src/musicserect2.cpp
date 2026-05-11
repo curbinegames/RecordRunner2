@@ -12,7 +12,6 @@
 
 /* rec system include */
 #include <RecSystem.h>
-#include <helpBar.h>
 #include <option.h>
 #include <playbox.h>
 #include <recr_cutin.h>
@@ -1181,7 +1180,7 @@ public:
 		this->detail.DrawDetailAll(20, 60, &(*songdata)[cmd[0]], cmd[1]);
 		this->previewSnd.CheckTime();
 		this->previewSnd.CheckSnd(&(*songdata)[cmd[0]], cmd[1]);
-		this->help.DrawHelp(HELP_MAT_MUSIC_SELECT);
+		this->help.DrawHelp(rec_helpbar_type_ec::SELECT);
 		this->cutin.DrawCut();
 	}
 };

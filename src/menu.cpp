@@ -146,7 +146,7 @@ now_scene_t menu(void) {
 		ClearDrawScreen(); /* 描画エリアここから */
 
 		menu_class.DrawMenu();
-		help.DrawHelp(HELP_MAT_MENU);
+		help.DrawHelp(rec_helpbar_type_ec::MENU);
 		cutin.DrawCut();
 
 		ScreenFlip(); /* 描画エリアここまで */
