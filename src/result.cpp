@@ -391,7 +391,7 @@ static const TCHAR *RecResultLoadCharaGraph(void) {
 	switch (optiondata.chara) {
 	case REC_CHARA_PICKER:
 		return (L"picture/RePicker.png");
-	case REC_CHARA_MAPGATOR:
+	case REC_CHARA_GATOR:
 		return (L"picture/ReGator.png");
 	case REC_CHARA_TAYLOR:
 		return (L"picture/ReTaylor.png");
@@ -511,7 +511,7 @@ now_scene_t result(const rec_map_detail_t *map_detail, const rec_play_userpal_t 
 	/* セーブ作業 */
 	RecSaveUpdateUserPlay(userpal);
 	SaveScore(userpal, songN, dif, map_detail->notes);
-	RecSaveUpdateCharaPlay((rec_nowchara_t)optiondata.chara);
+	RecSaveUpdateCharaPlay((rec_chara_et)optiondata.chara);
 	RecSaveUpdateRunnerRate(songN, (double)CalPlayRate(&userpal->judgeCount, map_detail) / 100.0);
 
 	/* リザルト表示 */

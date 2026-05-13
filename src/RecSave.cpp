@@ -417,7 +417,7 @@ int RecSaveWriteCharaPlay(const rec_save_charaplay_t *src) {
 	return 0;
 }
 
-int RecSaveUpdateCharaPlay(rec_nowchara_t nowChara) {
+int RecSaveUpdateCharaPlay(rec_chara_et nowChara) {
 	rec_save_charaplay_t data;
 
 	RecSaveReadCharaPlay(&data);
@@ -426,7 +426,7 @@ int RecSaveUpdateCharaPlay(rec_nowchara_t nowChara) {
 	case REC_CHARA_PICKER:
 		data.picker++;
 		break;
-	case REC_CHARA_MAPGATOR:
+	case REC_CHARA_GATOR:
 		data.mapgator++;
 		break;
 	case REC_CHARA_TAYLOR:

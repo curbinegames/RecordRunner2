@@ -7,13 +7,8 @@
 
 #define REC_STR_LANG(jp, en) ( (optiondata.lang == LANG_JP) ? (jp) : (en) )
 
-typedef enum rec_nowchara_e {
-	REC_CHARA_PICKER = 0,
-	REC_CHARA_MAPGATOR,
-	REC_CHARA_TAYLOR,
-} rec_nowchara_t;
-
 typedef struct rec_option_s {
+	int empty_val  = 0;
 	int chara      = 0; /* enum‚É‚µ‚½‚¢‚ªA‘€ìƒ‹[ƒv‚ª–Ê“| */
 	int offset     = 0;
 	int SEenable   = 0;

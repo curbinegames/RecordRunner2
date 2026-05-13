@@ -81,7 +81,7 @@ extern int RecSaveUpdateUserPlay(const rec_play_userpal_t *userpal);
 
 extern int RecSaveReadCharaPlay(rec_save_charaplay_t *dest);
 extern int RecSaveWriteCharaPlay(const rec_save_charaplay_t *src);
-extern int RecSaveUpdateCharaPlay(rec_nowchara_t nowChara);
+extern int RecSaveUpdateCharaPlay(rec_chara_et nowChara);
 
 extern int RecSaveReadRunnerRate(play_rate_t *data);
 extern int RecSaveWriteRunnerRate(const play_rate_t *src);

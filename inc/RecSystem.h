@@ -41,6 +41,12 @@ using tvec = datacur_timeline_vector<T>;
 
 #if 1 /* enum */
 
+typedef enum rec_chara_e {
+	REC_CHARA_PICKER,
+	REC_CHARA_GATOR,
+	REC_CHARA_TAYLOR
+} rec_chara_et;
+
 typedef enum rec_play_rank_e {
 	REC_SCORE_RATE_EX = 0,
 	REC_SCORE_RATE_S,
