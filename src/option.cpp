@@ -1,4 +1,5 @@
 
+#include <array>
 #include <RecWindowRescale.h>
 #include <option.h>
 
@@ -7,6 +8,11 @@ typedef enum rec_param_type_e {
 	REC_PARAM_TYPE_UINT,
 	REC_PARAM_TYPE_INT
 } rec_param_type_et;
+
+typedef struct rec_option_category_s {
+	rec_system_langstr_c name;
+	std::vector<rec_option_item_base_c *> &list;
+} rec_option_category_t;
 
 #if 1 /* 項目系 */
 
@@ -478,6 +484,11 @@ static std::vector<rec_option_item_base_c *> s_op_list_play = {
 	new rec_option_item_barThick_c()
 };
 
+static std::array<rec_option_category_t, 2> s_op_list_all = {
+	rec_option_category_t{rec_system_langstr_c(_T("システム"), _T("System")), s_op_list_system},
+	rec_option_category_t{rec_system_langstr_c(_T("プレイ"),   _T("Play")),   s_op_list_play}
+};
+
 rec_option_t optiondata;
 
 #if 1 /* option_file */
@@ -553,6 +564,7 @@ void RecOpenOptionFileSystem() {
 #endif /* option_file */
 
 void RecOptionDrawAll(
+	rec_option_category_t &now_option_list,
 	int cmd,
 	const rec_helpbar_c &help,
 	const dxcur_pic_c &cursor_pic,
@@ -564,41 +576,56 @@ void RecOptionDrawAll(
 	RecRescaleDrawGraph(0, 0, back_pic.handle(), TRUE); /* 背景 */
 	RecRescaleDrawGraph(40, 45 + cmd * 40, cursor_pic.handle(), TRUE); /* カーソル */
 
+	/* カテゴリー表示 */
+	DrawFormatString(det_txposx, det_txposy - 30, COLOR_WHITE, L"%s",
+		now_option_list.name.get_str().c_str());
+
 	/* 項目表示 */
-	for (int i = 0; i < s_op_list_play.size(); i++) {
+	for (int i = 0; i < now_option_list.list.size(); i++) {
 		static const int title_txposx = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, 100);
 		static const int title_txposy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 50);
 		static const int title_txgapy = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, 40);
 
-		tstring buf = s_op_list_play[i]->GetParamName();
+		tstring buf = now_option_list.list[i]->GetParamName();
 
 		DrawFormatString(title_txposx, title_txposy + title_txgapy * i, COLOR_WHITE, L"%s: %s",
-			s_op_list_play[i]->item_name.get_str().c_str(), buf.c_str());
+			now_option_list.list[i]->item_name.get_str().c_str(), buf.c_str());
 	}
 
 	DrawFormatString(det_txposx, det_txposy, COLOR_WHITE, L"%s",
-		s_op_list_play[cmd]->item_detail.get_str().c_str());
+		now_option_list.list[cmd]->item_detail.get_str().c_str());
 
 	help.DrawHelp(rec_helpbar_type_ec::OPTION);
 }
 
-static void RecOptionKeyCtrl(int *cmd, bool *exitFg, dxcur_snd_c &s_sel) {
+static void RecOptionKeyCtrl(
+	std::array<rec_option_category_t, 2> &option_list,
+	int *cmd, int &cmd_list, bool *exitFg, dxcur_snd_c &s_sel
+) {
 	InputAllKeyHold();
 	switch (GetKeyPushOnce()) {
 	case KEY_INPUT_UP:   /* 項目選択 */
-		*cmd = LOOP_SUB(*cmd, s_op_list_play.size());
+		*cmd = LOOP_SUB(*cmd, option_list[cmd_list].list.size());
 		s_sel.PlaySound();
 		break;
 	case KEY_INPUT_DOWN: /* 項目選択 */
-		*cmd = LOOP_ADD(*cmd, s_op_list_play.size());
+		*cmd = LOOP_ADD(*cmd, option_list[cmd_list].list.size());
 		s_sel.PlaySound();
 		break;
 	case KEY_INPUT_LEFT: /* 項目操作 */
-		s_op_list_play.at(*cmd)->CmdDown();
+		option_list[cmd_list].list.at(*cmd)->CmdDown();
 		s_sel.PlaySound();
 		break;
 	case KEY_INPUT_RIGHT: /* 項目操作 */
-		s_op_list_play.at(*cmd)->CmdUp();
+		option_list[cmd_list].list.at(*cmd)->CmdUp();
+		s_sel.PlaySound();
+		break;
+	case KEY_INPUT_PGUP: /* カテゴリUP */
+		cmd_list = LOOP_SUB(cmd_list, option_list.size());
+		s_sel.PlaySound();
+		break;
+	case KEY_INPUT_PGDN: /* カテゴリDOWN */
+		cmd_list = LOOP_ADD(cmd_list, option_list.size());
 		s_sel.PlaySound();
 		break;
 	case KEY_INPUT_BACK:
@@ -623,6 +650,7 @@ static void RecOptionKeyCtrl(int *cmd, bool *exitFg, dxcur_snd_c &s_sel) {
 
 now_scene_t option(void) {
 	int command = 0;
+	int cmd_list = 0;
 	struct {
 		dxcur_pic_c back   = dxcur_pic_c(_T("picture/OPTION back.png"));
 		dxcur_pic_c cursor = dxcur_pic_c(_T("picture/OC.png"));
@@ -646,10 +674,10 @@ now_scene_t option(void) {
 	AvoidKeyRush();
 
 	//処理
-	while (1) {
-		RecOptionKeyCtrl(&command, &exitFg, s_sel);
+	while (1) { /* s_op_list_play */
+		RecOptionKeyCtrl(s_op_list_all, &command, cmd_list, &exitFg, s_sel);
 		ClearDrawScreen(); /* 描画エリアスタート */
-		RecOptionDrawAll(command, help, pic.cursor, pic.back);
+		RecOptionDrawAll(s_op_list_all[cmd_list], command, help, pic.cursor, pic.back);
 		ScreenFlip(); /* 描画エリアここまで */
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		if (exitFg) { break; }
