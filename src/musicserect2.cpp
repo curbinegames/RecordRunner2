@@ -83,6 +83,7 @@ typedef struct music_box_2 {
 	int packNo     =  0;
 	int musicNo    =  0;
 	double Hacc    =  0.0;
+	int levelList[3] = {-1, -1, -1}; //0=easy, 1=normal, 2=hard
 	TCHAR difP[256]         = _T("");
 	TCHAR packName[64]      = _T("");
 	TCHAR SongName[64]      = _T("");
@@ -205,6 +206,8 @@ private: /* èâä˙âªån */
 	void ReadMusic(
 		const TCHAR *packName, const TCHAR *songName, int packNum, int musicNo
 	) {
+		int levelList[3] = {-1, -1, -1}; //0=easy, 1=normal, 2=hard
+		std::vector<MUSIC_BOX_2> buf_list;
 		for (int iDif = 0; iDif < 6; iDif++) {
 			rec_error_t status = REC_ERROR_NONE;
 			tstring txtpath = _T("record/");
@@ -226,8 +229,28 @@ private: /* èâä˙âªån */
 			if (status == REC_ERROR_NONE) {
 				RecScoreReadDdif(&buf.mpal, rrsPath.c_str());
 				this->ReadHighscore(&buf, songName, (rec_dif_t)iDif);
-				this->data.push_back(buf);
+				switch (iDif) {
+				case 1:
+					levelList[0] = buf.level;
+					break;
+				case 2:
+					levelList[1] = buf.level;
+					break;
+				case 3:
+					levelList[2] = buf.level;
+					break;
+				}
+				buf_list.push_back(buf);
 			}
+		}
+
+		while (!buf_list.empty()) {
+			MUSIC_BOX_2 buf = buf_list.back();
+			buf.levelList[0] = levelList[0];
+			buf.levelList[1] = levelList[1];
+			buf.levelList[2] = levelList[2];
+			this->data.push_back(buf);
+			buf_list.pop_back();
 		}
 	}
 
@@ -803,7 +826,7 @@ private:
 		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata.ScoreRate);
 		for (int idif = 0; idif < 3; idif++) {
 			DrawFormatStringToHandle(BasePosX - 25 + idif * 70, BasePosY - 97,
-				COLOR_BLACK, SmallFontData, L"%2d", songdata.level);
+				COLOR_BLACK, SmallFontData, L"%2d", songdata.levelList[idif]);
 		}
 	}
 
