@@ -390,7 +390,7 @@ static void RecSelectAllRelord(void) {
 					continue;
 				}
 				if (RecGetMusicMapRrsPath(path, 255, iPack, iSong, (rec_dif_t)iDif) != 0) { continue; }
-				cal_ddif_3(path);
+				// cal_ddif_3(path);
 			}
 		}
 	}
@@ -645,7 +645,7 @@ static void RecSerectSetToPlay(rec_to_play_set_t *toPlay, int cmd[],
 
 static class rec_serect_backpic_c {
 private:
-	dxcur_pic_c back = dxcur_pic_c(_T("picture/MSback.png"));
+	dxcur_pic_c back = dxcur_pic_c(_T("picture/select/MSback.png"));
 	int backpos = 0;
 
 public:
@@ -726,25 +726,27 @@ private:
 	int UD = REC_SERECT_VECT_DOWN;
 	int startC = -MUSE_FADTM;
 	dxcur_pic_c bar[2] = {
-		dxcur_pic_c(L"picture/songbarB.png"), dxcur_pic_c(L"picture/songbarY.png")
+		dxcur_pic_c(L"picture/select/songbarB.png"),
+		dxcur_pic_c(L"picture/select/songbarY.png")
 	};
 	dxcur_pic_c folder_bar[2] = {
-		dxcur_pic_c(L"picture/songbarB.png"), dxcur_pic_c(L"picture/songbarY.png") /* TODO: âÊëúçÏÇÈ */
+		dxcur_pic_c(L"picture/select/songbarB.png"),
+		dxcur_pic_c(L"picture/select/songbarY.png") /* TODO: âÊëúçÏÇÈ */
 	};
 	dxcur_pic_c CRate[5] = {
-		dxcur_pic_c(L"picture/MarkD.png"),
-		dxcur_pic_c(L"picture/MarkC.png"),
-		dxcur_pic_c(L"picture/MarkNM.png"),
-		dxcur_pic_c(L"picture/MarkFC.png"),
-		dxcur_pic_c(L"picture/MarkP.png")
+		dxcur_pic_c(L"picture/select/MarkD.png"),
+		dxcur_pic_c(L"picture/select/MarkC.png"),
+		dxcur_pic_c(L"picture/select/MarkNM.png"),
+		dxcur_pic_c(L"picture/select/MarkFC.png"),
+		dxcur_pic_c(L"picture/select/MarkP.png")
 	};
 	dxcur_pic_c rankP[6] = {
-		dxcur_pic_c(L"picture/MiniEX.png"),
-		dxcur_pic_c(L"picture/MiniS.png"),
-		dxcur_pic_c(L"picture/MiniA.png"),
-		dxcur_pic_c(L"picture/MiniB.png"),
-		dxcur_pic_c(L"picture/MiniC.png"),
-		dxcur_pic_c(L"picture/MiniD.png")
+		dxcur_pic_c(L"picture/select/MiniEX.png"),
+		dxcur_pic_c(L"picture/select/MiniS.png"),
+		dxcur_pic_c(L"picture/select/MiniA.png"),
+		dxcur_pic_c(L"picture/select/MiniB.png"),
+		dxcur_pic_c(L"picture/select/MiniC.png"),
+		dxcur_pic_c(L"picture/select/MiniD.png")
 	};
 public:
 	std::vector<tstring> folder_str;
@@ -895,15 +897,15 @@ public:
 
 		switch (optiondata.chara) {
 		case 0:
-			this->runner.reload(L"picture/Mpicker.png");
+			this->runner.reload(L"picture/select/Mpicker.png");
 			this->Lv = buf.picker;
 			break;
 		case 1:
-			this->runner.reload(L"picture/Mgator.png");
+			this->runner.reload(L"picture/select/Mgator.png");
 			this->Lv = buf.mapgator;
 			break;
 		case 2:
-			this->runner.reload(L"picture/Mtaylor.png");
+			this->runner.reload(L"picture/select/Mtaylor.png");
 			this->Lv = buf.taylor;
 			break;
 		default:
@@ -913,19 +915,19 @@ public:
 		this->Lv++;
 
 		if (this->rate < 2500) {
-			this->rateBar.reload(L"picture/MSrate1.png");
+			this->rateBar.reload(L"picture/select/MSrate1.png");
 		}
 		else if (2500 <= this->rate && this->rate < 5500) {
-			this->rateBar.reload(L"picture/MSrate2.png");
+			this->rateBar.reload(L"picture/select/MSrate2.png");
 		}
 		else if (5500 <= this->rate && this->rate < 9000) {
-			this->rateBar.reload(L"picture/MSrate3.png");
+			this->rateBar.reload(L"picture/select/MSrate3.png");
 		}
 		else if (9000 <= this->rate && this->rate < 12000) {
-			this->rateBar.reload(L"picture/MSrate4.png");
+			this->rateBar.reload(L"picture/select/MSrate4.png");
 		}
 		else {
-			this->rateBar.reload(L"picture/MSrate5.png");
+			this->rateBar.reload(L"picture/select/MSrate5.png");
 		}
 	}
 
@@ -956,19 +958,19 @@ private:
 		dxcur_pic_c(L"picture/difanother.png"),
 		dxcur_pic_c(L"picture/difanother.png")
 	};
-	dxcur_pic_c detail = dxcur_pic_c(_T("picture/detail.png"));
-	dxcur_pic_c mpalNamePic = dxcur_pic_c(_T("picture/mpalName.png"));
+	dxcur_pic_c detail = dxcur_pic_c(_T("picture/select/detail.png"));
+	dxcur_pic_c mpalNamePic = dxcur_pic_c(_T("picture/select/mpalName.png"));
 	dxcur_pic_c difC[10] = {
-		dxcur_pic_c(L"picture/Dif0S.png"),
-		dxcur_pic_c(L"picture/Dif0B.png"),
-		dxcur_pic_c(L"picture/Dif1S.png"),
-		dxcur_pic_c(L"picture/Dif1B.png"),
-		dxcur_pic_c(L"picture/Dif2S.png"),
-		dxcur_pic_c(L"picture/Dif2B.png"),
-		dxcur_pic_c(L"picture/Dif3S.png"),
-		dxcur_pic_c(L"picture/Dif3B.png"),
-		dxcur_pic_c(L"picture/Dif4S.png"),
-		dxcur_pic_c(L"picture/Dif4B.png")
+		dxcur_pic_c(L"picture/select/Dif0S.png"),
+		dxcur_pic_c(L"picture/select/Dif0B.png"),
+		dxcur_pic_c(L"picture/select/Dif1S.png"),
+		dxcur_pic_c(L"picture/select/Dif1B.png"),
+		dxcur_pic_c(L"picture/select/Dif2S.png"),
+		dxcur_pic_c(L"picture/select/Dif2B.png"),
+		dxcur_pic_c(L"picture/select/Dif3S.png"),
+		dxcur_pic_c(L"picture/select/Dif3B.png"),
+		dxcur_pic_c(L"picture/select/Dif4S.png"),
+		dxcur_pic_c(L"picture/select/Dif4B.png")
 	};
 
 private:
