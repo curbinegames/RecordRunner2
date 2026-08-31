@@ -167,6 +167,33 @@ bool GetFolderListWchar(std::vector<std::wstring> &list, const std::wstring &pat
 
 #endif /* dirent系 */
 
+bool RecGetPackList(std::vector<tstring> &list) {
+	list.clear();
+	DxFile_t file = FileRead_open(_T("RecordPack.txt"));
+	if (file == 0) { return false; }
+	while (FileRead_eof(file) == 0) {
+		TCHAR buf[256];
+		FileRead_gets(buf, 256, file);
+		list.push_back(buf);
+	}
+	FileRead_close(file);
+	return true;
+}
+
+bool RecGetMusicList(std::vector<tstring> &list, const tstring &packName) {
+	list.clear();
+	tstring path = _T("record/") + packName + _T("/list.txt");
+	DxFile_t file = FileRead_open(path.c_str());
+	if (file == 0) { return false; }
+	while (FileRead_eof(file) == 0) {
+		TCHAR buf[256];
+		FileRead_gets(buf, 256, file);
+		list.push_back(buf);
+	}
+	FileRead_close(file);
+	return true;
+}
+
 /* TODO: 各呼び元での戻り値チェック */
 /**
 * packNoからパックフォルダパスを取得する
@@ -180,7 +207,7 @@ rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
 
 	strcopy_2(_T("record/"), ret, size); // ret = "record/"
 
-	if (!GetFolderListWchar(list, _T("record"))) { return REC_ERROR_FILE_EXIST; }
+	if (!RecGetPackList(list)) { return REC_ERROR_FILE_EXIST; }
 
 	strcats_2(ret, size, list[packNo].c_str()); // ret = "record/<パック名>"
 	stradds_2(ret, size, _T('/'));              // ret = "record/<パック名>/"
@@ -198,16 +225,16 @@ rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
 */
 rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo) {
 	rec_error_t status = REC_ERROR_NONE;
-	tstring packPath;
+	tstring packName;
 	std::vector<tstring> list;
 
-	status = RecGetPackFolderPath(ret, size, packNo); // ret = "record/<パック名>/"
-	if (status != REC_ERROR_NONE) { return status; }
+	if (!RecGetPackList(list)) { return REC_ERROR_FILE_EXIST; }
+	packName = list[packNo];
+	if (!RecGetMusicList(list, packName)) { return REC_ERROR_FILE_EXIST; }
 
-	packPath = ret;      // packPath = "record/<パック名>/"
-	packPath.pop_back(); // packPath = "record/<パック名>"
-	if (!GetFolderListWchar(list, packPath)) { return REC_ERROR_FILE_EXIST; }
-
+	strcopy_2(_T("record/"), ret, size);        // ret = "record/"
+	strcats_2(ret, size, packName.c_str());     // ret = "record/<パック名>"
+	stradds_2(ret, size, _T('/'));              // ret = "record/<パック名>/"
 	strcats_2(ret, size, list[songNo].c_str()); // ret = "record/<パック名>/<曲名>"
 	stradds_2(ret, size, _T('/'));              // ret = "record/<パック名>/<曲名>/"
 
@@ -233,7 +260,7 @@ rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint son
 
 	packPathStr = packPath; // packPathStr = "record/<パック名>/"
 	packPathStr.pop_back(); // packPathStr = "record/<パック名>"
-	if (!GetFolderListWchar(list, packPathStr)) { return REC_ERROR_FILE_EXIST; }
+	if (!RecGetMusicList(list, packPathStr)) { return REC_ERROR_FILE_EXIST; }
 
 	strcopy_2(list[songNo].c_str(), ret, size);
 

@@ -240,7 +240,8 @@ private: /* èâä˙âªån */
 		tstring listpath = _T("record/") + packname;
 		std::vector<tstring> musiclist;
 
-		GetFolderListWchar(musiclist, listpath);
+		// GetFolderListWchar(musiclist, listpath);
+		RecGetMusicList(musiclist, packname);
 		if (musiclist.empty()) { return; }
 
 		for (size_t i = 0; i < musiclist.size(); i++) {
@@ -258,7 +259,8 @@ public: /* èâä˙âªån */
 		int musicNo = 0;
 		std::vector<tstring> packlist;
 
-		GetFolderListWchar(packlist, L"record");
+		// GetFolderListWchar(packlist, L"record");
+		RecGetPackList(packlist);
 		if (packlist.empty()) { return; }
 
 		for (size_t i = 0; i < packlist.size(); i++) {
@@ -322,6 +324,24 @@ public: /* ï¿Ç—ë÷Ç¶ån */
 				if (this->detail[this->sort[is]].level >
 					this->detail[this->sort[ie]].level)
 				{
+					uint temp = this->sort[is];
+					this->sort[is] = this->sort[ie];
+					this->sort[ie] = temp;
+				}
+			}
+		}
+	}
+
+	/**
+	 * @brief åªç›ÇÃ this->sort ÇÃì‡óeÇÉfÉtÉHÉãÉgèáÇ…ï¿Ç—ë÷Ç¶ÇÈ
+	 * @param Ç»Çµ
+	 * @return Ç»Çµ
+	 */
+	void SortByDefault(void) {
+		if (this->sort.empty()) { return; }
+		for (int is = 0; is + 1 < (this->sort.size()); is++) {
+			for (int ie = is + 1; ie < this->sort.size(); ie++) {
+				if (this->sort[is] > this->sort[ie]) {
 					uint temp = this->sort[is];
 					this->sort[is] = this->sort[ie];
 					this->sort[ie] = temp;
@@ -523,6 +543,7 @@ static void SortSong(songdata_set_t *songdata, int dif) {
 		songdata->SortByHScore();
 		break;
 	case rec_select_sorttype_ec::DEFAULT:
+		songdata->SortByDefault();
 		break;
 	}
 	return;

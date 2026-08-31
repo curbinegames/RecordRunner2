@@ -267,6 +267,9 @@ extern bool GetFolderListWchar(std::vector<std::wstring> &list, const std::wstri
 
 #endif /* dirent系 */
 
+extern bool RecGetPackList(std::vector<tstring> &list);
+extern bool RecGetMusicList(std::vector<tstring> &list, const tstring &packName);
+
 /* これらの関数は、呼ばれるたびにリソースを全探索する(o(n)である)ので、*/
 /* for文などで曲の全探索をするとo(n^2)になって処理が遅くなる。やめてね */
 /* TODO: 多分vector<string>でo(n)にできる */

@@ -2315,9 +2315,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	rec_error_t status = REC_ERROR_NONE;
 	int HighScore = 0;
-	TCHAR mapPath[255];
-	TCHAR fileName[255];
-	TCHAR folderPath[255];
+	TCHAR mapPath[255] = _T("");
+	TCHAR fileName[255] = _T("");
+	TCHAR folderPath[255] = _T("");
 	rec_map_detail_t map_detail;
 	rec_play_userpal_t userpal;
 	rec_play_nameset_t nameset;
