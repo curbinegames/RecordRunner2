@@ -32,28 +32,28 @@
 
 /* TODO: レベルフィルター周りの実装 */
 #define PackNumLim 16
-#define MapNumLim  128 /* とりあえず128譜面とする、現時点収録で結構ギリギリ */
 
 #define MUSE_FADTM 250
 #define MUSE_KEYTM 500
 
-#define REC_SERECT_KEY_RETURN 1
-#define REC_SERECT_KEY_BACK   2
-#define REC_SERECT_KEY_UP     3
-#define REC_SERECT_KEY_DOWN   4
-#define REC_SERECT_KEY_LEFT   5
-#define REC_SERECT_KEY_RIGHT  6
-#define REC_SERECT_KEY_SORT   7
-#define REC_SERECT_KEY_RELORD 8
-
-#define REC_SERECT_VECT_UP    -1
-#define REC_SERECT_VECT_DOWN   1
-#define REC_SERECT_VECT_LEFT   1
-#define REC_SERECT_VECT_RIGHT -1
+#define REC_SELECT_VECT_UP    -1
+#define REC_SELECT_VECT_DOWN   1
+#define REC_SELECT_VECT_LEFT   1
+#define REC_SELECT_VECT_RIGHT -1
 
 #endif /* define */
 
-typedef TCHAR rec_pack_name_set_t[256];
+typedef enum rec_select_key_e {
+	REC_SELECT_KEY_NONE   = 0,
+	REC_SELECT_KEY_RETURN = 1,
+	REC_SELECT_KEY_BACK   = 2,
+	REC_SELECT_KEY_UP     = 3,
+	REC_SELECT_KEY_DOWN   = 4,
+	REC_SELECT_KEY_LEFT   = 5,
+	REC_SELECT_KEY_RIGHT  = 6,
+	REC_SELECT_KEY_SORT   = 7,
+	REC_SELECT_KEY_RELORD = 8
+} rec_select_key_et;
 
 enum class rec_select_sorttype_ec {
 	DEFAULT,
@@ -401,8 +401,8 @@ static void RecSelectAllRelord(void) {
 
 #if 1 /* sub action */
 
-static int RecSerectKeyCheck() {
-	int ret = 0;
+static rec_select_key_et RecSerectKeyCheck() {
+	rec_select_key_et ret = REC_SELECT_KEY_NONE;
 	int mouseBtn = 0;
 	int mouseX = 0;
 	int mouseY = 0;
@@ -415,7 +415,7 @@ static int RecSerectKeyCheck() {
 	while (GetMouseInputLog2(&mouseBtn, &mouseX, &mouseY, &mouseAct, true) == 0) {}
 	if (mouseBtn == MOUSE_INPUT_LEFT && mouseAct == MOUSE_INPUT_LOG_UP) {
 		if (5 <= mouseX && mouseX <= 280 && 195 <= mouseY && mouseY <= 290) {
-			ret = REC_SERECT_KEY_RETURN;
+			ret = REC_SELECT_KEY_RETURN;
 		}
 		if (5 <= mouseX && mouseX <= 245 && 5 <= mouseY && mouseY <= 175) {
 			ret = REC_SERECT_KEY_UP;
@@ -431,35 +431,35 @@ static int RecSerectKeyCheck() {
 
 	/* ホイール入力 */
 	mouseHoil = GetMouseWheelRotVol();
-	if (1 <= mouseHoil)  { ret = REC_SERECT_KEY_UP;   } /* 奥回し */
-	if (mouseHoil <= -1) { ret = REC_SERECT_KEY_DOWN; } /* 手前回し */
+	if (1 <= mouseHoil)  { ret = REC_SELECT_KEY_UP;   } /* 奥回し */
+	if (mouseHoil <= -1) { ret = REC_SELECT_KEY_DOWN; } /* 手前回し */
 
 	/* キー入力 */
 	InputAllKeyHold();
 	switch (GetKeyPushOnce()) {
 	case KEY_INPUT_RETURN:
-		ret = REC_SERECT_KEY_RETURN;
+		ret = REC_SELECT_KEY_RETURN;
 		break;
 	case KEY_INPUT_BACK:
-		ret = REC_SERECT_KEY_BACK;
+		ret = REC_SELECT_KEY_BACK;
 		break;
 	case KEY_INPUT_UP:
-		ret = REC_SERECT_KEY_UP;
+		ret = REC_SELECT_KEY_UP;
 		break;
 	case KEY_INPUT_DOWN:
-		ret = REC_SERECT_KEY_DOWN;
+		ret = REC_SELECT_KEY_DOWN;
 		break;
 	case KEY_INPUT_LEFT:
-		ret = REC_SERECT_KEY_LEFT;
+		ret = REC_SELECT_KEY_LEFT;
 		break;
 	case KEY_INPUT_RIGHT:
-		ret = REC_SERECT_KEY_RIGHT;
+		ret = REC_SELECT_KEY_RIGHT;
 		break;
 	case KEY_INPUT_Z:
-		ret = REC_SERECT_KEY_SORT;
+		ret = REC_SELECT_KEY_SORT;
 		break;
 	case KEY_INPUT_F5:
-		ret = REC_SERECT_KEY_RELORD;
+		ret = REC_SELECT_KEY_RELORD;
 		break;
 	default:
 		break;
@@ -723,7 +723,7 @@ static class rec_serect_musicbar_c {
 private:
 #define VIEW_COUNT 9
 
-	int UD = REC_SERECT_VECT_DOWN;
+	int UD = REC_SELECT_VECT_DOWN;
 	int startC = -MUSE_FADTM;
 	dxcur_pic_c bar[2] = {
 		dxcur_pic_c(L"picture/select/songbarB.png"),
@@ -848,7 +848,7 @@ public:
 static class rec_serect_disk_c {
 private:
 	int Lv = 1;
-	int UD = REC_SERECT_VECT_DOWN;
+	int UD = REC_SELECT_VECT_DOWN;
 	int startC = -MUSE_FADTM;
 	intx100_t rate = 0;
 	double Nrot = 0.0;
@@ -867,7 +867,7 @@ private:
 		int moveC = 0;
 
 		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
-		if (this->UD == REC_SERECT_VECT_DOWN) { this->Nrot += pals(0, 2, MUSE_FADTM, -75, moveC) / 100.0; }
+		if (this->UD == REC_SELECT_VECT_DOWN) { this->Nrot += pals(0, 2, MUSE_FADTM, -75, moveC) / 100.0; }
 		else { this->Nrot += pals(0, 2, MUSE_FADTM, 75, moveC) / 100.0; }
 		if (this->Nrot > 6.28) { this->Nrot -= 6.28; }
 		else if (this->Nrot < 0) { this->Nrot += 6.28; }
@@ -947,7 +947,7 @@ public:
 
 static class rec_serect_detail_c {
 private:
-	int LR = REC_SERECT_VECT_LEFT;
+	int LR = REC_SELECT_VECT_LEFT;
 	int XstartC = -MUSE_FADTM;
 	TCHAR viewingDifBar[255] = { L"NULL" };
 	dxcur_pic_c difbar[6] = {
@@ -993,12 +993,12 @@ private:
 	void DrawDifBar(int baseX, int baseY, int dif) const {
 		int XmoveC = maxs_2(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
 
-		if (this->LR == REC_SERECT_VECT_LEFT) {
+		if (this->LR == REC_SELECT_VECT_LEFT) {
 			XmoveC = pals(0, 640, MUSE_FADTM, 460, XmoveC);
 			DrawGraphAnchor(baseX, baseY, this->difbar[dif].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif + 1].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 		}
-		else if (this->LR == REC_SERECT_VECT_RIGHT) {
+		else if (this->LR == REC_SELECT_VECT_RIGHT) {
 			XmoveC = pals(0, 460, MUSE_FADTM, 640, XmoveC);
 			DrawGraphAnchor(baseX, baseY, this->difbar[dif - 1].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 			DrawGraphAnchor(baseX + XmoveC - 461, baseY, this->difbar[dif].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
@@ -1204,14 +1204,14 @@ static void RecSerectKeyActLR(int cmd[], int vect,
 	rec_serect_ui_c *uiClass, songdata_set_t songdata[])
 {
 	switch (vect) {
-	case REC_SERECT_VECT_LEFT:
+	case REC_SELECT_VECT_LEFT:
 		cmd[1]--;
 		if (cmd[1] < 0) {
 			cmd[1] = 0;
 			return;
 		}
 		break;
-	case REC_SERECT_VECT_RIGHT:
+	case REC_SELECT_VECT_RIGHT:
 		cmd[1]++;
 		if (cmd[1] > 4) {
 			cmd[1] = 4;
@@ -1231,11 +1231,11 @@ static void RecSerectKeyActUD(int cmd[], int vect,
 	rec_serect_ui_c *uiClass, songdata_set_t *songdata)
 {
 	switch (vect) {
-	case REC_SERECT_VECT_UP:
+	case REC_SELECT_VECT_UP:
 		cmd[0]--;
 		if (cmd[0] < 0) { cmd[0] = songdata->sort.size() - 1; }
 		break;
-	case REC_SERECT_VECT_DOWN:
+	case REC_SELECT_VECT_DOWN:
 		cmd[0]++;
 		if (cmd[0] >= songdata->sort.size()) { cmd[0] = 0; }
 		break;
@@ -1250,11 +1250,11 @@ static void RecSerectKeyActUD(int cmd[], int vect,
 		int diffixBuf = RecSerectFetchDif(&(*songdata)[cmd[0]], cmd[1], songdata->sortMode);
 		if (diffixBuf < cmd[1]) {
 			cmd[1] = diffixBuf;
-			uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], REC_SERECT_VECT_LEFT);
+			uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], REC_SELECT_VECT_LEFT);
 		}
 		else if (diffixBuf > cmd[1]) {
 			cmd[1] = diffixBuf;
-			uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], REC_SERECT_VECT_RIGHT);
+			uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], REC_SELECT_VECT_RIGHT);
 		}
 	}
 #endif
@@ -1266,15 +1266,15 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 	int cmd[], int *CutTime, rec_serect_ui_c *uiClass, songdata_set_t *songdata,
 	const int *PackFirstNum)
 {
-	int key = 0;
+	rec_select_key_et key = REC_SELECT_KEY_NONE;
 
 	/* 操作検出*/
 	if (uiClass->cutin.IsClosing() == 0) { key = RecSerectKeyCheck(); }
-	else { key = 0; }
+	else { key = REC_SELECT_KEY_NONE; }
 
 	/* 動作 */
 	switch (key) {
-	case REC_SERECT_KEY_RETURN:
+	case REC_SELECT_KEY_RETURN:
 		// 選択できる曲であるかどうか (Lvが0以上であるかで判定)
 		if ((*songdata)[cmd[0]].level < 0) { break; }
 		RecSerectSetToPlay(toPlay, cmd, PackFirstNum, songdata);
@@ -1284,29 +1284,29 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 			(*songdata)[cmd[0]].jacketP);
 		uiClass->cutin.SetIo(CUT_FRAG_IN);
 		break;
-	case REC_SERECT_KEY_BACK:
+	case REC_SELECT_KEY_BACK:
 		*next = SCENE_MENU;
 		uiClass->cutin.SetTipNo();
 		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_ON);
 		uiClass->cutin.SetIo(CUT_FRAG_IN);
 		break;
-	case REC_SERECT_KEY_UP:
-		RecSerectKeyActUD(cmd, REC_SERECT_VECT_UP,    uiClass, songdata);
+	case REC_SELECT_KEY_UP:
+		RecSerectKeyActUD(cmd, REC_SELECT_VECT_UP,    uiClass, songdata);
 		break;
-	case REC_SERECT_KEY_DOWN:
-		RecSerectKeyActUD(cmd, REC_SERECT_VECT_DOWN,  uiClass, songdata);
+	case REC_SELECT_KEY_DOWN:
+		RecSerectKeyActUD(cmd, REC_SELECT_VECT_DOWN,  uiClass, songdata);
 		break;
-	case REC_SERECT_KEY_LEFT:
-		RecSerectKeyActLR(cmd, REC_SERECT_VECT_LEFT,  uiClass, songdata);
+	case REC_SELECT_KEY_LEFT:
+		RecSerectKeyActLR(cmd, REC_SELECT_VECT_LEFT,  uiClass, songdata);
 		break;
-	case REC_SERECT_KEY_RIGHT:
-		RecSerectKeyActLR(cmd, REC_SERECT_VECT_RIGHT, uiClass, songdata);
+	case REC_SELECT_KEY_RIGHT:
+		RecSerectKeyActLR(cmd, REC_SELECT_VECT_RIGHT, uiClass, songdata);
 		break;
-	case REC_SERECT_KEY_SORT:
+	case REC_SELECT_KEY_SORT:
 		++songdata->sortMode;
 		SortSongWithSave(songdata, cmd[1], &cmd[0]);
 		break;
-	case REC_SERECT_KEY_RELORD:
+	case REC_SELECT_KEY_RELORD:
 		*next = SCENE_RELOAD;
 		break;
 	default:
