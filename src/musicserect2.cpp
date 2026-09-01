@@ -1,6 +1,8 @@
 
 #if 1 /* include */
 
+#include <queue>
+
 /* base include */
 #include <DxLib.h>
 
@@ -207,7 +209,7 @@ private: /* èâä˙âªån */
 		const TCHAR *packName, const TCHAR *songName, int packNum, int musicNo
 	) {
 		int levelList[3] = {-1, -1, -1}; //0=easy, 1=normal, 2=hard
-		std::vector<MUSIC_BOX_2> buf_list;
+		std::queue<MUSIC_BOX_2> buf_list;
 		for (int iDif = 0; iDif < 6; iDif++) {
 			rec_error_t status = REC_ERROR_NONE;
 			tstring txtpath = _T("record/");
@@ -240,17 +242,17 @@ private: /* èâä˙âªån */
 					levelList[2] = buf.level;
 					break;
 				}
-				buf_list.push_back(buf);
+				buf_list.push(buf);
 			}
 		}
 
 		while (!buf_list.empty()) {
-			MUSIC_BOX_2 buf = buf_list.back();
+			MUSIC_BOX_2 buf = buf_list.front();
 			buf.levelList[0] = levelList[0];
 			buf.levelList[1] = levelList[1];
 			buf.levelList[2] = levelList[2];
 			this->data.push_back(buf);
-			buf_list.pop_back();
+			buf_list.pop();
 		}
 	}
 
@@ -397,18 +399,16 @@ typedef rec_serect_music_set_c songdata_set_t;
 
 #if 1 /* all relord */
 
-static void RecSelectAllRelordDrawInfo(uint iPack, uint iSong, uint iDif) {
+static void RecSelectAllRelordDrawInfo(const tstring &musicName, uint iDif) {
 	const TCHAR difName[4][16] = { _T("AUTO"), _T("EASY"), _T("NORMAL"), _T("HARD") }; /* anotherÇÕîÒï\é¶ */
 	static DxTime_t Btime = 0;
-	TCHAR songN[255] = _T("");
 
 	if (((Btime + 50) >= GetNowCount()) || (iDif >= 4)) { return; }
-	if (RecGetMusicFolderName(songN, ARRAY_COUNT(songN), iPack, iSong) != 0) { return; }
 
 	Btime = GetNowCount();
 	ClearDrawScreen();
 	/* TODO: îwåiÇ≠ÇÁÇ¢ÇÕó~ÇµÇ¢ */
-	DrawFormatString(5, 5, COLOR_WHITE, L"all record relording...\n%s[%s]", songN, difName[iDif]);
+	DrawFormatString(5, 5, COLOR_WHITE, L"all record relording...\n%s[%s]", musicName.c_str(), difName[iDif]);
 	ScreenFlip();
 	return;
 }
@@ -417,23 +417,23 @@ static void RecSelectAllRelord(void) {
 	TCHAR path[255];
 	DxTime_t next_time = 0;
 	std::vector<tstring> pack_list;
-	GetFolderListWchar(pack_list, L"record");
+	RecGetPackList(pack_list);
 
 	for (uint iPack = 0; iPack < pack_list.size(); iPack++) {
 		tstring pack_path = L"record/" + pack_list[iPack];
 		std::vector<tstring> music_list;
-		GetFolderListWchar(music_list, pack_path);
+		RecGetMusicList(music_list, pack_list[iPack]);
 		for (uint iSong = 0; iSong < music_list.size(); iSong++) {
 			for (uint iDif = 0; iDif < 5; iDif++) {
 				if (next_time <= GetNowCount()) {
-					RecSelectAllRelordDrawInfo(iPack, iSong, iDif);
+					RecSelectAllRelordDrawInfo(music_list[iSong], iDif);
 					next_time = GetNowCount() + 100;
 				}
 				if (RecordLoad2(iPack, iSong, iDif) != REC_ERROR_NONE) {
 					continue;
 				}
 				if (RecGetMusicMapRrsPath(path, 255, iPack, iSong, (rec_dif_t)iDif) != 0) { continue; }
-				// cal_ddif_3(path);
+				cal_ddif_3(path);
 			}
 		}
 	}

@@ -706,9 +706,9 @@ static int RecDdifSetNowkeyBase(
 	else if (0 <= note_p[2]->nowData().hittime) { G[0] = 2; }
 	if (G[0] == -1) { return -1; }
 
-	if (IS_BETWEEN_RIGHT_LESS(0, note_p[0]->nowData().hittime, note_p[0]->nowData().hittime)) { G[0] = 0; }
-	if (IS_BETWEEN_RIGHT_LESS(0, note_p[1]->nowData().hittime, note_p[1]->nowData().hittime)) { G[0] = 1; }
-	if (IS_BETWEEN_RIGHT_LESS(0, note_p[2]->nowData().hittime, note_p[2]->nowData().hittime)) { G[0] = 2; }
+	if (IS_BETWEEN_RIGHT_LESS(0, note_p[0]->nowData().hittime, note_p[G[0]]->nowData().hittime)) { G[0] = 0; }
+	if (IS_BETWEEN_RIGHT_LESS(0, note_p[1]->nowData().hittime, note_p[G[0]]->nowData().hittime)) { G[0] = 1; }
+	if (IS_BETWEEN_RIGHT_LESS(0, note_p[2]->nowData().hittime, note_p[G[0]]->nowData().hittime)) { G[0] = 2; }
 	Nowkey->time = note_p[G[0]]->nowData().hittime;
 
 	//Ÿ‚Ìƒm[ƒcŒQ‚ğæ“¾

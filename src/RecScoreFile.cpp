@@ -298,7 +298,7 @@ int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path) {
 		rec_map_detail_t buf;
 		RecScoreReadMapdata(&buf, fp, allnum.notenum[0] + allnum.notenum[1] + allnum.notenum[2]); /* seek‚·‚é‚¾‚¯ */
 	}
-	fseek(fp, sizeof(rec_ddif_pal_t), SEEK_CUR); /* seek‚µ‰ß‚¬‚½‚Ì‚Å–ß‚· */
+	fseek(fp, -(int)sizeof(rec_ddif_pal_t), SEEK_CUR); /* seek‚µ‰ß‚¬‚½‚Ì‚Å–ß‚· */
 	fwrite(ddif, sizeof(rec_ddif_pal_t), 1, fp); /* ‘‚«‚Ş */
 
 	fclose(fp);

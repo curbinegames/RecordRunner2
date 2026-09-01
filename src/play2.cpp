@@ -2332,7 +2332,7 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
-		// cal_ddif_3(mapPath); /* TODO: ç°ÉoÉOÇ¡ÇƒÇÈÅBÇ«Ç§ÇπseekÇÃñ‚ëË */
+		cal_ddif_3(mapPath);
 	}
 	else { fclose(fp); }
 
