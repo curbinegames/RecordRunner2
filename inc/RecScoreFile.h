@@ -94,9 +94,9 @@ typedef struct playnum_box {
 } playnum_box;
 
 typedef struct rec_play_nameset_s {
-	tstring sky = _T("picture/backskynoamal.png"); /* 空背景のファイル名 */
-	tstring ground = _T("picture/groundnaturenormal.png"); /* 地面背景のファイル名 */
-	tstring water = _T("picture/waternormal.png"); /* 水中背景のファイル名 */
+	tstring sky = _T("picture/play/backskynoamal.png"); /* 空背景のファイル名 */
+	tstring ground = _T("picture/play/groundnaturenormal.png"); /* 地面背景のファイル名 */
+	tstring water = _T("picture/play/waternormal.png"); /* 水中背景のファイル名 */
 	tstring mp3FN = _T("song/"); /* 曲のファイル名 */
 	tstring songN; /* 曲名 */
 	tstring songNE; /* 曲名(英語) */

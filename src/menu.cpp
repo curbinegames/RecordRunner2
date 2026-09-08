@@ -31,7 +31,7 @@ private:
 		{
 			dxcur_pic_c(L"picture/menu/FREE PLAY.png"),
 			dxcur_pic_c(L"picture/menu/FREE PLAY G.png"),
-			dxcur_pic_c(L"picture/backskynoamal.png"),
+			dxcur_pic_c(L"picture/play/backskynoamal.png"),
 			SCENE_SERECT
 		},
 		{
@@ -49,7 +49,7 @@ private:
 		{
 			dxcur_pic_c(L"picture/menu/QUIT.png"),
 			dxcur_pic_c(L"picture/menu/QUIT G.png"),
-			dxcur_pic_c(L"picture/backstar.png"),
+			dxcur_pic_c(L"picture/play/backstar.png"),
 			SCENE_EXIT
 		}
 	};

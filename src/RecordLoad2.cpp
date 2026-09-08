@@ -1268,19 +1268,19 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 		//空の背景を読み込む
 		else if (strands_direct(GT1, L"#SKY:")) {
 			strmods(GT1, 5);
-			recfp->nameset.sky  = _T("picture/");
+			recfp->nameset.sky  = _T("picture/play/");
 			recfp->nameset.sky += GT1;
 		}
 		//地面の画像を読み込む
 		else if (strands_direct(GT1, L"#FIELD:")) {
 			strmods(GT1, 7);
-			recfp->nameset.ground  = _T("picture/");
+			recfp->nameset.ground  = _T("picture/play/");
 			recfp->nameset.ground += GT1;
 		}
 		//水中の画像を読み込む
 		else if (strands_direct(GT1, L"#WATER:")) {
 			strmods(GT1, 7);
-			recfp->nameset.water  = _T("picture/");
+			recfp->nameset.water  = _T("picture/play/");
 			recfp->nameset.water += GT1;
 		}
 		//難易度バー(another)を読み込む

@@ -40,22 +40,22 @@ typedef rec_map_eff_data_t mapeff_t;
 class rec_play_notepic_c {
 public:
 	struct {
-		dxcur_pic_c notebase = dxcur_pic_c(L"picture/hit.png");
+		dxcur_pic_c notebase = dxcur_pic_c(L"picture/play/hit.png");
 		dxcur_pic_c hitcircle[6] = {
-			dxcur_pic_c(L"picture/hitc-G.png"),
-			dxcur_pic_c(L"picture/hitc-R.png"),
-			dxcur_pic_c(L"picture/hitc-B.png"),
-			dxcur_pic_c(L"picture/hitc-Y.png"),
-			dxcur_pic_c(L"picture/hitc-X.png"),
-			dxcur_pic_c(L"picture/hitc-W.png"),
+			dxcur_pic_c(L"picture/play/hitc-G.png"),
+			dxcur_pic_c(L"picture/play/hitc-R.png"),
+			dxcur_pic_c(L"picture/play/hitc-B.png"),
+			dxcur_pic_c(L"picture/play/hitc-Y.png"),
+			dxcur_pic_c(L"picture/play/hitc-X.png"),
+			dxcur_pic_c(L"picture/play/hitc-W.png"),
 		};
-		dxcur_pic_c catchi = dxcur_pic_c(L"picture/catch.png");
-		dxcur_pic_c up     = dxcur_pic_c(L"picture/up.png");
-		dxcur_pic_c down   = dxcur_pic_c(L"picture/down.png");
-		dxcur_pic_c left   = dxcur_pic_c(L"picture/left.png");
-		dxcur_pic_c right  = dxcur_pic_c(L"picture/right.png");
-		dxcur_pic_c bomb   = dxcur_pic_c(L"picture/bomb.png");
-		dxcur_pic_c goust  = dxcur_pic_c(L"picture/goust.png");
+		dxcur_pic_c catchi = dxcur_pic_c(L"picture/play/catch.png");
+		dxcur_pic_c up     = dxcur_pic_c(L"picture/play/up.png");
+		dxcur_pic_c down   = dxcur_pic_c(L"picture/play/down.png");
+		dxcur_pic_c left   = dxcur_pic_c(L"picture/play/left.png");
+		dxcur_pic_c right  = dxcur_pic_c(L"picture/play/right.png");
+		dxcur_pic_c bomb   = dxcur_pic_c(L"picture/play/bomb.png");
+		dxcur_pic_c goust  = dxcur_pic_c(L"picture/play/goust.png");
 	} pic;
 
 	/**
@@ -286,9 +286,9 @@ private:
 	size_t count = 0;
 
 	dxcur_pic_c pic_list[3] = {
-		dxcur_pic_c(_T("picture/Bonus-Smalllight1.png")),
-		dxcur_pic_c(_T("picture/Bonus-Smalllight2.png")),
-		dxcur_pic_c(_T("picture/Bonus-Smalllight3.png"))
+		dxcur_pic_c(_T("picture/play/Bonus-Smalllight1.png")),
+		dxcur_pic_c(_T("picture/play/Bonus-Smalllight2.png")),
+		dxcur_pic_c(_T("picture/play/Bonus-Smalllight3.png"))
 	};
 	DxPic_t using_pic = DXLIB_PIC_NULL;
 
@@ -329,7 +329,7 @@ private:
 	DxTime_t Stime = 0;
 	int alpha = 0;
 	size_t count = 0;
-	dxcur_pic_c pic{_T("picture/Bonus-Biglight.png")};
+	dxcur_pic_c pic{_T("picture/play/Bonus-Biglight.png")};
 
 public:
 	void draw(void) const {
@@ -369,7 +369,7 @@ private:
 	int DownPos  = 0;
 	int alpha    = 0;
 
-	dxcur_pic_c pic{_T("picture/Bonus-Ring.png")};
+	dxcur_pic_c pic{_T("picture/play/Bonus-Ring.png")};
 
 public:
 	void draw(void) const {
@@ -1239,10 +1239,10 @@ static void RecPlayGetKeyhold(rec_score_file_t *recfp, rec_play_key_hold_c &keyh
 class rec_play_judge_pic_c {
 private:
 	dxcur_pic_c pic[4] = {
-		dxcur_pic_c(_T("picture/judge-just.png")),
-		dxcur_pic_c(_T("picture/judge-good.png")),
-		dxcur_pic_c(_T("picture/judge-safe.png")),
-		dxcur_pic_c(_T("picture/judge-miss.png"))
+		dxcur_pic_c(_T("picture/play/judge-just.png")),
+		dxcur_pic_c(_T("picture/play/judge-good.png")),
+		dxcur_pic_c(_T("picture/play/judge-safe.png")),
+		dxcur_pic_c(_T("picture/play/judge-miss.png"))
 	};
 
 	DxTime_t state[4];
@@ -1297,12 +1297,12 @@ public:
 class rec_play_hiteff_c {
 private:
 	struct {
-		dxcur_divpic_c   hit{_T("picture/hiteff.png"  ), 5, 5, 1, 50, 50};
-		dxcur_divpic_c    up{_T("picture/upeff.png"   ), 5, 5, 1, 50, 50};
-		dxcur_divpic_c  down{_T("picture/downeff.png" ), 5, 5, 1, 50, 50};
-		dxcur_divpic_c  left{_T("picture/lefteff.png" ), 5, 5, 1, 50, 50};
-		dxcur_divpic_c right{_T("picture/righteff.png"), 5, 5, 1, 50, 50};
-		dxcur_divpic_c  bomb{_T("picture/bombeff.png" ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c   hit{_T("picture/play/hiteff.png"  ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c    up{_T("picture/play/upeff.png"   ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c  down{_T("picture/play/downeff.png" ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c  left{_T("picture/play/lefteff.png" ), 5, 5, 1, 50, 50};
+		dxcur_divpic_c right{_T("picture/play/righteff.png"), 5, 5, 1, 50, 50};
+		dxcur_divpic_c  bomb{_T("picture/play/bombeff.png" ), 5, 5, 1, 50, 50};
 	} pic;
 
 	struct {
@@ -1524,7 +1524,7 @@ private:
 
 public:
 	rec_play_combo_c() {
-		LoadDivGraph(L"picture/NumberComboBlue.png", 10, 5, 2, 80, 100, this->ComboFontimg);
+		LoadDivGraph(L"picture/play/NumberComboBlue.png", 10, 5, 2, 80, 100, this->ComboFontimg);
 	}
 
 	~rec_play_combo_c() {
@@ -1570,8 +1570,8 @@ private:
 	int pos = 1; //ƒLƒƒƒ‰‚Ì¡‚ÌˆÊ’u[0‚Åã,1‚Å’†,2‚Å‰º]
 	DxPic_t	charaimg[PIC_NUM];
 	rec_play_chara_hit_attack_t hitatk;
-	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/Cguide.png"));
-	dxcur_pic_c judghimg      = dxcur_pic_c(_T("picture/Marker.png"));
+	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/play/Cguide.png"));
+	dxcur_pic_c judghimg      = dxcur_pic_c(_T("picture/play/Marker.png"));
 	rec_play_hiteff_c hiteff;
 
 public:
@@ -1757,16 +1757,16 @@ public:
 
 static class rec_play_sbar_c {
 private:
-	dxcur_pic_c baseImg = dxcur_pic_c(_T("picture/scoreber.png"));
+	dxcur_pic_c baseImg = dxcur_pic_c(_T("picture/play/scoreber.png"));
 	struct {
-		dxcur_pic_c Green = dxcur_pic_c(_T("picture/LIFEbar.png"));
-		dxcur_pic_c Yellow = dxcur_pic_c(_T("picture/LIFEbar2.png"));
-		dxcur_pic_c Red = dxcur_pic_c(_T("picture/LIFEbar3.png"));
+		dxcur_pic_c Green = dxcur_pic_c(_T("picture/play/LIFEbar.png"));
+		dxcur_pic_c Yellow = dxcur_pic_c(_T("picture/play/LIFEbar2.png"));
+		dxcur_pic_c Red = dxcur_pic_c(_T("picture/play/LIFEbar3.png"));
 	} Lbarimg;
 	dxcur_pic_c Tbarimg[2] = {
-		dxcur_pic_c(_T("picture/TIMEbar.png")), dxcur_pic_c(_T("picture/TIMEbar2.png"))
+		dxcur_pic_c(_T("picture/play/TIMEbar.png")), dxcur_pic_c(_T("picture/play/TIMEbar2.png"))
 	};
-	dxcur_pic_c sbbarimg = dxcur_pic_c(_T("picture/scoreber2.png"));
+	dxcur_pic_c sbbarimg = dxcur_pic_c(_T("picture/play/scoreber2.png"));
 
 private:
 	int CalPosScore(rec_play_score_t score, int RemainNotes, int Notes, int combo, int MaxCombo) {
@@ -1916,8 +1916,8 @@ public:
 
 class rec_play_gapbar_c {
 private:
-	dxcur_pic_c gapbarimg  = dxcur_pic_c(L"picture/GapBer.png");
-	dxcur_pic_c gaplineimg = dxcur_pic_c(L"picture/GapBerLine.png");
+	dxcur_pic_c gapbarimg  = dxcur_pic_c(L"picture/play/GapBer.png");
+	dxcur_pic_c gaplineimg = dxcur_pic_c(L"picture/play/GapBerLine.png");
 
 public:
 	void ViewGapBar(const cur_deviation_c *gap) const {
@@ -1945,8 +1945,8 @@ private:
 public:
 	rec_play_keyview_c(void) {
 		if (this->enable) {
-			this->KeyViewimg[0].reload(_T("picture/KeyViewOff.png"));
-			this->KeyViewimg[1].reload(_T("picture/KeyViewOn.png"));
+			this->KeyViewimg[0].reload(_T("picture/play/KeyViewOff.png"));
+			this->KeyViewimg[1].reload(_T("picture/play/KeyViewOn.png"));
 		}
 	}
 
@@ -2078,8 +2078,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_cutin_c cutin;
 
 	/* mat */
-	dxcur_pic_c dangerimg = dxcur_pic_c(_T("picture/danger.png"));
-	dxcur_pic_c dropimg   = dxcur_pic_c(_T("picture/drop.png"));
+	dxcur_pic_c dangerimg = dxcur_pic_c(_T("picture/play/danger.png"));
+	dxcur_pic_c dropimg   = dxcur_pic_c(_T("picture/play/drop.png"));
 	dxcur_pic_c filterimg = dxcur_pic_c(_T("picture/Black.png"));
 	rec_play_notepic_c noteimg;
 	rec_play_snditem_all_c snd_set_class(folderPath);

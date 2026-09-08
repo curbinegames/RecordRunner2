@@ -254,14 +254,11 @@ rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint son
 	TCHAR packPath[256];
 	tstring packPathStr;
 	std::vector<tstring> list;
+	tstring packName;
 
-	status = RecGetPackFolderPath(packPath, 256, packNo); // ret = "record/<パック名>/"
-	if (status != REC_ERROR_NONE) { return status; }
-
-	packPathStr = packPath; // packPathStr = "record/<パック名>/"
-	packPathStr.pop_back(); // packPathStr = "record/<パック名>"
-	if (!RecGetMusicList(list, packPathStr)) { return REC_ERROR_FILE_EXIST; }
-
+	if (!RecGetPackList(list)) { return REC_ERROR_FILE_EXIST; }
+	packName = list[packNo];
+	if (!RecGetMusicList(list, packName)) { return REC_ERROR_FILE_EXIST; }
 	strcopy_2(list[songNo].c_str(), ret, size);
 
 	return REC_ERROR_NONE;

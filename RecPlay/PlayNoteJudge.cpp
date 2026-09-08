@@ -88,8 +88,6 @@ void rec_play_snditem_def_c::PlaySoundData(
 	note_judge judge, const note_box_2_t &note, rec_play_sound_c &p_sound,
 	const std::vector<DxSnd_t> &soundItem
 ) {
-	if (optiondata.SEenable != 0) { return; }
-
 	switch (note.object) {
 	case NOTE_HIT:
 	case NOTE_CATCH:
