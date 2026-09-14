@@ -1,3 +1,9 @@
+/**
+ * やりたいこと
+ * フォルダー機能
+ * リロード中の背景
+ * マウス選択機能の復活
+ */
 
 #if 1 /* include */
 
@@ -32,7 +38,6 @@
 
 #if 1 /* define */
 
-/* TODO: レベルフィルター周りの実装 */
 #define PackNumLim 16
 
 #define MUSE_FADTM 250
@@ -42,6 +47,8 @@
 #define REC_SELECT_VECT_DOWN   1
 #define REC_SELECT_VECT_LEFT   1
 #define REC_SELECT_VECT_RIGHT -1
+
+#define REC_SELECT_DEFAULT_SAMPLE_RATE 44100
 
 #endif /* define */
 
@@ -76,24 +83,29 @@ rec_select_sorttype_ec &operator++(rec_select_sorttype_ec &val) {
 
 typedef struct music_box_2 {
 	int level      = -1;
-	int LvType     =  1; // 0=auto, 1=easy, 2=normal, 3=hard, 4=another, 5=secret
 	int preview[2] = {0, 10000};
 	int Hscore     =  0;
 	int Hdis       =  0;
-	int ScoreRate  =  6; //0=EX, 1=S, 2=A, 3=B, 4=C, 5=D, 6=not play
-	int ClearRank  =  0; //0=not play, 1=droped, 2=cleared, 3=no miss!, 4=full combo!!, 5=perfect!!!
 	int packNo     =  0;
 	int musicNo    =  0;
 	double Hacc    =  0.0;
-	int levelList[3] = {-1, -1, -1}; //0=easy, 1=normal, 2=hard
-	TCHAR difP[256]         = _T("");
-	TCHAR packName[64]      = _T("");
-	TCHAR SongName[64]      = _T("");
-	TCHAR artist[64]        = _T("");
-	TCHAR SongFileName[256] = _T("");
-	TCHAR jacketP[256]      = _T("");
+	int levelList[4] = {-1, -1, -1, -1}; //0=easy, 1=normal, 2=hard, 3=another
+	rec_dif_t LvType = REC_DIF_EASY;
+	rec_score_rate_t ScoreRate = REC_SCORE_RATE_NO_PLAY;
+	rec_clear_rank_t ClearRank = REC_CLEAR_RANK_NO_PLAY;
+	tstring difP         = _T("");
+	tstring packName     = _T("");
+	tstring SongName     = _T("");
+	tstring artist       = _T("");
+	tstring SongFileName = _T("");
+	tstring jacketP      = _T("");
 	rec_ddif_pal_t mpal;
 } MUSIC_BOX_2;
+
+typedef struct rec_select_command_s {
+	int music = 0;
+	int dif   = 1;
+} rec_select_command_st;
 
 class rec_select_musiclist_c {
 private:
@@ -101,89 +113,89 @@ private:
 
 private: /* 初期化系 */
 	rec_error_t ReadMusicOneDif(
-		MUSIC_BOX_2 *songdata, const TCHAR *path,
-		const TCHAR *subpath, const TCHAR *packName, int packNum, int musicNo, int dif
+		MUSIC_BOX_2 &songdata, const tstring &path, const tstring &subpath,
+		const tstring &packName, int packNum, int musicNo, rec_dif_t dif
 	) {
 		DxFile_t fd;
 		TCHAR buf[256];
 		int lang = optiondata.lang;
 
-		fd = FileRead_open(path);
+		fd = FileRead_open(path.c_str());
 
-		if (fd == 0) { return REC_ERROR_FILE_EXIST; }
+		if (fd == DXLIB_FILE_NULL) { return REC_ERROR_FILE_EXIST; }
 
 		//初期値定義
-		songdata->LvType     =     dif;
-		songdata->level      =      -1;
-		songdata->preview[0] =  441000;
-		songdata->preview[1] = 2646000;
-		songdata->packNo     = packNum;
-		songdata->musicNo    = musicNo;
-		strcopy_2(L"NULL",                    songdata->SongName,      64);
-		strcopy_2(L"NULL",                    songdata->artist,        64);
-		strcopy_2(L"NULL",                    songdata->SongFileName, 255);
-		strcopy_2(L"picture/NULL jucket.png", songdata->jacketP,      255);
-		strcopy_2(packName,                   songdata->packName,      64);
+		songdata.LvType       = dif;
+		songdata.level        = -1;
+		songdata.preview[0]   = REC_SELECT_DEFAULT_SAMPLE_RATE * 10;
+		songdata.preview[1]   = REC_SELECT_DEFAULT_SAMPLE_RATE * 60;
+		songdata.packNo       = packNum;
+		songdata.musicNo      = musicNo;
+		songdata.packName     = packName;
+		songdata.SongName     = _T("NULL");
+		songdata.artist       = _T("NULL");
+		songdata.SongFileName = _T("NULL");
+		songdata.jacketP      = _T("picture/NULL jucket.png");
 
 		while (FileRead_eof(fd) == 0) {
 			FileRead_gets(buf, 256, fd);
 			//曲名を読み込む
 			if (strands_direct(buf, L"#TITLE:")) {
 				strmods(buf, 7);
-				if ((lang == 0) || strands_direct(songdata->SongName, L"NULL")) {
-					strcopy_2(buf, songdata->SongName, 64);
+				if ((lang == 0) || strands_direct(songdata.SongName.c_str(), L"NULL")) {
+					songdata.SongName = buf;
 				}
 			}
 			else if (strands_direct(buf, L"#E.TITLE:")) {
 				strmods(buf, 9);
-				if ((lang == 1) || strands_direct(songdata->SongName, L"NULL")) {
-					strcopy_2(buf, songdata->SongName, 64);
+				if ((lang == 1) || strands_direct(songdata.SongName.c_str(), L"NULL")) {
+					songdata.SongName = buf;
 				}
 			}
 			//作曲者を読み込む
 			else if (strands_direct(buf, L"#ARTIST:")) {
 				strmods(buf, 8);
-				if ((lang == 0) || strands_direct(songdata->artist, L"NULL")) {
-					strcopy_2(buf, songdata->artist, 64);
+				if ((lang == 0) || strands_direct(songdata.artist.c_str(), L"NULL")) {
+					songdata.artist = buf;
 				}
 			}
 			else if (strands_direct(buf, L"#E.ARTIST:")) {
 				strmods(buf, 10);
-				if ((lang == 1) || strands_direct(songdata->artist, L"NULL")) {
-					strcopy_2(buf, songdata->artist, 64);
+				if ((lang == 1) || strands_direct(songdata.artist.c_str(), L"NULL")) {
+					songdata.artist = buf;
 				}
 			}
 			//曲ファイル名を読み込む
 			else if (strands_direct(buf, L"#MUSIC:")) {
 				strmods(buf, 7);
-				strcopy_2(subpath, songdata->SongFileName, 255);
-				strcats(songdata->SongFileName, buf);
+				songdata.SongFileName  = subpath;
+				songdata.SongFileName += buf;
 			}
 			//難易度を読み込む
 			else if (strands_direct(buf, L"#LEVEL:")) {
 				strmods(buf, 7);
-				songdata->level = strsans(buf);
+				songdata.level = strsans(buf);
 			}
 			//プレビュー時間を読み込む
 			else if (strands_direct(buf, L"#PREVIEW:")) {
 				strmods(buf, 9);
-				songdata->preview[0] = (int)((double)strsans(buf) / 1000.0 * 44100.0);
+				songdata.preview[0] = (int)((double)strsans(buf) / 1000.0 * REC_SELECT_DEFAULT_SAMPLE_RATE);
 				strnex(buf);
 				if (L'0' <= buf[1] && buf[1] <= L'9') {
-					songdata->preview[1] = (int)((double)strsans(buf) / 1000.0 * 44100.0);
+					songdata.preview[1] = (int)((double)strsans(buf) / 1000.0 * REC_SELECT_DEFAULT_SAMPLE_RATE);
 				}
 			}
 			//ジャケット写真を読み込む
 			else if (strands_direct(buf, L"#JACKET:")) {
 				strmods(buf, 8);
-				strcopy_2(subpath, songdata->jacketP, 255);
-				strcats(songdata->jacketP, buf);
+				songdata.jacketP  = subpath;
+				songdata.jacketP += buf;
 			}
 			//差し替えAnotherバーを読み込む
 			else if (strands_direct(buf, L"#DIFBAR:")) {
 				strmods(buf, 8);
-				strcopy_2(subpath, songdata->difP, 255);
-				strcats(songdata->difP, buf);
+				songdata.difP  = subpath;
+				songdata.difP += buf;
 			}
 			//マップに入ったら抜ける
 			else if (strands_direct(buf, L"#MAP:")) { break; }
@@ -193,22 +205,21 @@ private: /* 初期化系 */
 		return REC_ERROR_NONE;
 	}
 
-	/* TODO: 初期値が正しく代入されない */
-	void ReadHighscore(MUSIC_BOX_2 *songdata, const TCHAR *songName, rec_dif_t dif) {
+	void ReadHighscore(MUSIC_BOX_2 &songdata, const tstring &songName, rec_dif_t dif) {
 		rec_save_score_t score;
-		RecSaveReadScoreOneDif(&score, songName, dif);
-		songdata->Hscore    = score.score;
-		songdata->Hacc      = score.acc;
-		songdata->Hdis      = score.dist;
-		songdata->ScoreRate = score.scoreRate;
-		songdata->ClearRank = score.clearRank;
+		RecSaveReadScoreOneDif(&score, songName.c_str(), dif);
+		songdata.Hscore    = score.score;
+		songdata.Hacc      = score.acc;
+		songdata.Hdis      = score.dist;
+		songdata.ScoreRate = score.scoreRate;
+		songdata.ClearRank = score.clearRank;
 		return;
 	}
 
 	void ReadMusic(
-		const TCHAR *packName, const TCHAR *songName, int packNum, int musicNo
+		const tstring &packName, const tstring &songName, int packNum, int musicNo
 	) {
-		int levelList[3] = {-1, -1, -1}; //0=easy, 1=normal, 2=hard
+		int levelList[4] = {-1, -1, -1, -1}; //0=easy, 1=normal, 2=hard, 3=another
 		std::queue<MUSIC_BOX_2> buf_list;
 		for (int iDif = 0; iDif < 6; iDif++) {
 			rec_error_t status = REC_ERROR_NONE;
@@ -226,11 +237,11 @@ private: /* 初期化系 */
 			txtpath += _T(".txt"); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 			rrsPath += _T(".rrs"); //"record/<パック名>/<曲名>/<難易度番号>.rrs"
 			status = this->ReadMusicOneDif(
-				&buf, txtpath.c_str(), subPath.c_str(), packName, packNum, musicNo, iDif
+				buf, txtpath, subPath, packName, packNum, musicNo, (rec_dif_t)iDif
 			);
 			if (status == REC_ERROR_NONE) {
 				RecScoreReadDdif(&buf.mpal, rrsPath.c_str());
-				this->ReadHighscore(&buf, songName, (rec_dif_t)iDif);
+				this->ReadHighscore(buf, songName, (rec_dif_t)iDif);
 				switch (iDif) {
 				case 1:
 					levelList[0] = buf.level;
@@ -240,6 +251,9 @@ private: /* 初期化系 */
 					break;
 				case 3:
 					levelList[2] = buf.level;
+					break;
+				case 4:
+					levelList[3] = buf.level;
 					break;
 				}
 				buf_list.push(buf);
@@ -251,6 +265,7 @@ private: /* 初期化系 */
 			buf.levelList[0] = levelList[0];
 			buf.levelList[1] = levelList[1];
 			buf.levelList[2] = levelList[2];
+			buf.levelList[3] = levelList[3];
 			this->data.push_back(buf);
 			buf_list.pop();
 		}
@@ -270,7 +285,7 @@ private: /* 初期化系 */
 		if (musiclist.empty()) { return; }
 
 		for (size_t i = 0; i < musiclist.size(); i++) {
-			this->ReadMusic(packname.c_str(), musiclist[i].c_str(), packIndex, i);
+			this->ReadMusic(packname, musiclist[i], packIndex, i);
 		}
 	}
 
@@ -297,12 +312,9 @@ public: /* 番地検索系 */
 	const MUSIC_BOX_2& operator[](int n) const {
 		return this->data[betweens(0, n, data.size() - 1)];
 	}
-	const MUSIC_BOX_2& at(int n) const {
-		return this->data[betweens(0, n, data.size() - 1)];
-	}
 
-	const int GetPackFirstNum(void) const {
-		return 0;
+	const MUSIC_BOX_2& at(int n) const {
+		return this->data.at(betweens(0, n, data.size() - 1));
 	}
 
 	size_t size(void) const {
@@ -324,17 +336,9 @@ public: /* 並び替え系 */
 	 */
 	void SortByHScore(void) {
 		if (this->sort.empty()) { return; }
-		for (int is = 0; is + 1 < (this->sort.size()); is++) {
-			for (int ie = is + 1; ie < this->sort.size(); ie++) {
-				if (this->detail[this->sort[is]].Hscore >
-					this->detail[this->sort[ie]].Hscore)
-				{
-					uint temp = this->sort[is];
-					this->sort[is] = this->sort[ie];
-					this->sort[ie] = temp;
-				}
-			}
-		}
+		std::sort(this->sort.begin(), this->sort.end(), [this](uint a, uint b) {
+			return this->detail[a].Hscore > this->detail[b].Hscore;
+		});
 	}
 
 	/**
@@ -344,17 +348,9 @@ public: /* 並び替え系 */
 	 */
 	void SortByLevel(void) {
 		if (this->sort.empty()) { return; }
-		for (int is = 0; is + 1 < (this->sort.size()); is++) {
-			for (int ie = is + 1; ie < this->sort.size(); ie++) {
-				if (this->detail[this->sort[is]].level >
-					this->detail[this->sort[ie]].level)
-				{
-					uint temp = this->sort[is];
-					this->sort[is] = this->sort[ie];
-					this->sort[ie] = temp;
-				}
-			}
-		}
+		std::sort(this->sort.begin(), this->sort.end(), [this](uint a, uint b) {
+			return this->detail[a].level < this->detail[b].level;
+		});
 	}
 
 	/**
@@ -364,14 +360,25 @@ public: /* 並び替え系 */
 	 */
 	void SortByDefault(void) {
 		if (this->sort.empty()) { return; }
-		for (int is = 0; is + 1 < (this->sort.size()); is++) {
-			for (int ie = is + 1; ie < this->sort.size(); ie++) {
-				if (this->sort[is] > this->sort[ie]) {
-					uint temp = this->sort[is];
-					this->sort[is] = this->sort[ie];
-					this->sort[ie] = temp;
-				}
-			}
+		std::sort(this->sort.begin(), this->sort.end(), [this](uint a, uint b) {
+			return a < b;
+		});
+	}
+
+	/**
+	 * @brief 現在の this->sort の内容を this->sortMode に従って並び替える
+	 */
+	void SortByNowMode(void) {
+		switch (this->sortMode) {
+		case rec_select_sorttype_ec::LEVEL:
+			this->SortByLevel();
+			break;
+		case rec_select_sorttype_ec::SCORE:
+			this->SortByHScore();
+			break;
+		case rec_select_sorttype_ec::DEFAULT:
+			this->SortByDefault();
+			break;
 		}
 	}
 
@@ -392,7 +399,7 @@ public: /* 番地検索系 */
 	}
 
 	const MUSIC_BOX_2& at(int n) const {
-		return this->detail[sort[betweens(0, n, sort.size() - 1)]];
+		return this->detail.at(sort[betweens(0, n, sort.size() - 1)]);
 	}
 };
 typedef rec_serect_music_set_c songdata_set_t;
@@ -400,15 +407,14 @@ typedef rec_serect_music_set_c songdata_set_t;
 #if 1 /* all relord */
 
 static void RecSelectAllRelordDrawInfo(const tstring &musicName, uint iDif) {
-	const TCHAR difName[4][16] = { _T("AUTO"), _T("EASY"), _T("NORMAL"), _T("HARD") }; /* anotherは非表示 */
+	const tstring difName[4] = { _T("AUTO"), _T("EASY"), _T("NORMAL"), _T("HARD") }; /* anotherは非表示 */
 	static DxTime_t Btime = 0;
 
 	if (((Btime + 50) >= GetNowCount()) || (iDif >= 4)) { return; }
 
 	Btime = GetNowCount();
 	ClearDrawScreen();
-	/* TODO: 背景くらいは欲しい */
-	DrawFormatString(5, 5, COLOR_WHITE, L"all record relording...\n%s[%s]", musicName.c_str(), difName[iDif]);
+	DrawFormatString(5, 5, COLOR_WHITE, L"all record relording...\n%s[%s]", musicName.c_str(), difName[iDif].c_str());
 	ScreenFlip();
 	return;
 }
@@ -417,12 +423,12 @@ static void RecSelectAllRelord(void) {
 	TCHAR path[255];
 	DxTime_t next_time = 0;
 	std::vector<tstring> pack_list;
-	RecGetPackList(pack_list);
+	if (RecGetPackList(pack_list) == false) { return; }
 
 	for (uint iPack = 0; iPack < pack_list.size(); iPack++) {
 		tstring pack_path = L"record/" + pack_list[iPack];
 		std::vector<tstring> music_list;
-		RecGetMusicList(music_list, pack_list[iPack]);
+		if (RecGetMusicList(music_list, pack_list[iPack]) == false) { continue; }
 		for (uint iSong = 0; iSong < music_list.size(); iSong++) {
 			for (uint iDif = 0; iDif < 5; iDif++) {
 				if (next_time <= GetNowCount()) {
@@ -511,9 +517,11 @@ static rec_select_key_et RecSerectKeyCheck() {
 	return ret;
 }
 
-static int RecSerectTrySecret(int Hscore) {
-	int ret = 0;
+static bool RecSerectTrySecret(int Hscore) {
+	bool ret = false;
 	int rate = 0;
+	if (Hscore < 90000) { return false; }
+	if (Hscore >= 99000) { return true; }
 	if (Hscore >= 90000 && Hscore < 92500) {
 		rate = pals(90000, 0, 92500, 25, Hscore);
 	}
@@ -526,8 +534,7 @@ static int RecSerectTrySecret(int Hscore) {
 	else if (Hscore >= 98000 && Hscore < 99000) {
 		rate = pals(99000, 1000, 98000, 750, Hscore);
 	}
-	else if (Hscore >= 99000) { rate = 1000; }
-	if (GetRand(1000) <= rate) { ret = 1; }
+	if (GetRand(1000) <= rate) { ret = true; }
 	return ret;
 }
 
@@ -538,7 +545,7 @@ static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
 		strands_direct(songdata->SongFileName[5], L"NULL") == 0 &&
 		songdata->Hscore[5] <= 0)
 	{
-		if (RecSerectTrySecret(songdata->Hscore[3]) == 1) {
+		if (RecSerectTrySecret(songdata->Hscore[3]) == true) {
 			return 1;
 		}
 	}
@@ -556,20 +563,9 @@ static bool Rec_Select_DifFilter(const MUSIC_BOX_2 &detail, int view_dif) {
  * @param[in] dif 難易度
  * TODO: songdata_set_tの中に入れる。
  */
-static void SortSong(songdata_set_t *songdata, int dif) {
-	songdata->Search(Rec_Select_DifFilter, dif);
-	switch (songdata->sortMode) {
-	case rec_select_sorttype_ec::LEVEL:
-		songdata->SortByLevel();
-		break;
-	case rec_select_sorttype_ec::SCORE:
-		songdata->SortByHScore();
-		break;
-	case rec_select_sorttype_ec::DEFAULT:
-		songdata->SortByDefault();
-		break;
-	}
-	return;
+static void SortSong(songdata_set_t &songdata, int dif) {
+	songdata.Search(Rec_Select_DifFilter, dif);
+	songdata.SortByNowMode();
 }
 
 /**
@@ -579,17 +575,18 @@ static void SortSong(songdata_set_t *songdata, int dif) {
  * @param[in] dif 難易度
  * @param[out] cmd commandの格納場所
  */
-static void SortSongWithSave(songdata_set_t *songdata, int dif, int *cmd) {
+static void SortSongWithSave(songdata_set_t &songdata, int dif, int &cmd) {
 	tstring save;
 
-	save = (*songdata)[betweens(0, *cmd, songdata->sort.size() - 1)].SongName;
+	save = songdata[betweens(0, cmd, songdata.sort.size() - 1)].SongName;
 	SortSong(songdata, dif);
-	for (int i = 0; i < songdata->sort.size(); i++) {
-		if (save == (*songdata)[i].SongName) {
-			*cmd = i;
+	for (int i = 0; i < songdata.sort.size(); i++) {
+		if (save == songdata[i].SongName) {
+			cmd = i;
+			break;
 		}
 	}
-	(*cmd) = min(*cmd, songdata->sort.size() - 1);
+	cmd = min(cmd, songdata.sort.size() - 1);
 	return;
 }
 
@@ -637,42 +634,45 @@ static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
 }
 #endif
 
-static void RecSerectLoadBefCmd(int *cmd, rec_select_sorttype_ec *sortMode) {
+static void RecSerectLoadBefCmd(rec_select_command_st &cmd, rec_select_sorttype_ec &sortMode) {
+	int buf[2] = {0, 1};
 	FILE *fp;
 	_wfopen_s(&fp, L"save/SongSelect2.dat", L"rb");
 	if (fp != NULL) {
-		fread(cmd, sizeof(int), 2, fp);
-		fread(sortMode, sizeof(rec_select_sorttype_ec), 1, fp);
+		fread(&buf, sizeof(int), 2, fp);
+		fread(&sortMode, sizeof(rec_select_sorttype_ec), 1, fp);
 		fclose(fp);
 	}
+	cmd.music = buf[0];
+	cmd.dif   = buf[1];
 	return;
 }
 
-static void RecSerectSaveBefCmd(int *cmd, rec_select_sorttype_ec sortMode) {
+static void RecSerectSaveBefCmd(const rec_select_command_st &cmd, rec_select_sorttype_ec sortMode) {
 	FILE *fp;
 	_wfopen_s(&fp, L"save/SongSelect2.dat", L"wb");
 	if (fp != NULL) {
-		fwrite(cmd, sizeof(int), 2, fp);
+		fwrite(&cmd, sizeof(int), 2, fp);
 		fwrite(&sortMode, sizeof(rec_select_sorttype_ec), 1, fp);
 		fclose(fp);
 	}
 	return;
 }
 
-static void RecSerectSetToPlay(rec_to_play_set_t *toPlay, int cmd[],
-	const int PackFirstNum[], songdata_set_t *songdata)
+static void RecSerectSetToPlay(rec_to_play_set_t &toPlay, const rec_select_command_st &cmd,
+	const songdata_set_t &songdata)
 {
 	int inum = 0;
 
 	if (CheckHitKey(KEY_INPUT_LSHIFT) == 1 || CheckHitKey(KEY_INPUT_RSHIFT) == 1) {
-		toPlay->shift = 1;
+		toPlay.shift = 1;
 	}
-	else { toPlay->shift = 0; }
-	if (CheckHitKey(KEY_INPUT_P) == 1) { toPlay->autoFg = 1; }
-	else { toPlay->autoFg = 0; }
-	toPlay->packNo  = (*songdata)[cmd[0]].packNo;
-	toPlay->musicNo = (*songdata)[cmd[0]].musicNo;
-	toPlay->dif     = (*songdata)[cmd[0]].LvType;
+	else { toPlay.shift = 0; }
+	if (CheckHitKey(KEY_INPUT_P) == 1) { toPlay.autoFg = 1; }
+	else { toPlay.autoFg = 0; }
+	toPlay.packNo  = songdata[cmd.music].packNo;
+	toPlay.musicNo = songdata[cmd.music].musicNo;
+	toPlay.dif     = songdata[cmd.music].LvType;
 
 #if 0
 	//隠し曲用
@@ -705,8 +705,11 @@ private:
 	int preSC = 0;
 	int SongPrePat = 0;
 	int SongPreSTime = 0;
-	int preTime[2] = { 441000,2646000 };
-	TCHAR playingsong[256] = { L"NULL" };
+	int preTime[2] = {
+		REC_SELECT_DEFAULT_SAMPLE_RATE * 10,
+		REC_SELECT_DEFAULT_SAMPLE_RATE * 60
+	};
+	tstring playingsong = { L"NULL" };
 
 public:
 	void StartSnd() {
@@ -717,18 +720,18 @@ public:
 		this->SongPreSTime = GetNowCount();
 	}
 
-	int UpdateSnd(const MUSIC_BOX_2 *songdata, int dif) {
-		if ((strands_direct(songdata->SongFileName, L"NULL") != 0) ||
-			(strands(this->playingsong, songdata->SongFileName) != 0))
+	int UpdateSnd(const MUSIC_BOX_2 &songdata, int dif) {
+		if ((strands_direct(songdata.SongFileName.c_str(), L"NULL") != 0) ||
+			(strands(this->playingsong.c_str(), songdata.SongFileName.c_str()) != 0))
 		{
 			return 0;
 		}
 		rec_bgm_system_g.Delete();
-		strcopy_2(songdata->SongFileName, this->playingsong, 255);
+		this->playingsong = songdata.SongFileName;
 		rec_bgm_system_g.SetMem(this->playingsong);
 		this->SongPrePat = 0;
-		this->preTime[0] = songdata->preview[0];
-		this->preTime[1] = songdata->preview[1];
+		this->preTime[0] = songdata.preview[0];
+		this->preTime[1] = songdata.preview[1];
 		return 1;
 	}
 
@@ -750,7 +753,7 @@ public:
 		}
 	}
 
-	void CheckSnd(const MUSIC_BOX_2 *songdata, int dif) {
+	void CheckSnd(const MUSIC_BOX_2 &songdata, int dif) {
 		if (this->preSC + MUSE_KEYTM < GetNowCount()) {
 			if (this->UpdateSnd(songdata, dif) == 1) {
 				this->StartSnd();
@@ -808,20 +811,20 @@ private:
 		}
 	}
 
-	void DrawMainFolderOne(int dif, int BasePosX, int BasePosY, const TCHAR *str) const {
+	void DrawMainFolderOne(int dif, int BasePosX, int BasePosY, const tstring &str) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->folder_bar[1].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, str , COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, str.c_str(), COLOR_BLACK, SmallFontData);
 	}
 
-	void DrawSubFolderOne(int dif, int BasePosX, int BasePosY, const TCHAR *str) const {
+	void DrawSubFolderOne(int dif, int BasePosX, int BasePosY, const tstring &str) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->folder_bar[0].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, str, COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, str.c_str(), COLOR_WHITE, SmallFontData);
 	}
 
 	void DrawMainOne(int dif, int BasePosX, int BasePosY, const MUSIC_BOX_2 &songdata) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName, COLOR_BLACK, SmallFontData);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist, COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName.c_str(), COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist.c_str(), COLOR_BLACK, SmallFontData);
 		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata.ClearRank - 1);
 		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata.ScoreRate);
 		for (int idif = 0; idif < 3; idif++) {
@@ -832,8 +835,8 @@ private:
 
 	void DrawSubOne(int dif, int BasePosX, int BasePosY, const MUSIC_BOX_2 &songdata) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName, COLOR_WHITE, SmallFontData);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist, COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName.c_str(), COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist.c_str(), COLOR_WHITE, SmallFontData);
 		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata.ClearRank - 1);
 		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata.ScoreRate);
 	}
@@ -844,7 +847,7 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawAll(int Ypos, int cmd[], const songdata_set_t &songdata, bool is_folder) const {
+	void DrawAll(int Ypos, const rec_select_command_st &cmd, const songdata_set_t &songdata, bool is_folder) const {
 		int BasePosX = 0;
 		int BasePosY = 0;
 		int slide = 0;
@@ -852,7 +855,7 @@ public:
 		int moveC = 0;
 
 		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
-		picsong = (cmd[0] + songdata.sort.size() - (VIEW_COUNT / 2)) % songdata.sort.size();
+		picsong = (cmd.music + songdata.sort.size() - (VIEW_COUNT / 2)) % songdata.sort.size();
 
 		for (int count = 0; count < VIEW_COUNT; count++) {
 			slide = pals(0, 0, 250, this->UD * 80, moveC);
@@ -867,18 +870,18 @@ public:
 
 			if (count == (VIEW_COUNT / 2)) {
 				if (is_folder) {
-					this->DrawMainFolderOne(cmd[1], BasePosX, BasePosY, this->folder_str[picsong].c_str());
+					this->DrawMainFolderOne(cmd.dif, BasePosX, BasePosY, this->folder_str[picsong]);
 				}
 				else {
-					this->DrawMainOne(cmd[1], BasePosX, BasePosY, songdata[picsong]);
+					this->DrawMainOne(cmd.dif, BasePosX, BasePosY, songdata[picsong]);
 				}
 			}
 			else {
 				if (is_folder) {
-					this->DrawSubFolderOne(cmd[1], BasePosX, BasePosY, this->folder_str[picsong].c_str());
+					this->DrawSubFolderOne(cmd.dif, BasePosX, BasePosY, this->folder_str[picsong]);
 				}
 				else {
-					this->DrawSubOne(cmd[1], BasePosX, BasePosY, songdata[picsong]);
+					this->DrawSubOne(cmd.dif, BasePosX, BasePosY, songdata[picsong]);
 				}
 			}
 
@@ -903,8 +906,10 @@ private:
 	void DrawNamePlate(int baseX, int baseY) {
 		DrawGraphAnchor(baseX - 30, baseY, this->rateBar.handle(), DXDRAW_ANCHOR_TOP_RIGHT);
 		DrawGraphAnchor(baseX, baseY, this->runner.handle(), DXDRAW_ANCHOR_TOP_RIGHT);
-		DrawFormatStringToHandleAnchor(baseX - 220, baseY + 12, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"Lv:%2d", this->Lv);
-		DrawFormatStringToHandleAnchor(baseX - 215, baseY + 37, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_TOP_RIGHT, L"RATE:%d.%02d", this->rate / 100, this->rate % 100);
+		DrawFormatStringToHandleAnchor(baseX - 220, baseY + 12, COLOR_BLACK, SmallFontData,
+			DXDRAW_ANCHOR_TOP_RIGHT, L"Lv:%2d", this->Lv);
+		DrawFormatStringToHandleAnchor(baseX - 215, baseY + 37, COLOR_BLACK, SmallFontData,
+			DXDRAW_ANCHOR_TOP_RIGHT, L"RATE:%d.%02d", this->rate / 100, this->rate % 100);
 	}
 
 	void DrawDisk(int baseX, int baseY) {
@@ -993,7 +998,7 @@ static class rec_serect_detail_c {
 private:
 	int LR = REC_SELECT_VECT_LEFT;
 	int XstartC = -MUSE_FADTM;
-	TCHAR viewingDifBar[255] = { L"NULL" };
+	tstring viewingDifBar = { L"NULL" };
 	dxcur_pic_c difbar[6] = {
 		dxcur_pic_c(L"picture/difauto.png"),
 		dxcur_pic_c(L"picture/difeasy.png"),
@@ -1004,35 +1009,37 @@ private:
 	};
 	dxcur_pic_c detail = dxcur_pic_c(_T("picture/select/detail.png"));
 	dxcur_pic_c mpalNamePic = dxcur_pic_c(_T("picture/select/mpalName.png"));
-	dxcur_pic_c difC[10] = {
-		dxcur_pic_c(L"picture/select/Dif0S.png"),
-		dxcur_pic_c(L"picture/select/Dif0B.png"),
-		dxcur_pic_c(L"picture/select/Dif1S.png"),
-		dxcur_pic_c(L"picture/select/Dif1B.png"),
-		dxcur_pic_c(L"picture/select/Dif2S.png"),
-		dxcur_pic_c(L"picture/select/Dif2B.png"),
-		dxcur_pic_c(L"picture/select/Dif3S.png"),
-		dxcur_pic_c(L"picture/select/Dif3B.png"),
-		dxcur_pic_c(L"picture/select/Dif4S.png"),
-		dxcur_pic_c(L"picture/select/Dif4B.png")
+	struct {
+		dxcur_pic_c tiny;
+		dxcur_pic_c big;
+	} difC[4] = {
+		{ dxcur_pic_c(L"picture/select/Dif1S.png"), dxcur_pic_c(L"picture/select/Dif1B.png") },
+		{ dxcur_pic_c(L"picture/select/Dif2S.png"), dxcur_pic_c(L"picture/select/Dif2B.png") },
+		{ dxcur_pic_c(L"picture/select/Dif3S.png"), dxcur_pic_c(L"picture/select/Dif3B.png") },
+		{ dxcur_pic_c(L"picture/select/Dif4S.png"), dxcur_pic_c(L"picture/select/Dif4B.png") }
 	};
 
 private:
-#if 0
-	void DrawDifMark(int baseX, int baseY, MUSIC_BOX *songdata, int comdif) const {
+	void DrawDifMark(int baseX, int baseY, const MUSIC_BOX_2 &songdata, int comdif) const {
 		int posX = 0;
 		int posY = 0;
 
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 4; i++) {
 			posY = 0;
-			if (comdif == i) { posY = 1; }
-			if (comdif <= i) { posX = 1; }
-			if (strands_direct(songdata->SongFileName[i], L"NULL") == 0 && i <= songdata->limit) {
-				DrawGraphAnchor(baseX + 11 * posX + 16 * i, baseY, this->difC[i * 2 + posY].handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			if (comdif - 1 == i) { posY = 1; }
+			if (comdif - 1 <= i) { posX = 1; }
+			if (songdata.levelList[i] >= 0) {
+				if (comdif - 1 == i) {
+					DrawGraphAnchor(baseX + 11 * posX + 16 * i, baseY,
+						this->difC[i].big.handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
+				}
+				else {
+					DrawGraphAnchor(baseX + 11 * posX + 16 * i, baseY,
+						this->difC[i].tiny.handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
+				}
 			}
 		}
 	}
-#endif
 
 	void DrawDifBar(int baseX, int baseY, int dif) const {
 		int XmoveC = maxs_2(-1 * (GetNowCount() - this->XstartC) + MUSE_FADTM, 0);
@@ -1049,7 +1056,6 @@ private:
 		}
 	}
 
-	/* TODO: ddifが表示されない */
 	void DrawDifMpal(int baseX, int baseY, const rec_ddif_pal_t *mpal, int dif) const {
 		const int thick = 8;
 		const DxColor_t color[8] = {
@@ -1081,8 +1087,16 @@ private:
 		uint *p_mpal = (uint *)mpal;
 		for (uint iPal = 0; iPal < 8; iPal++) {
 			uint length = lins(0, 0, 900, 450, p_mpal[7 - iPal]);
-			DrawBoxAnchor(baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2, baseX - 70, baseY - 2 * thick * iPal - thick / 2, color[7 - iPal], DXDRAW_ANCHOR_BOTTOM_RIGHT, TRUE);
-			DrawBoxAnchor(baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2, baseX - 70, baseY - 2 * thick * iPal - thick / 2, SubColor[7 - iPal], DXDRAW_ANCHOR_BOTTOM_RIGHT, FALSE);
+			DrawBoxAnchor(
+				baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2,
+				baseX - 70, baseY - 2 * thick * iPal - thick / 2, color[7 - iPal],
+				DXDRAW_ANCHOR_BOTTOM_RIGHT, TRUE)
+			;
+			DrawBoxAnchor(
+				baseX - length - 70, baseY - thick - 2 * thick * iPal - thick / 2,
+				baseX - 70, baseY - 2 * thick * iPal - thick / 2, SubColor[7 - iPal],
+				DXDRAW_ANCHOR_BOTTOM_RIGHT, FALSE
+			);
 		}
 		DrawGraphAnchor(baseX, baseY, this->mpalNamePic.handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
 #if REC_DEBUG == 1
@@ -1092,19 +1106,23 @@ private:
 #endif
 	}
 
-	void DrawDetail(int baseX, int baseY, const MUSIC_BOX_2 *songdata, int dif) const {
+	void DrawDetail(int baseX, int baseY, const MUSIC_BOX_2 &songdata, int dif) const {
 		const TCHAR starChar[2][2] = { _T("★"),_T("☆")};
 		DrawGraphAnchor(baseX, baseY, this->detail.handle(), DXDRAW_ANCHOR_BOTTOM_RIGHT);
-		DrawFormatStringToHandleAnchor(baseX - 330, baseY - 170, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"%s", songdata->packName);
-		DrawFormatStringToHandleAnchor(baseX - 325, baseY - 145, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"Lv.%2d", songdata->level);
+		DrawFormatStringToHandleAnchor(baseX - 330, baseY - 170, COLOR_BLACK, SmallFontData,
+			DXDRAW_ANCHOR_BOTTOM_RIGHT, L"%s", songdata.packName.c_str());
+		DrawFormatStringToHandleAnchor(baseX - 325, baseY - 145, COLOR_BLACK, SmallFontData,
+			DXDRAW_ANCHOR_BOTTOM_RIGHT, L"Lv.%2d", songdata.level);
 		for (int i = 0; i < 15; i++) {
 			int temp = 0;
-			if (10 <= i && songdata->level <= i) { break; }
-			temp = (i < songdata->level) ? 0 : 1;
-			DrawStringToHandleAnchor(baseX + 16 * i - 270, baseY - 145, starChar[temp], COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT);
+			if (10 <= i && songdata.level <= i) { break; }
+			temp = (i < songdata.level) ? 0 : 1;
+			DrawStringToHandleAnchor(baseX + 16 * i - 270, baseY - 145, starChar[temp],
+				COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT);
 		}
-		DrawFormatStringToHandleAnchor(baseX - 320, baseY - 120, COLOR_BLACK, SmallFontData, DXDRAW_ANCHOR_BOTTOM_RIGHT, L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
-			songdata->Hscore, songdata->Hacc, songdata->Hdis / 1000.0);
+		DrawFormatStringToHandleAnchor(baseX - 320, baseY - 120, COLOR_BLACK, SmallFontData,
+			DXDRAW_ANCHOR_BOTTOM_RIGHT, L"HighSCORE:%6d/%6.2f%%/%5.3fkm",
+			songdata.Hscore, songdata.Hacc, songdata.Hdis / 1000.0);
 	}
 
 public:
@@ -1113,8 +1131,8 @@ public:
 		this->XstartC = GetNowCount();
 	}
 
-	void FetchDifPic(const TCHAR *difpath) {
-		if (strands(this->viewingDifBar, difpath) == 1) { return; }
+	void FetchDifPic(const tstring &difpath) {
+		if (strands(this->viewingDifBar.c_str(), difpath.c_str()) == 1) { return; }
 
 		DeleteGraph(this->difbar[4].handle());
 		DeleteGraph(this->difbar[5].handle());
@@ -1124,34 +1142,33 @@ public:
 			DeleteGraph(this->difbar[4].handle());
 			this->difbar[4].reload(L"picture/difanother.png");
 			this->difbar[5] = this->difbar[4];
-			strcopy_2(L"NULL", this->viewingDifBar, 255);
+			this->viewingDifBar = _T("NULL");
 		}
 		else {
 			this->difbar[5] = this->difbar[4];
-			strcopy_2(difpath, this->viewingDifBar, 255);
+			this->viewingDifBar = difpath;
 		}
 	}
 
-	void DrawDetailAll(int baseX, int baseY, const MUSIC_BOX_2 *songdata, int dif) const {
-		// this->DrawDifMark(baseX - 100, baseY - 365, songdata, dif);
-		this->DrawDifBar(baseX - 15, baseY - 320, dif);
-		this->DrawDifMpal(baseX - 20, baseY - 186, &songdata->mpal, dif);
-		this->DrawDetail(baseX, baseY, songdata, dif);
+	void DrawDetailAll(int baseX, int baseY, const MUSIC_BOX_2 &songdata, int dif) const {
+		this->DrawDifMark(baseX - 100, baseY - 365,  songdata,      dif);
+		this->DrawDifBar( baseX -  15, baseY - 320,                 dif);
+		this->DrawDifMpal(baseX -  20, baseY - 186, &songdata.mpal, dif);
+		this->DrawDetail( baseX      , baseY      ,  songdata,      dif);
 	}
 };
 
 static class rec_serect_jacket_c {
 private:
 	dxcur_pic_c jacketpic = dxcur_pic_c(_T("picture/NULL jucket.png"));
-	TCHAR viewingjacket[255] = { L"picture/NULL jucket.png" };
+	tstring viewingjacket = { L"picture/NULL jucket.png" };
 
 public:
-	void UpdateJacket(const TCHAR *jacketName) {
-		if (strands(this->viewingjacket, jacketName) == 0) {
-			DeleteGraph(this->jacketpic.handle());
-			strcopy_2(jacketName, this->viewingjacket, 255);
-			this->jacketpic.reload(this->viewingjacket);
-		}
+	void UpdateJacket(const tstring &jacketName) {
+		if (strands(this->viewingjacket.c_str(), jacketName.c_str()) != 0) { return; }
+		DeleteGraph(this->jacketpic.handle());
+		this->viewingjacket = jacketName;
+		this->jacketpic.reload(this->viewingjacket);
 	}
 
 	void DrawJacket(int baseX, int baseY, int size) const {
@@ -1192,40 +1209,40 @@ public:
 
 	~rec_serect_ui_c() {}
 
-	void InitUi(const MUSIC_BOX_2 *songdata, int dif) {
-		this->jacket.UpdateJacket(songdata->jacketP);
-		this->detail.FetchDifPic(songdata->difP);
+	void InitUi(const MUSIC_BOX_2 &songdata, int dif) {
+		this->jacket.UpdateJacket(songdata.jacketP);
+		this->detail.FetchDifPic(songdata.difP);
 		this->previewSnd.UpdateSnd(songdata, dif);
 		this->previewSnd.StartSnd();
 	}
 
-	void Update4th(const TCHAR *jacketName) {
+	void Update4th(const tstring &jacketName) {
 		jacket.UpdateJacket(jacketName);
 		previewSnd.SetPresc(GetNowCount());
 		snd.PlaySnd();
 	}
 
-	void UpdateUD(const MUSIC_BOX_2 *songdata, int dif, int vect) {
-		this->detail.FetchDifPic(songdata->difP);
+	void UpdateUD(const MUSIC_BOX_2 &songdata, int dif, int vect) {
+		this->detail.FetchDifPic(songdata.difP);
 		this->musicbar.SlideBar(vect);
 		this->disk.SlideDisk(vect);
-		this->Update4th(songdata->jacketP);
+		this->Update4th(songdata.jacketP);
 	}
 
 	void UpdateLR(songdata_set_t &songdata, int *cmd, int dif, int vect) {
 		this->detail.SlideDif(vect);
-		SortSongWithSave(&songdata, dif, cmd);
+		SortSongWithSave(songdata, dif, *cmd);
 		this->Update4th(songdata[*cmd].jacketP);
 	}
 
-	void DrawUi(int cmd[], songdata_set_t *songdata) {
+	void DrawUi(const rec_select_command_st &cmd, songdata_set_t &songdata) {
 		this->backpic.DrawBackPic();
 		this->jacket.DrawJacket(380, 85, 500);
-		this->musicbar.DrawAll(300, cmd, *songdata, false);
-		this->disk.DrawDiskSet(-30, 25, songdata->sortMode);
-		this->detail.DrawDetailAll(20, 60, &(*songdata)[cmd[0]], cmd[1]);
+		this->musicbar.DrawAll(300, cmd, songdata, false);
+		this->disk.DrawDiskSet(-30, 25, songdata.sortMode);
+		this->detail.DrawDetailAll(20, 60, songdata[cmd.music], cmd.dif);
 		this->previewSnd.CheckTime();
-		this->previewSnd.CheckSnd(&(*songdata)[cmd[0]], cmd[1]);
+		this->previewSnd.CheckSnd(songdata[cmd.music], cmd.dif);
 		this->help.DrawHelp(rec_helpbar_type_ec::SELECT);
 		this->cutin.DrawCut();
 	}
@@ -1235,30 +1252,21 @@ public:
 
 #if 1 /* after class action */
 
-static void RecSerectDrawAllUi(rec_serect_ui_c *uiClass, int *cmd,
-	songdata_set_t *songdata, char closeFg, int CutTime)
-{
-	ClearDrawScreen();
-	uiClass->DrawUi(cmd, songdata);
-	ScreenFlip();
-	return;
-}
-
-static void RecSerectKeyActLR(int cmd[], int vect,
-	rec_serect_ui_c *uiClass, songdata_set_t songdata[])
+static void RecSerectKeyActLR(rec_select_command_st &cmd, int vect,
+	rec_serect_ui_c &uiClass, songdata_set_t &songdata)
 {
 	switch (vect) {
 	case REC_SELECT_VECT_LEFT:
-		cmd[1]--;
-		if (cmd[1] < 0) {
-			cmd[1] = 0;
+		cmd.dif--;
+		if (cmd.dif < 0) {
+			cmd.dif = 0;
 			return;
 		}
 		break;
 	case REC_SELECT_VECT_RIGHT:
-		cmd[1]++;
-		if (cmd[1] > 4) {
-			cmd[1] = 4;
+		cmd.dif++;
+		if (cmd.dif > 4) {
+			cmd.dif = 4;
 			return;
 		}
 		break;
@@ -1266,73 +1274,58 @@ static void RecSerectKeyActLR(int cmd[], int vect,
 		return;
 	}
 
-	uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], vect);
+	uiClass.UpdateLR(songdata, &cmd.music, cmd.dif, vect);
 
 	return;
 }
 
-static void RecSerectKeyActUD(int cmd[], int vect,
-	rec_serect_ui_c *uiClass, songdata_set_t *songdata)
+static void RecSerectKeyActUD(rec_select_command_st &cmd, int vect,
+	rec_serect_ui_c &uiClass, songdata_set_t &songdata)
 {
 	switch (vect) {
 	case REC_SELECT_VECT_UP:
-		cmd[0]--;
-		if (cmd[0] < 0) { cmd[0] = songdata->sort.size() - 1; }
+		cmd.music--;
+		if (cmd.music < 0) { cmd.music = songdata.sort.size() - 1; }
 		break;
 	case REC_SELECT_VECT_DOWN:
-		cmd[0]++;
-		if (cmd[0] >= songdata->sort.size()) { cmd[0] = 0; }
+		cmd.music++;
+		if (cmd.music >= songdata.sort.size()) { cmd.music = 0; }
 		break;
 	default:
 		return;
 	}
 
-	uiClass->UpdateUD(&(*songdata)[cmd[0]], cmd[1], vect);
-
-#if 0
-	{
-		int diffixBuf = RecSerectFetchDif(&(*songdata)[cmd[0]], cmd[1], songdata->sortMode);
-		if (diffixBuf < cmd[1]) {
-			cmd[1] = diffixBuf;
-			uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], REC_SELECT_VECT_LEFT);
-		}
-		else if (diffixBuf > cmd[1]) {
-			cmd[1] = diffixBuf;
-			uiClass->UpdateLR(*songdata, &cmd[0], cmd[1], REC_SELECT_VECT_RIGHT);
-		}
-	}
-#endif
+	uiClass.UpdateUD(songdata[cmd.music], cmd.dif, vect);
 
 	return;
 }
 
-static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, char *closeFg,
-	int cmd[], int *CutTime, rec_serect_ui_c *uiClass, songdata_set_t *songdata,
-	const int *PackFirstNum)
+static void RecSerectKeyActAll(now_scene_t &next, rec_to_play_set_t &toPlay,
+	rec_select_command_st &cmd, int &CutTime, rec_serect_ui_c &uiClass, songdata_set_t &songdata)
 {
 	rec_select_key_et key = REC_SELECT_KEY_NONE;
 
 	/* 操作検出*/
-	if (uiClass->cutin.IsClosing() == 0) { key = RecSerectKeyCheck(); }
+	if (uiClass.cutin.IsClosing() == 0) { key = RecSerectKeyCheck(); }
 	else { key = REC_SELECT_KEY_NONE; }
 
 	/* 動作 */
 	switch (key) {
 	case REC_SELECT_KEY_RETURN:
 		// 選択できる曲であるかどうか (Lvが0以上であるかで判定)
-		if ((*songdata)[cmd[0]].level < 0) { break; }
-		RecSerectSetToPlay(toPlay, cmd, PackFirstNum, songdata);
-		*next = SCENE_MUSIC;
-		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_SONG);
-		uiClass->cutin.SetCutSong((*songdata)[cmd[0]].SongName,
-			(*songdata)[cmd[0]].jacketP);
-		uiClass->cutin.SetIo(CUT_FRAG_IN);
+		if (songdata[cmd.music].level < 0) { break; }
+		RecSerectSetToPlay(toPlay, cmd, songdata);
+		next = SCENE_MUSIC;
+		uiClass.cutin.SetCutTipFg(CUTIN_TIPS_SONG);
+		uiClass.cutin.SetCutSong(songdata[cmd.music].SongName,
+			songdata[cmd.music].jacketP);
+		uiClass.cutin.SetIo(CUT_FRAG_IN);
 		break;
 	case REC_SELECT_KEY_BACK:
-		*next = SCENE_MENU;
-		uiClass->cutin.SetTipNo();
-		uiClass->cutin.SetCutTipFg(CUTIN_TIPS_ON);
-		uiClass->cutin.SetIo(CUT_FRAG_IN);
+		next = SCENE_MENU;
+		uiClass.cutin.SetTipNo();
+		uiClass.cutin.SetCutTipFg(CUTIN_TIPS_ON);
+		uiClass.cutin.SetIo(CUT_FRAG_IN);
 		break;
 	case REC_SELECT_KEY_UP:
 		RecSerectKeyActUD(cmd, REC_SELECT_VECT_UP,    uiClass, songdata);
@@ -1347,11 +1340,11 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 		RecSerectKeyActLR(cmd, REC_SELECT_VECT_RIGHT, uiClass, songdata);
 		break;
 	case REC_SELECT_KEY_SORT:
-		++songdata->sortMode;
-		SortSongWithSave(songdata, cmd[1], &cmd[0]);
+		++songdata.sortMode;
+		SortSongWithSave(songdata, cmd.dif, cmd.music);
 		break;
 	case REC_SELECT_KEY_RELORD:
-		*next = SCENE_RELOAD;
+		next = SCENE_RELOAD;
 		break;
 	default:
 		break;
@@ -1362,14 +1355,10 @@ static void RecSerectKeyActAll(now_scene_t *next, rec_to_play_set_t *toPlay, cha
 
 #endif /* after class action */
 
-static now_scene_t musicserect2(rec_to_play_set_t *toPlay) {
-	/* char */
-	char closeFg = 0;
-
+static now_scene_t musicselect2(rec_to_play_set_t &toPlay) {
 	/* int */
-	int cmd[2] = { 0,1 };
+	rec_select_command_st cmd;
 	int buf = 0;
-	int PackFirstNum[PackNumLim];
 	int CutTime = 0;
 
 	/* typedef */
@@ -1379,17 +1368,18 @@ static now_scene_t musicserect2(rec_to_play_set_t *toPlay) {
 	/* class */
 	rec_serect_ui_c uiClass;
 
-	RecSerectLoadBefCmd(cmd, &songdata.sortMode);
-	SortSong(&songdata, cmd[1]);
-	uiClass.InitUi(&songdata[cmd[0]], cmd[1]);
+	RecSerectLoadBefCmd(cmd, songdata.sortMode);
+	SortSong(songdata, cmd.dif);
+	uiClass.InitUi(songdata[cmd.music], cmd.dif);
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
 	uiClass.cutin.SetIo(CUT_FRAG_OUT);
 
 	while (1) {
-		RecSerectDrawAllUi(&uiClass, cmd, &songdata, closeFg, CutTime);
-		RecSerectKeyActAll(&next, toPlay, &closeFg, cmd, &CutTime,
-			&uiClass, &songdata, PackFirstNum);
+		ClearDrawScreen();
+		uiClass.DrawUi(cmd, songdata);
+		ScreenFlip();
+		RecSerectKeyActAll(next, toPlay, cmd, CutTime, uiClass, songdata);
 		if (next == SCENE_RELOAD) { return SCENE_RELOAD; }
 		if (uiClass.cutin.IsEndAnim()) { break; }
 		if (GetWindowUserCloseFlag(TRUE)) {
@@ -1409,7 +1399,7 @@ static now_scene_t musicserect2(rec_to_play_set_t *toPlay) {
 now_scene_t musicserect(rec_to_play_set_t *toPlay) {
 	now_scene_t next = SCENE_EXIT;
 	while (1) {
-		next = musicserect2(toPlay);
+		next = musicselect2(*toPlay);
 		/* RecSelectAllRelordを実行するためにはmusicserect2から抜ける必要がある。スタックオーバーフローを起こすから */
 		if (next == SCENE_RELOAD) { RecSelectAllRelord(); }
 		else { break; }
