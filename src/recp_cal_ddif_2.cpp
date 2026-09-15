@@ -861,7 +861,7 @@ static int cal_ddif_4(rec_ddif_pal_t *mpal, const TCHAR *path) {
 	rec_ddif_data_t key[REC_DDIF_BUF_NUM];
 	uint keyN = 0;
 
-	if (RecScoreReadForDdif(&recfp, esc_path) != 0) { return -1; }
+	if (RecScoreReadForDdif(recfp, esc_path) == false) { return -1; }
 
 	cvec<note_box_2_t> *note_p[3] = {
 		&recfp.mapdata.note[0],
@@ -931,7 +931,7 @@ void cal_ddif_3(const TCHAR *path) {
 	}
 
 	// mpal‚ð•Û‘¶‚·‚é
-	RecScoreWriteDdif(&mpal, path);
+	RecScoreWriteDdif(mpal, path);
 
 	return;
 }

@@ -1364,6 +1364,6 @@ rec_error_t RecordLoad2(int packNo, int songNo, int difNo) {
 
 	status = RecGetMusicMapRrsPath(mapPath, 255, packNo, songNo, (rec_dif_t)difNo);
 	if (status != REC_ERROR_NONE) { return status; }
-	rec_score_fwrite(&recfp, mapPath);
+	rec_score_fwrite(recfp, mapPath);
 	return REC_ERROR_NONE;
 }

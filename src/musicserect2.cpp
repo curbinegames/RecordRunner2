@@ -240,7 +240,7 @@ private: /* ‰Šú‰»Œn */
 				buf, txtpath, subPath, packName, packNum, musicNo, (rec_dif_t)iDif
 			);
 			if (status == REC_ERROR_NONE) {
-				RecScoreReadDdif(&buf.mpal, rrsPath.c_str());
+				RecScoreReadDdif(buf.mpal, rrsPath);
 				this->ReadHighscore(buf, songName, (rec_dif_t)iDif);
 				switch (iDif) {
 				case 1:

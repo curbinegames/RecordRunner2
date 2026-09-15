@@ -2091,7 +2091,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	fps[60] = 0;
 	fps[61] = 0;
 
-	if (rec_score_fread(&recfp, rrsPath) != 0) { return SCENE_EXIT; } /* TODO: EXITÇ…ÇµÇƒÇÈÇÃÇÕÅAÇ«Ç§Ç»ÇÃ? */
+	if (rec_score_fread(recfp, rrsPath) == false) { return SCENE_EXIT; } /* TODO: EXITÇ…ÇµÇƒÇÈÇÃÇÕÅAÇ«Ç§Ç»ÇÃ? */
 
 	rec_play_back_pic_c backpic{recfp};
 

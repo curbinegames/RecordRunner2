@@ -250,9 +250,8 @@ typedef struct rec_score_file_row_s {
 	rec_map_detail_t mapdata;
 } rec_score_file_row_t;
 
-extern int rec_score_fread(rec_score_file_t *recfp, const TCHAR *path);
-extern int rec_score_fwrite(const rec_score_file_t *recfp, const TCHAR *path);
-extern int RecScoreReadForDdif(rec_score_file_row_t *recfp, const TCHAR *path);
-extern int RecScoreReadSongName(TCHAR *songName, const TCHAR *path);
-extern int RecScoreReadDdif(rec_ddif_pal_t *ddif, const TCHAR *path);
-extern int RecScoreWriteDdif(rec_ddif_pal_t *ddif, const TCHAR *path);
+extern bool rec_score_fread(       rec_score_file_t &recfp, const tstring &path);
+extern bool rec_score_fwrite(const rec_score_file_t &recfp, const tstring &path);
+extern bool RecScoreReadForDdif(rec_score_file_row_t &recfp, const tstring &path);
+extern bool RecScoreReadDdif(       rec_ddif_pal_t &ddif, const tstring &path);
+extern bool RecScoreWriteDdif(const rec_ddif_pal_t &ddif, const tstring &path);
