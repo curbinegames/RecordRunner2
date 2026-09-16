@@ -145,9 +145,11 @@ private:
 	tstring en;
 
 public:
-	rec_system_langstr_c(void) = delete;
+	rec_system_langstr_c(void);
 	rec_system_langstr_c(tstring a_jp, tstring a_en);
 
+	void set_str_jp(const tstring &a_jp);
+	void set_str_en(const tstring &a_en);
 	const tstring &get_str(void) const;
 };
 

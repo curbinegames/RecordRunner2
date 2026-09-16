@@ -112,7 +112,16 @@ void rec_sys_bgm::SetCurrentPosition(int val) {
 
 #if 1 /* rec_system_langstr_c */
 
+rec_system_langstr_c::rec_system_langstr_c(void) : jp(_T("")), en(_T("")) {}
 rec_system_langstr_c::rec_system_langstr_c(tstring a_jp, tstring a_en) : jp(std::move(a_jp)), en(std::move(a_en)) {}
+
+void rec_system_langstr_c::set_str_jp(const tstring &a_jp) {
+	this->jp = std::move(a_jp);
+}
+
+void rec_system_langstr_c::set_str_en(const tstring &a_en) {
+	this->en = std::move(a_en);
+}
 
 const tstring &rec_system_langstr_c::get_str(void) const {
 	return (optiondata.lang == 0) ? this->jp : this->en;

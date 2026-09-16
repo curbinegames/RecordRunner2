@@ -93,10 +93,10 @@ typedef struct music_box_2 {
 	rec_dif_t LvType = REC_DIF_EASY;
 	rec_score_rate_t ScoreRate = REC_SCORE_RATE_NO_PLAY;
 	rec_clear_rank_t ClearRank = REC_CLEAR_RANK_NO_PLAY;
+	rec_system_langstr_c SongName;
+	rec_system_langstr_c artist;
 	tstring difP         = _T("");
 	tstring packName     = _T("");
-	tstring SongName     = _T("");
-	tstring artist       = _T("");
 	tstring SongFileName = _T("");
 	tstring jacketP      = _T("");
 	rec_ddif_pal_t mpal;
@@ -132,8 +132,6 @@ private: /* èâä˙âªån */
 		songdata.packNo       = packNum;
 		songdata.musicNo      = musicNo;
 		songdata.packName     = packName;
-		songdata.SongName     = _T("NULL");
-		songdata.artist       = _T("NULL");
 		songdata.SongFileName = _T("NULL");
 		songdata.jacketP      = _T("picture/NULL jucket.png");
 
@@ -142,27 +140,31 @@ private: /* èâä˙âªån */
 			//ã»ñºÇì«Ç›çûÇﬁ
 			if (strands_direct(buf, L"#TITLE:")) {
 				strmods(buf, 7);
-				if ((lang == 0) || strands_direct(songdata.SongName.c_str(), L"NULL")) {
-					songdata.SongName = buf;
+				songdata.SongName.set_str_jp(buf);
+				if (songdata.SongName.get_str() == _T("")) {
+					songdata.SongName.set_str_en(buf);
 				}
 			}
 			else if (strands_direct(buf, L"#E.TITLE:")) {
 				strmods(buf, 9);
-				if ((lang == 1) || strands_direct(songdata.SongName.c_str(), L"NULL")) {
-					songdata.SongName = buf;
+				songdata.SongName.set_str_en(buf);
+				if (songdata.SongName.get_str() == _T("")) {
+					songdata.SongName.set_str_jp(buf);
 				}
 			}
 			//çÏã»é“Çì«Ç›çûÇﬁ
 			else if (strands_direct(buf, L"#ARTIST:")) {
 				strmods(buf, 8);
-				if ((lang == 0) || strands_direct(songdata.artist.c_str(), L"NULL")) {
-					songdata.artist = buf;
+				songdata.artist.set_str_jp(buf);
+				if (songdata.artist.get_str() == _T("")) {
+					songdata.artist.set_str_en(buf);
 				}
 			}
 			else if (strands_direct(buf, L"#E.ARTIST:")) {
 				strmods(buf, 10);
-				if ((lang == 1) || strands_direct(songdata.artist.c_str(), L"NULL")) {
-					songdata.artist = buf;
+				songdata.artist.set_str_en(buf);
+				if (songdata.artist.get_str() == _T("")) {
+					songdata.artist.set_str_jp(buf);
 				}
 			}
 			//ã»ÉtÉ@ÉCÉãñºÇì«Ç›çûÇﬁ
@@ -578,10 +580,10 @@ static void SortSong(songdata_set_t &songdata, int dif) {
 static void SortSongWithSave(songdata_set_t &songdata, int dif, int &cmd) {
 	tstring save;
 
-	save = songdata[betweens(0, cmd, songdata.sort.size() - 1)].SongName;
+	save = songdata[betweens(0, cmd, songdata.sort.size() - 1)].SongName.get_str();
 	SortSong(songdata, dif);
 	for (int i = 0; i < songdata.sort.size(); i++) {
-		if (save == songdata[i].SongName) {
+		if (save == songdata[i].SongName.get_str()) {
 			cmd = i;
 			break;
 		}
@@ -823,8 +825,8 @@ private:
 
 	void DrawMainOne(int dif, int BasePosX, int BasePosY, const MUSIC_BOX_2 &songdata) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName.c_str(), COLOR_BLACK, SmallFontData);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist.c_str(), COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName.get_str().c_str(), COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist.get_str().c_str(), COLOR_BLACK, SmallFontData);
 		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata.ClearRank - 1);
 		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata.ScoreRate);
 		for (int idif = 0; idif < 3; idif++) {
@@ -835,8 +837,8 @@ private:
 
 	void DrawSubOne(int dif, int BasePosX, int BasePosY, const MUSIC_BOX_2 &songdata) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName.c_str(), COLOR_WHITE, SmallFontData);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist.c_str(), COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName.get_str().c_str(), COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist.get_str().c_str(), COLOR_WHITE, SmallFontData);
 		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata.ClearRank - 1);
 		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata.ScoreRate);
 	}
@@ -1317,7 +1319,7 @@ static void RecSerectKeyActAll(now_scene_t &next, rec_to_play_set_t &toPlay,
 		RecSerectSetToPlay(toPlay, cmd, songdata);
 		next = SCENE_MUSIC;
 		uiClass.cutin.SetCutTipFg(CUTIN_TIPS_SONG);
-		uiClass.cutin.SetCutSong(songdata[cmd.music].SongName,
+		uiClass.cutin.SetCutSong(songdata[cmd.music].SongName.get_str(),
 			songdata[cmd.music].jacketP);
 		uiClass.cutin.SetIo(CUT_FRAG_IN);
 		break;
