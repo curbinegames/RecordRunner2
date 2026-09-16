@@ -176,6 +176,98 @@ bool GetFolderListWchar(std::vector<std::wstring> &list, const std::wstring &pat
 
 #endif /* direntån */
 
+#if 1 /* enumëÄçÏån */
+
+rec_score_rate2_et RecSRateToSRate2(rec_score_rate_t rate) {
+	switch (rate) {
+	case REC_SCORE_RATE_EX:
+		return REC_SCORE_RATE2_X;
+	case REC_SCORE_RATE_S:
+		return REC_SCORE_RATE2_S;
+	case REC_SCORE_RATE_A:
+		return REC_SCORE_RATE2_A;
+	case REC_SCORE_RATE_B:
+		return REC_SCORE_RATE2_B;
+	case REC_SCORE_RATE_C:
+		return REC_SCORE_RATE2_C;
+	case REC_SCORE_RATE_D:
+		return REC_SCORE_RATE2_D;
+	case REC_SCORE_RATE_F:
+		return REC_SCORE_RATE2_F;
+	case REC_SCORE_RATE_NO_PLAY:
+		return REC_SCORE_RATE2_NO_PLAY;
+	default:
+		return REC_SCORE_RATE2_NO_PLAY;
+	}
+}
+
+rec_score_rate_t RecSRate2ToSRate(rec_score_rate2_et rate) {
+	switch (rate) {
+	case REC_SCORE_RATE2_X:
+		return REC_SCORE_RATE_EX;
+	case REC_SCORE_RATE2_S:
+		return REC_SCORE_RATE_S;
+	case REC_SCORE_RATE2_A:
+		return REC_SCORE_RATE_A;
+	case REC_SCORE_RATE2_B:
+		return REC_SCORE_RATE_B;
+	case REC_SCORE_RATE2_C:
+		return REC_SCORE_RATE_C;
+	case REC_SCORE_RATE2_D:
+		return REC_SCORE_RATE_D;
+	case REC_SCORE_RATE2_F:
+		return REC_SCORE_RATE_F;
+	case REC_SCORE_RATE2_NO_PLAY:
+		return REC_SCORE_RATE_NO_PLAY;
+	default:
+		return REC_SCORE_RATE_NO_PLAY;
+	}
+}
+
+rec_clear_type2_et RecCRankToCRank2(rec_clear_rank_t type) {
+	switch (type) {
+	case REC_CLEAR_RANK_NO_PLAY:
+		return REC_CLEAR_TYPE2_NO_PLAY;
+	case REC_CLEAR_RANK_DROPED:
+		return REC_CLEAR_TYPE2_DROPED;
+	case REC_CLEAR_RANK_CLEARED:
+		return REC_CLEAR_TYPE2_CLEARED;
+	case REC_CLEAR_RANK_NOMISS:
+		return REC_CLEAR_TYPE2_NOMISS;
+	case REC_CLEAR_RANK_FULLCOMBO:
+		return REC_CLEAR_TYPE2_FULLCOMBO;
+	case REC_CLEAR_RANK_PERFECT:
+		return REC_CLEAR_TYPE2_PERFECT;
+	default:
+		return REC_CLEAR_TYPE2_NO_PLAY;
+	}
+}
+
+rec_clear_rank_t RecCRank2ToCRank(rec_clear_type2_et type) {
+	switch (type) {
+	case REC_CLEAR_TYPE2_NO_PLAY:
+		return REC_CLEAR_RANK_NO_PLAY;
+	case REC_CLEAR_TYPE2_CRASHED:
+	case REC_CLEAR_TYPE2_DROPED:
+		return REC_CLEAR_RANK_DROPED;
+	case REC_CLEAR_TYPE2_CLEARED:
+	case REC_CLEAR_TYPE2_STABLECLEAR:
+	case REC_CLEAR_TYPE2_MISSLESS:
+		return REC_CLEAR_RANK_CLEARED;
+	case REC_CLEAR_TYPE2_NOMISS:
+		return REC_CLEAR_RANK_NOMISS;
+	case REC_CLEAR_TYPE2_FULLCOMBO:
+		return REC_CLEAR_RANK_FULLCOMBO;
+	case REC_CLEAR_TYPE2_PERFECT:
+	case REC_CLEAR_TYPE2_FULLPERFECT:
+		return REC_CLEAR_RANK_PERFECT;
+	default:
+		return REC_CLEAR_RANK_NO_PLAY;
+	}
+}
+
+#endif /* enumëÄçÏån */
+
 bool RecGetPackList(std::vector<tstring> &list) {
 	list.clear();
 	DxFile_t file = FileRead_open(_T("RecordPack.txt"));

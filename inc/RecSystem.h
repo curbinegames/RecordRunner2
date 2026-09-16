@@ -83,7 +83,7 @@ typedef enum now_scene_e {
 
 typedef enum rec_clear_rank_e {
 	REC_CLEAR_RANK_NO_PLAY = 0,
-	REC_CLEAR_RANK_DROPED = 1, /* é¿ëïÇÃìsçáè„1ÉXÉ^Å[Ég */
+	REC_CLEAR_RANK_DROPED,
 	REC_CLEAR_RANK_CLEARED,
 	REC_CLEAR_RANK_NOMISS,
 	REC_CLEAR_RANK_FULLCOMBO,
@@ -95,7 +95,7 @@ typedef enum rec_clear_type2_e {
 	REC_CLEAR_TYPE2_CRASHED,
 	REC_CLEAR_TYPE2_DROPED,
 	REC_CLEAR_TYPE2_CLEARED,
-	REC_CLEAR_TYPE2_COZYCLEAR,
+	REC_CLEAR_TYPE2_STABLECLEAR,
 	REC_CLEAR_TYPE2_MISSLESS,
 	REC_CLEAR_TYPE2_NOMISS,
 	REC_CLEAR_TYPE2_FULLCOMBO,
@@ -268,6 +268,15 @@ extern bool GetFolderList(std::vector<std::string> &list, const std::string &pat
 extern bool GetFolderListWchar(std::vector<std::wstring> &list, const std::wstring &path);
 
 #endif /* direntån */
+
+#if 1 /* enumëÄçÏån */
+
+extern rec_score_rate2_et RecSRateToSRate2(rec_score_rate_t rate);
+extern rec_score_rate_t RecSRate2ToSRate(rec_score_rate2_et rate);
+extern rec_clear_type2_et RecCRankToCRank2(rec_clear_rank_t type);
+extern rec_clear_rank_t RecCRank2ToCRank(rec_clear_type2_et type);
+
+#endif /* enumëÄçÏån */
 
 extern bool RecGetPackList(std::vector<tstring> &list);
 extern bool RecGetMusicList(std::vector<tstring> &list, const tstring &packName);

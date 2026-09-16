@@ -16,107 +16,16 @@ static void RecSaveConvScToSc2(rec_save_score2_st &dest, const rec_save_score_t 
 	dest.score = src.score;
 	dest.dist  = src.dist;
 	dest.acc   = src.acc;
-	switch (src.clearRank) {
-	case REC_CLEAR_RANK_DROPED:
-		dest.clearType = REC_CLEAR_TYPE2_DROPED;
-		break;
-	case REC_CLEAR_RANK_CLEARED:
-		dest.clearType = REC_CLEAR_TYPE2_CLEARED;
-		break;
-	case REC_CLEAR_RANK_NOMISS:
-		dest.clearType = REC_CLEAR_TYPE2_NOMISS;
-		break;
-	case REC_CLEAR_RANK_FULLCOMBO:
-		dest.clearType = REC_CLEAR_TYPE2_FULLCOMBO;
-		break;
-	case REC_CLEAR_RANK_PERFECT:
-		dest.clearType = REC_CLEAR_TYPE2_PERFECT;
-		break;
-	default:
-		dest.clearType = REC_CLEAR_TYPE2_NO_PLAY;
-		break;
-	}
-	switch (src.scoreRate) {
-	case REC_SCORE_RATE_EX:
-		dest.scoreRate = REC_SCORE_RATE2_X;
-		break;
-	case REC_SCORE_RATE_S:
-		dest.scoreRate = REC_SCORE_RATE2_S;
-		break;
-	case REC_SCORE_RATE_A:
-		dest.scoreRate = REC_SCORE_RATE2_A;
-		break;
-	case REC_SCORE_RATE_B:
-		dest.scoreRate = REC_SCORE_RATE2_B;
-		break;
-	case REC_SCORE_RATE_C:
-		dest.scoreRate = REC_SCORE_RATE2_C;
-		break;
-	case REC_SCORE_RATE_D:
-		dest.scoreRate = REC_SCORE_RATE2_D;
-		break;
-	case REC_SCORE_RATE_F:
-		dest.scoreRate = REC_SCORE_RATE2_F;
-		break;
-	default:
-		dest.scoreRate = REC_SCORE_RATE2_NO_PLAY;
-		break;
-	}
+	dest.clearType = RecCRankToCRank2(src.clearRank);
+	dest.scoreRate = RecSRateToSRate2(src.scoreRate);
 }
 
 static void RecSaveConvSc2ToSc(rec_save_score_t &dest, const rec_save_score2_st &src) {
 	dest.score = src.score;
 	dest.dist  = src.dist;
 	dest.acc   = src.acc;
-	switch (src.clearType) {
-	case REC_CLEAR_TYPE2_DROPED:
-		dest.clearRank = REC_CLEAR_RANK_DROPED;
-		break;
-	case REC_CLEAR_TYPE2_CLEARED:
-	case REC_CLEAR_TYPE2_COZYCLEAR:
-	case REC_CLEAR_TYPE2_MISSLESS:
-		dest.clearRank = REC_CLEAR_RANK_CLEARED;
-		break;
-	case REC_CLEAR_TYPE2_NOMISS:
-		dest.clearRank = REC_CLEAR_RANK_NOMISS;
-		break;
-	case REC_CLEAR_TYPE2_FULLCOMBO:
-		dest.clearRank = REC_CLEAR_RANK_FULLCOMBO;
-		break;
-	case REC_CLEAR_TYPE2_PERFECT:
-	case REC_CLEAR_TYPE2_FULLPERFECT:
-		dest.clearRank = REC_CLEAR_RANK_PERFECT;
-		break;
-	default:
-		dest.clearRank = REC_CLEAR_RANK_NO_PLAY;
-		break;
-	}
-	switch (src.scoreRate) {
-	case REC_SCORE_RATE2_X:
-		dest.scoreRate = REC_SCORE_RATE_EX;
-		break;
-	case REC_SCORE_RATE2_S:
-		dest.scoreRate = REC_SCORE_RATE_S;
-		break;
-	case REC_SCORE_RATE2_A:
-		dest.scoreRate = REC_SCORE_RATE_A;
-		break;
-	case REC_SCORE_RATE2_B:
-		dest.scoreRate = REC_SCORE_RATE_B;
-		break;
-	case REC_SCORE_RATE2_C:
-		dest.scoreRate = REC_SCORE_RATE_C;
-		break;
-	case REC_SCORE_RATE2_D:
-		dest.scoreRate = REC_SCORE_RATE_D;
-		break;
-	case REC_SCORE_RATE2_F:
-		dest.scoreRate = REC_SCORE_RATE_F;
-		break;
-	default:
-		dest.scoreRate = REC_SCORE_RATE_NO_PLAY;
-		break;
-	}
+	dest.clearRank = RecCRank2ToCRank(src.clearType);
+	dest.scoreRate = RecSRate2ToSRate(src.scoreRate);
 }
 
 #if 1 /* play score 2 */
