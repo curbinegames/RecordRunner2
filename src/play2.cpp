@@ -2315,32 +2315,32 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	rec_error_t status = REC_ERROR_NONE;
 	int HighScore = 0;
-	TCHAR mapPath[255] = _T("");
-	TCHAR fileName[255] = _T("");
-	TCHAR folderPath[255] = _T("");
+	tstring mapPath = _T("");
+	tstring fileName = _T("");
+	tstring folderPath = _T("");
 	rec_map_detail_t map_detail;
 	rec_play_userpal_t userpal;
 	rec_play_nameset_t nameset;
 	now_scene_t ret = SCENE_EXIT;
 	FILE *fp = NULL;
 
-	status = RecGetMusicMapRrsPath(mapPath, 255, packNo, musicNo, (rec_dif_t)difNo);
+	status = RecGetMusicMapRrsPath(mapPath, packNo, musicNo, (rec_dif_t)difNo);
 	if (status != REC_ERROR_NONE) { return SCENE_SERECT; }
 
 	/* rrsデータが無い、または作成の指示があれば作る */
-	if (shift == 0) { _wfopen_s(&fp, mapPath, L"rb"); } /* TODO: IsExist()関数とかあっていいかも */
+	if (shift == 0) { _wfopen_s(&fp, mapPath.c_str(), L"rb"); } /* TODO: IsExist()関数とかあっていいかも */
 
 	if (fp == NULL) {
 		RecordLoad2(packNo, musicNo, difNo);
-		cal_ddif_3(mapPath);
+		cal_ddif_3(mapPath.c_str());
 	}
 	else { fclose(fp); }
 
-	RecGetMusicFolderName(fileName, 255, packNo, musicNo);
-	HighScore = GetHighScore(fileName, (rec_dif_t)difNo);
-	RecGetMusicFolderPath(folderPath, 255, packNo, musicNo);
-	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath, mapPath, HighScore, AutoFlag);
+	RecGetMusicFolderName(fileName, packNo, musicNo);
+	HighScore = GetHighScore(fileName.c_str(), (rec_dif_t)difNo);
+	RecGetMusicFolderPath(folderPath, packNo, musicNo);
+	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath.c_str(), mapPath.c_str(), HighScore, AutoFlag);
 
 	if (ret != SCENE_RESULT) { return ret; }
-	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)difNo, fileName); }
+	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)difNo, fileName.c_str()); }
 }

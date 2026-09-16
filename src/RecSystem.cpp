@@ -196,35 +196,13 @@ bool RecGetMusicList(std::vector<tstring> &list, const tstring &packName) {
 
 /* TODO: 各呼び元での戻り値チェック */
 /**
-* packNoからパックフォルダパスを取得する
-* @param[out] ret パックフォルダパスの格納先
-* @param[in] size retの長さ、配列数で指定
-* @param[in] packNo パックナンバー
-* @return rec_error_t
-*/
-rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo) {
-	std::vector<tstring> list;
-
-	strcopy_2(_T("record/"), ret, size); // ret = "record/"
-
-	if (!RecGetPackList(list)) { return REC_ERROR_FILE_EXIST; }
-
-	strcats_2(ret, size, list[packNo].c_str()); // ret = "record/<パック名>"
-	stradds_2(ret, size, _T('/'));              // ret = "record/<パック名>/"
-
-	return REC_ERROR_NONE;
-}
-
-/**
 * packNoとsongNoから曲フォルダパスを取得する
 * @param[out] ret 曲フォルダパスの格納先
-* @param[in] size retの長さ、配列数で指定
 * @param[in] packNo パックナンバー
 * @param[in] songNo 曲ナンバー
 * @return rec_error_t
 */
-rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo) {
-	rec_error_t status = REC_ERROR_NONE;
+rec_error_t RecGetMusicFolderPath(tstring &ret, uint packNo, uint songNo) {
 	tstring packName;
 	std::vector<tstring> list;
 
@@ -232,11 +210,7 @@ rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint son
 	packName = list[packNo];
 	if (!RecGetMusicList(list, packName)) { return REC_ERROR_FILE_EXIST; }
 
-	strcopy_2(_T("record/"), ret, size);        // ret = "record/"
-	strcats_2(ret, size, packName.c_str());     // ret = "record/<パック名>"
-	stradds_2(ret, size, _T('/'));              // ret = "record/<パック名>/"
-	strcats_2(ret, size, list[songNo].c_str()); // ret = "record/<パック名>/<曲名>"
-	stradds_2(ret, size, _T('/'));              // ret = "record/<パック名>/<曲名>/"
+	ret = _T("record/") + packName + _T("/") + list[songNo] + _T("/");
 
 	return REC_ERROR_NONE;
 }
@@ -244,22 +218,18 @@ rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint son
 /**
 * packNoとsongNoから曲フォルダ名を取得する
 * @param[out] ret 曲フォルダ名の格納先
-* @param[in] size retの長さ、配列数で指定
 * @param[in] packNo パックナンバー
 * @param[in] songNo 曲ナンバー
 * @return rec_error_t
 */
-rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo) {
-	rec_error_t status = REC_ERROR_NONE;
-	TCHAR packPath[256];
-	tstring packPathStr;
+rec_error_t RecGetMusicFolderName(tstring &ret, uint packNo, uint songNo) {
 	std::vector<tstring> list;
 	tstring packName;
 
 	if (!RecGetPackList(list)) { return REC_ERROR_FILE_EXIST; }
 	packName = list[packNo];
 	if (!RecGetMusicList(list, packName)) { return REC_ERROR_FILE_EXIST; }
-	strcopy_2(list[songNo].c_str(), ret, size);
+	ret = list[songNo];
 
 	return REC_ERROR_NONE;
 }
@@ -267,35 +237,33 @@ rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint son
 /**
 * packNoとsongNoとdifNoからマップファイルパスを取得する
 * @param[out] ret マップファイルパスの格納先
-* @param[in] size retの長さ、配列数で指定
 * @param[in] packNo パックナンバー
 * @param[in] songNo 曲ナンバー
 * @param[in] difNo 難易度ナンバー
 * @return rec_error_t
 */
-rec_error_t RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, uint songNo, rec_dif_t difNo) {
+rec_error_t RecGetMusicMapRrsPath(tstring &ret, uint packNo, uint songNo, rec_dif_t difNo) {
 	rec_error_t status = REC_ERROR_NONE;
-	status = RecGetMusicFolderPath(ret, size, packNo, songNo);
+	status = RecGetMusicFolderPath(ret, packNo, songNo);
 	if (status != REC_ERROR_NONE) { return status; }
-	stradds_2(ret, size, (TCHAR)((int)_T('0') + (int)difNo));
-	strcats_2(ret, size, _T(".rrs"));
+	ret += (TCHAR)((int)_T('0') + (int)difNo);
+	ret += _T(".rrs");
 	return REC_ERROR_NONE;
 }
 
 /**
 * packNoとsongNoとdifNoからマップテキストファイルパスを取得する
 * @param[out] ret マップテキストファイルパスの格納先
-* @param[in] size retの長さ、配列数で指定
 * @param[in] packNo パックナンバー
 * @param[in] songNo 曲ナンバー
 * @param[in] difNo 難易度ナンバー
 * @return rec_error_t
 */
-rec_error_t RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo, rec_dif_t difNo) {
+rec_error_t RecGetMusicMapTxtPath(tstring &ret, uint packNo, uint songNo, rec_dif_t difNo) {
 	rec_error_t status = REC_ERROR_NONE;
-	status = RecGetMusicFolderPath(ret, size, packNo, songNo);
+	status = RecGetMusicFolderPath(ret, packNo, songNo);
 	if (status != REC_ERROR_NONE) { return status; }
-	stradds_2(ret, size, (TCHAR)((int)_T('0') + (int)difNo));
-	strcats_2(ret, size, _T(".txt"));
+	ret += (TCHAR)((int)_T('0') + (int)difNo);
+	ret += _T(".txt");
 	return REC_ERROR_NONE;
 }

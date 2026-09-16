@@ -273,10 +273,7 @@ extern bool RecGetMusicList(std::vector<tstring> &list, const tstring &packName)
 /* これらの関数は、呼ばれるたびにリソースを全探索する(o(n)である)ので、*/
 /* for文などで曲の全探索をするとo(n^2)になって処理が遅くなる。やめてね */
 /* TODO: 多分vector<string>でo(n)にできる */
-extern rec_error_t RecGetPackFolderPath(TCHAR *ret, size_t size, uint packNo);
-extern rec_error_t RecGetMusicFolderPath(TCHAR *ret, size_t size, uint packNo, uint songNo);
-extern rec_error_t RecGetMusicFolderName(TCHAR *ret, size_t size, uint packNo, uint songNo);
-extern rec_error_t RecGetMusicMapRrsPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
-	rec_dif_t difNo);
-extern rec_error_t RecGetMusicMapTxtPath(TCHAR *ret, size_t size, uint packNo, uint songNo,
-	rec_dif_t difNo);
+extern rec_error_t RecGetMusicFolderPath(tstring &ret, uint packNo, uint songNo);
+extern rec_error_t RecGetMusicFolderName(tstring &ret, uint packNo, uint songNo);
+extern rec_error_t RecGetMusicMapRrsPath(tstring &ret, uint packNo, uint songNo, rec_dif_t difNo);
+extern rec_error_t RecGetMusicMapTxtPath(tstring &ret, uint packNo, uint songNo, rec_dif_t difNo);

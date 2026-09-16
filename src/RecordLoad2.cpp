@@ -1351,18 +1351,18 @@ static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, 
 /* main action */
 rec_error_t RecordLoad2(int packNo, int songNo, int difNo) {
 	rec_error_t status = REC_ERROR_NONE;
-	TCHAR folderPath[255]; // フォルダのパス
-	TCHAR mapPath[255]; // マップのパス
+	tstring folderPath; // フォルダのパス
+	tstring mapPath; // マップのパス
 
 	rec_score_file_t recfp;
 
-	status = RecGetMusicFolderPath(folderPath, 255, packNo, songNo);
+	status = RecGetMusicFolderPath(folderPath, packNo, songNo);
 	if (status != REC_ERROR_NONE) { return status; }
-	status = RecGetMusicMapTxtPath(mapPath, 255, packNo, songNo, (rec_dif_t)difNo);
+	status = RecGetMusicMapTxtPath(mapPath, packNo, songNo, (rec_dif_t)difNo);
 	if (status != REC_ERROR_NONE) { return status; }
-	RecMapLoad_EncodeMap(&recfp, mapPath, folderPath);
+	RecMapLoad_EncodeMap(&recfp, mapPath.c_str(), folderPath.c_str());
 
-	status = RecGetMusicMapRrsPath(mapPath, 255, packNo, songNo, (rec_dif_t)difNo);
+	status = RecGetMusicMapRrsPath(mapPath, packNo, songNo, (rec_dif_t)difNo);
 	if (status != REC_ERROR_NONE) { return status; }
 	rec_score_fwrite(recfp, mapPath);
 	return REC_ERROR_NONE;

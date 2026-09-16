@@ -420,7 +420,7 @@ static void RecSelectAllRelordDrawInfo(const tstring &musicName, uint iDif) {
 }
 
 static void RecSelectAllRelord(void) {
-	TCHAR path[255];
+	tstring path;
 	DxTime_t next_time = 0;
 	std::vector<tstring> pack_list;
 	if (RecGetPackList(pack_list) == false) { return; }
@@ -438,8 +438,8 @@ static void RecSelectAllRelord(void) {
 				if (RecordLoad2(iPack, iSong, iDif) != REC_ERROR_NONE) {
 					continue;
 				}
-				if (RecGetMusicMapRrsPath(path, 255, iPack, iSong, (rec_dif_t)iDif) != 0) { continue; }
-				cal_ddif_3(path);
+				if (RecGetMusicMapRrsPath(path, iPack, iSong, (rec_dif_t)iDif) != 0) { continue; }
+				cal_ddif_3(path.c_str());
 			}
 		}
 	}
