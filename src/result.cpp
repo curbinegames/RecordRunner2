@@ -52,30 +52,7 @@ typedef enum cur_font_cr_e {
 	CUR_FONT_COLOR_RAINBOW,
 } cur_font_cr_t;
 
-typedef struct rec_result_mat_s {
-	dxcur_pic_c clearRate;
-	dxcur_pic_c difBer;
-	dxcur_pic_c rank;
-	dxcur_pic_c chara;
-	cur_font_cr_t fontNo = CUR_FONT_COLOR_MONO;
-	cur_font_cr_t floatfontNo = CUR_FONT_COLOR_MONO;
-} rec_result_mat_t;
-
-typedef struct rec_result_pal_s {
-	tstring songN;
-	rec_play_judge_t judge;
-	int Mcombo = 0;
-	int noteCount = 0;
-	int score = 0;
-	double acc = 0;
-	double floatRank = 0;
-	intx100_t newRate = 0;
-	intx100_t oldRate = 0;
-	intx100_t subRate = 0;
-	int gap = 0;
-	int width = 0;
-	rec_result_mat_t mat;
-} rec_result_pal_t;
+#if 1 /* class */
 
 class rec_result_numfont_c {
 private:
@@ -167,6 +144,184 @@ public:
 		this->DrawFloat(num, drawX, drawY, size * WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y, cr, under, zero);
 	}
 };
+
+class rec_result_cleartype_pic_c {
+private:
+	dxcur_pic_c pic;
+
+public:
+	rec_result_cleartype_pic_c(void) {}
+
+	rec_result_cleartype_pic_c(rec_clear_rank_t Clear) {
+		this->set_pic(Clear);
+	}
+
+	void set_pic(rec_clear_rank_t Clear) {
+		switch (Clear) {
+		case REC_CLEAR_RANK_DROPED:
+			this->pic.reload(_T("picture/DROPED.png"));
+			break;
+		case REC_CLEAR_RANK_CLEARED:
+			this->pic.reload(_T("picture/CLEARED.png"));
+			break;
+		case REC_CLEAR_RANK_NOMISS:
+			this->pic.reload(_T("picture/NOMISS.png"));
+			break;
+		case REC_CLEAR_RANK_FULLCOMBO:
+			this->pic.reload(_T("picture/FULLCOMBO.png"));
+			break;
+		case REC_CLEAR_RANK_PERFECT:
+			this->pic.reload(_T("picture/PERFECT.png"));
+			break;
+		default:
+			this->pic.reload(_T(""));
+			break;
+		}
+	}
+
+	DxPic_t handle(void) const {
+		return this->pic.handle();
+	}
+};
+
+class rec_result_difber_pic_c {
+private:
+	dxcur_pic_c pic;
+
+public:
+	rec_result_difber_pic_c(void) {}
+
+	rec_result_difber_pic_c(rec_dif_t dif, const tstring &difFN) {
+		this->set_pic(dif, difFN);
+	}
+
+	void set_pic(rec_dif_t dif, const tstring &difFN) {
+		switch (dif) {
+		case REC_DIF_AUTO:
+			this->pic.reload(L"picture/difauto.png");
+			break;
+		case REC_DIF_EASY:
+			this->pic.reload(L"picture/difeasy.png");
+			break;
+		case REC_DIF_NORMAL:
+			this->pic.reload(L"picture/difnormal.png");
+			break;
+		case REC_DIF_HARD:
+			this->pic.reload(L"picture/difhard.png");
+			break;
+		case REC_DIF_ANOTHER:
+		case REC_DIF_SECRET:
+			this->pic.reload(difFN);
+			break;
+		default:
+			this->pic.reload(_T(""));
+			break;
+		}
+	}
+
+	DxPic_t handle(void) const {
+		return this->pic.handle();
+	}
+};
+
+class rec_result_scorerank_pic_c {
+private:
+	dxcur_pic_c pic;
+
+public:
+	rec_result_scorerank_pic_c(void) {}
+
+	rec_result_scorerank_pic_c(rec_score_rate_t rank) {
+		this->set_pic(rank);
+	}
+
+	void set_pic(rec_score_rate_t rank) {
+		switch (rank) {
+		case REC_SCORE_RATE_EX:
+			this->pic.reload(L"picture/rankEX.png");
+			break;
+		case REC_SCORE_RATE_S:
+			this->pic.reload(L"picture/rankS.png");
+			break;
+		case REC_SCORE_RATE_A:
+			this->pic.reload(L"picture/rankA.png");
+			break;
+		case REC_SCORE_RATE_B:
+			this->pic.reload(L"picture/rankB.png");
+			break;
+		case REC_SCORE_RATE_C:
+			this->pic.reload(L"picture/rankC.png");
+			break;
+		case REC_SCORE_RATE_D:
+			this->pic.reload(L"picture/rankD.png");
+			break;
+		case REC_SCORE_RATE_F:
+			this->pic.reload(L"picture/rankF.png"); /* TODO: 画像作る */
+			break;
+		default:
+			this->pic.reload(_T(""));
+			break;
+		}
+	}
+
+	DxPic_t handle(void) const {
+		return this->pic.handle();
+	}
+};
+
+class rec_result_chara_pic_c {
+private:
+	dxcur_pic_c pic;
+
+public:
+	rec_result_chara_pic_c(void) {
+	switch (optiondata.chara) {
+		case REC_CHARA_PICKER:
+			this->pic.reload(L"picture/RePicker.png");
+			break;
+		case REC_CHARA_GATOR:
+			this->pic.reload(L"picture/ReGator.png");
+			break;
+		case REC_CHARA_TAYLOR:
+			this->pic.reload(L"picture/ReTaylor.png");
+			break;
+		default:
+			this->pic.reload(_T(""));
+			break;
+		}
+	}
+
+	DxPic_t handle(void) const {
+		return this->pic.handle();
+	}
+};
+
+#endif /* class */
+
+typedef struct rec_result_mat_s {
+	rec_result_cleartype_pic_c clearRate;
+	rec_result_difber_pic_c difBer;
+	rec_result_scorerank_pic_c rank;
+	rec_result_chara_pic_c chara;
+	cur_font_cr_t fontNo = CUR_FONT_COLOR_MONO;
+	cur_font_cr_t floatfontNo = CUR_FONT_COLOR_MONO;
+} rec_result_mat_t;
+
+typedef struct rec_result_pal_s {
+	tstring songN;
+	rec_play_judge_t judge;
+	int Mcombo = 0;
+	int noteCount = 0;
+	int score = 0;
+	double acc = 0;
+	double floatRank = 0;
+	intx100_t newRate = 0;
+	intx100_t oldRate = 0;
+	intx100_t subRate = 0;
+	int gap = 0;
+	int width = 0;
+	rec_result_mat_t mat;
+} rec_result_pal_t;
 
 static now_scene_t ViewResult(const rec_result_pal_t *val) {
 	/* typedef */
@@ -331,75 +486,6 @@ double GetFloatRank(int score, int miss, int notes, char rank) {
 	return 0;
 }
 
-static const TCHAR *RecResultLoadClearRateGraph(rec_clear_rank_t Clear) {
-	switch (Clear) {
-	case REC_CLEAR_RANK_DROPED:
-		return (_T("picture/DROPED.png"));
-	case REC_CLEAR_RANK_CLEARED:
-		return (_T("picture/CLEARED.png"));
-	case REC_CLEAR_RANK_NOMISS:
-		return (_T("picture/NOMISS.png"));
-	case REC_CLEAR_RANK_FULLCOMBO:
-		return (_T("picture/FULLCOMBO.png"));
-	case REC_CLEAR_RANK_PERFECT:
-		return (_T("picture/PERFECT.png"));
-	default:
-		return (_T(""));
-	}
-}
-
-static const TCHAR *RecResultLoadDifBarGraph(rec_dif_t dif, const TCHAR *difFN) {
-	switch (dif) {
-	case REC_DIF_AUTO:
-		return (L"picture/difauto.png");
-	case REC_DIF_EASY:
-		return (L"picture/difeasy.png");
-	case REC_DIF_NORMAL:
-		return (L"picture/difnormal.png");
-	case REC_DIF_HARD:
-		return (L"picture/difhard.png");
-	case REC_DIF_ANOTHER:
-	case REC_DIF_SECRET:
-		return (difFN);
-	default:
-		return (_T(""));
-	}
-}
-
-static const TCHAR *RecResultLoadClearRankGraph(rec_score_rate_t rank) {
-	switch (rank) {
-	case REC_SCORE_RATE_EX:
-		return (L"picture/rankEX.png");
-	case REC_SCORE_RATE_S:
-		return (L"picture/rankS.png");
-	case REC_SCORE_RATE_A:
-		return (L"picture/rankA.png");
-	case REC_SCORE_RATE_B:
-		return (L"picture/rankB.png");
-	case REC_SCORE_RATE_C:
-		return (L"picture/rankC.png");
-	case REC_SCORE_RATE_D:
-		return (L"picture/rankD.png");
-	case REC_SCORE_RATE_F:
-		return (L"picture/rankF.png"); /* TODO: 画像作る */
-	default:
-		return (_T(""));
-	}
-}
-
-static const TCHAR *RecResultLoadCharaGraph(void) {
-	switch (optiondata.chara) {
-	case REC_CHARA_PICKER:
-		return (L"picture/RePicker.png");
-	case REC_CHARA_GATOR:
-		return (L"picture/ReGator.png");
-	case REC_CHARA_TAYLOR:
-		return (L"picture/ReTaylor.png");
-	default:
-		return (_T(""));
-	}
-}
-
 static cur_font_cr_t RecResultGetCurFontColor(rec_score_rate_t rank) {
 	switch (rank) {
 	case REC_SCORE_RATE_EX:
@@ -470,10 +556,10 @@ static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_u
 	result_pal->newRate         = RecSaveGetFullRunnerRate() * 100;
 	result_pal->subRate         = result_pal->newRate - result_pal->oldRate; /* oldRateはレート保存前に代入している */
 
-	result_pal->mat.clearRate.reload(RecResultLoadClearRateGraph(Clear));
-	result_pal->mat.difBer.reload(RecResultLoadDifBarGraph(dif, nameset->DifFN.c_str()));
-	result_pal->mat.rank.reload(RecResultLoadClearRankGraph(rank));
-	result_pal->mat.chara.reload(RecResultLoadCharaGraph());
+	result_pal->mat.clearRate.set_pic(Clear);
+	result_pal->mat.difBer.set_pic(dif, nameset->DifFN);
+	result_pal->mat.rank.set_pic(rank);
+	// result_pal->mat.chara.set_pic(); TODO クリア状況でイラスト変える。
 	result_pal->mat.fontNo      = RecResultGetCurFontColor(rank);
 	result_pal->mat.floatfontNo = RecResultGetFlortCurFontColor(rank);
 
