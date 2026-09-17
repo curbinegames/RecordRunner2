@@ -82,6 +82,7 @@ rec_select_sorttype_ec &operator++(rec_select_sorttype_ec &val) {
 }
 
 typedef struct music_box_2 {
+	bool toSecret  = false;
 	int level      = -1;
 	int preview[2] = {0, 10000};
 	int Hscore     =  0;
@@ -222,6 +223,7 @@ private: /* èâä˙âªån */
 		const tstring &packName, const tstring &songName, int packNum, int musicNo
 	) {
 		int levelList[4] = {-1, -1, -1, -1}; //0=easy, 1=normal, 2=hard, 3=another
+		bool detect_secret = false;
 		std::queue<MUSIC_BOX_2> buf_list;
 		for (int iDif = 0; iDif < 6; iDif++) {
 			rec_error_t status = REC_ERROR_NONE;
@@ -257,6 +259,9 @@ private: /* èâä˙âªån */
 				case 4:
 					levelList[3] = buf.level;
 					break;
+				case 5:
+					detect_secret = true;
+					break;
 				}
 				buf_list.push(buf);
 			}
@@ -268,6 +273,9 @@ private: /* èâä˙âªån */
 			buf.levelList[1] = levelList[1];
 			buf.levelList[2] = levelList[2];
 			buf.levelList[3] = levelList[3];
+			if ((detect_secret == true) && (buf.LvType == REC_DIF_HARD)) {
+				buf.toSecret = true;
+			}
 			this->data.push_back(buf);
 			buf_list.pop();
 		}
@@ -519,41 +527,55 @@ static rec_select_key_et RecSerectKeyCheck() {
 	return ret;
 }
 
-static bool RecSerectTrySecret(int Hscore) {
-	bool ret = false;
-	int rate = 0;
-	if (Hscore < 90000) { return false; }
-	if (Hscore >= 99000) { return true; }
-	if (Hscore >= 90000 && Hscore < 92500) {
-		rate = pals(90000, 0, 92500, 25, Hscore);
+static int RecSerectGetDiscoverRate(int Hscore) {
+	const int border_0    = 90000;
+	const int border_25   = 92500;
+	const int border_50   = 95000;
+	const int border_750  = 98000;
+	const int border_1000 = 99000;
+	if (Hscore     < border_0) { return 0; }
+	if (border_1000 <= Hscore) { return 1000; }
+	if (IS_BETWEEN_RIGHT_LESS(border_750, Hscore, border_1000)) {
+		return pals(border_1000, 1000, border_750, 750, Hscore);
 	}
-	else if (Hscore >= 92500 && Hscore < 95000) {
-		rate = pals(95000, 50, 92500, 25, Hscore);
+	if (IS_BETWEEN_RIGHT_LESS(border_50,  Hscore, border_750)) {
+		return pals(border_50,     50, border_750, 750, Hscore);
 	}
-	else if (Hscore >= 95000 && Hscore < 98000) {
-		rate = pals(95000, 50, 98000, 750, Hscore);
+	if (IS_BETWEEN_RIGHT_LESS(border_25,  Hscore, border_50)) {
+		return pals(border_50,     50, border_25,   25, Hscore);
 	}
-	else if (Hscore >= 98000 && Hscore < 99000) {
-		rate = pals(99000, 1000, 98000, 750, Hscore);
+	if (IS_BETWEEN_RIGHT_LESS(border_0,   Hscore, border_25)) {
+		return pals(border_0,       0, border_25,   25, Hscore);
 	}
-	if (GetRand(1000) <= rate) { ret = true; }
-	return ret;
 }
 
-#if 0
-static int RecSerectTrySecret2(int AutoFlag, int dif, MUSIC_BOX *songdata) {
-	if (AutoFlag == 0 && dif == 3 &&
-		songdata->Hscore[3] >= 90000 &&
-		strands_direct(songdata->SongFileName[5], L"NULL") == 0 &&
-		songdata->Hscore[5] <= 0)
-	{
-		if (RecSerectTrySecret(songdata->Hscore[3]) == true) {
-			return 1;
+static bool RecSerectTrySecret(int Hscore) {
+	return GetRand(1000) <= RecSerectGetDiscoverRate(Hscore);
+}
+
+static bool RecSelectFindSecret(MUSIC_BOX_2 *dest, const songdata_set_t &songdata, tstring musicName, int cmd) {
+	for (size_t i = cmd; i < songdata.detail.size(); i++) {
+		if (songdata[cmd].SongName.get_str() != musicName) { return false; }
+		if (songdata[cmd].LvType == REC_DIF_SECRET) {
+			*dest = songdata[cmd];
+			return true;
 		}
 	}
-	return 0;
+	return false;
 }
-#endif
+
+static bool RecSerectTrySecret2(const songdata_set_t &songdata, int AutoFlag, int cmd, int dif) {
+	const MUSIC_BOX_2 &target = songdata[cmd];
+	if (AutoFlag == 1) { return false; }
+	if (target.LvType != REC_DIF_HARD) { return false; }
+	if (target.Hscore < 90000) { return false; }
+	if (target.toSecret == false) { return false; }
+	MUSIC_BOX_2 secret;
+	if (RecSelectFindSecret(&secret, songdata, target.SongName.get_str(), cmd) == false) { return false; }
+	if (secret.SongFileName == _T("NULL")) { return false; }
+	if (secret.Hscore > 0) { return false; }
+	return RecSerectTrySecret(target.Hscore);
+}
 
 static bool Rec_Select_DifFilter(const MUSIC_BOX_2 &detail, int view_dif) {
 	return (detail.LvType == view_dif);
@@ -676,12 +698,10 @@ static void RecSerectSetToPlay(rec_to_play_set_t &toPlay, const rec_select_comma
 	toPlay.musicNo = songdata[cmd.music].musicNo;
 	toPlay.dif     = songdata[cmd.music].LvType;
 
-#if 0
 	//âBÇµã»óp
-	if (RecSerectTrySecret2(toPlay->autoFg, cmd[1], &(*songdata)[cmd[0]]) == 1) {
-		toPlay->dif = 5;
+	if (RecSerectTrySecret2(songdata, toPlay.autoFg, cmd.music, cmd.dif) == true) {
+		toPlay.dif = 5;
 	}
-#endif
 	return;
 }
 
