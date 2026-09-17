@@ -57,7 +57,7 @@ static void GameMain() {
 			break;
 		case SCENE_MUSIC:
 			rec_bgm_system_g.Delete();
-			next = play3(ps.packNo, ps.musicNo, ps.dif, ps.shift, ps.autoFg);
+			next = play3(ps);
 			break;
 		default:
 			next = SCENE_EXIT;

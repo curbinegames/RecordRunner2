@@ -2305,14 +2305,11 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 }
 
 /**
-* @param[in] packNo パックナンバー
-* @param[in] musicNo 曲ナンバー
-* @param[in] difNo 難易度ナンバー
-* @param[in] shift マップ生成フラフ
-* @param[in] AutoFlag オートプレイフラグ
-* @return 次のシーン
-*/
-now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
+ * @brief プレイシーンの実行
+ * @param[in] ps プレイする譜面の情報
+ * @return 次のシーン
+ */
+now_scene_t play3(const rec_to_play_set_t &ps) {
 	rec_error_t status = REC_ERROR_NONE;
 	int HighScore = 0;
 	tstring mapPath = _T("");
@@ -2324,23 +2321,23 @@ now_scene_t play3(int packNo, int musicNo, int difNo, int shift, int AutoFlag) {
 	now_scene_t ret = SCENE_EXIT;
 	FILE *fp = NULL;
 
-	status = RecGetMusicMapRrsPath(mapPath, packNo, musicNo, (rec_dif_t)difNo);
+	status = RecGetMusicMapRrsPath(mapPath, ps.packNo, ps.musicNo, (rec_dif_t)ps.dif);
 	if (status != REC_ERROR_NONE) { return SCENE_SERECT; }
 
 	/* rrsデータが無い、または作成の指示があれば作る */
-	if (shift == 0) { _wfopen_s(&fp, mapPath.c_str(), L"rb"); } /* TODO: IsExist()関数とかあっていいかも */
+	if (ps.shift == 0) { _wfopen_s(&fp, mapPath.c_str(), L"rb"); } /* TODO: IsExist()関数とかあっていいかも */
 
 	if (fp == NULL) {
-		RecordLoad2(packNo, musicNo, difNo);
+		RecordLoad2(ps.packNo, ps.musicNo, ps.dif);
 		cal_ddif_3(mapPath.c_str());
 	}
 	else { fclose(fp); }
 
-	RecGetMusicFolderName(fileName, packNo, musicNo);
-	HighScore = GetHighScore(fileName.c_str(), (rec_dif_t)difNo);
-	RecGetMusicFolderPath(folderPath, packNo, musicNo);
-	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath.c_str(), mapPath.c_str(), HighScore, AutoFlag);
+	RecGetMusicFolderName(fileName, ps.packNo, ps.musicNo);
+	HighScore = GetHighScore(fileName.c_str(), (rec_dif_t)ps.dif);
+	RecGetMusicFolderPath(folderPath, ps.packNo, ps.musicNo);
+	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath.c_str(), mapPath.c_str(), HighScore, ps.autoFg);
 
 	if (ret != SCENE_RESULT) { return ret; }
-	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)difNo, fileName.c_str()); }
+	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)ps.dif, fileName.c_str()); }
 }
