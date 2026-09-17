@@ -48,12 +48,12 @@ void upgrade_rate_f() {
 static void fix10501to10502_2(const TCHAR *oldFL, const TCHAR *newFL) {
 	rec_save_score_t buf[6];
 	RecSaveReadScoreAllDif(buf, oldFL);
-	RecSaveUpdateScoreOneDif(&buf[REC_DIF_AUTO],    newFL, REC_DIF_AUTO);
-	RecSaveUpdateScoreOneDif(&buf[REC_DIF_EASY],    newFL, REC_DIF_EASY);
-	RecSaveUpdateScoreOneDif(&buf[REC_DIF_NORMAL],  newFL, REC_DIF_NORMAL);
-	RecSaveUpdateScoreOneDif(&buf[REC_DIF_HARD],    newFL, REC_DIF_HARD);
-	RecSaveUpdateScoreOneDif(&buf[REC_DIF_ANOTHER], newFL, REC_DIF_ANOTHER);
-	RecSaveUpdateScoreOneDif(&buf[REC_DIF_SECRET],  newFL, REC_DIF_SECRET);
+	RecSaveUpdateScoreOneDif(buf[REC_DIF_AUTO],    newFL, REC_DIF_AUTO);
+	RecSaveUpdateScoreOneDif(buf[REC_DIF_EASY],    newFL, REC_DIF_EASY);
+	RecSaveUpdateScoreOneDif(buf[REC_DIF_NORMAL],  newFL, REC_DIF_NORMAL);
+	RecSaveUpdateScoreOneDif(buf[REC_DIF_HARD],    newFL, REC_DIF_HARD);
+	RecSaveUpdateScoreOneDif(buf[REC_DIF_ANOTHER], newFL, REC_DIF_ANOTHER);
+	RecSaveUpdateScoreOneDif(buf[REC_DIF_SECRET],  newFL, REC_DIF_SECRET);
 	return;
 }
 

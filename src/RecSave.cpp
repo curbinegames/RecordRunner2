@@ -117,7 +117,7 @@ rec_save_error_et RecSaveUpdateScore2OneDif(const rec_save_score2_st &src, const
 
 #if 1 /* play score */
 
-int RecSaveReadScoreAllDif(rec_save_score_t dest[], const TCHAR *songname) {
+int RecSaveReadScoreAllDif(rec_save_score_t dest[], const tstring &songname) {
 	/* 新方式でトライ */
 	rec_save_score2_st data[6];
 	if (RecSaveReadScore2AllDif(data, songname) == REC_SAVE_ERROR_NONE) {
@@ -133,13 +133,13 @@ int RecSaveReadScoreAllDif(rec_save_score_t dest[], const TCHAR *songname) {
 	int	scoreRate[6] = { 6,6,6,6,6,6 };
 	int	clearRank[6] = { 0,0,0,0,0,0 };
 	double acc[6]    = { 0,0,0,0,0,0 };
-	TCHAR filename[255] = L"score/";
+	tstring filename = _T("score/");
 	FILE *fp;
 
-	strcats(filename, songname); // save = score/<曲名>
-	strcats(filename, L".dat");  // save = score/<曲名>.dat
+	filename += songname;   // save = score/<曲名>
+	filename += _T(".dat"); // save = score/<曲名>
 
-	_wfopen_s(&fp, filename, L"rb");
+	_wfopen_s(&fp, filename.c_str(), L"rb");
 	if (fp == NULL) { return -1; }
 	fread(&score,     sizeof(int),    6, fp);
 	fread(&acc,       sizeof(double), 6, fp);
@@ -160,7 +160,7 @@ int RecSaveReadScoreAllDif(rec_save_score_t dest[], const TCHAR *songname) {
 }
 
 /* 同じ曲名があったら上書きしてしまう */
-int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const TCHAR *songname) {
+int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const tstring &songname) {
 	/* 新方式でトライ */
 	rec_save_score2_st data[6];
 	for (size_t idif = 0; idif < 6; idif++) {
@@ -174,7 +174,7 @@ int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const TCHAR *songname)
 	int	scoreRate[6] = { 6,6,6,6,6,6 };
 	int	clearRank[6] = { 0,0,0,0,0,0 };
 	double acc[6]    = { 0,0,0,0,0,0 };
-	TCHAR filename[255] = L"score/";
+	tstring filename = _T("score/");
 	FILE *fp;
 
 	for (uint iDif = 0; iDif < 6; iDif++) {
@@ -185,10 +185,10 @@ int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const TCHAR *songname)
 		clearRank[iDif] = src[iDif].clearRank;
 	}
 
-	strcats(filename, songname); // save = score/<曲名>
-	strcats(filename, L".dat");  // save = score/<曲名>.dat
+	filename += songname;   // save = score/<曲名>
+	filename += _T(".dat"); // save = score/<曲名>.dat
 
-	_wfopen_s(&fp, filename, L"wb");
+	_wfopen_s(&fp, filename.c_str(), L"wb");
 	if (fp == NULL) { return -1; }
 	fwrite(&score,     sizeof(int),    6, fp);
 	fwrite(&acc,       sizeof(double), 6, fp);
@@ -200,31 +200,31 @@ int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const TCHAR *songname)
 	return 0;
 }
 
-int RecSaveReadScoreOneDif(rec_save_score_t *dest, const TCHAR *songname, rec_dif_t dif) {
+int RecSaveReadScoreOneDif(rec_save_score_t &dest, const tstring &songname, rec_dif_t dif) {
 	rec_save_score_t buf[6];
 	RecSaveReadScoreAllDif(buf, songname);
-	*dest = buf[dif];
+	dest = buf[dif];
 	return 0;
 }
 
-int RecSaveWriteScoreOneDif(const rec_save_score_t *src, const TCHAR *songname, rec_dif_t dif) {
+int RecSaveWriteScoreOneDif(const rec_save_score_t &src, const tstring &songname, rec_dif_t dif) {
 	rec_save_score_t buf[6];
 	RecSaveReadScoreAllDif(buf, songname);
-	buf[dif] = *src;
+	buf[dif] = src;
 	return RecSaveWriteScoreAllDif(buf, songname);
 }
 
-int RecSaveUpdateScoreOneDif(const rec_save_score_t *src, const TCHAR *songname, rec_dif_t dif) {
+int RecSaveUpdateScoreOneDif(const rec_save_score_t &src, const tstring &songname, rec_dif_t dif) {
 	rec_save_score_t buf;
-	RecSaveReadScoreOneDif(&buf, songname, dif);
+	RecSaveReadScoreOneDif(buf, songname, dif);
 
-	if (buf.score     < src->score)     { buf.score     = src->score; }
-	if (buf.acc       < src->acc)       { buf.acc       = src->acc; }
-	if (buf.dist      < src->dist)      { buf.dist      = src->dist; }
-	if (buf.clearRank < src->clearRank) { buf.clearRank = src->clearRank; }
-	if (buf.scoreRate > src->scoreRate || buf.scoreRate < 0) { buf.scoreRate = src->scoreRate; } /* ナンバリングの都合上、これだけ他と違う実装になってる */
+	if (buf.score     < src.score)     { buf.score     = src.score; }
+	if (buf.acc       < src.acc)       { buf.acc       = src.acc; }
+	if (buf.dist      < src.dist)      { buf.dist      = src.dist; }
+	if (buf.clearRank < src.clearRank) { buf.clearRank = src.clearRank; }
+	if (buf.scoreRate > src.scoreRate || buf.scoreRate < 0) { buf.scoreRate = src.scoreRate; } /* ナンバリングの都合上、これだけ他と違う実装になってる */
 
-	RecSaveWriteScoreOneDif(&buf, songname, dif);
+	RecSaveWriteScoreOneDif(buf, songname, dif);
 	return 0;
 }
 
@@ -372,7 +372,7 @@ int RecSaveWriteRunnerRate(const play_rate_t *src) {
 	return 0;
 }
 
-int RecSaveUpdateRunnerRate(const TCHAR *songname, double rate) {
+int RecSaveUpdateRunnerRate(const tstring &songname, double rate) {
 	play_rate_t data[RATE_NUM];
 	char num = -1;
 
@@ -380,7 +380,7 @@ int RecSaveUpdateRunnerRate(const TCHAR *songname, double rate) {
 
 	// 同じ曲、または未収録を探す
 	for (uint i = 0; i < RATE_NUM; i++) {
-		if (strands(songname, data[i].name) ||
+		if (strands(songname.c_str(), data[i].name) ||
 			(data[i].name[0] == L'\0' && data[i].num <= 0))
 		{
 			num = i;
@@ -400,7 +400,7 @@ int RecSaveUpdateRunnerRate(const TCHAR *songname, double rate) {
 
 	// レートを更新する
 	data[num].num = rate;
-	strcopy_2(songname, data[num].name, 64);
+	strcopy_2(songname.c_str(), data[num].name, 64);
 
 	return RecSaveWriteRunnerRate(data);
 }

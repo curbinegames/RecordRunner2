@@ -210,7 +210,7 @@ private: /* èâä˙âªån */
 
 	void ReadHighscore(MUSIC_BOX_2 &songdata, const tstring &songName, rec_dif_t dif) {
 		rec_save_score_t score;
-		RecSaveReadScoreOneDif(&score, songName.c_str(), dif);
+		RecSaveReadScoreOneDif(score, songName, dif);
 		songdata.Hscore    = score.score;
 		songdata.Hacc      = score.acc;
 		songdata.Hdis      = score.dist;

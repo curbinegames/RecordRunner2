@@ -69,11 +69,11 @@ extern rec_save_error_et RecSaveReadScore2OneDif(rec_save_score2_st &dest, const
 extern rec_save_error_et RecSaveWriteScore2OneDif(const rec_save_score2_st &src, const tstring &songname, rec_dif_t dif);
 extern rec_save_error_et RecSaveUpdateScore2OneDif(const rec_save_score2_st &src, const tstring &songname, rec_dif_t dif);
 
-extern int RecSaveReadScoreAllDif(rec_save_score_t dest[], const TCHAR *songname);
-extern int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const TCHAR *songname);
-extern int RecSaveReadScoreOneDif(rec_save_score_t *dest, const TCHAR *songname, rec_dif_t dif);
-extern int RecSaveWriteScoreOneDif(const rec_save_score_t *src, const TCHAR *songname, rec_dif_t dif);
-extern int RecSaveUpdateScoreOneDif(const rec_save_score_t *src, const TCHAR *songname, rec_dif_t dif);
+extern int RecSaveReadScoreAllDif(rec_save_score_t dest[], const tstring &songname);
+extern int RecSaveWriteScoreAllDif(const rec_save_score_t src[], const tstring &songname);
+extern int RecSaveReadScoreOneDif(rec_save_score_t &dest, const tstring &songname, rec_dif_t dif);
+extern int RecSaveWriteScoreOneDif(const rec_save_score_t &src, const tstring &songname, rec_dif_t dif);
+extern int RecSaveUpdateScoreOneDif(const rec_save_score_t &src, const tstring &songname, rec_dif_t dif);
 
 extern int RecSaveReadUserPlay(rec_user_data_t *dest);
 extern int RecSaveWriteUserPlay(const rec_user_data_t *src);
@@ -85,5 +85,5 @@ extern int RecSaveUpdateCharaPlay(rec_chara_et nowChara);
 
 extern int RecSaveReadRunnerRate(play_rate_t *data);
 extern int RecSaveWriteRunnerRate(const play_rate_t *src);
-extern int RecSaveUpdateRunnerRate(const TCHAR *songname, double rate);
+extern int RecSaveUpdateRunnerRate(const tstring &songname, double rate);
 extern double RecSaveGetFullRunnerRate(void);

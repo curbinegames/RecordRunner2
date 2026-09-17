@@ -688,7 +688,7 @@ static int GetRemainNotes(rec_play_judge_t judge, int Notes) {
 
 static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
 	rec_save_score_t scoreBuf;
-	RecSaveReadScoreOneDif(&scoreBuf, songName, dif);
+	RecSaveReadScoreOneDif(scoreBuf, songName, dif);
 	return scoreBuf.score;
 }
 

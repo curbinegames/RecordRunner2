@@ -582,7 +582,7 @@ static void SaveScore(const rec_play_userpal_t *userpal, const TCHAR *songN, rec
 	buf.dist      = userpal->Dscore.point;
 	buf.acc       = CAL_ACC(userpal->judgeCount, noteCount);
 
-	RecSaveUpdateScoreOneDif(&buf, songN, dif);
+	RecSaveUpdateScoreOneDif(buf, songN, dif);
 	return;
 }
 
