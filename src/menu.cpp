@@ -1,4 +1,8 @@
 
+#include <RecSystem.h>
+
+#if 0 /* old system */
+
 /* base include */
 #include <DxLib.h>
 
@@ -177,4 +181,58 @@ now_scene_t menu(void) {
 
 		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
+}
+
+#endif
+
+now_scene_t menu(void) {
+	int cmd = 0;
+	now_scene_t next = SCENE_EXIT;
+	dxcur_key_c key;
+	rec_helpbar_c help;
+	rec_cutin_c cutin;
+
+	int menuposy[6] = {
+		230, 292, 410, 475, 538, 598
+	};
+	int menuposright[6] = {
+		290, 450, 350, 195, 230, 175
+	};
+
+	dxcur_pic_c backpic(_T("picture/menu/タイトル原案.png"));
+	dxcur_window_pic_c curpic(_T("picture/cursorwindow.png"));
+	dxcur_snd_c s_sel(_T("sound/select.wav"));
+
+	cutin.SetIo(CUT_FRAG_OUT);
+
+	while (true) {
+		if (GetWindowUserCloseFlag(TRUE)) {
+			next = SCENE_EXIT;
+			break;
+		}
+		if (cutin.IsClosing() == 0) {
+			key.update();
+			switch (key.GetKeyPulseOnce()) {
+			case KEY_INPUT_RETURN:
+				break;
+			case KEY_INPUT_UP:
+				cmd = LOOP_SUB(cmd, 6);
+				s_sel.PlaySound();
+				break;
+			case KEY_INPUT_DOWN:
+				cmd = LOOP_ADD(cmd, 6);
+				s_sel.PlaySound();
+				break;
+			}
+		}
+
+		ClearDrawScreen(); /* 描画エリアここから */
+		DrawGraph(0, 0, backpic.handle(), TRUE);
+		curpic.draw(50, menuposy[cmd], menuposright[cmd], menuposy[cmd] + 60);
+		help.DrawHelp(rec_helpbar_type_ec::MENU);
+		cutin.DrawCut();
+		ScreenFlip(); /* 描画エリアここまで */
+	}
+
+	return next;
 }

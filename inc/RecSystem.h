@@ -174,8 +174,8 @@ private:
 #if 1 /* str系 */
 	const std::vector<rec_system_langstr_c> str_menu = {
 		rec_system_langstr_c{
-			_T("左右キー:選択   Enterキー:決定"),
-			_T("←→key:choose   Enter key:enter")
+			_T("上下キー:選択   Enterキー:決定"),
+			_T("↑↓key:choose   Enter key:enter")
 		}
 	};
 
