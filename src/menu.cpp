@@ -1,203 +1,83 @@
 
+#include <array>
 #include <RecSystem.h>
 
-#if 0 /* old system */
+#define MENU_DRAW_LEFT 50
+#define MENU_DRAW_HEIGHT 60
 
-/* base include */
-#include <DxLib.h>
-
-/* curbine code include */
-#include <dxcur.h>
-#include <dxdraw.h>
-#include <sancur.h>
-
-/* rec system include */
-#include <option.h>
-#include <RecWindowRescale.h>
-#include <RecSystem.h>
-
-typedef struct rec_menu_data_s {
-	dxcur_pic_c card;
-	dxcur_pic_c ground;
-	dxcur_pic_c back;
-	now_scene_t num;
-} rec_menu_data_t;
-
-static class rec_manu_dataset_c {
-private:
-	int LR = 1;
-	int Ncmd = 0;
-	int Bcmd = 0;
-	DxTime_t stime = -250;
-	DxSnd_t select = LoadSoundMem(L"sound/arrow.wav");
-
-	rec_menu_data_t menu_item[4] = {
-		{
-			dxcur_pic_c(L"picture/menu/FREE PLAY.png"),
-			dxcur_pic_c(L"picture/menu/FREE PLAY G.png"),
-			dxcur_pic_c(L"picture/play/backskynoamal.png"),
-			SCENE_SERECT
-		},
-		{
-			dxcur_pic_c(L"picture/menu/COLLECTION.png"),
-			dxcur_pic_c(L"picture/menu/COLLECT G.png"),
-			dxcur_pic_c(L"picture/menu/COLLECT W.png"),
-			SCENE_COLLECTION
-		},
-		{
-			dxcur_pic_c(L"picture/menu/OPTION.png"),
-			dxcur_pic_c(L"picture/menu/OPTION G.png"),
-			dxcur_pic_c(L"picture/menu/OPTION W.png"),
-			SCENE_OPTION
-		},
-		{
-			dxcur_pic_c(L"picture/menu/QUIT.png"),
-			dxcur_pic_c(L"picture/menu/QUIT G.png"),
-			dxcur_pic_c(L"picture/play/backstar.png"),
-			SCENE_EXIT
-		}
-	};
-
-#define MENU_NUM (sizeof(this->menu_item) / sizeof(this->menu_item[0]))
-
-public:
-	rec_manu_dataset_c(void) {
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, select);
-		return;
-	}
-
-	~rec_manu_dataset_c(void) {
-		for (int inum = 0; inum < MENU_NUM; inum++) {
-			DeleteGraph(this->menu_item[inum].card.handle());
-			DeleteGraph(this->menu_item[inum].ground.handle());
-			DeleteGraph(this->menu_item[inum].back.handle());
-		}
-		return;
-	}
-
-private:
-	void DrawBack(void) const {
-		int time = GetNowCount() - this->stime;
-		time = betweens(0, time, 250);
-		RecRescaleDrawGraph(0, 0, this->menu_item[this->Bcmd].back.handle(), TRUE);
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(0, 0, 250, 255, time));
-		RecRescaleDrawGraph(0, 0, this->menu_item[this->Ncmd].back.handle(), TRUE);
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		DrawGraphAnchor(0, pals(250, WINDOW_SIZE_Y / 2, 0, 0, time), this->menu_item[this->Bcmd].ground.handle(), DXDRAW_ANCHOR_BOTTOM_CENTRE);
-		DrawGraphAnchor(0, pals(250, 0, 0, WINDOW_SIZE_Y / 2, time), this->menu_item[this->Ncmd].ground.handle(), DXDRAW_ANCHOR_BOTTOM_CENTRE);
-		return;
-	}
-
-	void DrawCard(void) const {
-		int time = GetNowCount() - this->stime;
-		int num = this->Ncmd;
-		time = betweens(0, time, 250);
-		num -= 2;
-		while (num < 0) {
-			num += MENU_NUM;
-		}
-		for (int i = 0; i < 5; i++) {
-			int drawX = pals(250, 420 * i - 680, 0, 420 * i + 420 * this->LR - 680, time);
-			int drawY = pals(250, 100, -250, 0, -time * this->LR + 250 * i + 250 * this->LR - 250);
-			RecRescaleDrawGraph(drawX, drawY, this->menu_item[num].card.handle(), TRUE);
-			num = (num + 1) % MENU_NUM;
-		}
-		return;
-	}
-
-public:
-	void SetLeft(void) {
-		this->Bcmd = this->Ncmd;
-		this->Ncmd = (this->Ncmd + MENU_NUM - 1) % MENU_NUM;
-		this->LR = -1;
-		this->stime = GetNowCount();
-		PlaySoundMem(this->select, DX_PLAYTYPE_BACK);
-		return;
-	}
-	
-	void SetRight(void) {
-		this->Bcmd = this->Ncmd;
-		this->Ncmd = (this->Ncmd + 1) % MENU_NUM;
-		this->LR = 1;
-		this->stime = GetNowCount();
-		PlaySoundMem(this->select, DX_PLAYTYPE_BACK);
-		return;
-	}
-
-	now_scene_t GetSerectScene(void) const {
-		return this->menu_item[this->Ncmd].num;
-	}
-
-	void DrawMenu(void) const {
-		this->DrawBack();
-		this->DrawCard();
-		return;
-	}
-
-#undef MENU_NUM
-
+struct rec_menu_item_st {
+	int posUp = 0;
+	int posRight = 0;
+	now_scene_t next = SCENE_EXIT;
 };
 
-now_scene_t menu(void) {
-	rec_manu_dataset_c menu_class;
-	rec_helpbar_c help;
-	rec_cutin_c cutin;
+int RecMenuGetMouseAct(
+	int &cmd, const std::array<rec_menu_item_st, 6> &menuitem,
+	dxcur_snd_c &s_sel, const rec_cutin_c &cutin
+) {
+	if (cutin.IsClosing() != 0) { return -1; }
 
-	cutin.SetIo(CUT_FRAG_OUT);
-	AvoidKeyRush();
+	bool selecting = false;
+	int mouseBtn = 0;
+	int mouseX = 0;
+	int mouseY = 0;
+	int mouseAct = 0;
 
-	while (1) {
-		ClearDrawScreen(); /* 描画エリアここから */
-
-		menu_class.DrawMenu();
-		help.DrawHelp(rec_helpbar_type_ec::MENU);
-		cutin.DrawCut();
-
-		ScreenFlip(); /* 描画エリアここまで */
-
-		/* キー入力 */
-		if (cutin.IsClosing() == 0) {
-			InputAllKeyHold();
-			switch (GetKeyPushOnce()) {
-			case KEY_INPUT_LEFT:
-				menu_class.SetLeft();
-				break;
-			case KEY_INPUT_RIGHT:
-				menu_class.SetRight();
-				break;
-			case KEY_INPUT_RETURN:
-				if (menu_class.GetSerectScene() != SCENE_SERECT) { return menu_class.GetSerectScene(); }
-				cutin.SetCutTipFg(CUTIN_TIPS_ON);
-				cutin.SetTipNo();
-				cutin.SetIo(CUT_FRAG_IN);
-				break;
-			default:
-				break;
+	GetMousePoint(&mouseX, &mouseY);
+	for (int i = 0; i < menuitem.size(); i++) {
+		if (IS_BETWEEN(MENU_DRAW_LEFT, mouseX, menuitem[i].posRight) &&
+			IS_BETWEEN(menuitem[i].posUp, mouseY, menuitem[i].posUp + MENU_DRAW_HEIGHT))
+		{
+			if (i != cmd) {
+				cmd = i;
+				s_sel.PlaySound();
 			}
+			selecting = true;
+			break;
 		}
-
-		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-		if (cutin.IsEndAnim()) { return menu_class.GetSerectScene(); }
-
-		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
+
+	while (GetMouseInputLog2(&mouseBtn, &mouseX, &mouseY, &mouseAct, true) == 0) {}
+	if (selecting && mouseAct == MOUSE_INPUT_LEFT) {
+		return KEY_INPUT_RETURN;
+	}
+	return -1;
 }
 
-#endif
+int RecMenuGetKeyAct(dxcur_key_c &key, const rec_cutin_c &cutin) {
+	if (cutin.IsClosing() != 0) { return -1; }
+	key.update();
+	return key.GetKeyPulseOnce();
+}
 
-now_scene_t menu(void) {
+int RecMenuGetAllAct(
+	int &cmd, const std::array<rec_menu_item_st, 6> &menuitem,
+	dxcur_key_c &key, dxcur_snd_c &s_sel, const rec_cutin_c &cutin
+) {
+	int act = -1;
+	act = RecMenuGetMouseAct(cmd, menuitem, s_sel, cutin);
+	if (act == -1) { act = RecMenuGetKeyAct(key, cutin); }
+	return act;
+}
+
+now_scene_t RecMenuBase(void) {
 	int cmd = 0;
 	now_scene_t next = SCENE_EXIT;
 	dxcur_key_c key;
 	rec_helpbar_c help;
 	rec_cutin_c cutin;
 
-	int menuposy[6] = {
-		230, 292, 410, 475, 538, 598
+	std::array<rec_menu_item_st, 6> menuitem = {
+		rec_menu_item_st{230, 290, SCENE_SERECT},
+		rec_menu_item_st{292, 450, SCENE_MENU},
+		rec_menu_item_st{410, 350, SCENE_COLLECTION},
+		rec_menu_item_st{475, 195, SCENE_COLLECTION},
+		rec_menu_item_st{538, 230, SCENE_OPTION},
+		rec_menu_item_st{598, 175, SCENE_EXIT}
 	};
-	int menuposright[6] = {
-		290, 450, 350, 195, 230, 175
-	};
+
+	int draw_win_posU = menuitem[0].posUp;
+	int draw_win_posR = menuitem[0].posRight;
 
 	dxcur_pic_c backpic(_T("picture/menu/タイトル原案.png"));
 	dxcur_window_pic_c curpic(_T("picture/cursorwindow.png"));
@@ -210,25 +90,32 @@ now_scene_t menu(void) {
 			next = SCENE_EXIT;
 			break;
 		}
-		if (cutin.IsClosing() == 0) {
-			key.update();
-			switch (key.GetKeyPulseOnce()) {
-			case KEY_INPUT_RETURN:
-				break;
-			case KEY_INPUT_UP:
-				cmd = LOOP_SUB(cmd, 6);
-				s_sel.PlaySound();
-				break;
-			case KEY_INPUT_DOWN:
-				cmd = LOOP_ADD(cmd, 6);
-				s_sel.PlaySound();
-				break;
-			}
+		if (cutin.IsEndAnim()) { break; }
+
+		switch (RecMenuGetAllAct(cmd, menuitem, key, s_sel, cutin)) {
+		case KEY_INPUT_RETURN:
+			next = menuitem[cmd].next;
+			cutin.SetTipNo();
+			cutin.SetCutTipFg(CUTIN_TIPS_ON);
+			cutin.SetIo(CUT_FRAG_IN);
+			break;
+		case KEY_INPUT_UP:
+			cmd = LOOP_SUB(cmd, 6);
+			s_sel.PlaySound();
+			break;
+		case KEY_INPUT_DOWN:
+			cmd = LOOP_ADD(cmd, 6);
+			s_sel.PlaySound();
+			break;
 		}
+
+		draw_win_posU = (draw_win_posU + menuitem[cmd].posUp) / 2;
+		draw_win_posR = (draw_win_posR + menuitem[cmd].posRight) / 2;
 
 		ClearDrawScreen(); /* 描画エリアここから */
 		DrawGraph(0, 0, backpic.handle(), TRUE);
-		curpic.draw(50, menuposy[cmd], menuposright[cmd], menuposy[cmd] + 60);
+		curpic.draw(MENU_DRAW_LEFT, draw_win_posU,
+			draw_win_posR, draw_win_posU + MENU_DRAW_HEIGHT);
 		help.DrawHelp(rec_helpbar_type_ec::MENU);
 		cutin.DrawCut();
 		ScreenFlip(); /* 描画エリアここまで */

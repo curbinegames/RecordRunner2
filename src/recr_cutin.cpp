@@ -321,7 +321,7 @@ void rec_cutin_c::SetTipNo() {
 	return;
 }
 
-void rec_cutin_c::DrawCut() {
+void rec_cutin_c::DrawCut() const {
 	if (s_cutIoFg == CUT_FRAG_OUT) { ViewCutOut(s_cutStime); }
 	if (s_cutIoFg == CUT_FRAG_IN) { ViewCutIn(s_cutStime); }
 	return;
@@ -339,10 +339,10 @@ void rec_cutin_c::SetIo(cutin_io_t val) {
 	return;
 }
 
-int rec_cutin_c::IsClosing() {
+int rec_cutin_c::IsClosing() const {
 	return s_cutIoFg;
 }
 
-int rec_cutin_c::IsEndAnim() {
+int rec_cutin_c::IsEndAnim() const {
 	return (s_cutIoFg == 1 && s_cutStime + 2000 <= GetNowCount());
 }

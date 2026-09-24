@@ -2,4 +2,4 @@
 
 #include <RecSystem.h>
 
-extern now_scene_t menu(void);
+extern now_scene_t RecMenuBase(void);

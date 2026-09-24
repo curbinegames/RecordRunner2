@@ -39,7 +39,7 @@ static void GameMain() {
 		case SCENE_MENU:
 			rec_bgm_system_g.SetMem(_T("song/LetÅfs_be_happy.mp3"));
 			rec_bgm_system_g.Play(false, true, true);
-			next = menu();
+			next = RecMenuBase();
 			break;
 		case SCENE_SERECT:
 			rec_bgm_system_g.Delete();

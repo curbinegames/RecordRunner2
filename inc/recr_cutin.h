@@ -21,8 +21,8 @@ public:
 	void SetCutSong(const tstring &songName, const tstring &picName);
 	void SetCutTipFg(cutin_tips_e Fg);
 	void SetTipNo();
-	void DrawCut();
+	void DrawCut() const;
 	void SetIo(cutin_io_t val);
-	int IsClosing();
-	int IsEndAnim();
+	int IsClosing() const;
+	int IsEndAnim() const;
 };
