@@ -9,6 +9,7 @@
 struct rec_menu_item_st {
 	int posUp = 0;
 	int posRight = 0;
+	bool cutin = false;
 	now_scene_t next = SCENE_EXIT;
 };
 
@@ -90,6 +91,7 @@ int RecMenuGetAllAct(
 }
 
 now_scene_t RecMenuBase(void) {
+	bool exit_flag = false;
 	int cmd = 0;
 	now_scene_t next = SCENE_EXIT;
 	dxcur_key_c key;
@@ -97,12 +99,12 @@ now_scene_t RecMenuBase(void) {
 	rec_cutin_c cutin;
 
 	std::array<rec_menu_item_st, 6> menuitem = {
-		rec_menu_item_st{230, 290, SCENE_SERECT},
-		rec_menu_item_st{292, 450, SCENE_MENU},
-		rec_menu_item_st{410, 350, SCENE_COLLECTION},
-		rec_menu_item_st{475, 195, SCENE_COLLECTION},
-		rec_menu_item_st{538, 230, SCENE_OPTION},
-		rec_menu_item_st{598, 175, SCENE_EXIT}
+		rec_menu_item_st{230, 290,  true, SCENE_SERECT},
+		rec_menu_item_st{292, 450, false, SCENE_MENU},
+		rec_menu_item_st{410, 350, false, SCENE_COLLECTION},
+		rec_menu_item_st{475, 195, false, SCENE_COLLECTION},
+		rec_menu_item_st{538, 230, false, SCENE_OPTION},
+		rec_menu_item_st{598, 175, false, SCENE_EXIT}
 	};
 
 	int draw_win_posU = menuitem[0].posUp;
@@ -126,13 +128,19 @@ now_scene_t RecMenuBase(void) {
 			break;
 		}
 		if (cutin.IsEndAnim()) { break; }
+		if (exit_flag) { break; }
 
 		switch (RecMenuGetAllAct(cmd, menuitem, key, s_sel, cutin)) {
 		case KEY_INPUT_RETURN:
 			next = menuitem[cmd].next;
-			cutin.SetTipNo();
-			cutin.SetCutTipFg(CUTIN_TIPS_ON);
-			cutin.SetIo(CUT_FRAG_IN);
+			if (menuitem[cmd].cutin) {
+				cutin.SetTipNo();
+				cutin.SetCutTipFg(CUTIN_TIPS_ON);
+				cutin.SetIo(CUT_FRAG_IN);
+			}
+			else {
+				exit_flag = true;
+			}
 			break;
 		case KEY_INPUT_UP:
 			cmd = LOOP_SUB(cmd, 6);
