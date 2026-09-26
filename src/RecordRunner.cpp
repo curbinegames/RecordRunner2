@@ -37,7 +37,7 @@ static void GameMain() {
 			next = title();
 			break;
 		case SCENE_MENU:
-			rec_bgm_system_g.SetMem(_T("song/LetÅfs_be_happy.mp3"));
+			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = RecMenuBase();
 			break;
@@ -46,12 +46,12 @@ static void GameMain() {
 			next = musicserect(&ps);
 			break;
 		case SCENE_COLLECTION:
-			rec_bgm_system_g.SetMem(_T("song/LetÅfs_be_happy.mp3"));
+			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = collection();
 			break;
 		case SCENE_OPTION:
-			rec_bgm_system_g.SetMem(_T("song/LetÅfs_be_happy.mp3"));
+			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = option();
 			break;
