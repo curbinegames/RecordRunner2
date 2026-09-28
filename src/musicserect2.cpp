@@ -94,12 +94,12 @@ typedef struct music_box_2 {
 	rec_dif_t LvType = REC_DIF_EASY;
 	rec_score_rate_t ScoreRate = REC_SCORE_RATE_NO_PLAY;
 	rec_clear_rank_t ClearRank = REC_CLEAR_RANK_NO_PLAY;
-	rec_system_langstr_c SongName;
+	rec_system_langstr_c musicName;
 	rec_system_langstr_c artist;
-	tstring difP         = _T("");
-	tstring packName     = _T("");
-	tstring SongFileName = _T("");
-	tstring jacketP      = _T("");
+	tstring difP          = _T("");
+	tstring packName      = _T("");
+	tstring musicFilePath = _T("");
+	tstring jacketPath    = _T("");
 	rec_ddif_pal_t mpal;
 } MUSIC_BOX_2;
 
@@ -126,31 +126,31 @@ private: /* 初期化系 */
 		if (fd == DXLIB_FILE_NULL) { return REC_ERROR_FILE_EXIST; }
 
 		//初期値定義
-		songdata.LvType       = dif;
-		songdata.level        = -1;
-		songdata.preview[0]   = REC_SELECT_DEFAULT_SAMPLE_RATE * 10;
-		songdata.preview[1]   = REC_SELECT_DEFAULT_SAMPLE_RATE * 60;
-		songdata.packNo       = packNum;
-		songdata.musicNo      = musicNo;
-		songdata.packName     = packName;
-		songdata.SongFileName = _T("NULL");
-		songdata.jacketP      = _T("picture/NULL jucket.png");
+		songdata.LvType        = dif;
+		songdata.level         = -1;
+		songdata.preview[0]    = REC_SELECT_DEFAULT_SAMPLE_RATE * 10;
+		songdata.preview[1]    = REC_SELECT_DEFAULT_SAMPLE_RATE * 60;
+		songdata.packNo        = packNum;
+		songdata.musicNo       = musicNo;
+		songdata.packName      = packName;
+		songdata.musicFilePath = _T("NULL");
+		songdata.jacketPath    = _T("picture/NULL jucket.png");
 
 		while (FileRead_eof(fd) == 0) {
 			FileRead_gets(buf, 256, fd);
 			//曲名を読み込む
 			if (strands_direct(buf, L"#TITLE:")) {
 				strmods(buf, 7);
-				songdata.SongName.set_str_jp(buf);
-				if (songdata.SongName.get_str() == _T("")) {
-					songdata.SongName.set_str_en(buf);
+				songdata.musicName.set_str_jp(buf);
+				if (songdata.musicName.get_str() == _T("")) {
+					songdata.musicName.set_str_en(buf);
 				}
 			}
 			else if (strands_direct(buf, L"#E.TITLE:")) {
 				strmods(buf, 9);
-				songdata.SongName.set_str_en(buf);
-				if (songdata.SongName.get_str() == _T("")) {
-					songdata.SongName.set_str_jp(buf);
+				songdata.musicName.set_str_en(buf);
+				if (songdata.musicName.get_str() == _T("")) {
+					songdata.musicName.set_str_jp(buf);
 				}
 			}
 			//作曲者を読み込む
@@ -171,8 +171,8 @@ private: /* 初期化系 */
 			//曲ファイル名を読み込む
 			else if (strands_direct(buf, L"#MUSIC:")) {
 				strmods(buf, 7);
-				songdata.SongFileName  = subpath;
-				songdata.SongFileName += buf;
+				songdata.musicFilePath  = subpath;
+				songdata.musicFilePath += buf;
 			}
 			//難易度を読み込む
 			else if (strands_direct(buf, L"#LEVEL:")) {
@@ -191,8 +191,8 @@ private: /* 初期化系 */
 			//ジャケット写真を読み込む
 			else if (strands_direct(buf, L"#JACKET:")) {
 				strmods(buf, 8);
-				songdata.jacketP  = subpath;
-				songdata.jacketP += buf;
+				songdata.jacketPath  = subpath;
+				songdata.jacketPath += buf;
 			}
 			//差し替えAnotherバーを読み込む
 			else if (strands_direct(buf, L"#DIFBAR:")) {
@@ -555,7 +555,7 @@ static bool RecSerectTrySecret(int Hscore) {
 
 static bool RecSelectFindSecret(MUSIC_BOX_2 *dest, const songdata_set_t &songdata, tstring musicName, int cmd) {
 	for (size_t i = cmd; i < songdata.detail.size(); i++) {
-		if (songdata[cmd].SongName.get_str() != musicName) { return false; }
+		if (songdata[cmd].musicName.get_str() != musicName) { return false; }
 		if (songdata[cmd].LvType == REC_DIF_SECRET) {
 			*dest = songdata[cmd];
 			return true;
@@ -571,8 +571,8 @@ static bool RecSerectTrySecret2(const songdata_set_t &songdata, int AutoFlag, in
 	if (target.Hscore < 90000) { return false; }
 	if (target.toSecret == false) { return false; }
 	MUSIC_BOX_2 secret;
-	if (RecSelectFindSecret(&secret, songdata, target.SongName.get_str(), cmd) == false) { return false; }
-	if (secret.SongFileName == _T("NULL")) { return false; }
+	if (RecSelectFindSecret(&secret, songdata, target.musicName.get_str(), cmd) == false) { return false; }
+	if (secret.musicFilePath == _T("NULL")) { return false; }
 	if (secret.Hscore > 0) { return false; }
 	return RecSerectTrySecret(target.Hscore);
 }
@@ -602,10 +602,10 @@ static void SortSong(songdata_set_t &songdata, int dif) {
 static void SortSongWithSave(songdata_set_t &songdata, int dif, int &cmd) {
 	tstring save;
 
-	save = songdata[betweens(0, cmd, songdata.sort.size() - 1)].SongName.get_str();
+	save = songdata[betweens(0, cmd, songdata.sort.size() - 1)].musicName.get_str();
 	SortSong(songdata, dif);
 	for (int i = 0; i < songdata.sort.size(); i++) {
-		if (save == songdata[i].SongName.get_str()) {
+		if (save == songdata[i].musicName.get_str()) {
 			cmd = i;
 			break;
 		}
@@ -743,13 +743,13 @@ public:
 	}
 
 	int UpdateSnd(const MUSIC_BOX_2 &songdata, int dif) {
-		if ((strands_direct(songdata.SongFileName.c_str(), L"NULL") != 0) ||
-			(strands(this->playingsong.c_str(), songdata.SongFileName.c_str()) != 0))
+		if ((strands_direct(songdata.musicFilePath.c_str(), L"NULL") != 0) ||
+			(strands(this->playingsong.c_str(), songdata.musicFilePath.c_str()) != 0))
 		{
 			return 0;
 		}
 		rec_bgm_system_g.Delete();
-		this->playingsong = songdata.SongFileName;
+		this->playingsong = songdata.musicFilePath;
 		rec_bgm_system_g.SetMem(this->playingsong);
 		this->SongPrePat = 0;
 		this->preTime[0] = songdata.preview[0];
@@ -845,7 +845,7 @@ private:
 
 	void DrawMainOne(int dif, int BasePosX, int BasePosY, const MUSIC_BOX_2 &songdata) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[1].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName.get_str().c_str(), COLOR_BLACK, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.musicName.get_str().c_str(), COLOR_BLACK, SmallFontData);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist.get_str().c_str(), COLOR_BLACK, SmallFontData);
 		this->DrawClear(BasePosX + 156, BasePosY - 132, songdata.ClearRank - 1);
 		this->DrawRack(BasePosX + 156, BasePosY - 132, songdata.ScoreRate);
@@ -857,7 +857,7 @@ private:
 
 	void DrawSubOne(int dif, int BasePosX, int BasePosY, const MUSIC_BOX_2 &songdata) const {
 		DrawGraph(BasePosX - 120, BasePosY - 170, this->bar[0].handle(), TRUE);
-		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.SongName.get_str().c_str(), COLOR_WHITE, SmallFontData);
+		DrawStringToHandle(BasePosX - 30, BasePosY - 157, songdata.musicName.get_str().c_str(), COLOR_WHITE, SmallFontData);
 		DrawStringToHandle(BasePosX - 30, BasePosY - 129, songdata.artist.get_str().c_str(), COLOR_WHITE, SmallFontData);
 		this->DrawClear(BasePosX + 152, BasePosY - 163, songdata.ClearRank - 1);
 		this->DrawRack(BasePosX + 152, BasePosY - 163, songdata.ScoreRate);
@@ -1232,7 +1232,7 @@ public:
 	~rec_serect_ui_c() {}
 
 	void InitUi(const MUSIC_BOX_2 &songdata, int dif) {
-		this->jacket.UpdateJacket(songdata.jacketP);
+		this->jacket.UpdateJacket(songdata.jacketPath);
 		this->detail.FetchDifPic(songdata.difP);
 		this->previewSnd.UpdateSnd(songdata, dif);
 		this->previewSnd.StartSnd();
@@ -1248,13 +1248,13 @@ public:
 		this->detail.FetchDifPic(songdata.difP);
 		this->musicbar.SlideBar(vect);
 		this->disk.SlideDisk(vect);
-		this->Update4th(songdata.jacketP);
+		this->Update4th(songdata.jacketPath);
 	}
 
 	void UpdateLR(songdata_set_t &songdata, int *cmd, int dif, int vect) {
 		this->detail.SlideDif(vect);
 		SortSongWithSave(songdata, dif, *cmd);
-		this->Update4th(songdata[*cmd].jacketP);
+		this->Update4th(songdata[*cmd].jacketPath);
 	}
 
 	void DrawUi(const rec_select_command_st &cmd, songdata_set_t &songdata) {
@@ -1339,8 +1339,8 @@ static void RecSerectKeyActAll(now_scene_t &next, rec_to_play_set_t &toPlay,
 		RecSerectSetToPlay(toPlay, cmd, songdata);
 		next = SCENE_MUSIC;
 		uiClass.cutin.SetCutTipFg(CUTIN_TIPS_SONG);
-		uiClass.cutin.SetCutSong(songdata[cmd.music].SongName.get_str(),
-			songdata[cmd.music].jacketP);
+		uiClass.cutin.SetCutSong(songdata[cmd.music].musicName.get_str(),
+			songdata[cmd.music].jacketPath);
 		uiClass.cutin.SetIo(CUT_FRAG_IN);
 		break;
 	case REC_SELECT_KEY_BACK:
