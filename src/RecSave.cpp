@@ -261,7 +261,7 @@ int RecSaveUpdateUserPlay(const rec_play_userpal_t *userpal) {
 
 	data.playCount++;
 
-	switch (JudgeClearRank(userpal)) {
+	switch (JudgeClearRank(*userpal)) {
 	case REC_CLEAR_RANK_DROPED:
 		data.dropCount++;
 		break;

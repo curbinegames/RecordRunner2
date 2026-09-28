@@ -2339,5 +2339,5 @@ now_scene_t play3(const rec_to_play_set_t &ps) {
 	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath.c_str(), mapPath.c_str(), HighScore, ps.autoFg);
 
 	if (ret != SCENE_RESULT) { return ret; }
-	else { return result(&map_detail, &userpal, &nameset, (rec_dif_t)ps.dif, fileName.c_str()); }
+	else { return result(map_detail, userpal, nameset, (rec_dif_t)ps.dif, fileName.c_str()); }
 }

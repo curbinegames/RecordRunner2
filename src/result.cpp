@@ -323,7 +323,7 @@ typedef struct rec_result_pal_s {
 	rec_result_mat_t mat;
 } rec_result_pal_t;
 
-static now_scene_t ViewResult(const rec_result_pal_t *val) {
+static now_scene_t ViewResult(const rec_result_pal_t &val) {
 	/* typedef */
 	dxcur_pic_c resultimg = dxcur_pic_c(_T("picture/result.png"));
 	/* class */
@@ -340,33 +340,33 @@ static now_scene_t ViewResult(const rec_result_pal_t *val) {
 		RecRescaleDrawGraph(0, 0, resultimg.handle(), TRUE);
 		
 		/* 曲情報 */
-		RecRescaleDrawGraph( 460, 20, val->mat.difBer.handle(), TRUE);
-		RecRescaleDrawString(100, 13, val->songN.c_str(), COLOR_WHITE);
+		RecRescaleDrawGraph( 460, 20, val.mat.difBer.handle(), TRUE);
+		RecRescaleDrawString(100, 13, val.songN.c_str(), COLOR_WHITE);
 
 		/* 判定周り */
-		num_font.RescaleDrawNum(val->judge.just, 140,  52, 30, CUR_FONT_COLOR_BLUE);
-		num_font.RescaleDrawNum(val->judge.good, 140,  93, 30, CUR_FONT_COLOR_YELLOW);
-		num_font.RescaleDrawNum(val->judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN);
-		num_font.RescaleDrawNum(val->judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED);
-		num_font.RescaleDrawNum(val->Mcombo,     155, 215, 30, CUR_FONT_COLOR_BLUE);
-		num_font.RescaleDrawNum(val->noteCount,  265, 215, 30, CUR_FONT_COLOR_PURPLE);
+		num_font.RescaleDrawNum(val.judge.just, 140,  52, 30, CUR_FONT_COLOR_BLUE);
+		num_font.RescaleDrawNum(val.judge.good, 140,  93, 30, CUR_FONT_COLOR_YELLOW);
+		num_font.RescaleDrawNum(val.judge.safe, 140, 134, 30, CUR_FONT_COLOR_GREEN);
+		num_font.RescaleDrawNum(val.judge.miss, 140, 175, 30, CUR_FONT_COLOR_RED);
+		num_font.RescaleDrawNum(val.Mcombo,     155, 215, 30, CUR_FONT_COLOR_BLUE);
+		num_font.RescaleDrawNum(val.noteCount,  265, 215, 30, CUR_FONT_COLOR_PURPLE);
 
 		/* レート周り */
-		RecRescaleDrawFormatString(10, 320, COLOR_WHITE, L"%d.%02d", val->newRate / 100, val->newRate % 100);
-		if (0 < val->subRate) { RecRescaleDrawFormatString(10, 340, COLOR_WHITE, L"+%d.%02d", val->subRate / 100, val->subRate % 100); }
+		RecRescaleDrawFormatString(10, 320, COLOR_WHITE, L"%d.%02d", val.newRate / 100, val.newRate % 100);
+		if (0 < val.subRate) { RecRescaleDrawFormatString(10, 340, COLOR_WHITE, L"+%d.%02d", val.subRate / 100, val.subRate % 100); }
 		else { RecRescaleDrawString(10, 340, L"not rise", COLOR_WHITE); }
 
 		/* スコア周り */
-		num_font.RescaleDrawNum(  val->score, 310,  75, 55, val->mat.fontNo);
-		num_font.RescaleDrawFloat(val->acc,   430, 150, 30, val->mat.fontNo, 2);
-		num_font.RescaleDrawFloat(val->gap,   510, 205, 20, CUR_FONT_COLOR_MONO, 2);
-		num_font.RescaleDrawFloat(val->width, 500, 230, 20, CUR_FONT_COLOR_MONO, 2);
+		num_font.RescaleDrawNum(  val.score, 310,  75, 55, val.mat.fontNo);
+		num_font.RescaleDrawFloat(val.acc,   430, 150, 30, val.mat.fontNo, 2);
+		num_font.RescaleDrawFloat(val.gap,   510, 205, 20, CUR_FONT_COLOR_MONO, 2);
+		num_font.RescaleDrawFloat(val.width, 500, 230, 20, CUR_FONT_COLOR_MONO, 2);
 
 		/* ランク周り */
-		RecRescaleDrawGraph(140, 260, val->mat.rank.handle(),      TRUE);
-		RecRescaleDrawGraph(5,   420, val->mat.clearRate.handle(), TRUE);
-		RecRescaleDrawGraph(336, 252, val->mat.chara.handle(),     TRUE);
-		num_font.RescaleDrawFloat(val->floatRank, 280, 390, 30, val->mat.floatfontNo, 3, FALSE);
+		RecRescaleDrawGraph(140, 260, val.mat.rank.handle(),      TRUE);
+		RecRescaleDrawGraph(5,   420, val.mat.clearRate.handle(), TRUE);
+		RecRescaleDrawGraph(336, 252, val.mat.chara.handle(),     TRUE);
+		num_font.RescaleDrawFloat(val.floatRank, 280, 390, 30, val.mat.floatfontNo, 3, FALSE);
 
 		cutin.DrawCut();
 
@@ -414,46 +414,45 @@ static rec_score_rate_t CalScoreRank(int score) {
  * safe以下ボーナス = min(1 - [safe以下率(0to1)] * 10  0)
  * miss数ボーナス   = min((50 - [miss数]) / 50, 0)
  */
-static int CalPlayRate(const rec_play_judge_t *judge, const rec_map_detail_t *map_detail) {
-	const double DifRate = CAL_DIF_RATE(map_detail->mpal.mdif, map_detail->Lv) / 100.0;
+static int CalPlayRate(const rec_play_judge_t &judge, const rec_map_detail_t &map_detail) {
+	const double DifRate = CAL_DIF_RATE(map_detail.mpal.mdif, map_detail.Lv) / 100.0;
 
 	double rate = 0;
 	// level0なら0固定
 	if (DifRate == 0) { rate = 0; }
 	// "譜面定数" - "miss数" x "譜面定数" x 0.03 (下限=0)
-	else if (judge->miss > 0) {
-		rate = DifRate - judge->miss * DifRate * 0.03;
+	else if (judge.miss > 0) {
+		rate = DifRate - judge.miss * DifRate * 0.03;
 		rate = maxs_2(rate, 0);
 	}
 	// NO MISS,"譜面定数" + 1 - "safe数" x 0.05 (下限="譜面定数")
-	else if (judge->miss == 0 && judge->safe > 0) {
-		rate = DifRate + 1 - judge->safe * 0.05;
+	else if (judge.miss == 0 && judge.safe > 0) {
+		rate = DifRate + 1 - judge.safe * 0.05;
 		rate = maxs_2(rate, DifRate);
 	}
 	// FULL COMBO,"譜面定数" + 2 - "good数" x 0.01 (下限="譜面定数" + 1)
-	else if (judge->miss == 0 && judge->safe == 0 && judge->good > 0) {
-		rate = DifRate + 2 - judge->good * 0.01;
+	else if (judge.miss == 0 && judge.safe == 0 && judge.good > 0) {
+		rate = DifRate + 2 - judge.good * 0.01;
 		rate = maxs_2(rate, DifRate + 1);
 	}
 	// PERFECT, "譜面定数" + 2
-	else if (judge->miss == 0 && judge->safe == 0 && judge->good == 0) {
+	else if (judge.miss == 0 && judge.safe == 0 && judge.good == 0) {
 		rate = DifRate + 2;
 	}
 	return (int)(rate * 100);
 }
 
-rec_clear_rank_t JudgeClearRank(const rec_play_userpal_t *userpal) {
-	const rec_play_judge_t *judge = &userpal->judgeCount;
+rec_clear_rank_t JudgeClearRank(const rec_play_userpal_t &userpal) {
 	/* TODO: LOSTED, LIGHTCLEAR, MISSLESS, FULLPERFECTを作る  */
-	/* if (userpal->status == REC_PLAY_STATUS_LOSTED) { return REC_CLEAR_RANK_LOSTED; } */
-	if (userpal->status == REC_PLAY_STATUS_DROPED) { return REC_CLEAR_RANK_DROPED; }
-	/* if (userpal->Exlife < 0) { return REC_CLEAR_RANK_CLEARED; } */
-	/* if (5 < userpal->judgeCount.miss) { return REC_CLEAR_RANK_LIGHTCLEAR; } */
-	/* if (0 < userpal->judgeCount.miss) { return REC_CLEAR_RANK_MISSLESS; } */
-	if (0 < userpal->judgeCount.miss) { return REC_CLEAR_RANK_CLEARED; }
-	if (0 < userpal->judgeCount.safe) { return REC_CLEAR_RANK_NOMISS; }
-	if (0 < userpal->judgeCount.good) { return REC_CLEAR_RANK_FULLCOMBO; }
-	/* if (userpal->score.sum < 100100) { return REC_CLEAR_RANK_PERFECT; } */
+	/* if (userpal.status == REC_PLAY_STATUS_LOSTED) { return REC_CLEAR_RANK_LOSTED; } */
+	if (userpal.status == REC_PLAY_STATUS_DROPED) { return REC_CLEAR_RANK_DROPED; }
+	/* if (userpal.Exlife < 0) { return REC_CLEAR_RANK_CLEARED; } */
+	/* if (5 < userpal.judgeCount.miss) { return REC_CLEAR_RANK_LIGHTCLEAR; } */
+	/* if (0 < userpal.judgeCount.miss) { return REC_CLEAR_RANK_MISSLESS; } */
+	if (0 < userpal.judgeCount.miss) { return REC_CLEAR_RANK_CLEARED; }
+	if (0 < userpal.judgeCount.safe) { return REC_CLEAR_RANK_NOMISS; }
+	if (0 < userpal.judgeCount.good) { return REC_CLEAR_RANK_FULLCOMBO; }
+	/* if (userpal.score.sum < 100100) { return REC_CLEAR_RANK_PERFECT; } */
 	/* return REC_CLEAR_RANK_FULLPERFECT; */
 	return REC_CLEAR_RANK_PERFECT;
 }
@@ -539,55 +538,55 @@ static void RecResultSetBgm(rec_play_status_t status) {
 /**
  * リザルト表示に必要な情報を取得します。
  */
-static void RecResultCalParameter(rec_result_pal_t *result_pal, const rec_play_userpal_t *userpal,
-	const rec_play_nameset_t *nameset, rec_dif_t dif, short noteCount)
+static void RecResultCalParameter(rec_result_pal_t &result_pal, const rec_play_userpal_t &userpal,
+	const rec_play_nameset_t &nameset, rec_dif_t dif, short noteCount)
 {
 	const rec_clear_rank_t Clear = JudgeClearRank(userpal);
-	const rec_score_rate_t rank  = CalScoreRank(userpal->score.sum);
+	const rec_score_rate_t rank  = CalScoreRank(userpal.score.sum);
 
-	result_pal->acc             = CAL_ACC(userpal->judgeCount, noteCount);
-	result_pal->gap             = userpal->gap.GetAverage();
-	result_pal->width           = userpal->gap.GetDeviation();
-	result_pal->score           = userpal->score.sum;
-	result_pal->judge           = userpal->judgeCount;
-	result_pal->Mcombo          = userpal->Mcombo;
-	result_pal->noteCount       = noteCount;
-	result_pal->floatRank       = GetFloatRank(userpal->score.sum, userpal->judgeCount.miss, noteCount, rank) / 1000;
-	result_pal->newRate         = RecSaveGetFullRunnerRate() * 100;
-	result_pal->subRate         = result_pal->newRate - result_pal->oldRate; /* oldRateはレート保存前に代入している */
+	result_pal.acc             = CAL_ACC(userpal.judgeCount, noteCount);
+	result_pal.gap             = userpal.gap.GetAverage();
+	result_pal.width           = userpal.gap.GetDeviation();
+	result_pal.score           = userpal.score.sum;
+	result_pal.judge           = userpal.judgeCount;
+	result_pal.Mcombo          = userpal.Mcombo;
+	result_pal.noteCount       = noteCount;
+	result_pal.floatRank       = GetFloatRank(userpal.score.sum, userpal.judgeCount.miss, noteCount, rank) / 1000;
+	result_pal.newRate         = RecSaveGetFullRunnerRate() * 100;
+	result_pal.subRate         = result_pal.newRate - result_pal.oldRate; /* oldRateはレート保存前に代入している */
 
-	result_pal->mat.clearRate.set_pic(Clear);
-	result_pal->mat.difBer.set_pic(dif, nameset->DifFN);
-	result_pal->mat.rank.set_pic(rank);
-	// result_pal->mat.chara.set_pic(); TODO クリア状況でイラスト変える。
-	result_pal->mat.fontNo      = RecResultGetCurFontColor(rank);
-	result_pal->mat.floatfontNo = RecResultGetFlortCurFontColor(rank);
+	result_pal.mat.clearRate.set_pic(Clear);
+	result_pal.mat.difBer.set_pic(dif, nameset.DifFN);
+	result_pal.mat.rank.set_pic(rank);
+	// result_pal.mat.chara.set_pic(); TODO クリア状況でイラスト変える。
+	result_pal.mat.fontNo      = RecResultGetCurFontColor(rank);
+	result_pal.mat.floatfontNo = RecResultGetFlortCurFontColor(rank);
 
-	RecResultSetBgm(userpal->status);
+	RecResultSetBgm(userpal.status);
 
-	result_pal->songN = nameset->songN;
+	result_pal.songN = nameset.songN;
 	return;
 }
 
 #endif /* RecResultCalParameter */
 
-static void SaveScore(const rec_play_userpal_t *userpal, const TCHAR *songN, rec_dif_t dif,
+static void SaveScore(const rec_play_userpal_t &userpal, const tstring &songN, rec_dif_t dif,
 	short noteCount)
 {
 	rec_save_score_t buf;
 
 	buf.clearRank = JudgeClearRank(userpal);
-	buf.scoreRate = CalScoreRank(userpal->score.sum);
-	buf.score     = userpal->score.sum;
-	buf.dist      = userpal->Dscore.point;
-	buf.acc       = CAL_ACC(userpal->judgeCount, noteCount);
+	buf.scoreRate = CalScoreRank(userpal.score.sum);
+	buf.score     = userpal.score.sum;
+	buf.dist      = userpal.Dscore.point;
+	buf.acc       = CAL_ACC(userpal.judgeCount, noteCount);
 
 	RecSaveUpdateScoreOneDif(buf, songN, dif);
 	return;
 }
 
-now_scene_t result(const rec_map_detail_t *map_detail, const rec_play_userpal_t *userpal,
-	const rec_play_nameset_t *nameset, rec_dif_t dif, const TCHAR *songN)
+now_scene_t result(const rec_map_detail_t &map_detail, const rec_play_userpal_t &userpal,
+	const rec_play_nameset_t &nameset, rec_dif_t dif, const tstring &songN)
 {
 	rec_result_pal_t result_pal;
 
@@ -595,12 +594,12 @@ now_scene_t result(const rec_map_detail_t *map_detail, const rec_play_userpal_t 
 	result_pal.oldRate = RecSaveGetFullRunnerRate() * 100;
 
 	/* セーブ作業 */
-	RecSaveUpdateUserPlay(userpal);
-	SaveScore(userpal, songN, dif, map_detail->notes);
+	RecSaveUpdateUserPlay(&userpal);
+	SaveScore(userpal, songN, dif, map_detail.notes);
 	RecSaveUpdateCharaPlay((rec_chara_et)optiondata.chara);
-	RecSaveUpdateRunnerRate(songN, (double)CalPlayRate(&userpal->judgeCount, map_detail) / 100.0);
+	RecSaveUpdateRunnerRate(songN, (double)CalPlayRate(userpal.judgeCount, map_detail) / 100.0);
 
 	/* リザルト表示 */
-	RecResultCalParameter(&result_pal, userpal, nameset, dif, map_detail->notes);
-	return ViewResult(&result_pal);
+	RecResultCalParameter(result_pal, userpal, nameset, dif, map_detail.notes);
+	return ViewResult(result_pal);
 }
