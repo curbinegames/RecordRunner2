@@ -3,8 +3,8 @@
 #include <cmath>
 #include <RecSystem.h>
 
-#define MENU_DRAW_LEFT 50
-#define MENU_DRAW_HEIGHT 60
+#define MENU_DRAW_LEFT 45
+#define MENU_DRAW_HEIGHT 65
 
 struct rec_menu_item_st {
 	int posUp = 0;
@@ -150,19 +150,19 @@ now_scene_t RecMenuBase(void) {
 	rec_cutin_c cutin;
 
 	std::array<rec_menu_item_st, 6> menuitem = {
-		rec_menu_item_st{230, 290,  true, SCENE_SERECT},
-		rec_menu_item_st{292, 450, false, SCENE_MENU},
-		rec_menu_item_st{410, 350, false, SCENE_COLLECTION},
-		rec_menu_item_st{475, 195, false, SCENE_COLLECTION},
-		rec_menu_item_st{538, 230, false, SCENE_OPTION},
-		rec_menu_item_st{598, 175, false, SCENE_EXIT}
+		rec_menu_item_st{220, 295,  true, SCENE_SERECT},
+		rec_menu_item_st{285, 450, false, SCENE_MENU},
+		rec_menu_item_st{408, 340, false, SCENE_COLLECTION},
+		rec_menu_item_st{472, 208, false, SCENE_COLLECTION},
+		rec_menu_item_st{536, 222, false, SCENE_OPTION},
+		rec_menu_item_st{598, 170, false, SCENE_EXIT}
 	};
 
 	int draw_win_posU = menuitem[0].posUp;
 	int draw_win_posR = menuitem[0].posRight;
 
 	dxcur_pic_c backpic(_T("picture/menu/freerun_back.png"));
-	dxcur_pic_c debugpic(_T("picture/menu/タイトル原案.png"));
+	dxcur_pic_c basepic(_T("picture/menu/menu_base.png"));
 	rec_menu_pic_item_c charpic(920, 330, _T("picture/menu/freerun_picker.png"));
 	std::vector<rec_menu_pic_item_c> subpic;
 	subpic.push_back(rec_menu_pic_item_c( 650, 250, _T("picture/menu/freerun_hit.png")));
@@ -218,7 +218,7 @@ now_scene_t RecMenuBase(void) {
 		}
 		curpic.draw(MENU_DRAW_LEFT, draw_win_posU,
 			draw_win_posR, draw_win_posU + MENU_DRAW_HEIGHT);
-		DrawGraph(0, 0, debugpic.handle(), TRUE);
+		DrawGraph(0, 0, basepic.handle(), TRUE);
 		help.DrawHelp(rec_helpbar_type_ec::MENU);
 		cutin.DrawCut();
 		ScreenFlip(); /* 描画エリアここまで */
