@@ -12,6 +12,7 @@
 #include <RecScoreFile.h>
 #include <recp_cal_ddif_2.h>
 #include <RecSystem.h>
+#include <RecordLoad2.h>
 
 #define REC_MAPENC_BLANK_CHAR     ( _T('0') )
 #define REC_MAPENC_HITNOTE_CHAR   ( _T('H') )
@@ -1204,6 +1205,127 @@ static void RecMapLoad_SetEndRecfp(rec_score_file_t *recfp, rec_mapenc_data_t *m
 	recfp->allnum.notenum[1]++;
 	recfp->time.end = mapenc->timer[0];
 	return;
+}
+
+rec_error_t RecMapencGetBaseData(rec_mapenc_basedata_st &dest, const tstring &path) {
+	rec_error_t status = REC_ERROR_NONE;
+	tstring folderpath = path;
+	TCHAR GT1[256];
+	DxFile_t fd = DXLIB_FILE_NULL;
+	fd = FileRead_open(path.c_str());
+	if (fd == DXLIB_FILE_NULL) { return REC_ERROR_FILE_EXIST; }
+
+	{
+		auto pos = folderpath.find_last_of('/');
+		if (pos != std::string::npos) {
+			folderpath.erase(pos);
+			folderpath += _T("/");
+		}
+	}
+
+	//テキストデータを読む
+	while (FileRead_eof(fd) == 0) {
+		FileRead_gets(GT1, 256, fd);
+
+		//譜面に入ったら終わり
+		if (strands_direct(GT1, L"#MAP:")) { break; }
+
+		//音楽ファイルを読み込む
+		if (strands_direct(GT1, L"#MUSIC:")) {
+			strmods(GT1, 7);
+			dest.music_path  = folderpath;
+			dest.music_path += GT1;
+		}
+		//曲名を読み込む
+		else if (strands_direct(GT1, L"#TITLE:")) {
+			strmods(GT1, 7);
+			dest.music_name.set_str_jp(GT1);
+			if (dest.music_name.get_str() == _T("")) {
+				dest.music_name.set_str_en(GT1);
+			}
+		}
+		//英語
+		else if (strands_direct(GT1, L"#E.TITLE:")) {
+			strmods(GT1, 7);
+			dest.music_name.set_str_en(GT1);
+			if (dest.music_name.get_str() == _T("")) {
+				dest.music_name.set_str_jp(GT1);
+			}
+		}
+		//作曲者を読み込む
+		else if (strands_direct(GT1, L"#ARTIST:")) {
+			strmods(GT1, 8);
+			dest.artist_name.set_str_jp(GT1);
+			if (dest.artist_name.get_str() == _T("")) {
+				dest.artist_name.set_str_en(GT1);
+			}
+		}
+		//英語
+		else if (strands_direct(GT1, L"#E.ARTIST:")) {
+			strmods(GT1, 10);
+			dest.artist_name.set_str_en(GT1);
+			if (dest.artist_name.get_str() == _T("")) {
+				dest.artist_name.set_str_jp(GT1);
+			}
+		}
+		//レベルを読み込む
+		else if (strands_direct(GT1, L"#LEVEL:")) {
+			strmods(GT1, 7);
+			dest.level = strsans(GT1);
+		}
+		//BPMを読み込む
+		else if (strands_direct(GT1, L"#BPM:")) {
+			strmods(GT1, 5);
+			dest.bpm = strsans2(GT1);
+		}
+		//ノートのオフセットを読み込む
+		else if (strands_direct(GT1, L"#NOTEOFFSET:")) {
+			strmods(GT1, 12);
+			dest.note_offset = strsans(GT1);
+		}
+		//プレビュー時間を読み込む
+		else if (strands_direct(GT1, L"#PREVIEW:")) {
+			strmods(GT1, 9);
+			dest.preview[0] = (int)((double)strsans(GT1) / 1000.0 * REC_DEFAULT_MUSIC_SAMPLE_RATE);
+			strnex(GT1);
+			if (L'0' <= GT1[1] && GT1[1] <= L'9') {
+				dest.preview[1] = (int)((double)strsans(GT1) / 1000.0 * REC_DEFAULT_MUSIC_SAMPLE_RATE);
+			}
+		}
+		//ジャケット写真を読み込む
+		else if (strands_direct(GT1, L"#JACKET:")) {
+			strmods(GT1, 8);
+			dest.jacket_path  = folderpath;
+			dest.jacket_path += GT1;
+		}
+		//空の背景を読み込む
+		else if (strands_direct(GT1, L"#SKY:")) {
+			strmods(GT1, 5);
+			dest.sky_path  = _T("picture/play/");
+			dest.sky_path += GT1;
+		}
+		//地面の画像を読み込む
+		else if (strands_direct(GT1, L"#FIELD:")) {
+			strmods(GT1, 7);
+			dest.field_path  = _T("picture/play/");
+			dest.field_path += GT1;
+		}
+		//水中の画像を読み込む
+		else if (strands_direct(GT1, L"#WATER:")) {
+			strmods(GT1, 7);
+			dest.water_path  = _T("picture/play/");
+			dest.water_path += GT1;
+		}
+		//難易度バー(another)を読み込む
+		else if (strands_direct(GT1, L"#DIFBAR:")) {
+			strmods(GT1, 8);
+			dest.difbar_path  = folderpath;
+			dest.difbar_path += GT1;
+		}
+	}
+
+	FileRead_close(fd);
+	return REC_ERROR_NONE;
 }
 
 static void RecMapLoad_EncodeMap(rec_score_file_t *recfp, const TCHAR *mapPath, const TCHAR *folderPath) {

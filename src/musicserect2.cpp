@@ -114,101 +114,29 @@ private:
 
 private: /* 初期化系 */
 	rec_error_t ReadMusicOneDif(
-		MUSIC_BOX_2 &songdata, const tstring &path, const tstring &subpath,
-		const tstring &packName, int packNum, int musicNo, rec_dif_t dif
-	) {
-		DxFile_t fd;
-		TCHAR buf[256];
-		int lang = optiondata.lang;
-
-		fd = FileRead_open(path.c_str());
-
-		if (fd == DXLIB_FILE_NULL) { return REC_ERROR_FILE_EXIST; }
-
-		//初期値定義
-		songdata.LvType        = dif;
-		songdata.level         = -1;
-		songdata.preview[0]    = REC_SELECT_DEFAULT_SAMPLE_RATE * 10;
-		songdata.preview[1]    = REC_SELECT_DEFAULT_SAMPLE_RATE * 60;
-		songdata.packNo        = packNum;
-		songdata.musicNo       = musicNo;
-		songdata.packName      = packName;
-		songdata.musicFilePath = _T("NULL");
-		songdata.jacketPath    = _T("picture/NULL jucket.png");
-
-		while (FileRead_eof(fd) == 0) {
-			FileRead_gets(buf, 256, fd);
-			//曲名を読み込む
-			if (strands_direct(buf, L"#TITLE:")) {
-				strmods(buf, 7);
-				songdata.musicName.set_str_jp(buf);
-				if (songdata.musicName.get_str() == _T("")) {
-					songdata.musicName.set_str_en(buf);
-				}
-			}
-			else if (strands_direct(buf, L"#E.TITLE:")) {
-				strmods(buf, 9);
-				songdata.musicName.set_str_en(buf);
-				if (songdata.musicName.get_str() == _T("")) {
-					songdata.musicName.set_str_jp(buf);
-				}
-			}
-			//作曲者を読み込む
-			else if (strands_direct(buf, L"#ARTIST:")) {
-				strmods(buf, 8);
-				songdata.artist.set_str_jp(buf);
-				if (songdata.artist.get_str() == _T("")) {
-					songdata.artist.set_str_en(buf);
-				}
-			}
-			else if (strands_direct(buf, L"#E.ARTIST:")) {
-				strmods(buf, 10);
-				songdata.artist.set_str_en(buf);
-				if (songdata.artist.get_str() == _T("")) {
-					songdata.artist.set_str_jp(buf);
-				}
-			}
-			//曲ファイル名を読み込む
-			else if (strands_direct(buf, L"#MUSIC:")) {
-				strmods(buf, 7);
-				songdata.musicFilePath  = subpath;
-				songdata.musicFilePath += buf;
-			}
-			//難易度を読み込む
-			else if (strands_direct(buf, L"#LEVEL:")) {
-				strmods(buf, 7);
-				songdata.level = strsans(buf);
-			}
-			//プレビュー時間を読み込む
-			else if (strands_direct(buf, L"#PREVIEW:")) {
-				strmods(buf, 9);
-				songdata.preview[0] = (int)((double)strsans(buf) / 1000.0 * REC_SELECT_DEFAULT_SAMPLE_RATE);
-				strnex(buf);
-				if (L'0' <= buf[1] && buf[1] <= L'9') {
-					songdata.preview[1] = (int)((double)strsans(buf) / 1000.0 * REC_SELECT_DEFAULT_SAMPLE_RATE);
-				}
-			}
-			//ジャケット写真を読み込む
-			else if (strands_direct(buf, L"#JACKET:")) {
-				strmods(buf, 8);
-				songdata.jacketPath  = subpath;
-				songdata.jacketPath += buf;
-			}
-			//差し替えAnotherバーを読み込む
-			else if (strands_direct(buf, L"#DIFBAR:")) {
-				strmods(buf, 8);
-				songdata.difP  = subpath;
-				songdata.difP += buf;
-			}
-			//マップに入ったら抜ける
-			else if (strands_direct(buf, L"#MAP:")) { break; }
-		}
-		FileRead_close(fd);
-
+		MUSIC_BOX_2 &dest, const tstring &path, const tstring &packName,
+		int packNum, int musicNo, rec_dif_t dif
+	) const {
+		rec_error_t err = REC_ERROR_NONE;
+		rec_mapenc_basedata_st buf;
+		err = RecMapencGetBaseData(buf, path);
+		if (err != REC_ERROR_NONE) { return err; }
+		dest.LvType        = dif;
+		dest.level         = buf.level;
+		dest.preview[0]    = buf.preview[0];
+		dest.preview[1]    = buf.preview[1];
+		dest.packNo        = packNum;
+		dest.musicNo       = musicNo;
+		dest.packName      = packName;
+		dest.musicName     = buf.music_name;
+		dest.artist        = buf.artist_name;
+		dest.musicFilePath = buf.music_path;
+		dest.jacketPath    = buf.jacket_path;
+		dest.difP          = buf.difbar_path;
 		return REC_ERROR_NONE;
 	}
 
-	void ReadHighscore(MUSIC_BOX_2 &songdata, const tstring &songName, rec_dif_t dif) {
+	void ReadHighscore(MUSIC_BOX_2 &songdata, const tstring &songName, rec_dif_t dif) const {
 		rec_save_score_t score;
 		RecSaveReadScoreOneDif(score, songName, dif);
 		songdata.Hscore    = score.score;
@@ -241,7 +169,7 @@ private: /* 初期化系 */
 			txtpath += _T(".txt"); //"record/<パック名>/<曲名>/<難易度番号>.txt"
 			rrsPath += _T(".rrs"); //"record/<パック名>/<曲名>/<難易度番号>.rrs"
 			status = this->ReadMusicOneDif(
-				buf, txtpath, subPath, packName, packNum, musicNo, (rec_dif_t)iDif
+				buf, txtpath, packName, packNum, musicNo, (rec_dif_t)iDif
 			);
 			if (status == REC_ERROR_NONE) {
 				RecScoreReadDdif(buf.mpal, rrsPath);

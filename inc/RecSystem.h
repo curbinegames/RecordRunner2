@@ -17,6 +17,8 @@
 #define WAIT_TIME_AFTER_MUSICPLAY 30 /* 音楽再生直後のウェイト時間 */
 #define WAIT_TIME_ON_GAMELOOP      1 /* ゲーム処理ループ中のウェイト時間 */
 
+#define REC_DEFAULT_MUSIC_SAMPLE_RATE 44100 /* デフォルトの音楽ファイルのサンプルレート */
+
 #define INIT_SND() InitSoundMem()
 
 /* debug */
