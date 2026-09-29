@@ -99,6 +99,12 @@ public:
 		int drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
 		this->DrawFloat(drawX, drawY, size * WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y, num, cr, under, zero);
 	}
+
+	void RescaleDrawUnderFloat(int x, int y, double size, double num, cur_font_cr_t cr, uint under) const {
+		int drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+		int drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+		this->pic[cr].DrawUnderFloat(drawX, drawY, size * WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y, num, under);
+	}
 };
 
 class rec_result_cleartype_pic_c {
@@ -322,7 +328,7 @@ static now_scene_t ViewResult(const rec_result_pal_t &val) {
 		RecRescaleDrawGraph(140, 260, val.mat.rank.handle(),      TRUE);
 		RecRescaleDrawGraph(5,   420, val.mat.clearRate.handle(), TRUE);
 		RecRescaleDrawGraph(336, 252, val.mat.chara.handle(),     TRUE);
-		num_font.RescaleDrawFloat(280, 390, 30 / 64.0, val.floatRank, val.mat.floatfontNo, 3, FALSE);
+		num_font.RescaleDrawUnderFloat(280, 390, 30 / 64.0, val.floatRank, val.mat.floatfontNo, 3);
 
 		cutin.DrawCut();
 
