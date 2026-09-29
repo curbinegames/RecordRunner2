@@ -14,7 +14,13 @@
 #include <RecScoreFile.h>
 #include <RecWindowRescale.h>
 
-/* TODO: クリア状況はclearrank、スコア評価はscorerateに改名しよう */
+#include <cmath>
+#include <sancur.h>
+#include <strcur.h>
+#include <dxcur.h>
+#include <RecSystem.h>
+
+/* TODO: クリア状況はcleartype、スコア評価はscorerateに改名しよう */
 
 #define CAL_ACC(judge, notes)												\
 	DIV_AVOID_ZERO((judge).just * 10000 + (judge).good * 9500 + (judge).safe * 5500, (notes) * 100.0, 0)
@@ -25,7 +31,7 @@
 #define CAL_GAP(all_gap, count) DIV_AVOID_ZERO((all_gap), (count), 0)
 
 #define CAL_GAP_WIDTH(all_gap, count, all_d_gap)							\
-	(sanrute(DIV_AVOID_ZERO((all_d_gap) * (count) - (all_gap) * (all_gap), (count) * (count), 0)))
+	(std::sqrt(DIV_AVOID_ZERO((all_d_gap) * (count) - (all_gap) * (all_gap), (count) * (count), 0)))
 
 typedef enum cur_font_id_e {
 	CUR_FONT_ID_0 = 0,
@@ -480,7 +486,7 @@ double GetFloatRank(int score, int miss, int notes, char rank) {
 			return score / 80;
 		}
 	case REC_SCORE_RATE_F:
-		return pals(0, 1000, 100, 0, 100 * miss / notes);
+		return pals(0, 1000, 100, 0, DIV_AVOID_ZERO(100 * miss, notes, 100));
 	}
 	return 0;
 }
