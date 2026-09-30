@@ -332,12 +332,22 @@ public: /* 絞り込み系 */
 	}
 
 public: /* 番地検索系 */
-	const MUSIC_BOX_2& operator[](int n) const {
+	const MUSIC_BOX_2& operator[](size_t n) const {
 		return this->detail[sort[betweens(0, n, sort.size() - 1)]];
 	}
 
-	const MUSIC_BOX_2& at(int n) const {
-		return this->detail.at(sort[betweens(0, n, sort.size() - 1)]);
+	const MUSIC_BOX_2& at(size_t n) const {
+		return this->detail[sort[betweens(0, n, sort.size() - 1)]];
+	}
+
+	/* 読み込んだ譜面データの数 */
+	size_t sizeAll(void) const {
+		return this->detail.size();
+	}
+
+	/* 絞り込みをした後の譜面データの数 */
+	size_t sizeSort(void) const {
+		return this->sort.size();
 	}
 };
 typedef rec_serect_music_set_c songdata_set_t;
@@ -482,7 +492,7 @@ static bool RecSerectTrySecret(int Hscore) {
 }
 
 static bool RecSelectFindSecret(MUSIC_BOX_2 *dest, const songdata_set_t &songdata, tstring musicName, int cmd) {
-	for (size_t i = cmd; i < songdata.detail.size(); i++) {
+	for (size_t i = cmd; i < songdata.sizeAll(); i++) {
 		if (songdata[cmd].musicName.get_str() != musicName) { return false; }
 		if (songdata[cmd].LvType == REC_DIF_SECRET) {
 			*dest = songdata[cmd];
@@ -530,61 +540,17 @@ static void SortSong(songdata_set_t &songdata, int dif) {
 static void SortSongWithSave(songdata_set_t &songdata, int dif, int &cmd) {
 	tstring save;
 
-	save = songdata[betweens(0, cmd, songdata.sort.size() - 1)].musicName.get_str();
+	save = songdata[betweens(0, cmd, songdata.sizeSort() - 1)].musicName.get_str();
 	SortSong(songdata, dif);
-	for (int i = 0; i < songdata.sort.size(); i++) {
+	for (int i = 0; i < songdata.sizeSort(); i++) {
 		if (save == songdata[i].musicName.get_str()) {
 			cmd = i;
 			break;
 		}
 	}
-	cmd = min(cmd, songdata.sort.size() - 1);
+	cmd = min(cmd, songdata.sizeSort() - 1);
 	return;
 }
-
-#if 0
-/**
- * 今選んでいる難易度に譜面がなかったら、ほかの難易度を探しに行く
- * @param[in] songdata 今選んでいる曲データ
- * @param[in] dif 今選んでいる難易度
- * @param[in] SortMode 今の並び順
- * @return int 見つかった難易度
- */
-static int RecSerectFetchDif(const MUSIC_BOX *songdata, int dif, int SortMode) {
-	int ret = dif;
-
-	if (SortMode != REC_SORT_DEFAULT) { return ret; }
-	if (strands_direct(songdata->SongName[dif], L"NULL") == 0) { return ret; }
-
-	if (strands_direct(songdata->SongName[0], L"NULL") != 1) { ret = 0; }
-	switch (dif) {
-	case REC_DIF_AUTO:
-		if (strands_direct(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
-		else if (strands_direct(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
-		else if (strands_direct(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
-		break;
-	case REC_DIF_EASY:
-		if (strands_direct(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
-		else if (strands_direct(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
-		break;
-	case REC_DIF_NORMAL:
-		if (strands_direct(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
-		else if (strands_direct(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
-		break;
-	case REC_DIF_HARD:
-		if (strands_direct(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
-		else if (strands_direct(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
-		break;
-	default:
-		if (strands_direct(songdata->SongName[3], L"NULL") != 1) { ret = 3; }
-		else if (strands_direct(songdata->SongName[2], L"NULL") != 1) { ret = 2; }
-		else if (strands_direct(songdata->SongName[1], L"NULL") != 1) { ret = 1; }
-		break;
-	}
-
-	return ret;
-}
-#endif
 
 static void RecSerectLoadBefCmd(rec_select_command_st &cmd, rec_select_sorttype_ec &sortMode) {
 	int buf[2] = {0, 1};
@@ -805,7 +771,7 @@ public:
 		int moveC = 0;
 
 		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
-		picsong = (cmd.music + songdata.sort.size() - (VIEW_COUNT / 2)) % songdata.sort.size();
+		picsong = (cmd.music + songdata.sizeSort() - (VIEW_COUNT / 2)) % songdata.sizeSort();
 
 		for (int count = 0; count < VIEW_COUNT; count++) {
 			slide = pals(0, 0, 250, this->UD * 80, moveC);
@@ -835,7 +801,7 @@ public:
 				}
 			}
 
-			picsong = (picsong + 1) % songdata.sort.size();
+			picsong = (picsong + 1) % songdata.sizeSort();
 		}
 	}
 
@@ -1115,9 +1081,14 @@ private:
 
 public:
 	void UpdateJacket(const tstring &jacketName) {
-		if (strands(this->viewingjacket.c_str(), jacketName.c_str()) != 0) { return; }
+		if (!jacketName.empty() && (strands(this->viewingjacket.c_str(), jacketName.c_str()) != 0)) { return; }
 		DeleteGraph(this->jacketpic.handle());
-		this->viewingjacket = jacketName;
+		if (jacketName.empty()) {
+			this->viewingjacket = _T("picture/NULL jucket.png");
+		}
+		else {
+			this->viewingjacket = jacketName;
+		}
 		this->jacketpic.reload(this->viewingjacket);
 	}
 
@@ -1235,11 +1206,11 @@ static void RecSerectKeyActUD(rec_select_command_st &cmd, int vect,
 	switch (vect) {
 	case REC_SELECT_VECT_UP:
 		cmd.music--;
-		if (cmd.music < 0) { cmd.music = songdata.sort.size() - 1; }
+		if (cmd.music < 0) { cmd.music = songdata.sizeSort() - 1; }
 		break;
 	case REC_SELECT_VECT_DOWN:
 		cmd.music++;
-		if (cmd.music >= songdata.sort.size()) { cmd.music = 0; }
+		if (cmd.music >= songdata.sizeSort()) { cmd.music = 0; }
 		break;
 	default:
 		return;
