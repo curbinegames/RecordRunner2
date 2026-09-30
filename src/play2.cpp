@@ -2125,7 +2125,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, LineMoveN);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			rec_bgm_system_g.Stop();
-			return SCENE_SERECT;
+			return SCENE_SELECT;
 		}
 
 		//計算
@@ -2301,7 +2301,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	*ret_userpal = userpal;
 	*ret_nameset = recfp.nameset;
 
-	return AutoFlag == 1 ? SCENE_SERECT : SCENE_RESULT;
+	return AutoFlag == 1 ? SCENE_SELECT : SCENE_RESULT;
 }
 
 /**
@@ -2322,7 +2322,7 @@ now_scene_t play3(const rec_to_play_set_t &ps) {
 	FILE *fp = NULL;
 
 	status = RecGetMusicMapRrsPath(mapPath, ps.packNo, ps.musicNo, (rec_dif_t)ps.dif);
-	if (status != REC_ERROR_NONE) { return SCENE_SERECT; }
+	if (status != REC_ERROR_NONE) { return SCENE_SELECT; }
 
 	/* rrsデータが無い、または作成の指示があれば作る */
 	if (ps.shift == 0) { _wfopen_s(&fp, mapPath.c_str(), L"rb"); } /* TODO: IsExist()関数とかあっていいかも */

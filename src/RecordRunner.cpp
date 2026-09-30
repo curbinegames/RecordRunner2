@@ -37,15 +37,18 @@ static void GameMain() {
 			next = title();
 			break;
 		case SCENE_MENU:
+		case SCENE_CHALLENGE: /* âºèàíu */
 			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = RecMenuBase();
 			break;
-		case SCENE_SERECT:
+		case SCENE_SELECT:
 			rec_bgm_system_g.Delete();
 			next = musicserect(&ps);
 			break;
 		case SCENE_COLLECTION:
+		case SCENE_ACHIVEMENT: /* âºèàíu */
+		case SCENE_STORY: /* âºèàíu */
 			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = collection();

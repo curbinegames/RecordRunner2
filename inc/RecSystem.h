@@ -74,13 +74,16 @@ typedef enum rec_play_rank2_e {
 typedef enum now_scene_e {
 	SCENE_TITLE = 0,
 	SCENE_MENU,
-	SCENE_SERECT,
+	SCENE_SELECT,
 	SCENE_COLLECTION,
 	SCENE_OPTION,
 	SCENE_EXIT = 5,
 	SCENE_MUSIC,
 	SCENE_RESULT,
 	SCENE_RELOAD,
+	SCENE_CHALLENGE,
+	SCENE_ACHIVEMENT,
+	SCENE_STORY,
 } now_scene_t; /* = next */
 
 typedef enum rec_clear_rank_e {

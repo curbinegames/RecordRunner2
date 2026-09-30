@@ -347,7 +347,7 @@ static now_scene_t ViewResult(const rec_result_pal_t &val) {
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 	}
 
-	return SCENE_SERECT;
+	return SCENE_SELECT;
 }
 
 #if 1 /* RecResultCalParameter */
