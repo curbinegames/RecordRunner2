@@ -511,6 +511,145 @@ void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) 
 	return;
 }
 
+static bool RecMapencSplitMovieData(item_box &dest1, item_box &dest2, const item_box &src) {
+	switch (src.movemode) {
+	case 1: /* lin */
+	case 2: /* acc */
+	case 3: /* dec */
+	default:
+		dest1 = src;
+		return false;
+	case 5: /* sli */
+		dest1 = src;
+		dest2 = src;
+
+		dest1.ID         = src.ID;
+		dest2.ID         = src.ID;
+		dest1.movemode   = 2; /* acc */
+		dest2.movemode   = 3; /* dec */
+
+		dest1.starttime  = src.starttime;
+		dest1.endtime    = (src.starttime  + src.endtime ) / 2;
+		dest2.starttime  = (src.starttime  + src.endtime ) / 2;
+		dest2.endtime    = src.endtime;
+
+		dest1.startXpos  = src.startXpos;
+		dest1.endXpos    = (src.startXpos  + src.endXpos ) / 2;
+		dest2.startXpos  = (src.startXpos  + src.endXpos ) / 2;
+		dest2.endXpos    = src.endXpos;
+
+		dest1.startYpos  = src.startYpos;
+		dest1.endYpos    = (src.startYpos  + src.endYpos ) / 2;
+		dest2.startYpos  = (src.startYpos  + src.endYpos ) / 2;
+		dest2.endYpos    = src.endYpos;
+
+		dest1.startsize  = src.startsize;
+		dest1.endsize    = (src.startsize  + src.endsize ) / 2;
+		dest2.startsize  = (src.startsize  + src.endsize ) / 2;
+		dest2.endsize    = src.endsize;
+
+		dest1.startrot   = src.startrot;
+		dest1.endrot     = (src.startrot   + src.endrot  ) / 2;
+		dest2.startrot   = (src.startrot   + src.endrot  ) / 2;
+		dest2.endrot     = src.endrot;
+
+		dest1.startalpha = src.startalpha;
+		dest1.endalpha   = (src.startalpha + src.endalpha) / 2;
+		dest2.startalpha = (src.startalpha + src.endalpha) / 2;
+		dest2.endalpha   = src.endalpha;
+
+		dest1.eff        = src.eff;
+		dest2.eff        = src.eff;
+		break;
+	case 6: /* pal */
+		dest1 = src;
+		dest2 = src;
+
+		dest1.ID         = src.ID;
+		dest2.ID         = src.ID;
+		dest1.movemode   = 3; /* dec */
+		dest2.movemode   = 2; /* acc */
+
+		dest1.starttime  = src.starttime;
+		dest1.endtime    = (src.starttime  + src.endtime ) / 2;
+		dest2.starttime  = (src.starttime  + src.endtime ) / 2;
+		dest2.endtime    = src.endtime;
+
+		dest1.startXpos  = src.startXpos;
+		dest1.endXpos    = src.endXpos;
+		dest2.startXpos  = src.endXpos;
+		dest2.endXpos    = src.startXpos;
+
+		dest1.startYpos  = src.startYpos;
+		dest1.endYpos    = src.endYpos;
+		dest2.startYpos  = src.endYpos;
+		dest2.endYpos    = src.startYpos;
+
+		dest1.startsize  = src.startsize;
+		dest1.endsize    = src.endsize;
+		dest2.startsize  = src.endsize;
+		dest2.endsize    = src.startsize;
+
+		dest1.startrot   = src.startrot;
+		dest1.endrot     = src.endrot;
+		dest2.startrot   = src.endrot;
+		dest2.endrot     = src.startrot;
+
+		dest1.startalpha = src.startalpha;
+		dest1.endalpha   = src.endalpha;
+		dest2.startalpha = src.endalpha;
+		dest2.endalpha   = src.startalpha;
+
+		dest1.eff        = src.eff;
+		dest2.eff        = src.eff;
+		break;
+	case 7: /* edg */
+		dest1 = src;
+		dest2 = src;
+
+		dest1.ID         = src.ID;
+		dest2.ID         = src.ID;
+		dest1.movemode   = 2; /* acc */
+		dest2.movemode   = 3; /* dec */
+
+		dest1.starttime  = src.starttime;
+		dest1.endtime    = (src.starttime  + src.endtime ) / 2;
+		dest2.starttime  = (src.starttime  + src.endtime ) / 2;
+		dest2.endtime    = src.endtime;
+
+		dest1.startXpos  = src.startXpos;
+		dest1.endXpos    = src.endXpos;
+		dest2.startXpos  = src.endXpos;
+		dest2.endXpos    = src.startXpos;
+
+		dest1.startYpos  = src.startYpos;
+		dest1.endYpos    = src.endYpos;
+		dest2.startYpos  = src.endYpos;
+		dest2.endYpos    = src.startYpos;
+
+		dest1.startsize  = src.startsize;
+		dest1.endsize    = src.endsize;
+		dest2.startsize  = src.endsize;
+		dest2.endsize    = src.startsize;
+
+		dest1.startrot   = src.startrot;
+		dest1.endrot     = src.endrot;
+		dest2.startrot   = src.endrot;
+		dest2.endrot     = src.startrot;
+
+		dest1.startalpha = src.startalpha;
+		dest1.endalpha   = src.endalpha;
+		dest2.startalpha = src.endalpha;
+		dest2.endalpha   = src.startalpha;
+
+		dest1.eff        = src.eff;
+		dest2.eff        = src.eff;
+		break;
+	}
+
+	return true;
+}
+
 #endif /* sub action 2 */
 
 #if 1 /* rec_mapenc_noteact_f */
@@ -890,6 +1029,8 @@ static void RecMapencSetVLane(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 static void RecMapencSetMovie(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
 	item_box buf;
+	item_box buf2;
+	item_box buf3;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	strmods(GT1, 7);
@@ -904,6 +1045,18 @@ static void RecMapencSetMovie(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 		break;
 	case L'd':
 		buf.movemode = 3;
+		break;
+	case L'm': /* L'l'‚Æ‚µ‚Äˆ— */
+		buf.movemode = 1;
+		break;
+	case L's':
+		buf.movemode = 5;
+		break;
+	case L'p':
+		buf.movemode = 6;
+		break;
+	case L'e':
+		buf.movemode = 7;
 		break;
 	}
 	strnex(GT1);
@@ -932,8 +1085,25 @@ static void RecMapencSetMovie(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 	buf.endalpha = (int)(strsans2(GT1) * 255.0);
 	strnex(GT1);
 	buf.eff = set_pic_mat(GT1);
-	recfp->mapeff.Movie.push_back(buf);
-	recfp->allnum.movienum++;
+
+	switch (buf.movemode) {
+	case 1: /* lin */
+	case 2: /* acc */
+	case 3: /* dec */
+	default:
+		recfp->mapeff.Movie.push_back(buf);
+		recfp->allnum.movienum++;
+		break;
+	case 5: /* sli */
+	case 6: /* pal */
+	case 7: /* edg */
+		RecMapencSplitMovieData(buf2, buf3, buf);
+		recfp->mapeff.Movie.push_back(buf2);
+		recfp->mapeff.Movie.push_back(buf3);
+		recfp->allnum.movienum += 2;
+		break;
+	}
+
 	return;
 }
 
@@ -977,9 +1147,10 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 	TCHAR GT1[255];
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
-	int G[15];
 	uint itemNo = 0;
-	uint mode   = 1;
+	item_box stack1;
+	item_box stack2;
+	bool spe_flag = false;
 
 	rec_map_eff_data_t *mapeff = &recfp->mapeff;
 
@@ -988,65 +1159,115 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 	strnex(GT1);
 	switch (GT1[0]) {
 	case L'l':
-		mode = 1;
+		stack1.movemode = 1;
 		break;
 	case L'a':
-		mode = 2;
+		stack1.movemode = 2;
 		break;
 	case L'd':
-		mode = 3;
+		stack1.movemode = 3;
+		break;
+	case L'm': /* L'l'‚Æ‚µ‚Äˆ— */
+		stack1.movemode = 1;
+		break;
+	case L's':
+		stack1.movemode = 5;
+		spe_flag = true;
+		break;
+	case L'p':
+		stack1.movemode = 6;
+		spe_flag = true;
+		break;
+	case L'e':
+		stack1.movemode = 7;
+		spe_flag = true;
 		break;
 	}
 
 	strnex(GT1);
-	G[2] = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]); /* stime */
+	stack1.starttime  = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]); /* stime */
 	strnex(GT1);
-	G[3] = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]); /* etime */
+	stack1.endtime    = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]); /* etime */
 	strnex(GT1);
-	G[4] = (int)(strsans2(GT1) * 50 + 115); /* sx */
+	stack1.startXpos  = strsans2(GT1) * 50 + 115; /* sx */
 	strnex(GT1);
-	G[5] = strsans2(GT1) * 50 + 115; /* ex */
+	stack1.endXpos    = strsans2(GT1) * 50 + 115; /* ex */
 	strnex(GT1);
-	G[6] = strsans2(GT1) * 50 + 115; /* sy */
+	stack1.startYpos  = strsans2(GT1) * 50 + 115; /* sy */
 	strnex(GT1);
-	G[7] = strsans2(GT1) * 50 + 115; /* ey */
+	stack1.endYpos    = strsans2(GT1) * 50 + 115; /* ey */
 	strnex(GT1);
-	G[8] = strsans2(GT1) * 100; /* ss */
+	stack1.startsize  = strsans2(GT1) * 100; /* ss */
 	strnex(GT1);
-	G[9] = strsans2(GT1) * 100; /* es */
+	stack1.endsize    = strsans2(GT1) * 100; /* es */
 	strnex(GT1);
-	G[10] = strsans(GT1); /* sr */
+	stack1.startrot   = strsans(GT1); /* sr */
 	strnex(GT1);
-	G[11] = strsans(GT1); /* er */
+	stack1.endrot     = strsans(GT1); /* er */
 	strnex(GT1);
-	G[12] = strsans2(GT1) * 255.0; /* sa */
+	stack1.startalpha = strsans2(GT1) * 255.0; /* sa */
 	strnex(GT1);
-	G[13] = strsans2(GT1) * 255.0; /* ea */
+	stack1.endalpha   = strsans2(GT1) * 255.0; /* ea */
+
+	if (spe_flag)  {
+		item_box stack3 = stack1;
+		RecMapencSplitMovieData(stack1, stack2, stack3);
+	}
+
 	for (uint inum = 0; inum < mapenc->item_set[itemNo].num; inum++) {
 		item_box buf;
-		buf.ID = mapenc->item_set[itemNo].picID[inum].picID;
-		buf.movemode = mode;
-		buf.eff = mapenc->item_set[itemNo].picID[inum].eff;
-		buf.starttime = G[2];
-		buf.endtime = G[3];
-		buf.startXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[8] / 100;
-		buf.endXpos = mapenc->item_set[itemNo].picID[inum].Xpos * G[9] / 100;
-		buf.startYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[8] / 100;
-		buf.endYpos = mapenc->item_set[itemNo].picID[inum].Ypos * G[9] / 100;
-		rot_xy_pos(G[10], &buf.startXpos, &buf.startYpos);
-		rot_xy_pos(G[10], &buf.endXpos, &buf.endYpos);
-		buf.startXpos += G[4];
-		buf.endXpos += G[5];
-		buf.startYpos += G[6];
-		buf.endYpos += G[7];
-		buf.startsize = G[8] * mapenc->item_set[itemNo].picID[inum].size / 100;
-		buf.endsize = G[9] * mapenc->item_set[itemNo].picID[inum].size / 100;
-		buf.startrot = G[10] + mapenc->item_set[itemNo].picID[inum].rot;
-		buf.endrot = G[11] + mapenc->item_set[itemNo].picID[inum].rot;
-		buf.startalpha = G[12] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
-		buf.endalpha = G[13] * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+		buf.ID        = mapenc->item_set[itemNo].picID[inum].picID;
+		buf.movemode  = stack1.movemode;
+		buf.eff       = mapenc->item_set[itemNo].picID[inum].eff;
+		buf.starttime = stack1.starttime;
+		buf.endtime   = stack1.endtime;
+		buf.startXpos = mapenc->item_set[itemNo].picID[inum].Xpos * stack1.startsize / 100;
+		buf.endXpos   = mapenc->item_set[itemNo].picID[inum].Xpos * stack1.endsize   / 100;
+		buf.startYpos = mapenc->item_set[itemNo].picID[inum].Ypos * stack1.startsize / 100;
+		buf.endYpos   = mapenc->item_set[itemNo].picID[inum].Ypos * stack1.endsize   / 100;
+		rot_xy_pos(stack1.startrot, &buf.startXpos, &buf.startYpos);
+		rot_xy_pos(stack1.startrot, &buf.endXpos,   &buf.endYpos);
+		buf.startXpos += stack1.startXpos;
+		buf.endXpos   += stack1.endXpos;
+		buf.startYpos += stack1.startYpos;
+		buf.endYpos   += stack1.endYpos;
+		buf.startsize  = stack1.startsize  * mapenc->item_set[itemNo].picID[inum].size  / 100;
+		buf.endsize    = stack1.endsize    * mapenc->item_set[itemNo].picID[inum].size  / 100;
+		buf.startrot   = stack1.startrot   + mapenc->item_set[itemNo].picID[inum].rot;
+		buf.endrot     = stack1.endrot     + mapenc->item_set[itemNo].picID[inum].rot;
+		buf.startalpha = stack1.startalpha * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+		buf.endalpha   = stack1.endalpha   * mapenc->item_set[itemNo].picID[inum].alpha / 255;
 		recfp->mapeff.Movie.push_back(buf);
 		recfp->allnum.movienum++;
+	}
+
+	if (spe_flag) {
+		for (uint inum = 0; inum < mapenc->item_set[itemNo].num; inum++) {
+			item_box buf;
+			buf.ID        = mapenc->item_set[itemNo].picID[inum].picID;
+			buf.movemode  = stack2.movemode;
+			buf.eff       = mapenc->item_set[itemNo].picID[inum].eff;
+			buf.starttime = stack2.starttime;
+			buf.endtime   = stack2.endtime;
+			buf.startXpos = mapenc->item_set[itemNo].picID[inum].Xpos * stack2.startsize / 100;
+			buf.endXpos   = mapenc->item_set[itemNo].picID[inum].Xpos * stack2.endsize   / 100;
+			buf.startYpos = mapenc->item_set[itemNo].picID[inum].Ypos * stack2.startsize / 100;
+			buf.endYpos   = mapenc->item_set[itemNo].picID[inum].Ypos * stack2.endsize   / 100;
+			rot_xy_pos(stack2.startrot, &buf.startXpos, &buf.startYpos);
+			rot_xy_pos(stack2.startrot, &buf.endXpos,   &buf.endYpos);
+			buf.startXpos += stack2.startXpos;
+			buf.endXpos   += stack2.endXpos;
+			buf.startYpos += stack2.startYpos;
+			buf.endYpos   += stack2.endYpos;
+			buf.startsize  = stack2.startsize  * mapenc->item_set[itemNo].picID[inum].size  / 100;
+			buf.endsize    = stack2.endsize    * mapenc->item_set[itemNo].picID[inum].size  / 100;
+			buf.startrot   = stack2.startrot   + mapenc->item_set[itemNo].picID[inum].rot;
+			buf.endrot     = stack2.endrot     + mapenc->item_set[itemNo].picID[inum].rot;
+			buf.startalpha = stack2.startalpha * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+			buf.endalpha   = stack2.endalpha   * mapenc->item_set[itemNo].picID[inum].alpha / 255;
+			recfp->mapeff.Movie.push_back(buf);
+			recfp->allnum.movienum++;
+		}
 	}
 	return;
 }
