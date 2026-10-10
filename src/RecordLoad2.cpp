@@ -114,30 +114,19 @@ static int IsNoteCode(TCHAR c) {
 	return 0;
 }
 
-static item_eff_box set_pic_mat(TCHAR *s) {
-	item_eff_box eff;
-	while (s[0] != L'\0' && s[0] != L'\n') {
-		if (strands_direct(s, L"bpm_a")) {
-			eff.bpm_alphr = 1;
-		}
-		else if (strands_direct(s, L"bpm_s")) {
-			eff.bpm_size = 1;
-		}
-		else if (strands_direct(s, L"lock")) {
-			eff.lock = 1;
-		}
-		else if (strands_direct(s, L"cha_a")) {
-			eff.chara_alphr = 1;
-		}
-		else if (strands_direct(s, L"edge_s")) {
-			eff.edge_size = 1;
-		}
-		else {
+static size_t RecMapencGetStringParams(std::vector<tstring> &ret, const tstring &str) {
+	size_t start = 0;
+	ret.clear();
+	while (true) {
+		size_t pos = str.find(_T('/'), start);
+		if (pos == tstring::npos) {
+			ret.push_back(str.substr(start));
 			break;
 		}
-		strnex(s);
+		ret.push_back(str.substr(start, pos - start));
+		start = pos + 1;
 	}
-	return eff;
+	return ret.size();
 }
 
 static int strrans(const TCHAR *p1) {
@@ -394,7 +383,7 @@ static int RecMapLoadGetc(TCHAR c, int istr, rec_score_file_t *recfp, rec_mapenc
 	return 0;
 }
 
-enum melodysound RecMapLoad_GetMelSnd(TCHAR str[]) {
+enum melodysound RecMapLoad_GetMelSnd(const TCHAR str[]) {
 	enum melodysound ret;
 	switch (str[1]) {
 	case L'F':
@@ -425,15 +414,16 @@ enum melodysound RecMapLoad_GetMelSnd(TCHAR str[]) {
 	return ret;
 }
 
-static void RecEncCustomSetNoteMat(struct custom_note_box *ret, TCHAR str[]) {
+static void RecEncCustomSetNoteMat(struct custom_note_box *ret, const TCHAR *str) {
+	tstring strbuf = str;
 	ret->rand = 0;
 
-	if (strands(str, L"RAND(")) {
-		strmods(str, 5);
+	if (strands(strbuf.c_str(), L"RAND(")) {
+		strbuf.erase(0, 5);
 		int i = 0;
 		bool loopFg = true;
 		while (loopFg) {
-			switch (str[i]) {
+			switch (strbuf[i]) {
 			case REC_MAPENC_BLANK_CHAR:
 				ret->rand |= (1 << 8);
 				break;
@@ -470,44 +460,46 @@ static void RecEncCustomSetNoteMat(struct custom_note_box *ret, TCHAR str[]) {
 		return;
 	}
 
-	ret->note = str[0];
+	ret->note = strbuf[0];
 	return ;
 }
 
 void RecMapLoad_ComCustomNote(TCHAR str[], struct custom_note_box customnote[]) {
 	int No = 0;
 	struct custom_note_box *ptr;
+	std::vector<tstring> params;
 	strmods(str, 8);
-	No = strsans2(str) - 1;
+
+	RecMapencGetStringParams(params, str);
+	if (params.size() < 1) { return; }
+
+	No = strsans2(params[0].c_str()) - 1;
 	ptr = &customnote[No];
 	ptr->color = 0;
 	ptr->melody = MELODYSOUND_NONE;
 	ptr->note = 0;
 	ptr->sound = 0;
-	strnex(str);
-	while (str[0] != L'\0') {
-		if (strands_direct(str, L"NOTE=")) {
-			strmods(str, 5);
-			RecEncCustomSetNoteMat(ptr, str);
+
+	for (size_t i = 1; i < params.size(); i++) {
+		if (strands_direct(params[i].c_str(), L"NOTE=")) {
+			params[i].erase(0, 5);
+			RecEncCustomSetNoteMat(ptr, params[i].c_str());
 		}
-		else if (strands_direct(str, L"SOUND=")) {
-			strmods(str, 6);
-			if (str[0] == L'L' || str[0] == L'H') {
-				ptr->melody = RecMapLoad_GetMelSnd(str);
+		else if (strands_direct(params[i].c_str(), L"SOUND=")) {
+			params[i].erase(0, 6);
+			if (params[i][0] == L'L' || params[i][0] == L'H') {
+				ptr->melody = RecMapLoad_GetMelSnd(params[i].c_str());
 			}
 			else {
-				ptr->sound = strsans2(str);
+				ptr->sound = strsans2(params[i].c_str());
 			}
 		}
-		else if (strands_direct(str, L"COLOR=")) {
-			strmods(str, 6);
-			ptr->color = strsans2(str);
+		else if (strands_direct(params[i].c_str(), L"COLOR=")) {
+			params[i].erase(0, 6);
+			ptr->color = strsans2(params[i].c_str());
 		}
-		else {
-			break;
-		}
-		strnex(str);
 	}
+
 	return;
 }
 
@@ -656,22 +648,24 @@ static bool RecMapencSplitMovieData(item_box &dest1, item_box &dest2, const item
 
 static void RecMapencSetSpeed(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	int time_buf;
 	double data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	uint lane = betweens(0, GT1[6] - '1', 4);
-
 	strmods(GT1, 8);
-	data_buf = strsans2(GT1);
-	strnex(GT1);
-	if (GT1[0] >= L'0' && GT1[0] <= L'9' || GT1[0] == L'-') {
-		time_buf = mapenc->timer[lane] + 240000 * (data_buf - 1) / (mapenc->bpmG * 16) - 10;
-		data_buf = strsans2(GT1);
-	}
-	else {
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 1) { return; }
+	if (params.size() == 1) {
+		data_buf = strsans2(params[0].c_str());
 		time_buf = mapenc->timer[lane] - 10;
 	}
+	if (params.size() == 2) {
+		time_buf = shifttime(strsans2(params[0].c_str()), mapenc->bpmG, mapenc->timer[lane]) - 10;
+		data_buf = strsans2(params[1].c_str());
+	}
+
 	recfp->mapeff.speedt[lane].push_back(time_buf, data_buf);
 	return;
 }
@@ -687,14 +681,17 @@ static void RecMapencSetBpm(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, 
 
 static void RecMapencSetVBpm(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	int time_buf;
 	double data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	strmods(GT1, 7);
-	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	data_buf = strsans(GT1);
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 2) { return; }
+	time_buf = shifttime(strsans2(params[0].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	data_buf = strsans2(params[1].c_str());
+
 	recfp->mapeff.v_BPM.push_back(time_buf, data_buf);
 	return;
 }
@@ -716,6 +713,7 @@ static void RecMapencSetChara(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 
 static void RecMapencSetMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	uint   Slane = 0;
@@ -774,12 +772,14 @@ static void RecMapencSetMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 		break;
 	}
 	strmods(GT1, 10);
-	Stime = strsans2(GT1);
-	strnex(GT1);
-	if (GT1[0] == _T('R')) { pos = strrans(GT1); }
-	else { pos = strsans2(GT1); }
-	strnex(GT1);
-	Etime = strsans2(GT1);
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 3) { return; }
+	Stime = strsans2(params[0].c_str());
+	if (params[1][0] == _T('R')) { pos = strrans(params[1].c_str()); }
+	else { pos = strsans2(params[1].c_str()); }
+	Etime = strsans2(params[2].c_str());
+
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
 		RecMapLoadSetMove(recfp->mapeff.move.y[iLane], Stime,
 			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer[0]);
@@ -789,6 +789,7 @@ static void RecMapencSetMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc,
 
 static void RecMapencSetXMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	uint   Slane = 0;
@@ -847,12 +848,14 @@ static void RecMapencSetXMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 		break;
 	}
 	strmods(GT1, 10);
-	Stime = strsans2(GT1);
-	strnex(GT1);
-	if (GT1[0] == _T('R')) { pos = strrans(GT1); }
-	else { pos = strsans2(GT1); }
-	strnex(GT1);
-	Etime = strsans2(GT1);
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 3) { return; }
+	Stime = strsans2(params[0].c_str());
+	if (params[1][0] == _T('R')) { pos = strrans(params[1].c_str()); }
+	else { pos = strsans2(params[1].c_str()); }
+	Etime = strsans2(params[2].c_str());
+
 	for (uint iLane = Slane; iLane <= Elane; iLane++) {
 		RecMapLoadSetMove(recfp->mapeff.move.x[iLane], Stime,
 			pos + Gap * iLane - Gap, Etime, mode, mapenc->bpmG, mapenc->timer[0]);
@@ -862,6 +865,7 @@ static void RecMapencSetXMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 
 static void RecMapencSetDiv(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	bool   Yflag   = false;
@@ -871,15 +875,14 @@ static void RecMapencSetDiv(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, 
 	double pos     = 5.0;
 	double count   = 1.0;
 	if (GT1[4] == L'Y') { Yflag = true; }
-
 	strmods(GT1, 7);
-	Stime = strsans2(GT1);//開始時間
-	strnex(GT1);
-	pos = strsans2(GT1);//振動位置
-	strnex(GT1);
-	Onetime = strsans2(GT1) / 2.0;//往復時間
-	strnex(GT1);
-	count = strsans2(GT1);//往復回数
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 4) { return; }
+	Stime   = strsans2(params[0].c_str()); //開始時間
+	pos     = strsans2(params[1].c_str()); //振動位置
+	Onetime = strsans2(params[2].c_str()); //往復時間
+	count   = strsans2(params[3].c_str()); //往復回数
 
 	cvec<rec_mapeff_move_st> &dest = recfp->mapeff.move.y[lane];
 	if (Yflag) {
@@ -906,6 +909,7 @@ static void RecMapencSetDiv(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, 
 
 static void RecMapencSetGMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	uint   mode  = 1;
@@ -934,12 +938,13 @@ static void RecMapencSetGMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 		break;
 	}
 	strmods(GT1, 10);
-	Stime = strsans2(GT1);
-	strnex(GT1);
-	if (GT1[0] == _T('R')) { pos = strrans(GT1); }
-	else { pos = strsans2(GT1); }
-	strnex(GT1);
-	Etime = strsans2(GT1);
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 3) { return; }
+	Stime = strsans2(params[0].c_str());
+	if (params[1][0] == _T('R')) { pos = strrans(params[1].c_str()); }
+	else { pos = strsans2(params[1].c_str()); }
+	Etime = strsans2(params[2].c_str());
 	RecMapLoadSetMove(recfp->mapeff.move.y[3],
 		Stime, pos, Etime, mode, mapenc->bpmG, mapenc->timer[0]);
 	return;
@@ -986,57 +991,65 @@ static void RecMapencSetCArrow(rec_score_file_t *recfp, rec_mapenc_data_t *mapen
 
 static void RecMapencSetFall(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	int time_buf;
 	double data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	strmods(GT1, 6);
-	data_buf = strsans(GT1);
-	strnex(GT1);
-	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 2) { return; }
+	data_buf = strsans2(params[0].c_str());
+	time_buf = shifttime(strsans2(params[1].c_str()), mapenc->bpmG, mapenc->timer[0]);
 	recfp->mapeff.fall.push_back(time_buf, data_buf);
 	return;
 }
 
 static void RecMapencSetView(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	int time_buf;
 	int data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	strmods(GT1, 6);
-	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	data_buf = strsans(GT1);
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 2) { return; }
+	time_buf = shifttime(strsans(params[0].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	data_buf = strsans(params[1].c_str());
 	recfp->mapeff.viewT.push_back(time_buf, data_buf);
 	return;
 }
 
 static void RecMapencSetVLane(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	int time_buf;
 	bool data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	strmods(GT1, 8);
-	data_buf = (GT1[0] == _T('1'));
-	strnex(GT1);
-	time_buf = shifttime(strsans(GT1), mapenc->bpmG, mapenc->timer[0]);
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 2) { return; }
+	data_buf = (params[0][0] == _T('1'));
+	time_buf = shifttime(strsans(params[1].c_str()), mapenc->bpmG, mapenc->timer[0]);
 	recfp->mapeff.viewLine.push_back(time_buf, data_buf);
 	return;
 }
 
 static void RecMapencSetMovie(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	item_box buf;
 	item_box buf2;
 	item_box buf3;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	strmods(GT1, 7);
-	buf.ID = strsans(GT1);
-	strnex(GT1);
-	switch (GT1[0]) {
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 14) { return; }
+	buf.ID = strsans(params[0].c_str());
+	switch (params[1][0]) {
 	case L'l':
 		buf.movemode = 1;
 		break;
@@ -1059,32 +1072,36 @@ static void RecMapencSetMovie(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc
 		buf.movemode = 7;
 		break;
 	}
-	strnex(GT1);
-	buf.starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	buf.endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	buf.startXpos = (int)(strsans2(GT1) * 50 + 115);
-	strnex(GT1);
-	buf.endXpos = (int)(strsans2(GT1) * 50 + 115);
-	strnex(GT1);
-	buf.startYpos = (int)(strsans2(GT1) * 50 + 115);
-	strnex(GT1);
-	buf.endYpos = (int)(strsans2(GT1) * 50 + 115);
-	strnex(GT1);
-	buf.startsize = (int)(strsans2(GT1) * 100);
-	strnex(GT1);
-	buf.endsize = (int)(strsans2(GT1) * 100);
-	strnex(GT1);
-	buf.startrot = strsans(GT1);
-	strnex(GT1);
-	buf.endrot = strsans(GT1);
-	strnex(GT1);
-	buf.startalpha = (int)(strsans2(GT1) * 255.0);
-	strnex(GT1);
-	buf.endalpha = (int)(strsans2(GT1) * 255.0);
-	strnex(GT1);
-	buf.eff = set_pic_mat(GT1);
+	buf.starttime  = shifttime(strsans2(params[2].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	buf.endtime    = shifttime(strsans2(params[3].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	buf.startXpos  = (int)(strsans2(params[4].c_str()) * 50 + 115);
+	buf.endXpos    = (int)(strsans2(params[5].c_str()) * 50 + 115);
+	buf.startYpos  = (int)(strsans2(params[6].c_str()) * 50 + 115);
+	buf.endYpos    = (int)(strsans2(params[7].c_str()) * 50 + 115);
+	buf.startsize  = (int)(strsans2(params[8].c_str()) * 100);
+	buf.endsize    = (int)(strsans2(params[9].c_str()) * 100);
+	buf.startrot   = strsans(params[10].c_str());
+	buf.endrot     = strsans(params[11].c_str());
+	buf.startalpha = (int)(strsans2(params[12].c_str()) * 255.0);
+	buf.endalpha   = (int)(strsans2(params[13].c_str()) * 255.0);
+
+	for (size_t i = 14; i < params.size(); i++) {
+		if (strands_direct(params[i].c_str(), L"bpm_a")) {
+			buf.eff.bpm_alphr = 1;
+		}
+		else if (strands_direct(params[i].c_str(), L"bpm_s")) {
+			buf.eff.bpm_size = 1;
+		}
+		else if (strands_direct(params[i].c_str(), L"lock")) {
+			buf.eff.lock = 1;
+		}
+		else if (strands_direct(params[i].c_str(), L"cha_a")) {
+			buf.eff.chara_alphr = 1;
+		}
+		else if (strands_direct(params[i].c_str(), L"edge_s")) {
+			buf.eff.edge_size = 1;
+		}
+	}
 
 	switch (buf.movemode) {
 	case 1: /* lin */
@@ -1118,33 +1135,54 @@ static void RecMapencInitItemSet(rec_score_file_t *recfp, rec_mapenc_data_t *map
 
 static void RecMapencAddItemSet(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	strmods(GT1, 14);
-	uint No = strsans(GT1);
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 7) { return; }
 
+	uint No = strsans(params[0].c_str());
 	if (10 < mapenc->item_set[No].num) { return; }
 
-	strnex(GT1);
-	mapenc->item_set[No].picID[mapenc->item_set[No].num].picID = strsans(GT1);
-	strnex(GT1);
-	mapenc->item_set[No].picID[mapenc->item_set[No].num].Xpos = (int)(strsans2(GT1) * 50);
-	strnex(GT1);
-	mapenc->item_set[No].picID[mapenc->item_set[No].num].Ypos = (int)(strsans2(GT1) * 50);
-	strnex(GT1);
-	mapenc->item_set[No].picID[mapenc->item_set[No].num].size = (int)(strsans2(GT1) * 100);
-	strnex(GT1);
-	mapenc->item_set[No].picID[mapenc->item_set[No].num].rot = strsans(GT1);
-	strnex(GT1);
-	mapenc->item_set[No].picID[mapenc->item_set[No].num].alpha = (int)(strsans2(GT1) * 255);
-	strnex(GT1);
-	mapenc->item_set[No].picID[mapenc->item_set[No].num].eff = set_pic_mat(GT1);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].picID = strsans(params[1].c_str());
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].Xpos  = (int)(strsans2(params[2].c_str()) * 50);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].Ypos  = (int)(strsans2(params[3].c_str()) * 50);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].size  = (int)(strsans2(params[4].c_str()) * 100);
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].rot   = strsans(params[5].c_str());
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].alpha = (int)(strsans2(params[6].c_str()) * 255);
+
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.bpm_alphr   = 0;
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.bpm_size    = 0;
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.lock        = 0;
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.chara_alphr = 0;
+	mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.edge_size   = 0;
+
+	for (size_t i = 7; i < params.size(); i++) {
+		if (strands_direct(params[i].c_str(), L"bpm_a")) {
+			mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.bpm_alphr = 1;
+		}
+		else if (strands_direct(params[i].c_str(), L"bpm_s")) {
+			mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.bpm_size = 1;
+		}
+		else if (strands_direct(params[i].c_str(), L"lock")) {
+			mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.lock = 1;
+		}
+		else if (strands_direct(params[i].c_str(), L"cha_a")) {
+			mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.chara_alphr = 1;
+		}
+		else if (strands_direct(params[i].c_str(), L"edge_s")) {
+			mapenc->item_set[No].picID[mapenc->item_set[No].num].eff.edge_size = 1;
+		}
+	}
+
 	mapenc->item_set[No].num++;
 	return;
 }
 
 static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
 
 	uint itemNo = 0;
@@ -1153,11 +1191,12 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 	bool spe_flag = false;
 
 	rec_map_eff_data_t *mapeff = &recfp->mapeff;
-
 	strmods(GT1, 10);
-	itemNo = strsans(GT1);
-	strnex(GT1);
-	switch (GT1[0]) {
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 14) { return; }
+	itemNo = strsans(params[0].c_str());
+	switch (params[1][0]) {
 	case L'l':
 		stack1.movemode = 1;
 		break;
@@ -1184,30 +1223,18 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 		break;
 	}
 
-	strnex(GT1);
-	stack1.starttime  = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]); /* stime */
-	strnex(GT1);
-	stack1.endtime    = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]); /* etime */
-	strnex(GT1);
-	stack1.startXpos  = strsans2(GT1) * 50 + 115; /* sx */
-	strnex(GT1);
-	stack1.endXpos    = strsans2(GT1) * 50 + 115; /* ex */
-	strnex(GT1);
-	stack1.startYpos  = strsans2(GT1) * 50 + 115; /* sy */
-	strnex(GT1);
-	stack1.endYpos    = strsans2(GT1) * 50 + 115; /* ey */
-	strnex(GT1);
-	stack1.startsize  = strsans2(GT1) * 100; /* ss */
-	strnex(GT1);
-	stack1.endsize    = strsans2(GT1) * 100; /* es */
-	strnex(GT1);
-	stack1.startrot   = strsans(GT1); /* sr */
-	strnex(GT1);
-	stack1.endrot     = strsans(GT1); /* er */
-	strnex(GT1);
-	stack1.startalpha = strsans2(GT1) * 255.0; /* sa */
-	strnex(GT1);
-	stack1.endalpha   = strsans2(GT1) * 255.0; /* ea */
+	stack1.starttime  = shifttime(strsans2(params[2].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	stack1.endtime    = shifttime(strsans2(params[3].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	stack1.startXpos  = strsans2(params[4].c_str()) * 50 + 115;
+	stack1.endXpos    = strsans2(params[5].c_str()) * 50 + 115;
+	stack1.startYpos  = strsans2(params[6].c_str()) * 50 + 115;
+	stack1.endYpos    = strsans2(params[7].c_str()) * 50 + 115;
+	stack1.startsize  = strsans2(params[8].c_str()) * 100;
+	stack1.endsize    = strsans2(params[9].c_str()) * 100;
+	stack1.startrot   = strsans(params[10].c_str());
+	stack1.endrot     = strsans(params[11].c_str());
+	stack1.startalpha = strsans2(params[12].c_str()) * 255.0;
+	stack1.endalpha   = strsans2(params[13].c_str()) * 255.0;
 
 	if (spe_flag)  {
 		item_box stack3 = stack1;
@@ -1274,23 +1301,20 @@ static void RecMapencSetItemGroup(rec_score_file_t *recfp, rec_mapenc_data_t *ma
 
 static void RecMapencSetCamera(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	rec_camera_data_t buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	strmods(GT1, 8);
-	buf.starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	buf.endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	buf.xpos = strsans2(GT1) * 50;
-	strnex(GT1);
-	buf.ypos = strsans2(GT1) * 50;
-	strnex(GT1);
-	buf.zoom = strsans2(GT1);
-	strnex(GT1);
-	buf.rot = strsans2(GT1);
-	strnex(GT1);
-	switch (GT1[0]) {
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 7) { return; }
+	buf.starttime = shifttime(strsans2(params[0].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	buf.endtime = shifttime(strsans2(params[1].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	buf.xpos = strsans2(params[2].c_str()) * 50;
+	buf.ypos = strsans2(params[3].c_str()) * 50;
+	buf.zoom = strsans2(params[4].c_str());
+	buf.rot = strsans2(params[5].c_str());
+	switch (params[6][0]) {
 	case L'a':
 		buf.mode = 2;
 		break;
@@ -1307,20 +1331,19 @@ static void RecMapencSetCamera(rec_score_file_t *recfp, rec_mapenc_data_t *mapen
 
 static void RecMapencSetCamMove(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	rec_camera_data_t buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	if (strands_direct(GT1, L"#CMOV:")) { strmods(GT1, 6); }
 	if (strands_direct(GT1, L"#CAMMOVE:")) { strmods(GT1, 9); }
-	buf.starttime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	buf.endtime = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	buf.xpos = strsans2(GT1) * 50;
-	strnex(GT1);
-	buf.ypos = strsans2(GT1) * 50;
-	strnex(GT1);
-	switch (GT1[0]) {
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 5) { return; }
+	buf.starttime = shifttime(strsans2(params[0].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	buf.endtime = shifttime(strsans2(params[1].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	buf.xpos = strsans2(params[2].c_str()) * 50;
+	buf.ypos = strsans2(params[3].c_str()) * 50;
+	switch (params[4][0]) {
 	case L'a':
 		buf.mode = 2;
 		break;
@@ -1337,16 +1360,17 @@ static void RecMapencSetCamMove(rec_score_file_t *recfp, rec_mapenc_data_t *mape
 
 static void RecMapencSetScrool(rec_score_file_t *recfp, rec_mapenc_data_t *mapenc, const TCHAR *str) {
 	TCHAR GT1[255];
+	std::vector<tstring> params;
 	int time_buf;
 	rec_scrool_data_t data_buf;
 	strcopy_2(str, GT1, ARRAY_COUNT(GT1));
-
 	int temp = 0;
-
 	strmods(GT1, 8);
-	time_buf = shifttime(strsans2(GT1), mapenc->bpmG, mapenc->timer[0]);
-	strnex(GT1);
-	data_buf.speed = strsans2(GT1);
+
+	RecMapencGetStringParams(params, GT1);
+	if (params.size() < 2) { return; }
+	time_buf = shifttime(strsans2(params[0].c_str()), mapenc->bpmG, mapenc->timer[0]);
+	data_buf.speed = strsans2(params[1].c_str());
 	temp = recfp->mapeff.scrool.lastData().speed *
 		time_buf + recfp->mapeff.scrool.lastData().basetime;
 	data_buf.basetime = temp - data_buf.speed * time_buf;
