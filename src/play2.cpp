@@ -4,6 +4,7 @@
 /* include */
 
 /* base include */
+#include <array>
 #include <DxLib.h>
 
 /* curbine code include */
@@ -2013,6 +2014,54 @@ public:
 	}
 };
 
+class rec_play_fps_c {
+private:
+	std::array<DxTime_t, 60> queue{};
+	size_t head = 0;
+	size_t count = 0;
+
+	void push(DxTime_t Ntime) {
+		if (count < queue.size()) {
+			queue[(head + count) % queue.size()] = Ntime;
+			count++;
+		}
+		else {
+			queue[head] = Ntime;
+			head = (head + 1) % queue.size();
+		}
+	}
+
+	void pop(void) {
+		if (count == 0) { return; }
+		head = (head + 1) % queue.size();
+		count--;
+	}
+
+	DxTime_t front(void) const {
+		if (count == 0) { return 0; }
+		return queue[head];
+	}
+
+	DxTime_t back(void) const {
+		if (count == 0) { return 0; }
+		return queue[(head + count - 1) % queue.size()];
+	}
+
+public:
+	/* Ntime = GetNowCount() */
+	void update(DxTime_t Ntime) {
+		this->push(Ntime);
+		while ((5 < this->count) && (1000 < this->back() - this->front())) {
+			this->pop();
+		}
+	}
+
+	double GetFps(void) const {
+		if (this->count < 2) { return 0; }
+		return DIV_AVOID_ZERO(1000 * (this->count - 1), this->back() - this->front(), 0);
+	}
+};
+
 #endif /* class */
 
 /* main action */
@@ -2075,6 +2124,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_bonus_c bonusClass;
 	rec_play_judge_pic_c judgepicClass;
 	rec_play_item_c itemClass(folderPath);
+	rec_play_fps_c fpsClass;
 	rec_cutin_c cutin;
 
 	/* mat */
@@ -2183,14 +2233,25 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		if (optiondata.backbright != 0) {
 			backpic.update(recfp.mapeff, cameraClass, cameraSkyClass);
 		}
+		fpsClass.update(recfp.time.now);
 		//オートでなく、ノーミス以上を出したら演出
 		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
 			AllNotesHitTime = 0;
 			bonusClass.setBonus(userpal.judgeCount); /* TODO: もっと内部で呼びたい */
 		}
 
+		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
+		if ((cutin.IsClosing() == 0) &&
+			(recfp.time.end + 5000 <= recfp.time.now) &&
+			(rec_bgm_system_g.RecCheckSoundMem() == 0))
+		{
+			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
+			cutin.SetIo(CUT_FRAG_IN);
+		}
+
 		//描画
 		ClearDrawScreen(); /* 描画エリアここから */
+
 		//背景表示
 		if (optiondata.backbright != 0) {
 			rec_play_draw_back_c action;
@@ -2226,6 +2287,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		judgepicClass.draw(cameraClass, &lanePos, runnerClass.getCharaPos());
 		/* 音符表示 */
 		noteimg.draw(recfp, lanePos, cameraClass);
+
 		//スコアバー表示
 		sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighScore, holdG);
 		//判定ずれバー表示
@@ -2235,14 +2297,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		//デバッグ表示
 		if (AutoFlag == 1) {
-			fps[fps[60]++] = recfp.time.now - fps[61];
-			if (fps[60] > 59)fps[60] -= 60;
-			fps[61] = recfp.time.now;
-			G[0] = 0;
-			for (i[0] = 0; i[0] <= 59; i[0]++)G[0] += fps[i[0]];
-			RecRescaleDrawFormatString(
-				20, 80, Cr, L"FPS: %.1f", DIV_AVOID_ZERO((double)60000, (double)G[0], (double)0)
-			);
+			RecRescaleDrawFormatString(20,  80, Cr, L"FPS: %.2f", fpsClass.GetFps());
 			RecRescaleDrawFormatString(20, 100, Cr, L"Autoplay");
 		}
 		if (holdG >= 1) {
@@ -2254,43 +2309,16 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 				cameraClass.getX(), cameraClass.getY(),
 				cameraClass.getZoom(), cameraClass.getAngleDeg()
 			);
-#if 0
-			/* エラー表示 */
-			if (recfp.outpoint[1] != 0) {
-				RecRescaleDrawFormatString(20, 120, CrR, L"MAPERROR");
-				RecRescaleDrawLine(lins(recfp.time.offset, 155, recfp.time.end, 446, recfp.outpoint[0]), 71,
-					lins(recfp.time.offset, 175, recfp.time.end, 465, recfp.outpoint[0]), 38, CrR);
-			}
-#endif
 		}
 		RECR_DEBUG(0, RecPlayDebug[0]);
 		RECR_DEBUG(1, RecPlayDebug[1]);
 		RECR_DEBUG(2, RecPlayDebug[2]);
 
-		//データオーバーフローで警告文表示
-#if 0
-		if (0 <= recfp.mapdata.note2.up[1999].hittime) {
-			RecRescaleDrawFormatString(20, 120, CrR, L"UPPER OVER");
-		}
-		else if (0 <= recfp.mapdata.note2.mid[1999].hittime) {
-			RecRescaleDrawFormatString(20, 120, CrR, L"MIDDLE OVER");
-		}
-		else if (0 <= recfp.mapdata.note2.low[1999].hittime) {
-			RecRescaleDrawFormatString(20, 120, CrR, L"LOWER OVER");
-		}
-#endif
 		if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, dropimg.handle(), TRUE); }
 		else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, dangerimg.handle(), TRUE); }
 		bonusClass.draw();
-		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
-		if ((cutin.IsClosing() == 0) &&
-			(recfp.time.end + 5000 <= recfp.time.now) &&
-			(rec_bgm_system_g.RecCheckSoundMem() == 0))
-		{
-			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
-			cutin.SetIo(CUT_FRAG_IN);
-		}
 		cutin.DrawCut();
+
 		ScreenFlip(); /* 描画エリアここまで */
 
 		//ウェイト
