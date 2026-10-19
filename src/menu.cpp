@@ -289,6 +289,8 @@ now_scene_t RecMenuBase(void) {
 	menuitem[0].itempic.push_back(rec_menu_pic_item_c( 650, 250, _T("picture/menu/freerun_hit.png"   )));
 	menuitem[0].itempic.push_back(rec_menu_pic_item_c( 600, 550, _T("picture/menu/freerun_catch.png" )));
 	menuitem[0].itempic.push_back(rec_menu_pic_item_c(1200, 300, _T("picture/menu/freerun_arrow.png" )));
+	menuitem[1].itempic.push_back(rec_menu_pic_item_c( 650, 150, _T("picture/menu/chall_gold3.png"   )));
+	menuitem[1].itempic.push_back(rec_menu_pic_item_c( 450, 450, _T("picture/menu/chall_silver2.png" )));
 	menuitem[1].itempic.push_back(rec_menu_pic_item_c( 650, 450, _T("picture/menu/chall_gator.png"   )));
 	menuitem[1].itempic.push_back(rec_menu_pic_item_c(1000, 200, _T("picture/menu/chall_taylor.png"  )));
 
