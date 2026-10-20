@@ -124,8 +124,8 @@ public:
 		int drawUp    = 0;
 		int drawRight = 0;
 		DxTime_t Ntime = GetNowCount() - cmd.get_Stime();
-		drawUp    = pals_scale(300, menuitem[cmd.get_cmd()].posUp,    0, menuitem[cmd.get_bcmd()].posUp,    Ntime);
-		drawRight = pals_scale(300, menuitem[cmd.get_cmd()].posRight, 0, menuitem[cmd.get_bcmd()].posRight, Ntime);
+		drawUp    = pals_scale(200, menuitem[cmd.get_cmd()].posUp,    0, menuitem[cmd.get_bcmd()].posUp,    Ntime);
+		drawRight = pals_scale(200, menuitem[cmd.get_cmd()].posRight, 0, menuitem[cmd.get_bcmd()].posRight, Ntime);
 		this->drawBase(MENU_DRAW_LEFT, drawUp, drawRight, drawUp + MENU_DRAW_HEIGHT);
 	}
 };
@@ -280,10 +280,10 @@ now_scene_t RecMenuBase(void) {
 	std::array<rec_menu_item_st, 6> menuitem = {
 		rec_menu_item_st{220, 295,  true, SCENE_SELECT,     _T("picture/menu/freerun_back.png")},
 		rec_menu_item_st{285, 450,  true, SCENE_CHALLENGE,  _T("picture/menu/freerun_back.png")},
-		rec_menu_item_st{408, 340, false, SCENE_ACHIVEMENT  },
-		rec_menu_item_st{472, 208, false, SCENE_STORY       },
-		rec_menu_item_st{536, 222, false, SCENE_OPTION      },
-		rec_menu_item_st{598, 170, false, SCENE_EXIT        }
+		rec_menu_item_st{408, 340, false, SCENE_ACHIVEMENT, _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{472, 208, false, SCENE_STORY,      _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{536, 222, false, SCENE_OPTION,     _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{598, 170, false, SCENE_EXIT,       _T("picture/menu/freerun_back.png")}
 	};
 	menuitem[0].itempic.push_back(rec_menu_pic_item_c( 920, 330, _T("picture/menu/freerun_picker.png")));
 	menuitem[0].itempic.push_back(rec_menu_pic_item_c( 650, 250, _T("picture/menu/freerun_hit.png"   )));
@@ -293,6 +293,7 @@ now_scene_t RecMenuBase(void) {
 	menuitem[1].itempic.push_back(rec_menu_pic_item_c( 450, 450, _T("picture/menu/chall_silver2.png" )));
 	menuitem[1].itempic.push_back(rec_menu_pic_item_c( 650, 450, _T("picture/menu/chall_gator.png"   )));
 	menuitem[1].itempic.push_back(rec_menu_pic_item_c(1000, 200, _T("picture/menu/chall_taylor.png"  )));
+	menuitem[2].itempic.push_back(rec_menu_pic_item_c( 950, 350, _T("picture/menu/achiv_gator.png"   )));
 
 	rec_menu_cursor_pic_c curpic;
 	dxcur_pic_c basepic(_T("picture/menu/menu_base.png"));
