@@ -1555,13 +1555,72 @@ public:
 	}
 };
 
-static class rec_play_runner_field_c {
+static class rec_play_runner_c {
 #define DIV_X 6
 #define DIV_Y 6
 #define PIC_NUM (DIV_X * DIV_Y)
 #define PIC_SIZE_X 160
 #define PIC_SIZE_Y 160
 
+private:
+	int hitpose = 0;
+	dxcur_divpic_c pic;
+
+public:
+	rec_play_runner_c(void) {
+		switch (optiondata.chara) {
+		case 0:
+			this->pic.reload(_T("picture/Picker.png"), PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
+			break;
+		case 1:
+			this->pic.reload(_T("picture/Gator.png") , PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
+			break;
+		case 2:
+			this->pic.reload(_T("picture/Taylor.png"), PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
+			break;
+		}
+	}
+
+	void draw(
+		int x, int y, const dxcur_camera_c &camera, const rec_map_eff_data_t &mapeff,
+		int charahit, int npos, int Ntime, bool turn
+	) const {
+		int hitoffset = 0;
+		int offsetX = 0;
+		int picID = 0;
+
+		if (250 + charahit < GetNowCount()) { hitoffset = 0; }
+		else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
+
+		if (0 < charahit) {
+			offsetX = hitoffset;
+			picID = lins_scale(0, 24 + this->hitpose * 6, 750, 29 + this->hitpose * 6, GetNowCount() - charahit);
+		}
+		else {
+			offsetX = 0;
+			picID = (int)(Ntime * mapeff.v_BPM.nowData() / 20000) % 6 + mapeff.chamo[npos].nowData() * 6;
+		}
+
+		if (turn) {
+			camera.drawpicTurn(x - offsetX +  30, y, this->pic.handle(picID));
+		}
+		else {
+			camera.drawpic(    x + offsetX - 160, y, this->pic.handle(picID));
+		}
+	}
+
+	void add_hitpose(int add) {
+		this->hitpose = (this->hitpose + add) % 2;
+	}
+
+#undef DIV_X
+#undef DIV_Y
+#undef PIC_NUM
+#undef PIC_SIZE_X
+#undef PIC_SIZE_Y
+};
+
+static class rec_play_runner_field_c {
 #define CHARA_POS_UP 0
 #define CHARA_POS_MID 1
 #define CHARA_POS_DOWN 2
@@ -1569,63 +1628,15 @@ static class rec_play_runner_field_c {
 private:
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int pos = 1; //キャラの今の位置[0で上,1で中,2で下]
-	dxcur_divpic_c charaimg;
+	rec_play_runner_c runner;
 	rec_play_chara_hit_attack_t hitatk;
 	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/play/Cguide.png"));
 	dxcur_pic_c judghimg      = dxcur_pic_c(_T("picture/play/Marker.png"));
 	rec_play_hiteff_c hiteff;
 
 public:
-	rec_play_runner_field_c(void) {
-		switch (optiondata.chara) {
-		case 0:
-			this->charaimg.reload(_T("picture/Picker.png"), PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
-			break;
-		case 1:
-			this->charaimg.reload(_T("picture/Gator.png"), PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
-			break;
-		case 2:
-			this->charaimg.reload(_T("picture/Taylor.png"), PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
-			break;
-		}
-	}
+	rec_play_runner_field_c(void) = default;
 
-private:
-	void PlayDrawChara(const rec_play_key_hold_c &key, rec_play_lanepos_t *lanePos,
-		const dxcur_camera_c &camera_pos, int charahit,
-		int Ntime, rec_map_eff_data_t *mapeff)
-	{
-		static int hitpose = 0;
-		int drawX = 0;
-		int drawY = 0;
-		int hitoffset = 0;
-		int picID = 0;
-
-		hitpose = (hitpose + key.GetHitPushCount()) % 2;
-
-		if (GetNowCount() - charahit > 250) { hitoffset = 0; }
-		else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
-		drawY = lanePos->y[this->pos] - 75;
-		if (charahit > 0) {
-			drawX = lanePos->x[this->pos] + hitoffset;
-			picID = betweens(24 + hitpose * 6,
-				(GetNowCount() - charahit) / 125 + 24 + hitpose * 6, 29 + hitpose * 6);
-		}
-		else {
-			drawX = lanePos->x[this->pos];
-
-			picID = (int)(Ntime * mapeff->v_BPM.nowData() / 20000) %
-				6 + mapeff->chamo[this->pos].nowData() * 6;
-		}
-		if (mapeff->carrow.nowData()) {
-			camera_pos.drawpic(drawX - 160, drawY, this->charaimg.handle(picID));
-		}
-		else {
-			camera_pos.drawpicTurn(drawX + 30, drawY, this->charaimg.handle(picID));
-		}
-	}
-
-public:
 	/**
 	 * 上下キー入力があったらそれに準ずる
 	 * 上記以外で、左右キー入力があったらmid
@@ -1701,7 +1712,7 @@ public:
 	}
 
 	void ViewRunner(rec_map_eff_data_t *mapeff, const rec_play_key_hold_c &keyhold,
-		rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera_pos, int Ntime)
+		rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera_pos, int Ntime) const
 	{
 		// view chara pos guide
 		if (mapeff->carrow.nowData()) {
@@ -1721,7 +1732,8 @@ public:
 			camera_pos.drawpic(lanePos->x[i], lanePos->y[i], this->judghimg.handle());
 		}
 		/* キャラ表示 */
-		this->PlayDrawChara(keyhold, lanePos, camera_pos, this->charahit, Ntime, mapeff);
+		this->runner.draw(lanePos->x[this->pos], lanePos->y[this->pos] - 75, camera_pos, *mapeff,
+			charahit, this->pos, Ntime, !mapeff->carrow.nowData());
 	}
 
 	void drawHiteff(const dxcur_camera_c &camera_pos, const rec_play_lanepos_t &lanePos) {
@@ -1732,6 +1744,10 @@ public:
 		this->hiteff.update();
 	}
 
+	void addHitPose(int add) {
+		this->runner.add_hitpose(add);
+	}
+
 	void setHiteff(note_judge judge, note_material mat, int LineNo) {
 		this->hiteff.setEff(judge, mat, LineNo);
 	}
@@ -1739,12 +1755,6 @@ public:
 	int getCharaPos(void) const {
 		return this->pos;
 	}
-
-#undef DIV_X
-#undef DIV_Y
-#undef PIC_NUM
-#undef PIC_SIZE_X
-#undef PIC_SIZE_Y
 };
 
 static class rec_play_sbar_c {
@@ -2221,6 +2231,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 		bonusClass.update();
 		runnerClass.updateHiteff();
+		runnerClass.addHitPose(keyhold.GetHitPushCount());
+
 		if (optiondata.backbright != 0) {
 			backpic.update(recfp.mapeff, cameraClass, cameraSkyClass);
 		}
