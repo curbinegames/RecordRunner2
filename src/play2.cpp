@@ -1555,7 +1555,7 @@ public:
 	}
 };
 
-static class rec_play_runner_c {
+static class rec_play_runner_field_c {
 #define DIV_X 6
 #define DIV_Y 6
 #define PIC_NUM (DIV_X * DIV_Y)
@@ -1569,33 +1569,24 @@ static class rec_play_runner_c {
 private:
 	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
 	int pos = 1; //キャラの今の位置[0で上,1で中,2で下]
-	DxPic_t	charaimg[PIC_NUM];
+	dxcur_divpic_c charaimg;
 	rec_play_chara_hit_attack_t hitatk;
 	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/play/Cguide.png"));
 	dxcur_pic_c judghimg      = dxcur_pic_c(_T("picture/play/Marker.png"));
 	rec_play_hiteff_c hiteff;
 
 public:
-	rec_play_runner_c(void) {
+	rec_play_runner_field_c(void) {
 		switch (optiondata.chara) {
 		case 0:
-			LoadDivGraph(L"picture/Picker.png",
-				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			this->charaimg.reload(_T("picture/Picker.png"), PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
 			break;
 		case 1:
-			LoadDivGraph(L"picture/Gator.png",
-				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			this->charaimg.reload(_T("picture/Gator.png"), PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
 			break;
 		case 2:
-			LoadDivGraph(L"picture/Taylor.png",
-				PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y, this->charaimg);
+			this->charaimg.reload(_T("picture/Taylor.png"), PIC_NUM, DIV_X, DIV_Y, PIC_SIZE_X, PIC_SIZE_Y);
 			break;
-		}
-	}
-
-	~rec_play_runner_c() {
-		for (int i = 0; i < PIC_NUM; i++) {
-			DeleteGraph(this->charaimg[i]);
 		}
 	}
 
@@ -1627,10 +1618,10 @@ private:
 				6 + mapeff->chamo[this->pos].nowData() * 6;
 		}
 		if (mapeff->carrow.nowData()) {
-			camera_pos.drawpic(drawX - 160, drawY, this->charaimg[picID]);
+			camera_pos.drawpic(drawX - 160, drawY, this->charaimg.handle(picID));
 		}
 		else {
-			camera_pos.drawpicTurn(drawX + 30, drawY, this->charaimg[picID]);
+			camera_pos.drawpicTurn(drawX + 30, drawY, this->charaimg.handle(picID));
 		}
 	}
 
@@ -2117,7 +2108,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_play_sbar_c sbarClass;
 	rec_play_combo_c comboPicClass;
 	rec_play_gapbar_c gapbarClass;
-	rec_play_runner_c runnerClass;
+	rec_play_runner_field_c runnerClass;
 	dxcur_camera_c cameraClass;
 	dxcur_camera_c cameraSkyClass;
 	rec_play_keyview_c keyviewClass;
