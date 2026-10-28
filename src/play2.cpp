@@ -1563,7 +1563,9 @@ static class rec_play_runner_c {
 #define PIC_SIZE_Y 160
 
 private:
-	int hitpose = 0;
+	int hitpose  = 0;
+	int charahit = 0; /* ランナーがノーツを叩いた絶対時間 */
+	int position = 0;
 	dxcur_divpic_c pic;
 
 public:
@@ -1582,23 +1584,21 @@ public:
 	}
 
 	void draw(
-		int x, int y, const dxcur_camera_c &camera, const rec_map_eff_data_t &mapeff,
-		int charahit, int npos, int Ntime, bool turn
+		const rec_play_lanepos_t &lanePos, const dxcur_camera_c &camera,
+		const rec_map_eff_data_t &mapeff, int Ntime, bool turn
 	) const {
-		int hitoffset = 0;
+		int x = lanePos.x[this->position];
+		int y = lanePos.y[this->position] - 75;
 		int offsetX = 0;
 		int picID = 0;
 
-		if (250 + charahit < GetNowCount()) { hitoffset = 0; }
-		else { hitoffset = pals(250, 0, 0, 50, GetNowCount() - charahit); }
-
-		if (0 < charahit) {
-			offsetX = hitoffset;
+		if (!this->is_hitting()) {
+			offsetX = pals_scale(250, 0, 0, 50, GetNowCount() - charahit);
 			picID = lins_scale(0, 24 + this->hitpose * 6, 750, 29 + this->hitpose * 6, GetNowCount() - charahit);
 		}
 		else {
 			offsetX = 0;
-			picID = (int)(Ntime * mapeff.v_BPM.nowData() / 20000) % 6 + mapeff.chamo[npos].nowData() * 6;
+			picID = (int)(Ntime * mapeff.v_BPM.nowData() / 20000) % 6 + mapeff.chamo[this->position].nowData() * 6;
 		}
 
 		if (turn) {
@@ -1611,6 +1611,26 @@ public:
 
 	void add_hitpose(int add) {
 		this->hitpose = (this->hitpose + add) % 2;
+	}
+
+	void set_charahit(int val) {
+		this->charahit = val;
+	}
+
+	int get_charahit(void) const {
+		return this->charahit;
+	}
+
+	void set_pos(int pos) {
+		this->position = pos;
+	}
+
+	int get_pos(void) const {
+		return this->position;
+	}
+
+	bool is_hitting(void) const {
+		return 750 + charahit < GetNowCount();
 	}
 
 #undef DIV_X
@@ -1626,8 +1646,6 @@ static class rec_play_runner_field_c {
 #define CHARA_POS_DOWN 2
 
 private:
-	int charahit = 0; //キャラがノーツをたたいた後であるかどうか。[1以上で叩いた、0で叩いてない]
-	int pos = 1; //キャラの今の位置[0で上,1で中,2で下]
 	rec_play_runner_c runner;
 	rec_play_chara_hit_attack_t hitatk;
 	dxcur_pic_c charaguideimg = dxcur_pic_c(_T("picture/play/Cguide.png"));
@@ -1635,8 +1653,6 @@ private:
 	rec_play_hiteff_c hiteff;
 
 public:
-	rec_play_runner_field_c(void) = default;
-
 	/**
 	 * 上下キー入力があったらそれに準ずる
 	 * 上記以外で、左右キー入力があったらmid
@@ -1648,28 +1664,28 @@ public:
 		int ans = CHARA_POS_MID;
 		// key action
 		if (keyhold.IsUpAction()) {
-			this->pos = CHARA_POS_UP;
+			this->runner.set_pos(CHARA_POS_UP);
 			return;
 		}
 		if (keyhold.IsDownAction()) {
-			this->pos = CHARA_POS_DOWN;
+			this->runner.set_pos(CHARA_POS_DOWN);
 			return;
 		}
 		if (keyhold.IsMidAction()) {
-			this->pos = CHARA_POS_MID;
+			this->runner.set_pos(CHARA_POS_MID);
 			return;
 		}
 		// near catch or bomb
 		if (IS_NEAR_NOTE_ACTOR_ANYLANE(note, time, 100)) {
-			this->pos = CHARA_POS_MID;
+			this->runner.set_pos(CHARA_POS_MID);
 			return;
 		}
 		// hit note
 		if (this->hitatk.time != -1000) {
-			this->pos = this->hitatk.pos;
+			this->runner.set_pos(this->hitatk.pos);
 			return;
 		}
-		this->pos = CHARA_POS_MID;
+		this->runner.set_pos(CHARA_POS_MID);
 		return;
 	}
 
@@ -1683,18 +1699,19 @@ public:
 	}
 
 	void UpdateCharahit(const rec_play_key_hold_c &keyhold) {
-		if ((GetNowCount() - this->charahit > 50) && keyhold.IsJustPushAnyArrow()) {
-			this->charahit = 0;
+		if (((50 + this->runner.get_charahit() < GetNowCount()) && keyhold.IsJustPushAnyArrow()) ||
+			(this->runner.get_charahit() + 750 < GetNowCount())
+		) {
+			this->runner.set_charahit(0);
 		}
-		if (keyhold.IsJustPushAnyHit()) { this->charahit = GetNowCount(); }
-		if (this->charahit + 750 < GetNowCount()) { this->charahit = 0; }
+		if (keyhold.IsJustPushAnyHit()) { this->runner.set_charahit(GetNowCount()); }
 	}
 
 	void SetHitatkByEvent(rec_hitatk_event_ec event, int Ntime) {
 		switch (event) {
 		case REC_HITATK_EVENT_RESET:
 			this->hitatk.time = -1000;
-			this->charahit    = 0;
+			this->runner.set_charahit(0);
 			break;
 		case REC_HITATK_EVENT_UP:
 			this->hitatk.pos  = 0;
@@ -1711,29 +1728,28 @@ public:
 		}
 	}
 
-	void ViewRunner(rec_map_eff_data_t *mapeff, const rec_play_key_hold_c &keyhold,
-		rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera_pos, int Ntime) const
+	void ViewRunner(const rec_map_eff_data_t &mapeff, const rec_play_lanepos_t &lanePos,
+		const dxcur_camera_c &camera_pos, int Ntime) const
 	{
 		// view chara pos guide
-		if (mapeff->carrow.nowData()) {
+		if (mapeff.carrow.nowData()) {
 			camera_pos.drawpic(
-				lanePos->x[this->pos] - 4,
-				lanePos->y[this->pos] - 4, this->charaguideimg.handle()
+				lanePos.x[this->runner.get_pos()] -  4,
+				lanePos.y[this->runner.get_pos()] -  4, this->charaguideimg.handle()
 			);
 		}
 		else {
 			camera_pos.drawpicTurn(
-				lanePos->x[this->pos] - 56,
-				lanePos->y[this->pos] - 4, this->charaguideimg.handle()
+				lanePos.x[this->runner.get_pos()] - 56,
+				lanePos.y[this->runner.get_pos()] -  4, this->charaguideimg.handle()
 			);
 		}
 		//判定マーカーの表示
 		for (int i = 0; i < 3; i++) {
-			camera_pos.drawpic(lanePos->x[i], lanePos->y[i], this->judghimg.handle());
+			camera_pos.drawpic(lanePos.x[i], lanePos.y[i], this->judghimg.handle());
 		}
 		/* キャラ表示 */
-		this->runner.draw(lanePos->x[this->pos], lanePos->y[this->pos] - 75, camera_pos, *mapeff,
-			charahit, this->pos, Ntime, !mapeff->carrow.nowData());
+		this->runner.draw(lanePos, camera_pos, mapeff, Ntime, !mapeff.carrow.nowData());
 	}
 
 	void drawHiteff(const dxcur_camera_c &camera_pos, const rec_play_lanepos_t &lanePos) {
@@ -1753,7 +1769,7 @@ public:
 	}
 
 	int getCharaPos(void) const {
-		return this->pos;
+		return this->runner.get_pos();
 	}
 };
 
@@ -2282,7 +2298,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		PlayShowAllGuideLine(&recfp, &lanePos, cameraClass, LineMoveN);
 		RecPlayDrawGuideBorder(&recfp, cameraClass, &lanePos);
 		/* キャラ周り表示 */
-		runnerClass.ViewRunner(&recfp.mapeff, keyhold, &lanePos, cameraClass, recfp.time.now);
+		runnerClass.ViewRunner(recfp.mapeff, lanePos, cameraClass, recfp.time.now);
 		runnerClass.drawHiteff(cameraClass, lanePos);
 		//コンボ表示
 		comboPicClass.ViewCombo(userpal.Ncombo);
