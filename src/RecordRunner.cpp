@@ -7,15 +7,16 @@
 
 /* rec system include */
 #include <RecSystem.h>
+#include <versionup.h>
 
 /* rec sub include */
+#include <title.h>
 #include <menu.h>
 #include <musicserect2.h>
-#include <option.h>
 #include <play2.h>
-#include <RecCollection.h>
-#include <title.h>
-#include <versionup.h>
+#include <RecAchievement.h>
+#include <RecStory.h>
+#include <option.h>
 
 #define DX_MAIN_DEF HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow
 
@@ -46,12 +47,15 @@ static void GameMain() {
 			rec_bgm_system_g.Delete();
 			next = musicserect(&ps);
 			break;
-		case SCENE_COLLECTION:
-		case SCENE_ACHIVEMENT: /* âºèàíu */
-		case SCENE_STORY: /* âºèàíu */
+		case SCENE_STORY:
 			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
 			rec_bgm_system_g.Play(false, true, true);
-			next = collection();
+			next = RecStory();
+			break;
+		case SCENE_ACHIEVEMENT:
+			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
+			rec_bgm_system_g.Play(false, true, true);
+			next = Achievement();
 			break;
 		case SCENE_OPTION:
 			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));

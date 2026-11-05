@@ -2,4 +2,4 @@
 
 #include <RecSystem.h>
 
-extern now_scene_t collection(void);
+extern now_scene_t RecStory(void);

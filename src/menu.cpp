@@ -195,6 +195,7 @@ static int RecMenuGetMouseAct(
 	dxcur_snd_c &s_sel
 ) {
 	int itemNo = -1;
+	int mouseHoil = 0;
 
 	itemNo = RecMenuMouseClickCheck(menuitem);
 	if (itemNo != -1) {
@@ -205,6 +206,17 @@ static int RecMenuGetMouseAct(
 	itemNo = RecMenuMouseMoveCheck(menuitem);
 	if (itemNo != -1 && cmd != itemNo) {
 		cmd = itemNo;
+		s_sel.PlaySound();
+	}
+
+	/* ホイール入力 */
+	mouseHoil = GetMouseWheelRotVol();
+	if (1 <= mouseHoil)  { /* 奥回し */
+		cmd--;
+		s_sel.PlaySound();
+	}
+	if (mouseHoil <= -1) { /* 手前回し */
+		cmd++;
 		s_sel.PlaySound();
 	}
 
@@ -278,12 +290,12 @@ now_scene_t RecMenuBase(void) {
 	rec_cutin_c cutin;
 
 	std::array<rec_menu_item_st, 6> menuitem = {
-		rec_menu_item_st{220, 295,  true, SCENE_SELECT,     _T("picture/menu/freerun_back.png")},
-		rec_menu_item_st{285, 450,  true, SCENE_CHALLENGE,  _T("picture/menu/freerun_back.png")},
-		rec_menu_item_st{408, 340, false, SCENE_ACHIVEMENT, _T("picture/menu/freerun_back.png")},
-		rec_menu_item_st{472, 208, false, SCENE_STORY,      _T("picture/menu/freerun_back.png")},
-		rec_menu_item_st{536, 222, false, SCENE_OPTION,     _T("picture/menu/freerun_back.png")},
-		rec_menu_item_st{598, 170, false, SCENE_EXIT,       _T("picture/menu/freerun_back.png")}
+		rec_menu_item_st{220, 295,  true, SCENE_SELECT,      _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{285, 450,  true, SCENE_CHALLENGE,   _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{408, 340, false, SCENE_ACHIEVEMENT, _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{472, 208, false, SCENE_STORY,       _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{536, 222, false, SCENE_OPTION,      _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{598, 170, false, SCENE_EXIT,        _T("picture/menu/freerun_back.png")}
 	};
 	menuitem[0].itempic.push_back(rec_menu_pic_item_c( 920, 330, _T("picture/menu/freerun_picker.png")));
 	menuitem[0].itempic.push_back(rec_menu_pic_item_c( 650, 250, _T("picture/menu/freerun_hit.png"   )));
@@ -293,7 +305,11 @@ now_scene_t RecMenuBase(void) {
 	menuitem[1].itempic.push_back(rec_menu_pic_item_c( 450, 450, _T("picture/menu/chall_silver2.png" )));
 	menuitem[1].itempic.push_back(rec_menu_pic_item_c( 650, 450, _T("picture/menu/chall_gator.png"   )));
 	menuitem[1].itempic.push_back(rec_menu_pic_item_c(1000, 200, _T("picture/menu/chall_taylor.png"  )));
-	menuitem[2].itempic.push_back(rec_menu_pic_item_c( 950, 350, _T("picture/menu/achiv_gator.png"   )));
+	menuitem[2].itempic.push_back(rec_menu_pic_item_c( 900, 350, _T("picture/menu/achiv_gator.png"   )));
+	menuitem[3].itempic.push_back(rec_menu_pic_item_c(1100, 350, _T("picture/menu/story_picker.png"  )));
+	menuitem[3].itempic.push_back(rec_menu_pic_item_c( 800, 180, _T("picture/menu/story_gator.png"   )));
+	menuitem[3].itempic.push_back(rec_menu_pic_item_c( 700, 520, _T("picture/menu/story_taylor.png"  )));
+	menuitem[4].itempic.push_back(rec_menu_pic_item_c( 800, 300, _T("picture/menu/option_taylor.png" )));
 
 	rec_menu_cursor_pic_c curpic;
 	dxcur_pic_c basepic(_T("picture/menu/menu_base.png"));
