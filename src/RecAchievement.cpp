@@ -8,21 +8,21 @@
 static class rec_clct_itemview_c {
 private:
 	bool openFg[10] = { false,false,false,false,false,false,false,false,false,false };
-	DxPic_t win = LoadGraph(L"picture/item枠.png");
-	DxPic_t cover = LoadGraph(L"picture/itemカバー.png");
-	DxPic_t backimg = LoadGraph(L"picture/COLLECT back.png");
-	DxPic_t item[11] = {
-		LoadGraph(L"picture/item0.png"),
-		LoadGraph(L"picture/item1.png"),
-		LoadGraph(L"picture/item2.png"),
-		LoadGraph(L"picture/item3.png"),
-		LoadGraph(L"picture/item4.png"),
-		LoadGraph(L"picture/item5.png"),
-		LoadGraph(L"picture/item6.png"),
-		LoadGraph(L"picture/item7.png"),
-		LoadGraph(L"picture/item8.png"),
-		LoadGraph(L"picture/item9.png"),
-		LoadGraph(L"picture/item10.png")
+	dxcur_pic_c win{_T("picture/item枠.png")};
+	dxcur_pic_c cover{_T("picture/itemカバー.png")};
+	dxcur_pic_c backimg{_T("picture/COLLECT back.png")};
+	dxcur_pic_c null_item{_T("picture/item0.png")};
+	dxcur_pic_c item[10] = {
+		dxcur_pic_c{_T("picture/item1.png")},
+		dxcur_pic_c{_T("picture/item2.png")},
+		dxcur_pic_c{_T("picture/item3.png")},
+		dxcur_pic_c{_T("picture/item4.png")},
+		dxcur_pic_c{_T("picture/item5.png")},
+		dxcur_pic_c{_T("picture/item6.png")},
+		dxcur_pic_c{_T("picture/item7.png")},
+		dxcur_pic_c{_T("picture/item8.png")},
+		dxcur_pic_c{_T("picture/item9.png")},
+		dxcur_pic_c{_T("picture/item10.png")}
 	};
 	DxSnd_t selectSnd = DXLIB_SND_NULL;
 
@@ -54,47 +54,20 @@ public:
 	}
 
 private:
-	void RecClctDrawItemPictureLine(uint DrawX, int DrawY, uint StartNum, uint count,
-		uint cmdX, uint cmdY)
-	{
-		uint cmd_item_num = 0;
-		uint DrawP = 0;
-		switch (cmdY) {
-		case 0:
-			cmd_item_num = cmdX + 0;
-			break;
-		case 1:
-			cmd_item_num = cmdX + 3;
-			break;
-		case 2:
-			cmd_item_num = cmdX + 7;
-			break;
+	void DrawItemPic(uint DrawX, int DrawY, uint cmd) {
+		RecRescaleDrawGraph(DrawX, DrawY, this->win.handle(), TRUE);
+		if (this->openFg[cmd]) {
+			RecRescaleDrawGraph(DrawX + 3, DrawY + 3, this->item[cmd].handle(), TRUE);
 		}
-		for (int i = 0; i < count; i++) {
-			DrawP = (this->openFg[i + StartNum]) ? (i + 1 + StartNum) : 0;
-			RecRescaleDrawGraph(DrawX + i * 150, DrawY, this->win, TRUE);
-			RecRescaleDrawGraph(DrawX + i * 150 + 3, DrawY + 3, this->item[DrawP], TRUE);
-			if (i + StartNum != cmd_item_num) {
-				RecRescaleDrawGraph(DrawX + i * 150, DrawY, this->cover, TRUE);
-			}
+		else {
+			RecRescaleDrawGraph(DrawX + 3, DrawY + 3, this->null_item.handle(), TRUE);
 		}
 		return;
 	}
 
-	void RecClctDrawItemDetail(uint cmdX, int cmdY) {
+	void RecClctDrawItemDetail(uint cmd) {
 		const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
-		uint itemNo = 0;
-		switch (cmdY) {
-		case 0:
-			itemNo = cmdX + 0;
-			break;
-		case 1:
-			itemNo = cmdX + 3;
-			break;
-		case 2:
-			itemNo = cmdX + 7;
-			break;
-		}
+		uint itemNo = cmd;
 		if (this->openFg[itemNo]) {
 			RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("%s:\n%s\n%s[%s]"),
 				p_item_data[itemNo].name,
@@ -111,31 +84,20 @@ private:
 
 public:
 	int C_item(void) {
-		int	command[2] = { 0,0 };
+		int	cmd = 0;
 		rec_helpbar_c help;
+		dxcur_window_pic_c winpic{_T("picture/achievement/window.png")};
 
 		while (1) {
 			InputAllKeyHold();
 			switch (GetKeyPushOnce()) {
-			case KEY_INPUT_LEFT:
-				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
-				command[0] = (command[0] + 3) % 4;
-				if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 2; }
-				break;
-			case KEY_INPUT_RIGHT:
-				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
-				command[0] = (command[0] + 1) % 4;
-				if (command[0] == 3 && (command[1] == 0 || command[1] == 2)) { command[0] = 0; }
-				break;
 			case KEY_INPUT_UP:
 				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
-				command[1] = (command[1] + 2) % 3;
-				if (command[0] == 3 && command[1] == 0) { command[0] = 2; }
+				cmd = LOOP_SUB(cmd, 10);
 				break;
 			case KEY_INPUT_DOWN:
 				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
-				command[1] = (command[1] + 1) % 3;
-				if (command[0] == 3 && command[1] == 2) { command[0] = 2; }
+				cmd = LOOP_ADD(cmd, 10);
 				break;
 			case KEY_INPUT_BACK:
 				return 0;
@@ -146,12 +108,11 @@ public:
 			if (GetWindowUserCloseFlag(TRUE)) { return 5; }
 
 			ClearDrawScreen();
-			RecRescaleDrawGraph(0, 0, this->backimg, TRUE);
+			RecRescaleDrawGraph(0, 0, this->backimg.handle(), TRUE);
+			winpic.draw(640, 50, 1230, 640);
 
-			this->RecClctDrawItemPictureLine(110,  20, 0, 3, command[0], command[1]);
-			this->RecClctDrawItemPictureLine( 40, 140, 3, 4, command[0], command[1]);
-			this->RecClctDrawItemPictureLine(110, 260, 7, 3, command[0], command[1]);
-			this->RecClctDrawItemDetail(command[0], command[1]);
+			this->DrawItemPic(100, 100, cmd);
+			this->RecClctDrawItemDetail(cmd);
 
 			help.DrawHelp(rec_helpbar_type_ec::COLLECT_ITEM);
 			ScreenFlip();
