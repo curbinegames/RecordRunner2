@@ -5,24 +5,57 @@
 #include <RecWindowRescale.h>
 #include <collect_seclet.h>
 
+static class rec_cursor_pic_c {
+private:
+	bool is_to_white = false;
+	DxTime_t Stime = GetNowCount();
+	dxcur_window_pic_c curpic{_T("picture/cursorwindow.png")};
+	dxcur_window_pic_c curwpic{_T("picture/cursorwindowwhite.png")};
+
+public:
+	void update(void) {
+		DxTime_t Ntime = GetNowCount();
+		if (this->Stime + 500 < Ntime) {
+			this->Stime = Ntime;
+			this->is_to_white = !this->is_to_white;
+		}
+	}
+
+	void draw(int left, int up, int right, int down) const {
+		DxTime_t Ntime = GetNowCount() - this->Stime;
+		int alpha = 255;
+		if (this->is_to_white) {
+			alpha = lins_scale(0, 0, 500, 255, Ntime);
+		}
+		else {
+			alpha = lins_scale(0, 255, 500, 0, Ntime);
+		}
+		curpic.draw(left, up, right, down);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
+		curwpic.draw(left, up, right, down);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	}
+};
+
 static class rec_clct_itemview_c {
 private:
 	bool openFg[10] = { false,false,false,false,false,false,false,false,false,false };
-	dxcur_pic_c win{_T("picture/item˜g.png")};
-	dxcur_pic_c cover{_T("picture/itemƒJƒo[.png")};
+	rec_cursor_pic_c cursor;
+	dxcur_pic_c win{_T("picture/achievement/item˜g.png")};
 	dxcur_pic_c backimg{_T("picture/COLLECT back.png")};
-	dxcur_pic_c null_item{_T("picture/item0.png")};
+	dxcur_pic_c null_item{_T("picture/achievement/item0.png")};
+	dxcur_window_pic_c winpic{_T("picture/achievement/window.png")};
 	dxcur_pic_c item[10] = {
-		dxcur_pic_c{_T("picture/item1.png")},
-		dxcur_pic_c{_T("picture/item2.png")},
-		dxcur_pic_c{_T("picture/item3.png")},
-		dxcur_pic_c{_T("picture/item4.png")},
-		dxcur_pic_c{_T("picture/item5.png")},
-		dxcur_pic_c{_T("picture/item6.png")},
-		dxcur_pic_c{_T("picture/item7.png")},
-		dxcur_pic_c{_T("picture/item8.png")},
-		dxcur_pic_c{_T("picture/item9.png")},
-		dxcur_pic_c{_T("picture/item10.png")}
+		dxcur_pic_c{_T("picture/achievement/item1.png")},
+		dxcur_pic_c{_T("picture/achievement/item2.png")},
+		dxcur_pic_c{_T("picture/achievement/item3.png")},
+		dxcur_pic_c{_T("picture/achievement/item4.png")},
+		dxcur_pic_c{_T("picture/achievement/item5.png")},
+		dxcur_pic_c{_T("picture/achievement/item6.png")},
+		dxcur_pic_c{_T("picture/achievement/item7.png")},
+		dxcur_pic_c{_T("picture/achievement/item8.png")},
+		dxcur_pic_c{_T("picture/achievement/item9.png")},
+		dxcur_pic_c{_T("picture/achievement/item10.png")}
 	};
 	DxSnd_t selectSnd = DXLIB_SND_NULL;
 
@@ -54,39 +87,59 @@ public:
 	}
 
 private:
-	void DrawItemPic(uint DrawX, int DrawY, uint cmd) {
-		RecRescaleDrawGraph(DrawX, DrawY, this->win.handle(), TRUE);
-		if (this->openFg[cmd]) {
-			RecRescaleDrawGraph(DrawX + 3, DrawY + 3, this->item[cmd].handle(), TRUE);
-		}
-		else {
-			RecRescaleDrawGraph(DrawX + 3, DrawY + 3, this->null_item.handle(), TRUE);
+	void DrawItemName(uint left, uint up, uint down) {
+		static constexpr uint list_gap = 40;
+		const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
+		for (uint i = 0; i < 10; i++) {
+			if (up + i * list_gap > down) { break; }
+			if (this->openFg[i]) {
+				DrawFormatString(left, up + i * list_gap, COLOR_WHITE, _T("%s"), p_item_data[i].name);
+			}
+			else {
+				DrawFormatString(left, up + i * list_gap, COLOR_WHITE, _T("???"));
+			}
 		}
 		return;
 	}
 
-	void RecClctDrawItemDetail(uint cmd) {
+	void DrawItemPic(uint DrawX, int DrawY, uint cmd) {
+		int size = 300;
+		DrawExtendGraph(DrawX, DrawY, DrawX + size, DrawY + size, this->win.handle(), TRUE);
+		if (this->openFg[cmd]) {
+			DrawExtendGraph(DrawX + 3, DrawY + 3, DrawX + size - 3, DrawY + size - 3, this->item[cmd].handle(), TRUE);
+		}
+		else {
+			DrawExtendGraph(DrawX + 3, DrawY + 3, DrawX + size - 3, DrawY + size - 3, this->null_item.handle(), TRUE);
+		}
+		return;
+	}
+
+	void DrawItemDetail(int x, int y, uint cmd) {
 		const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
 		uint itemNo = cmd;
 		if (this->openFg[itemNo]) {
-			RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("%s:\n%s\n%s[%s]"),
-				p_item_data[itemNo].name,
+			DrawFormatString(x, y, COLOR_WHITE, _T("%s\n%s[%s]"),
 				p_item_data[itemNo].detail1,
 				p_item_data[itemNo].detail2,
 				p_item_data[itemNo].condition);
 		}
 		else {
-			RecRescaleDrawFormatString(50, 400, COLOR_WHITE, _T("???\n[%s]"),
+			DrawFormatString(x, y, COLOR_WHITE, _T("[%s]"),
 				p_item_data[itemNo].condition);
 		}
 		return;
+	}
+
+	void DrawLeftWindow(int left, int up, int right, int down, uint cmd) {
+		winpic.draw(left, up, right, down);
+		this->DrawItemName(left + 30, up + 30, down - 30);
+		this->cursor.draw(left + 20, up + 25 + cmd * 40, right - 20, up + 60 + cmd * 40);
 	}
 
 public:
 	int C_item(void) {
 		int	cmd = 0;
 		rec_helpbar_c help;
-		dxcur_window_pic_c winpic{_T("picture/achievement/window.png")};
 
 		while (1) {
 			InputAllKeyHold();
@@ -107,12 +160,16 @@ public:
 
 			if (GetWindowUserCloseFlag(TRUE)) { return 5; }
 
+			this->cursor.update();
+
 			ClearDrawScreen();
 			RecRescaleDrawGraph(0, 0, this->backimg.handle(), TRUE);
-			winpic.draw(640, 50, 1230, 640);
 
-			this->DrawItemPic(100, 100, cmd);
-			this->RecClctDrawItemDetail(cmd);
+			this->DrawLeftWindow(50, 50, 590, 640, cmd);
+			this->DrawItemPic(790, 50, cmd);
+
+			winpic.draw(640, 400, 1230, 640);
+			this->DrawItemDetail(650, 420, cmd);
 
 			help.DrawHelp(rec_helpbar_type_ec::COLLECT_ITEM);
 			ScreenFlip();

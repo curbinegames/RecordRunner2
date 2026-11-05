@@ -292,7 +292,7 @@ now_scene_t RecMenuBase(void) {
 	std::array<rec_menu_item_st, 6> menuitem = {
 		rec_menu_item_st{220, 295,  true, SCENE_SELECT,      _T("picture/menu/freerun_back.png")},
 		rec_menu_item_st{285, 450,  true, SCENE_CHALLENGE,   _T("picture/menu/freerun_back.png")},
-		rec_menu_item_st{408, 340, false, SCENE_ACHIEVEMENT, _T("picture/menu/freerun_back.png")},
+		rec_menu_item_st{408, 370, false, SCENE_ACHIEVEMENT, _T("picture/menu/freerun_back.png")},
 		rec_menu_item_st{472, 208, false, SCENE_STORY,       _T("picture/menu/freerun_back.png")},
 		rec_menu_item_st{536, 222, false, SCENE_OPTION,      _T("picture/menu/freerun_back.png")},
 		rec_menu_item_st{598, 170, false, SCENE_EXIT,        _T("picture/menu/freerun_back.png")}
