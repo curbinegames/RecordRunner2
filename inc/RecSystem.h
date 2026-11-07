@@ -228,8 +228,8 @@ private:
 
 	const std::vector<rec_system_langstr_c> str_option = {
 		rec_system_langstr_c{
-			_T("上下左右キー:選択   BackSpaceキー:保存して戻る"),
-			_T("←↓↑→ key:choose   BackSpace key:save the option and return")
+			_T("上下左右キー:選択   PageUp/Downキー:カテゴリ変更   BackSpaceキー:保存して戻る"),
+			_T("←↓↑→ key:choose   PageUp/Down key:change category   BackSpace key:save the option and return")
 		}
 	};
 #endif /* str系 */

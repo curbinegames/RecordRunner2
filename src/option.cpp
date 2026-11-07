@@ -575,6 +575,7 @@ void RecOptionDrawCategory(std::array<rec_option_category_t, 2> &now_option_list
 			color = COLOR_GRAY;
 		}
 		DrawFormatString(50 + i * 200, 50, color, L"%s", now_option_list[i].name.get_str().c_str());
+		DrawBox(45 + i * 200, 45, 200 + i * 200, 80, color, FALSE);
 	}
 }
 
@@ -619,6 +620,27 @@ static void RecOptionKeyCtrl(
 	std::array<rec_option_category_t, 2> &option_list,
 	int *cmd, int &cmd_list, bool *exitFg, dxcur_snd_c &s_sel
 ) {
+	int mouseBtn = 0;
+	int mouseX = 0;
+	int mouseY = 0;
+	int mouseAct = 0;
+
+	/* マウス入力 */
+	while (GetMouseInputLog2(&mouseBtn, &mouseX, &mouseY, &mouseAct, true) == 0) {}
+	if ((mouseBtn & MOUSE_INPUT_LEFT) && (mouseAct == MOUSE_INPUT_LOG_DOWN)) {
+		if (IS_BETWEEN(45, mouseX, 200) && IS_BETWEEN(45, mouseY, 80)) {
+			cmd_list = 0;
+			*cmd = 0;
+			s_sel.PlaySound();
+		}
+		else if (IS_BETWEEN(245, mouseX, 400) && IS_BETWEEN(45, mouseY, 80)) {
+			cmd_list = 1;
+			*cmd = 0;
+			s_sel.PlaySound();
+		}
+	}
+
+	/* キー入力 */
 	InputAllKeyHold();
 	switch (GetKeyPushOnce()) {
 	case KEY_INPUT_UP:   /* 項目選択 */
