@@ -50,7 +50,11 @@ public:
 			dxcur_pic_c(L"picture/play/hitc-X.png"),
 			dxcur_pic_c(L"picture/play/hitc-W.png"),
 		};
-		dxcur_pic_c catchi = dxcur_pic_c(L"picture/play/catch.png");
+		dxcur_pic_c catchi[3] = {
+			dxcur_pic_c(L"picture/play/catch.png"),
+			dxcur_pic_c(L"picture/play/catch_G.png"),
+			dxcur_pic_c(L"picture/play/catch_B.png"),
+		};
 		dxcur_pic_c up     = dxcur_pic_c(L"picture/play/up.png");
 		dxcur_pic_c down   = dxcur_pic_c(L"picture/play/down.png");
 		dxcur_pic_c left   = dxcur_pic_c(L"picture/play/left.png");
@@ -89,7 +93,7 @@ public:
 		return DrawX;
 	}
 
-	void DrawNotesBase(int x, int y, int cr, const dxcur_camera_c &camera, note_material mat) const {
+	void DrawNotesBase(int x, int y, int cr, int lane, const dxcur_camera_c &camera, note_material mat) const {
 		DxPic_t DrawID = 0;
 		switch (mat) {
 		case 1: /* TODO: enum‚É‚·‚é */
@@ -105,7 +109,7 @@ public:
 			DrawID = this->pic.hitcircle[cr].handle();
 			break;
 		case 2:
-			DrawID = this->pic.catchi.handle();
+			DrawID = this->pic.catchi[lane].handle();
 			break;
 		case 3:
 			DrawID = this->pic.up.handle();
@@ -144,7 +148,7 @@ public:
 		int  DrawX  = this->CalXpos(recfp, lanePos, note, iLine);
 		int  DrawY  = (YLockp ? note.ypos : lanePos.y[iLine]);
 
-		this->DrawNotesBase(DrawX, DrawY, note.color, camera, note.object);
+		this->DrawNotesBase(DrawX, DrawY, note.color, iLine, camera, note.object);
 		return true;
 	}
 
