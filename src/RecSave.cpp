@@ -240,6 +240,20 @@ int RecSaveReadUserPlay(rec_user_data_t *dest) {
 	fread(dest, sizeof(rec_user_data_t), 1, fp);
 	fclose(fp);
 
+#define cat(a, name, b)                            \
+	if (!IS_BETWEEN((a), dest->name, b)) {         \
+		dest->name = betweens((a), dest->name, b); \
+	}
+
+	cat(0,  playCount, 10000);
+	cat(0,  dropCount, 10000);
+	cat(0, clearCount, 10000);
+	cat(0,    NMCount, 10000);
+	cat(0,    FCCount, 10000);
+	cat(0,    PFcount, 10000);
+
+#undef cat
+
 	return 0;
 }
 
