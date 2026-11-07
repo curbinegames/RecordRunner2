@@ -268,6 +268,93 @@ rec_clear_rank_t RecCRank2ToCRank(rec_clear_type2_et type) {
 
 #endif /* enum操作系 */
 
+#if 1 /* rec_se_system_c */
+
+void rec_se_system_c::LoadBase(const tstring &path) {
+	this->snd = LoadGraph(path.c_str());
+	if (this->snd != DXLIB_SND_NULL) {
+		this->path = path;
+		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->snd);
+	}
+	else {
+		this->path.clear();
+	}
+}
+
+void rec_se_system_c::DeleteBase(void) {
+	if (this->IsValid()) {
+		DeleteSoundMem(this->snd);
+		this->snd = DXLIB_SND_NULL;
+	}
+}
+
+rec_se_system_c::rec_se_system_c() {}
+
+rec_se_system_c::rec_se_system_c(const tstring &path) {
+	this->LoadBase(path);
+}
+
+rec_se_system_c::~rec_se_system_c() {
+	this->DeleteBase();
+}
+
+rec_se_system_c::rec_se_system_c(const rec_se_system_c &obj) {
+	if (obj.IsValid()) {
+		this->LoadBase(obj.path.c_str());
+	}
+}
+
+rec_se_system_c &rec_se_system_c::operator=(const rec_se_system_c &obj) {
+	if (this != &obj) {
+		this->DeleteBase();
+		if (obj.IsValid()) {
+			this->LoadBase(obj.path.c_str());
+		}
+	}
+	return *this;
+}
+
+rec_se_system_c::rec_se_system_c(rec_se_system_c &&obj) noexcept {
+	this->snd = obj.snd;
+	this->path = std::move(obj.path);
+	obj.snd = DXLIB_SND_NULL;
+	obj.path.clear();
+}
+
+rec_se_system_c &rec_se_system_c::operator=(rec_se_system_c &&obj) noexcept {
+	if (this != &obj) {
+		this->DeleteBase();
+		this->snd = obj.snd;
+		this->path = std::move(obj.path);
+		obj.snd = DXLIB_SND_NULL;
+		obj.path.clear();
+	}
+	return *this;
+}
+
+void rec_se_system_c::reserveSound(void) {
+	if (!this->IsValid()) { return; }
+	this->reserveFlag = true;
+}
+
+void rec_se_system_c::playSound(void) {
+	if (!this->IsValid()) { return; }
+	if (!this->reserveFlag) { return; }
+	PlaySoundMem(this->snd, DX_PLAYTYPE_BACK, FALSE);
+	this->reserveFlag = false;
+}
+
+void rec_se_system_c::reload(const tstring &path) {
+	this->DeleteBase();
+	this->LoadBase(path);
+}
+
+bool rec_se_system_c::IsValid(void) const {
+	return (this->snd != DXLIB_SND_NULL);
+}
+
+#endif /* rec_se_system_c */
+
 bool RecGetPackList(std::vector<tstring> &list) {
 	list.clear();
 	DxFile_t file = FileRead_open(_T("RecordPack.txt"));
@@ -367,4 +454,76 @@ rec_error_t RecGetMusicMapTxtPath(tstring &ret, uint packNo, uint songNo, rec_di
 	ret += (TCHAR)((int)_T('0') + (int)difNo);
 	ret += _T(".txt");
 	return REC_ERROR_NONE;
+}
+
+static std::size_t AddNewLineString_FindSingleSlashPos(const tstring &str, std::size_t startpos) {
+    for (std::size_t i = startpos; i < str.size(); i++) {
+        if (str[i] == _T('/')) {
+            if (str.size() <= i + 1) {
+                return i;
+            }
+            else if (str[i + 1] != _T('/')) {
+                return i;
+            }
+            i++;
+        }
+    }
+    return tstring::npos;
+}
+
+static std::vector<tstring> AddNewLineString_MakeList(const tstring &str) {
+    std::vector<tstring> list;
+    std::size_t nowpos = 0;
+    while (nowpos < str.size()) {
+        auto spos = AddNewLineString_FindSingleSlashPos(str, nowpos);
+        if (spos != tstring::npos) {
+            list.push_back(str.substr(nowpos, spos - nowpos));
+            nowpos = spos + 1;
+        }
+        else {
+            list.push_back(str.substr(nowpos));
+            nowpos = str.size();
+        }
+    }
+    return list;
+}
+
+/**
+ * @brief 横幅に合わせて改行を挿入する
+ * @param[in] str 対象文字列
+ * @param[in] width 横幅
+ * @return 改行を挿入した文字列
+ * @details strの中にある'/'を単語の区切りとする。'/'そのものを表示したい場合は"//"とする。1単語が長すぎる場合は改行しない。
+ */
+tstring AddNewLineString(const tstring &str, std::size_t width) {
+    std::vector<tstring> list;
+    tstring result;
+	std::size_t line_len = 0;
+
+    list = AddNewLineString_MakeList(str);
+	if (list.empty()) { return _T(""); }
+
+    for (std::size_t i = 0; i < list.size(); i++) {
+        while (1) {
+            auto pos = list[i].find(_T("//"));
+            if (pos == tstring::npos) { break; }
+            list[i].erase(pos, 1);
+        }
+    }
+
+	result += list[0];
+	line_len += list[0].size();
+	for (std::size_t i = 1; i < list.size(); i++) {
+		if (line_len + list[i].size() <= width) {
+			result += list[i];
+			line_len += list[i].size();
+		}
+		else {
+			result += _T("\n");
+			result += list[i];
+			line_len = list[i].size();
+		}
+	}
+
+    return result;
 }

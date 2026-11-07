@@ -282,6 +282,32 @@ extern rec_clear_rank_t RecCRank2ToCRank(rec_clear_type2_et type);
 
 #endif /* enumëÄçÏån */
 
+class rec_se_system_c {
+private:
+	DxSnd_t snd = DXLIB_SND_NULL;
+	tstring path = _T("");
+	bool reserveFlag = false;
+
+private:
+	void LoadBase(const tstring &path);
+	void DeleteBase(void);
+
+public:
+	rec_se_system_c();
+	rec_se_system_c(const tstring &path);
+	~rec_se_system_c();
+	rec_se_system_c(const rec_se_system_c &obj);
+	rec_se_system_c &operator=(const rec_se_system_c &obj);
+	rec_se_system_c(rec_se_system_c &&obj) noexcept;
+	rec_se_system_c &operator=(rec_se_system_c &&obj) noexcept;
+
+public:
+	void reserveSound(void);
+	void playSound(void);
+	void reload(const tstring &path);
+	bool IsValid(void) const;
+};
+
 extern bool RecGetPackList(std::vector<tstring> &list);
 extern bool RecGetMusicList(std::vector<tstring> &list, const tstring &packName);
 
@@ -292,3 +318,5 @@ extern rec_error_t RecGetMusicFolderPath(tstring &ret, uint packNo, uint songNo)
 extern rec_error_t RecGetMusicFolderName(tstring &ret, uint packNo, uint songNo);
 extern rec_error_t RecGetMusicMapRrsPath(tstring &ret, uint packNo, uint songNo, rec_dif_t difNo);
 extern rec_error_t RecGetMusicMapTxtPath(tstring &ret, uint packNo, uint songNo, rec_dif_t difNo);
+
+extern tstring AddNewLineString(const tstring &str, std::size_t width);

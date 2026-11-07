@@ -37,8 +37,10 @@ public:
 	}
 };
 
-static class rec_clct_itemview_c {
+static class rec_achivement_c {
 private:
+	static constexpr uint list_gap = 40;
+
 	bool openFg[10] = { false,false,false,false,false,false,false,false,false,false };
 	rec_cursor_pic_c cursor;
 	dxcur_pic_c win{_T("picture/achievement/item˜g.png")};
@@ -57,10 +59,10 @@ private:
 		dxcur_pic_c{_T("picture/achievement/item9.png")},
 		dxcur_pic_c{_T("picture/achievement/item10.png")}
 	};
-	DxSnd_t selectSnd = DXLIB_SND_NULL;
+	rec_se_system_c selectSnd{_T("sound/select.wav")};
 
 private:
-	void RecClctGetItemOpenFg(void) {
+	void GetItemOpenFg(void) {
 		const double Grate = RecSaveGetFullRunnerRate();
 		rec_user_data_t userData;
 
@@ -79,24 +81,15 @@ private:
 		return;
 	}
 
-public:
-	rec_clct_itemview_c(void) {
-		this->selectSnd = LoadSoundMem(L"sound/select.wav");
-		ChangeVolumeSoundMem(optiondata.SEvolume * 255 / 10, this->selectSnd);
-		this->RecClctGetItemOpenFg();
-	}
-
-private:
 	void DrawItemName(uint left, uint up, uint down) {
-		static constexpr uint list_gap = 40;
 		const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
 		for (uint i = 0; i < 10; i++) {
-			if (up + i * list_gap > down) { break; }
+			if (up + i * this->list_gap > down) { break; }
 			if (this->openFg[i]) {
-				DrawFormatString(left, up + i * list_gap, COLOR_WHITE, _T("%s"), p_item_data[i].name);
+				DrawFormatString(left, up + i * this->list_gap, COLOR_WHITE, _T("%s"), p_item_data[i].name.c_str());
 			}
 			else {
-				DrawFormatString(left, up + i * list_gap, COLOR_WHITE, _T("???"));
+				DrawFormatString(left, up + i * this->list_gap, COLOR_WHITE, _T("???"));
 			}
 		}
 		return;
@@ -118,14 +111,13 @@ private:
 		const rec_collect_item_set_t *const p_item_data = (optiondata.lang == 0) ? item_data_jp : item_data_en;
 		uint itemNo = cmd;
 		if (this->openFg[itemNo]) {
-			DrawFormatString(x, y, COLOR_WHITE, _T("%s\n%s[%s]"),
-				p_item_data[itemNo].detail1,
-				p_item_data[itemNo].detail2,
-				p_item_data[itemNo].condition);
+			DrawFormatString(x, y, COLOR_WHITE, _T("%s\n[%s]"),
+				AddNewLineString(p_item_data[itemNo].detail, 21).c_str(),
+				p_item_data[itemNo].condition.c_str());
 		}
 		else {
 			DrawFormatString(x, y, COLOR_WHITE, _T("[%s]"),
-				p_item_data[itemNo].condition);
+				p_item_data[itemNo].condition.c_str());
 		}
 		return;
 	}
@@ -133,26 +125,38 @@ private:
 	void DrawLeftWindow(int left, int up, int right, int down, uint cmd) {
 		winpic.draw(left, up, right, down);
 		this->DrawItemName(left + 30, up + 30, down - 30);
-		this->cursor.draw(left + 20, up + 25 + cmd * 40, right - 20, up + 60 + cmd * 40);
+		this->cursor.draw(left + 20, up + 25 + cmd * this->list_gap, right - 20, up + 60 + cmd * this->list_gap);
+	}
+
+	void DrawDetailWindow(int left, int up, int right, int down, uint cmd) {
+		winpic.draw(left, up, right, down);
+		this->DrawItemDetail(left + 10, up + 20, cmd);
 	}
 
 public:
-	int C_item(void) {
+	int action(void) {
 		int	cmd = 0;
 		rec_helpbar_c help;
+
+		int win_sizeX = 0;
+		int win_sizeY = 0;
+		GetScreenState(&win_sizeX, &win_sizeY, NULL);
+
+		this->GetItemOpenFg();
 
 		while (1) {
 			InputAllKeyHold();
 			switch (GetKeyPushOnce()) {
 			case KEY_INPUT_UP:
-				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
+				this->selectSnd.reserveSound();
 				cmd = LOOP_SUB(cmd, 10);
 				break;
 			case KEY_INPUT_DOWN:
-				PlaySoundMem(this->selectSnd, DX_PLAYTYPE_NORMAL);
+				this->selectSnd.reserveSound();
 				cmd = LOOP_ADD(cmd, 10);
 				break;
 			case KEY_INPUT_BACK:
+			case KEY_INPUT_ESCAPE:
 				return 0;
 			default:
 				break;
@@ -165,14 +169,14 @@ public:
 			ClearDrawScreen();
 			RecRescaleDrawGraph(0, 0, this->backimg.handle(), TRUE);
 
-			this->DrawLeftWindow(50, 50, 590, 640, cmd);
+			this->DrawLeftWindow(50, 50, win_sizeX / 2 - 25, win_sizeY - 80, cmd);
 			this->DrawItemPic(790, 50, cmd);
-
-			winpic.draw(640, 400, 1230, 640);
-			this->DrawItemDetail(650, 420, cmd);
+			this->DrawDetailWindow(win_sizeX / 2 + 25, win_sizeY / 2, win_sizeX - 50, win_sizeY - 80, cmd);
 
 			help.DrawHelp(rec_helpbar_type_ec::COLLECT_ITEM);
 			ScreenFlip();
+
+			this->selectSnd.playSound();
 
 			WaitTimer(WAIT_TIME_ON_GAMELOOP);
 		}
@@ -181,8 +185,8 @@ public:
 };
 
 now_scene_t Achievement(void) {
-	rec_clct_itemview_c action;
-	switch (action.C_item()) {
+	rec_achivement_c action;
+	switch (action.action()) {
 	case 0:
 		return SCENE_MENU;
 	case 5:
