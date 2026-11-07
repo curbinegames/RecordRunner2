@@ -2097,6 +2097,11 @@ public:
 
 class rec_play_allset_c {
 public:
+	int AllNotesHitTime = -1;
+	int LaneTrack[3] = { -150,-150,-150 };
+	rec_play_lanepos_t lanePos;
+	rec_play_userpal_t userpal;
+
 	rec_play_back_pic_c backpic;
 	rec_play_notepic_c noteimg;
 	rec_play_sbar_c sbarClass;
@@ -2116,6 +2121,8 @@ public:
 	dxcur_camera_c cameraClass;
 	dxcur_camera_c cameraSkyClass;
 
+	rec_cutin_c cutin;
+
 private:
 	void DrawDebug(const rec_score_file_t &recfp) const {
 		RecRescaleDrawFormatString(20, 120, COLOR_WHITE, L"mdif: %.2f",
@@ -2130,22 +2137,105 @@ private:
 	}
 
 public:
+	void UpdateAll(
+		int &Stime,
+		int AutoFlag,
+		int &StopFrag,
+		rec_score_file_t &recfp,
+		rec_play_key_hold_c &keyhold,
+		rec_play_snditem_all_c &snd_set_class
+	) {
+		//計算
+		//カメラ移動
+		RecPlaySetCamera(this->cameraClass, this->cameraSkyClass, recfp.mapeff.camera, recfp.time.now);
+		//lanePos.x(横位置)の計算
+		recSetLine(this->lanePos.x, recfp.mapeff.move.x, recfp.time.now, 3);
+		//lanePos.y(縦位置)の計算
+		if (optiondata.backbright == 0) {
+			recSetLine(this->lanePos.y, recfp.mapeff.move.y, recfp.time.now, 3);
+		}
+		else {
+			recSetLine(this->lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
+		}
+		this->runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, keyhold);
+		this->runnerClass.UpdateHitatk(keyhold, recfp.time.now);
+		this->runnerClass.UpdateCharahit(keyhold);
+		//キャッチ判定に使う数値を計算
+		RecPlayCalLaneTrack(this->LaneTrack, keyhold, this->runnerClass.getCharaPos(), recfp.time.now);
+		/* ノーツ判定 */ {
+			rec_hitatk_event_ec hitatk_ev = REC_HITATK_EVENT_NONE;
+			std::queue<rec_judge_event_st> event_queue;
+			RecJudgeAllNotes(
+				event_queue, recfp.mapdata.note, recfp.time.now, keyhold, hitatk_ev,
+				this->LaneTrack, this->runnerClass.getCharaPos(), &this->userpal, snd_set_class
+			);
+			while (!event_queue.empty()) {
+				this->runnerClass.setHiteff(
+					event_queue.front().judge, event_queue.front().mat,
+					event_queue.front().lineNo
+				);
+				this->judgepicClass.setJudge(event_queue.front().judge);
+				event_queue.pop();
+			}
+			this->runnerClass.SetHitatkByEvent(hitatk_ev, recfp.time.now);
+		}
+		/* スコア計算 */ {
+			rec_play_score_calculator_c action;
+			action.RecPlayCalUserPal(&this->userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
+		}
+		//ノーツが全部なくなった瞬間の時間を記録
+		if (GetRemainNotes(this->userpal.judgeCount, recfp.mapdata.notes) == 0 && this->AllNotesHitTime < 0) {
+			this->AllNotesHitTime = GetNowCount();
+		}
+		//時間計算
+		if (StopFrag == -1) {
+			recfp.time.now = GetNowCount() - Stime + optiondata.offset * 5;
+		}
+		else {
+			Stime = GetNowCount() - recfp.time.now + optiondata.offset * 5;
+		}
+
+		this->bonusClass.update();
+		this->runnerClass.updateHiteff();
+		this->runnerClass.addHitPose(keyhold.GetHitPushCount());
+
+		if (optiondata.backbright != 0) {
+			this->backpic.update(recfp.mapeff, this->cameraClass, this->cameraSkyClass);
+		}
+		this->fpsClass.update(recfp.time.now);
+		//オートでなく、ノーミス以上を出したら演出
+		if (AutoFlag == 0 && this->AllNotesHitTime + 2000 > GetNowCount()) {
+			this->AllNotesHitTime = 0;
+			this->bonusClass.setBonus(this->userpal.judgeCount); /* TODO: もっと内部で呼びたい */
+		}
+
+		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
+		if ((this->cutin.IsClosing() == 0) &&
+			(recfp.time.end + 5000 <= recfp.time.now) &&
+			(rec_bgm_system_g.RecCheckSoundMem() == 0))
+		{
+			this->cutin.SetCutTipFg(CUTIN_TIPS_NONE);
+			this->cutin.SetIo(CUT_FRAG_IN);
+		}
+
+		keyviewClass.update(keyhold);
+
+		this->keyviewClass.update(keyhold);
+	}
+
 	void DrawAllUI(
 		const rec_score_file_t &recfp,
 		int holdG,
 		int HighScore,
 		int AutoFlag,
 		const short LineMoveN[],
-		const rec_play_key_hold_c &keyhold,
-		const rec_play_lanepos_t &lanePos,
-		const rec_play_userpal_t &userpal,
-		const rec_cutin_c &cutin
+		const rec_play_key_hold_c &keyhold
 	) const {
 		//背景表示
 		if (optiondata.backbright != 0) {
 			rec_play_draw_back_c action;
-			this->backpic.draw(lanePos.y, this->cameraClass, this->cameraSkyClass);
-			action.PlayDrawBackGround(&recfp.mapeff, lanePos.y, this->itemClass.GetItemList());
+			this->backpic.draw(this->lanePos.y, this->cameraClass, this->cameraSkyClass);
+			action.PlayDrawBackGround(&recfp.mapeff, this->lanePos.y, this->itemClass.GetItemList());
 		}
 		//フィルター表示
 		switch (optiondata.backbright) {
@@ -2162,26 +2252,26 @@ public:
 		}
 		//アイテム表示
 		if (optiondata.backbright != 0) {
-			PlayDrawItem(&recfp.mapeff, recfp.time.now, lanePos.x[1],
+			PlayDrawItem(&recfp.mapeff, recfp.time.now, this->lanePos.x[1],
 				this->cameraClass, this->itemClass.GetItemList());
 		}
 		// view line
-		PlayShowAllGuideLine(&recfp, &lanePos, this->cameraClass, LineMoveN);
-		RecPlayDrawGuideBorder(&recfp, this->cameraClass, &lanePos);
+		PlayShowAllGuideLine(&recfp, &this->lanePos, this->cameraClass, LineMoveN);
+		RecPlayDrawGuideBorder(&recfp, this->cameraClass, &this->lanePos);
 		/* キャラ周り表示 */
-		this->runnerClass.ViewRunner(recfp.mapeff, lanePos, this->cameraClass, recfp.time.now);
-		this->runnerClass.drawHiteff(this->cameraClass, lanePos);
+		this->runnerClass.ViewRunner(recfp.mapeff, this->lanePos, this->cameraClass, recfp.time.now);
+		this->runnerClass.drawHiteff(this->cameraClass, this->lanePos);
 		//コンボ表示
-		this->comboPicClass.ViewCombo(userpal.Ncombo);
+		this->comboPicClass.ViewCombo(this->userpal.Ncombo);
 		//判定表示
-		this->judgepicClass.draw(this->cameraClass, &lanePos, this->runnerClass.getCharaPos());
+		this->judgepicClass.draw(this->cameraClass, &this->lanePos, this->runnerClass.getCharaPos());
 		/* 音符表示 */
-		this->noteimg.draw(recfp, lanePos, this->cameraClass);
+		this->noteimg.draw(recfp, this->lanePos, this->cameraClass);
 
 		//スコアバー表示
-		this->sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighScore, holdG);
+		this->sbarClass.ViewScoreBar(&this->userpal, &recfp.time, &recfp.mapdata, HighScore, holdG);
 		//判定ずれバー表示
-		this->gapbarClass.ViewGapBar(&userpal.gap);
+		this->gapbarClass.ViewGapBar(&this->userpal.gap);
 		//キー押し状況表示(オプション)
 		this->keyviewClass.ViewKeyview(keyhold);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
@@ -2197,110 +2287,15 @@ public:
 		RECR_DEBUG(1, RecPlayDebug[1]);
 		RECR_DEBUG(2, RecPlayDebug[2]);
 
-		if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, this->dropimg.handle(), TRUE); }
-		else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, this->dangerimg.handle(), TRUE); }
+		if (this->userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, this->dropimg.handle(), TRUE); }
+		else if (this->userpal.life <= 100) { RecRescaleDrawGraph(0, 0, this->dangerimg.handle(), TRUE); }
 		this->bonusClass.draw();
-		cutin.DrawCut();
+		this->cutin.DrawCut();
 	}
 
 };
 
 #endif /* class */
-
-static void RecPlayDrawAll(
-	const rec_score_file_t &recfp,
-	int holdG,
-	int HighScore,
-	int AutoFlag,
-	const short LineMoveN[],
-	const rec_play_key_hold_c &keyhold,
-	const rec_play_lanepos_t &lanePos,
-	const rec_play_userpal_t &userpal,
-	const rec_play_notepic_c &noteimg,
-	const rec_play_sbar_c &sbarClass,
-	const rec_play_gapbar_c &gapbarClass,
-	const rec_play_runner_field_c &runnerClass,
-	const rec_play_combo_c &comboPicClass,
-	const rec_play_judge_pic_c &judgepicClass,
-	const rec_play_item_c &itemClass,
-	const rec_play_keyview_c &keyviewClass,
-	const rec_play_fps_c &fpsClass,
-	const dxcur_pic_c &filterimg,
-	const rec_play_back_pic_c &backpic,
-	const dxcur_pic_c &dropimg,
-	const dxcur_pic_c &dangerimg,
-	const rec_play_bonus_c &bonusClass,
-	const dxcur_camera_c &cameraClass,
-	const dxcur_camera_c &cameraSkyClass,
-	const rec_cutin_c &cutin
-) {
-	//背景表示
-	if (optiondata.backbright != 0) {
-		rec_play_draw_back_c action;
-		backpic.draw(lanePos.y, cameraClass, cameraSkyClass);
-		action.PlayDrawBackGround(&recfp.mapeff, lanePos.y, itemClass.GetItemList());
-	}
-	//フィルター表示
-	switch (optiondata.backbright) {
-	case 1:
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
-		RecRescaleDrawGraph(0, 0, filterimg.handle(), TRUE);
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		break;
-	case 2:
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 85);
-		RecRescaleDrawGraph(0, 0, filterimg.handle(), TRUE);
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		break;
-	}
-	//アイテム表示
-	if (optiondata.backbright != 0) {
-		PlayDrawItem(&recfp.mapeff, recfp.time.now, lanePos.x[1], cameraClass, itemClass.GetItemList());
-	}
-	// view line
-	PlayShowAllGuideLine(&recfp, &lanePos, cameraClass, LineMoveN);
-	RecPlayDrawGuideBorder(&recfp, cameraClass, &lanePos);
-	/* キャラ周り表示 */
-	runnerClass.ViewRunner(recfp.mapeff, lanePos, cameraClass, recfp.time.now);
-	runnerClass.drawHiteff(cameraClass, lanePos);
-	//コンボ表示
-	comboPicClass.ViewCombo(userpal.Ncombo);
-	//判定表示
-	judgepicClass.draw(cameraClass, &lanePos, runnerClass.getCharaPos());
-	/* 音符表示 */
-	noteimg.draw(recfp, lanePos, cameraClass);
-
-	//スコアバー表示
-	sbarClass.ViewScoreBar(&userpal, &recfp.time, &recfp.mapdata, HighScore, holdG);
-	//判定ずれバー表示
-	gapbarClass.ViewGapBar(&userpal.gap);
-	//キー押し状況表示(オプション)
-	keyviewClass.ViewKeyview(keyhold);
-	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-	//デバッグ表示
-	if (AutoFlag == 1) {
-		RecRescaleDrawFormatString(20,  80, COLOR_WHITE, L"FPS: %.2f", fpsClass.GetFps());
-		RecRescaleDrawFormatString(20, 100, COLOR_WHITE, L"Autoplay");
-	}
-	if (holdG >= 1) {
-		RecRescaleDrawFormatString(20, 120, COLOR_WHITE, L"mdif: %.2f", recfp.mapdata.mpal.mdif / 100.0);
-		RacPlayDrawFieldGrid(cameraClass);
-		RecRescaleDrawFormatString(
-			20, 140, COLOR_WHITE,
-			_T("camera: x=%d, y=%d,\n        zoom=%.2f, rot=%.1f"),
-			cameraClass.getX(), cameraClass.getY(),
-			cameraClass.getZoom(), cameraClass.getAngleDeg()
-		);
-	}
-	RECR_DEBUG(0, RecPlayDebug[0]);
-	RECR_DEBUG(1, RecPlayDebug[1]);
-	RECR_DEBUG(2, RecPlayDebug[2]);
-
-	if (userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, dropimg.handle(), TRUE); }
-	else if (userpal.life <= 100) { RecRescaleDrawGraph(0, 0, dangerimg.handle(), TRUE); }
-	bonusClass.draw();
-	cutin.DrawCut();
-}
 
 /* main action */
 
@@ -2319,20 +2314,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	int AutoFlag)
 {
 	int holdG = 0;
-	int AllNotesHitTime = -1;
-	int LaneTrack[3] = { -150,-150,-150 };
 	int StopFrag = -1;
 	short LineMoveN[3] = { 0,0,0 };
 	int Stime = 0;
 
-	rec_play_lanepos_t lanePos;
 	rec_score_file_t recfp;
-	rec_play_userpal_t userpal;
-
 	rec_play_allset_c allsetClass;
 	rec_play_key_hold_c keyhold;
-	rec_cutin_c cutin;
-
 	rec_play_snditem_all_c snd_set_class(folderPath);
 
 	if (rec_score_fread(recfp, rrsPath) == false) { return SCENE_EXIT; } /* TODO: EXITにしてるのは、どうなの? */
@@ -2347,13 +2335,13 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	rec_bgm_system_g.Play(true, false, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
 	Stime = GetNowCount();
-	cutin.SetIo(CUT_FRAG_OUT);
+	allsetClass.cutin.SetIo(CUT_FRAG_OUT);
 	//ゲーム開始
 	//終了判定->キー入力->計算->描画->ウェイトの順で処理する
 	while (1) {
 		//終了判定
 		//カットイン再生から2秒以上たったら抜ける。
-		if (cutin.IsEndAnim()) {
+		if (allsetClass.cutin.IsEndAnim()) {
 			rec_bgm_system_g.Stop();
 			break;
 		}
@@ -2368,83 +2356,9 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 			return SCENE_SELECT;
 		}
 
-		//計算
-		//カメラ移動
-		RecPlaySetCamera(allsetClass.cameraClass, allsetClass.cameraSkyClass, recfp.mapeff.camera, recfp.time.now);
-		//lanePos.x(横位置)の計算
-		recSetLine(lanePos.x, recfp.mapeff.move.x, recfp.time.now, 3);
-		//lanePos.y(縦位置)の計算
-		if (optiondata.backbright == 0) {
-			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 3);
-		}
-		else {
-			recSetLine(lanePos.y, recfp.mapeff.move.y, recfp.time.now, 5);
-		}
-		allsetClass.runnerClass.UpdateCharapos(recfp.time.now, recfp.mapdata.note, keyhold);
-		allsetClass.runnerClass.UpdateHitatk(keyhold, recfp.time.now);
-		allsetClass.runnerClass.UpdateCharahit(keyhold);
-		//キャッチ判定に使う数値を計算
-		RecPlayCalLaneTrack(LaneTrack, keyhold, allsetClass.runnerClass.getCharaPos(), recfp.time.now);
-		/* ノーツ判定 */ {
-			rec_hitatk_event_ec hitatk_ev = REC_HITATK_EVENT_NONE;
-			std::queue<rec_judge_event_st> event_queue;
-			RecJudgeAllNotes(
-				event_queue, recfp.mapdata.note, recfp.time.now, keyhold, hitatk_ev,
-				LaneTrack, allsetClass.runnerClass.getCharaPos(), &userpal, snd_set_class
-			);
-			while (!event_queue.empty()) {
-				allsetClass.runnerClass.setHiteff(
-					event_queue.front().judge, event_queue.front().mat,
-					event_queue.front().lineNo
-				);
-				allsetClass.judgepicClass.setJudge(event_queue.front().judge);
-				event_queue.pop();
-			}
-			allsetClass.runnerClass.SetHitatkByEvent(hitatk_ev, recfp.time.now);
-		}
-		/* スコア計算 */ {
-			rec_play_score_calculator_c action;
-			action.RecPlayCalUserPal(&userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
-		}
-		//ノーツが全部なくなった瞬間の時間を記録
-		if (GetRemainNotes(userpal.judgeCount, recfp.mapdata.notes) == 0 && AllNotesHitTime < 0) {
-			AllNotesHitTime = GetNowCount();
-		}
-		//時間計算
-		if (StopFrag == -1) {
-			recfp.time.now = GetNowCount() - Stime + optiondata.offset * 5;
-		}
-		else {
-			Stime = GetNowCount() - recfp.time.now + optiondata.offset * 5;
-		}
-
-		allsetClass.bonusClass.update();
-		allsetClass.runnerClass.updateHiteff();
-		if (optiondata.backbright != 0) {
-			allsetClass.backpic.update(recfp.mapeff, allsetClass.cameraClass, allsetClass.cameraSkyClass);
-		}
-		allsetClass.fpsClass.update(recfp.time.now);
-		//オートでなく、ノーミス以上を出したら演出
-		if (AutoFlag == 0 && AllNotesHitTime + 2000 > GetNowCount()) {
-			AllNotesHitTime = 0;
-			allsetClass.bonusClass.setBonus(userpal.judgeCount); /* TODO: もっと内部で呼びたい */
-		}
-
-		//終了時間から5秒以上たって、曲が終了したらカットイン再生。
-		if ((cutin.IsClosing() == 0) &&
-			(recfp.time.end + 5000 <= recfp.time.now) &&
-			(rec_bgm_system_g.RecCheckSoundMem() == 0))
-		{
-			cutin.SetCutTipFg(CUTIN_TIPS_NONE);
-			cutin.SetIo(CUT_FRAG_IN);
-		}
-
-		allsetClass.keyviewClass.update(keyhold);
-
-		//描画
+		allsetClass.UpdateAll(Stime, AutoFlag, StopFrag, recfp, keyhold, snd_set_class);
 		ClearDrawScreen(); /* 描画エリアここから */
-		allsetClass.DrawAllUI(recfp, holdG, HighScore, AutoFlag,
-			LineMoveN, keyhold, lanePos, userpal, cutin);
+		allsetClass.DrawAllUI(recfp, holdG, HighScore, AutoFlag, LineMoveN, keyhold);
 		ScreenFlip(); /* 描画エリアここまで */
 
 		//ウェイト
@@ -2452,7 +2366,7 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 	}
 
 	*ret_map_det = recfp.mapdata;
-	*ret_userpal = userpal;
+	*ret_userpal = allsetClass.userpal;
 	*ret_nameset = recfp.nameset;
 
 	return AutoFlag == 1 ? SCENE_SELECT : SCENE_RESULT;
