@@ -39,7 +39,7 @@
 typedef rec_map_eff_data_t mapeff_t;
 
 class rec_play_notepic_c {
-public:
+private:
 	struct {
 		dxcur_pic_c notebase = dxcur_pic_c(L"picture/play/hit.png");
 		dxcur_pic_c hitcircle[6] = {
@@ -50,11 +50,7 @@ public:
 			dxcur_pic_c(L"picture/play/hitc-X.png"),
 			dxcur_pic_c(L"picture/play/hitc-W.png"),
 		};
-		dxcur_pic_c catchi[3] = {
-			dxcur_pic_c(L"picture/play/catch.png"),
-			dxcur_pic_c(L"picture/play/catch_G.png"),
-			dxcur_pic_c(L"picture/play/catch_B.png"),
-		};
+		dxcur_pic_c catchi[3] = {};
 		dxcur_pic_c up     = dxcur_pic_c(L"picture/play/up.png");
 		dxcur_pic_c down   = dxcur_pic_c(L"picture/play/down.png");
 		dxcur_pic_c left   = dxcur_pic_c(L"picture/play/left.png");
@@ -63,6 +59,23 @@ public:
 		dxcur_pic_c goust  = dxcur_pic_c(L"picture/play/goust.png");
 	} pic;
 
+public:
+	rec_play_notepic_c(void) {
+		switch (optiondata.catchColor) {
+		case 0: /* RGB */
+			this->pic.catchi[0].reload(_T("picture/play/catch_R.png"));
+			this->pic.catchi[1].reload(_T("picture/play/catch_G.png"));
+			this->pic.catchi[2].reload(_T("picture/play/catch_B.png"));
+			break;
+		case 1: /* pink only */
+			this->pic.catchi[0].reload(_T("picture/play/catch_R.png"));
+			this->pic.catchi[1].reload(_T("picture/play/catch_R.png"));
+			this->pic.catchi[2].reload(_T("picture/play/catch_R.png"));
+			break;
+		}
+	}
+
+private:
 	/**
 	 * @return 0: 通常表示, 1: 非表示スキップ, 2:3秒ブレーク
 	 */
@@ -178,6 +191,7 @@ public:
 		}
 	}
 
+public:
 	/* TODO: ゴーストノーツは全表示で良いかも */
 	/* TODO: てかレーンアイテム作りたい */
 	void draw(

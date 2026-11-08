@@ -20,6 +20,7 @@ typedef struct rec_option_s {
 	int SEvolume   = 7; /* 0~10 */
 	int lineThick  = 3;
 	int barThick   = 3;
+	int catchColor = 0; /* 0:RGB, 1:pinkOnly */
 } rec_option_t;
 
 extern rec_option_t optiondata;

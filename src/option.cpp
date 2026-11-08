@@ -461,6 +461,41 @@ public:
 	}
 };
 
+class rec_option_item_catchcolor_c : public rec_option_item_base_c {
+private:
+	dxcur_pic_c pic[6];
+
+	rec_system_langstr_c param_name_str[2] = {
+		rec_system_langstr_c(_T("RGB"),       _T("RGB")),
+		rec_system_langstr_c(_T("pink only"), _T("pink only")  ),
+	};
+
+public:
+	rec_option_item_catchcolor_c (void) {
+		this->param_type    = REC_PARAM_TYPE_UINT;
+		this->is_loop_param = true;
+		this->upper_limit   = 1;
+		this->option_p      = &optiondata.catchColor;
+		this->item_name     = rec_system_langstr_c(_T("catchノーツの色"), _T("catch notes color"));
+		this->item_detail   = rec_system_langstr_c(
+			_T("catchノーツの色を決めます。"), _T("Choose catch notes color.")
+		);
+	}
+
+	tstring GetParamName(void) const override {
+		return param_name_str[*(uint *)(this->option_p)].get_str();
+	}
+
+	DxPic_t GetPicHandle(void) const override {
+		return this->pic[*(uint *)(this->option_p)].handle();
+	}
+
+	void ReloadPic(void) override {
+		this->pic[0].reload(_T(""));
+		this->pic[1].reload(_T(""));
+	}
+};
+
 #endif /* 項目系 */
 
 static std::vector<rec_option_item_base_c *> s_op_list_system = {
@@ -475,6 +510,7 @@ static std::vector<rec_option_item_base_c *> s_op_list_play = {
 	new rec_option_item_backbright_c(),
 	new rec_option_item_keydetail_c(),
 	new rec_option_item_combopos_c(),
+	new rec_option_item_catchcolor_c(),
 	new rec_option_item_lineThick_c(),
 	new rec_option_item_barThick_c()
 };
