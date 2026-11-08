@@ -4,6 +4,7 @@
 /* include */
 
 /* base include */
+#include <cmath>
 #include <array>
 #include <DxLib.h>
 
@@ -1541,37 +1542,68 @@ public:
 
 static class rec_play_combo_c {
 private:
-	DxPic_t ComboFontimg[10];
+	static constexpr int COMBO_PIC_GAP = 50;
+	DxTime_t Stime = 0;
+	double BPM = 120.0;
+	struct {
+		dxcur_number_pic_c white  = dxcur_number_pic_c(_T("picture/play/NumberComboWhite.png"));
+		dxcur_number_pic_c green  = dxcur_number_pic_c(_T("picture/play/NumberComboGreen.png"));
+		dxcur_number_pic_c cyan   = dxcur_number_pic_c(_T("picture/play/NumberComboCyan.png"));
+		dxcur_number_pic_c blue   = dxcur_number_pic_c(_T("picture/play/NumberComboBlue.png"));
+		dxcur_number_pic_c purple = dxcur_number_pic_c(_T("picture/play/NumberComboPurple.png"));
+	} pic;
 
 public:
-	rec_play_combo_c() {
-		LoadDivGraph(L"picture/play/NumberComboBlue.png", 10, 5, 2, 80, 100, this->ComboFontimg);
+	rec_play_combo_c(void) {
+		this->pic.white.SetPicGapAll( COMBO_PIC_GAP);
+		this->pic.green.SetPicGapAll( COMBO_PIC_GAP);
+		this->pic.cyan.SetPicGapAll(  COMBO_PIC_GAP);
+		this->pic.blue.SetPicGapAll(  COMBO_PIC_GAP);
+		this->pic.purple.SetPicGapAll(COMBO_PIC_GAP);
 	}
 
-	~rec_play_combo_c() {
-		for (int i = 0; i < 10; i++) {
-			DeleteGraph(this->ComboFontimg[i]);
-		}
-	}
-
-	void ViewCombo(int combo) const {
-		const int CHARA_WIDTH = 50;
-		int keta = 0;
-		int buf = 0;
-		int DrawX = 0;
-
+public:
+	void draw(uint winSizeX, int combo, DxTime_t Ntime) const {
+		int keta = 2;
+		int drawX = 0;
+		double size = lins(0, 0, 1280, 1.8, winSizeX);
 		if (combo < 10) { return; }
-
-		for (int i = combo; i > 0; i /= 10) { keta++; }
-
-		for (int i = keta - 1; i >= 0; i--) {
-			buf = combo;
-			for (int j = 0; j < i; j++) { buf /= 10; }
-			buf %= 10;
-
-			DrawX = ((keta - 1) * CHARA_WIDTH / 2 - i * CHARA_WIDTH) + 280;
-			RecRescaleDrawGraph(DrawX, 150, this->ComboFontimg[buf], TRUE);
+		else if (combo < 100) { keta = 2; }
+		else if (combo < 1000) { keta = 3; }
+		else { keta = 4; }
+		drawX = winSizeX / 2 - (keta * COMBO_PIC_GAP / 2 + 15) * size;
+		if (combo < 100) {
+ 			this->pic.green.DrawNum(drawX, 200, size, combo);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(10, 0, 100, 255, combo));
+			this->pic.cyan.DrawNum(drawX, 200, size, combo);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
+		else if (combo < 400) {
+			this->pic.cyan.DrawNum(drawX, 200, size, combo);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 0, 400, 255, combo));
+			this->pic.blue.DrawNum(drawX, 200, size, combo);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		}
+		else if (combo < 1000) {
+			this->pic.blue.DrawNum(drawX, 200, size, combo);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(400, 0, 1000, 255, combo));
+			this->pic.purple.DrawNum(drawX, 200, size, combo);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		}
+		else {
+			this->pic.purple.DrawNum(drawX, 200, size, combo);
+		}
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, pals(0, 127, 60000 / this->BPM, 0, std::fmod(Ntime - this->Stime, 60000 / this->BPM)));
+		this->pic.white.DrawNum(drawX, 200, size, combo);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+	}
+
+	void SetStime(DxTime_t time) {
+		this->Stime = time;
+	}
+
+	void SetBPM(double bpm) {
+		this->BPM = bpm;
 	}
 };
 
@@ -2280,7 +2312,7 @@ public:
 		this->runnerClass.ViewRunner(recfp.mapeff, this->lanePos, this->cameraClass, recfp.time.now);
 		this->runnerClass.drawHiteff(this->cameraClass, this->lanePos);
 		//コンボ表示
-		this->comboPicClass.ViewCombo(this->userpal.Ncombo);
+		this->comboPicClass.draw(1280, this->userpal.Ncombo, recfp.time.now);
 		//判定表示
 		this->judgepicClass.draw(this->cameraClass, &this->lanePos, this->runnerClass.getCharaPos());
 		/* 音符表示 */
@@ -2348,6 +2380,8 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 
 	//ゲーム開始前の下準備
 	recfp.mapdata.notes = notzero(recfp.mapdata.notes);
+	allsetClass.comboPicClass.SetBPM(recfp.mapdata.bpm);
+	allsetClass.comboPicClass.SetStime(recfp.time.offset);
 	RecResetPlayObjectNum(&recfp);
 	rec_bgm_system_g.SetMem(recfp.nameset.mp3FN);
 	rec_bgm_system_g.Play(true, false, true);
