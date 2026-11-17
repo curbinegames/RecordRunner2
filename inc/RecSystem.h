@@ -246,7 +246,7 @@ public:
 
 class rec_sys_bgm {
 	int s_totalVolume = 255;
-	DxSnd_t s_bgm = DXLIB_SND_NULL;
+	dxcur_snd_c snd;
 	tstring s_bgmName = _T("");
 
 public:

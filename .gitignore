@@ -12,6 +12,7 @@ StartDXProgram.vcxproj.user
 
 *.avi
 *.bmp
+*.culk
 *.dat
 *.db
 *.ipch

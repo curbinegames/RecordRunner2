@@ -39,7 +39,7 @@ static void GameMain() {
 			break;
 		case SCENE_MENU:
 		case SCENE_CHALLENGE: /* âºèàíu */
-			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
+			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.culk"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = RecMenuBase();
 			break;
@@ -48,17 +48,17 @@ static void GameMain() {
 			next = musicserect(&ps);
 			break;
 		case SCENE_STORY:
-			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
+			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.culk"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = RecStory();
 			break;
 		case SCENE_ACHIEVEMENT:
-			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
+			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.culk"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = Achievement();
 			break;
 		case SCENE_OPTION:
-			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.mp3"));
+			rec_bgm_system_g.SetMem(_T("song/keep_slow_life.culk"));
 			rec_bgm_system_g.Play(false, true, true);
 			next = option();
 			break;

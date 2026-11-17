@@ -1572,28 +1572,31 @@ public:
 		else if (combo < 1000) { keta = 3; }
 		else { keta = 4; }
 		drawX = winSizeX / 2 - (keta * COMBO_PIC_GAP / 2 + 15) * size;
-		if (combo < 100) {
+		if (combo < 200) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(10, 255, 200, 0, combo));
  			this->pic.green.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(10, 0, 100, 255, combo));
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(10, 0, 200, 255, combo));
 			this->pic.cyan.DrawNum(drawX, 200, size, combo);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
-		else if (combo < 400) {
+		else if (combo < 450) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(200, 255, 450, 0, combo));
 			this->pic.cyan.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(100, 0, 400, 255, combo));
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(200, 0, 450, 255, combo));
 			this->pic.blue.DrawNum(drawX, 200, size, combo);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
 		else if (combo < 1000) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(450, 255, 1000, 0, combo));
 			this->pic.blue.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(400, 0, 1000, 255, combo));
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(450, 0, 1000, 255, combo));
 			this->pic.purple.DrawNum(drawX, 200, size, combo);
 			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 		}
 		else {
 			this->pic.purple.DrawNum(drawX, 200, size, combo);
 		}
-		SetDrawBlendMode(DX_BLENDMODE_ALPHA, pals(0, 127, 60000 / this->BPM, 0, std::fmod(Ntime - this->Stime, 60000 / this->BPM)));
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, pals(0, 63, 60000 / this->BPM, 0, std::fmod(Ntime - this->Stime, 60000 / this->BPM)));
 		this->pic.white.DrawNum(drawX, 200, size, combo);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}

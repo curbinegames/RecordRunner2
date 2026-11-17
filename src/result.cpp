@@ -489,10 +489,10 @@ static cur_font_cr_t RecResultGetFlortCurFontColor(rec_score_rate_t rank) {
 
 static void RecResultSetBgm(rec_play_status_t status) {
 	if (status == REC_PLAY_STATUS_DROPED) {
-		rec_bgm_system_g.SetMem(_T("song/Regret.mp3"));
+		rec_bgm_system_g.SetMem(_T("song/Regret.culk"));
 	}
 	else {
-		rec_bgm_system_g.SetMem(_T("song/Balloon Art.mp3"));
+		rec_bgm_system_g.SetMem(_T("song/Balloon Art.culk"));
 	}
 	return;
 }

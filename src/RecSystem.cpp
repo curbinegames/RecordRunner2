@@ -66,46 +66,44 @@ void rec_helpbar_c::DrawHelp(rec_helpbar_type_ec type) const {
 
 void rec_sys_bgm::SetVolume(int val) {
 	s_totalVolume = val * optiondata.BGMvolume / 10;
-	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
+	snd.SetVolume(s_totalVolume);
 }
 
 void rec_sys_bgm::SetMem(const tstring &sndPath) {
 	if (s_bgmName == sndPath) { return; }
 	s_bgmName = sndPath;
-	StopSoundMem(s_bgm);
-	DeleteSoundMem(s_bgm);
-	s_bgm = LoadSoundMem(sndPath.c_str());
+	snd.reload(sndPath);
 	this->SetVolume(255);
 }
 
 bool rec_sys_bgm::RecCheckSoundMem(void) const {
-	return CheckSoundMem(s_bgm);
+	return CheckSoundMem(snd.handle());
 }
 
 void rec_sys_bgm::Play(bool force, bool loop, bool top_position) {
-	if (!(force) && CheckSoundMem(s_bgm) == 1) { return; }
-	if (force) { StopSoundMem(s_bgm); }
-	ChangeVolumeSoundMem(s_totalVolume, s_bgm);
+	if (!(force) && CheckSoundMem(snd.handle()) == 1) { return; }
+	if (force) { StopSoundMem(snd.handle()); }
+	snd.SetVolume(s_totalVolume);
 	if (loop) {
-		PlaySoundMem(s_bgm, DX_PLAYTYPE_LOOP, top_position);
+		PlaySoundMem(snd.handle(), DX_PLAYTYPE_LOOP, top_position);
 	}
 	else {
-		PlaySoundMem(s_bgm, DX_PLAYTYPE_BACK, top_position);
+		PlaySoundMem(snd.handle(), DX_PLAYTYPE_BACK, top_position);
 	}
 }
 
 void rec_sys_bgm::Delete(void) {
-	StopSoundMem(s_bgm);
-	DeleteSoundMem(s_bgm);
+	StopSoundMem(snd.handle());
+	DeleteSoundMem(snd.handle());
 	s_bgmName.clear();
 }
 
 void rec_sys_bgm::Stop(void) {
-	StopSoundMem(s_bgm);
+	StopSoundMem(snd.handle());
 }
 
 void rec_sys_bgm::SetCurrentPosition(int val) {
-	SetCurrentPositionSoundMem(val, s_bgm);
+	SetCurrentPositionSoundMem(val, snd.handle());
 }
 
 #endif /* rec_sys_bgm */
