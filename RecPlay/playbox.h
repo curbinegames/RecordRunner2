@@ -57,14 +57,6 @@ typedef struct rec_play_xy_set_s {
 	int y;
 } rec_play_xy_set_t;
 
-typedef struct distance_score_s {
-	int add = 0;
-	int add_save = 0;
-	int now_dis = 0;
-	int dis_save = 0;
-	int point = 0;
-} distance_score_t;
-
 typedef struct rec_play_chara_hit_attack_s {
 	int pos = 1;
 	int time = -1000;
@@ -91,9 +83,23 @@ public:
 	int GetViewScore(int Ntime) const;
 };
 
+class distance_score_c {
+private:
+	int add = 0; /* ノーツ判定によって加算された距離 */
+	int now_dis = 0; /* 時間経過によって走った距離 */
+	bool droped = false; /* drop判定。dropしてたら距離の更新を止める。 */
+
+public:
+	void AddDist(int val);
+	void SetDist(int val);
+	int GetDist(void) const;
+	double GetAllPoint(void) const;
+	void SetDrop(void);
+};
+
 typedef struct rec_play_userpal_s {
 	rec_play_score_c score;
-	distance_score_t Dscore;
+	distance_score_c Dscore;
 	rec_play_status_t status = REC_PLAY_STATUS_PLAYING;
 	int Ncombo = 0;
 	int Mcombo = 0;

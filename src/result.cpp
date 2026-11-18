@@ -541,7 +541,7 @@ static void SaveScore(const rec_play_userpal_t &userpal, const tstring &songN, r
 	buf.clearRank = JudgeClearRank(userpal);
 	buf.scoreRate = CalScoreRank(userpal.score.GetAllScore());
 	buf.score     = userpal.score.GetAllScore();
-	buf.dist      = userpal.Dscore.point;
+	buf.dist      = userpal.Dscore.GetAllPoint();
 	buf.acc       = CAL_ACC(userpal.judgeCount, noteCount);
 
 	RecSaveUpdateScoreOneDif(buf, songN, dif);

@@ -45,6 +45,32 @@ int rec_play_score_c::GetViewScore(int Ntime) const {
 
 #pragma endregion rec_play_score_c
 
+#pragma region distance_score_c
+
+void distance_score_c::AddDist(int val) {
+    if (this->droped) { return; }
+    this->add += val;
+}
+
+void distance_score_c::SetDist(int val) {
+    if (this->droped) { return; }
+    this->now_dis = val;
+}
+
+int distance_score_c::GetDist(void) const {
+    return this->now_dis;
+}
+
+double distance_score_c::GetAllPoint(void) const {
+    return (this->now_dis + 100 * this->add) / 100000.0;
+}
+
+void distance_score_c::SetDrop(void) {
+    this->droped = true;
+}
+
+#pragma endregion distance_score_c
+
 #pragma region rec_play_key_hold_c
 
 int rec_play_key_hold_c::GetHitPushCount(void) const {

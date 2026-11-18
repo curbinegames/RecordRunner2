@@ -252,7 +252,7 @@ static void RecJudgeSetUserpal(userpal_t *userpal, bool scoreFlip, bool PjustFg,
 	if (PjustFg) { (userpal->judgeCount.pjust)++; }
 	(userpal->life) += addLife;
 	if (0 < userpal->Exlife) { (userpal->Exlife) += addExLife; }
-	(userpal->Dscore.add) += addDscore;
+	userpal->Dscore.AddDist(addDscore);
 	if (addCombo < 0) { userpal->Ncombo = 0; }
 	else { (userpal->Ncombo) += addCombo; }
 	return;

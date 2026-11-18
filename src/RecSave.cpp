@@ -299,7 +299,7 @@ int RecSaveUpdateUserPlay(const rec_play_userpal_t *userpal) {
 		break;
 	}
 
-	data.mileage += userpal->Dscore.point;
+	data.mileage += userpal->Dscore.GetAllPoint() * 1000;
 
 	return RecSaveWriteUserPlay(&data);
 }

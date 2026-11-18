@@ -1517,15 +1517,12 @@ private:
 	void CalDistans(rec_play_userpal_t &userpal, const rec_play_time_set_t &time) {
 		switch (userpal.status) {
 		case REC_PLAY_STATUS_PLAYING:
-			userpal.Dscore.now_dis = maxs_2(time.now - time.offset, 0);
-			userpal.Dscore.add_save = userpal.Dscore.add;
+			userpal.Dscore.SetDist(maxs_2(time.now - time.offset, 0));
 			break;
 		case REC_PLAY_STATUS_CLEARED:
-			userpal.Dscore.now_dis = time.end - time.offset;
-			userpal.Dscore.add_save = userpal.Dscore.add;
+			userpal.Dscore.SetDist(time.end - time.offset);
 			break;
 		case REC_PLAY_STATUS_DROPED:
-			userpal.Dscore.now_dis = userpal.Dscore.dis_save;
 			break;
 		}
 	}
@@ -1546,8 +1543,7 @@ public:
 		//ステータス
 		if (userpal.life <= 0 && userpal.status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
 			userpal.status = REC_PLAY_STATUS_DROPED;
-			userpal.Dscore.add_save = userpal.Dscore.add;
-			userpal.Dscore.dis_save = maxs_2(time.now - time.offset, 0);
+			userpal.Dscore.SetDrop();
 		}
 		else if (userpal.status != REC_PLAY_STATUS_DROPED &&
 			maxs_2(time.now - time.offset, 0) > time.end - time.offset)
@@ -1556,7 +1552,6 @@ public:
 		}
 		//距離計算
 		this->CalDistans(userpal, time);
-		userpal.Dscore.point = (int)(userpal.Dscore.now_dis / 100.0 + userpal.Dscore.add_save);
 		return;
 	}
 };
@@ -1983,7 +1978,7 @@ private:
 		RecRescaleDrawFormatString(440, 10, COLOR_WHITE, L"%3d", life);
 	}
 
-	void ViewDist(rec_play_status_t status, const distance_score_t *Dscore,
+	void ViewDist(rec_play_status_t status, const distance_score_c *Dscore,
 		const rec_play_time_set_t *time, const rec_ddif_time_t *mdiftime, bool holdG) const
 	{
 		int DrawX = 0;
@@ -1994,9 +1989,9 @@ private:
 			DrawNo = 1;
 			cr = COLOR_BLACK;
 		}
-		DrawX = (291 * Dscore->now_dis - 136 * time->end + 136 * time->offset) / (time->end - time->offset);
+		DrawX = (291 * Dscore->GetDist() - 136 * time->end + 136 * time->offset) / (time->end - time->offset);
 		RecRescaleDrawGraph(DrawX, 38, this->Tbarimg[DrawNo].handle(), TRUE);
-		RecRescaleDrawFormatString(180, 45, cr, L"%.3fkm", Dscore->point / 1000.0);
+		RecRescaleDrawFormatString(180, 45, cr, L"%.3fkm", Dscore->GetAllPoint());
 		if (holdG) {
 			DrawX = lins(time->offset, 175, time->end, 466, mdiftime->notes);
 			RecRescaleDrawLine(DrawX, 38, DrawX - 19, 72, GetColor(  0,   0, 255));
