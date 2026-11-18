@@ -708,9 +708,11 @@ static int GetRemainNotes(rec_play_judge_t judge, int Notes) {
 	return Notes - judge.just - judge.good - judge.safe - judge.miss;
 }
 
-static int GetHighScore(const TCHAR *songName, rec_dif_t dif) {
+static int GetHighScore(const rec_to_play_set_t &ps) {
+	tstring fileName;
 	rec_save_score_t scoreBuf;
-	RecSaveReadScoreOneDif(scoreBuf, songName, dif);
+	RecGetMusicFolderName(fileName, ps.packNo, ps.musicNo);
+	RecSaveReadScoreOneDif(scoreBuf, fileName, (rec_dif_t)ps.dif);
 	return scoreBuf.score;
 }
 
@@ -876,6 +878,20 @@ static void RecPlayCalLaneTrack(int LaneTrack[], const rec_play_key_hold_c &keyh
 	if (LaneTrack[0] <= LaneTrack[2]) { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[0]); }
 	else { LaneTrack[1] = maxs_2(LaneTrack[1], LaneTrack[2]); } 
 	return;
+}
+
+/**
+ * @brief rssファイルを新たに作るかどうかの判定をする。
+ * @param[in] mapPath マップのパス
+ * @param[in] shift 作成指定
+ * @return bool 作成フラグ
+ */
+static bool RecPlayMakeRssCheck(const tstring &mapPath, int shift) {
+	FILE *fp = nullptr;
+	if (shift == 1) { return true; }
+	if ((_wfopen_s(&fp, mapPath.c_str(), _T("rb")) != 0) || (fp == nullptr)) { return true; }
+	fclose(fp);
+	return false;
 }
 
 #endif /* sub action */
@@ -1136,7 +1152,7 @@ static int PlayShowInnerGuideLine(const rec_map_eff_data_t *mapeff, const cvec<r
 	return RET_DRAW;
 }
 
-/* 通常ライングループ */
+/* 通常ライングループ(move後直角ライン+move繋ぎライン+move前直角ライン+moveライン) */
 static int PlayShowGuideLineStandard(const rec_map_eff_data_t *mapeff, const cvec<rec_mapeff_move_st> &Ymove,
 	const rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera_c,
 	int Line, int iDraw, int drawC, int Ntime, bool viewEn)
@@ -1151,7 +1167,7 @@ static int PlayShowGuideLineStandard(const rec_map_eff_data_t *mapeff, const cve
 	return PlayShowMovingGuideLine(mapeff, Ymove, lanePos, camera_c, Line, iDraw, drawC, Ntime, viewEn);
 }
 
-/* ラスライングループ */
+/* ラスライングループ(move後直角ライン+ラスライン) */
 static int PlayShowLastGuideLineGroup(const rec_map_eff_data_t *mapeff, const cvec<rec_mapeff_move_st> &Ymove,
 	const rec_play_lanepos_t *lanePos, const dxcur_camera_c &camera,
 	int Line, int iDraw, int drawC, int Ntime, bool viewEn)
@@ -1194,12 +1210,12 @@ static int PlayShowGuideLine(const rec_score_file_t *recfp, const rec_play_lanep
 	if (iDraw + 1 == Ymove.size()) {
 		return PlayShowLastGuideLineGroup(mapeff, Ymove, lanePos, camera_c, Line, iDraw, drawC, Ntime, viewEn);
 	}
-	else if (iDraw < 1) {
+
+	if (iDraw < 1) {
 		return PlayShowStartGuideLine(mapeff, Ymove, lanePos, camera_c, Line, drawC, Ntime, viewEn);
 	}
-	else {
-		return PlayShowGuideLineStandard(mapeff, Ymove, lanePos, camera_c, Line, iDraw, drawC, Ntime, viewEn);
-	}
+
+	return PlayShowGuideLineStandard(mapeff, Ymove, lanePos, camera_c, Line, iDraw, drawC, Ntime, viewEn);
 }
 
 static void PlayShowAllGuideLine(const rec_score_file_t *recfp, const rec_play_lanepos_t *lanePos,
@@ -1543,6 +1559,7 @@ public:
 static class rec_play_combo_c {
 private:
 	static constexpr int COMBO_PIC_GAP = 50;
+	int combo = 0;
 	DxTime_t Stime = 0;
 	double BPM = 120.0;
 	struct {
@@ -1552,6 +1569,8 @@ private:
 		dxcur_number_pic_c blue   = dxcur_number_pic_c(_T("picture/play/NumberComboBlue.png"));
 		dxcur_number_pic_c purple = dxcur_number_pic_c(_T("picture/play/NumberComboPurple.png"));
 	} pic;
+	int eff_time = 0;
+	int eff_num  = 0;
 
 public:
 	rec_play_combo_c(void) {
@@ -1563,42 +1582,66 @@ public:
 	}
 
 public:
-	void draw(uint winSizeX, int combo, DxTime_t Ntime) const {
+	void update(int val) {
+		int border = (int)(val / 100) * 100;
+		if (this->combo < border && border <= val) {
+			this->eff_time = GetNowCount();
+			this->eff_num  = border;
+		}
+		this->combo = val;
+	}
+
+	void drawNum(int x, int y, double size, int alpha, int num) const {
+		int half_alpha = alpha / 2;
+		if (num < 200) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(10, alpha,  200, half_alpha, num));
+			this->pic.green.DrawNum(x, y, size, num);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(10,     0,  200, half_alpha, num));
+			this->pic.cyan.DrawNum(x, y, size, num);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		}
+		else if (num < 500) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(200, alpha,  500, half_alpha, num));
+			this->pic.cyan.DrawNum(x, y, size, num);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(200,     0,  500, half_alpha, num));
+			this->pic.blue.DrawNum(x, y, size, num);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		}
+		else if (num < 1000) {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(500, alpha, 1000, half_alpha, num));
+			this->pic.blue.DrawNum(x, y, size, num);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(500,     0, 1000, half_alpha, num));
+			this->pic.purple.DrawNum(x, y, size, num);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		}
+		else {
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
+			this->pic.purple.DrawNum(x, y, size, num);
+			SetDrawBlendMode(DX_BLENDMODE_ALPHA,   255);
+		}
+	}
+
+	void draw(uint winSizeX, DxTime_t Ntime) const {
 		int keta = 2;
 		int drawX = 0;
 		double size = lins(0, 0, 1280, 1.8, winSizeX);
+		int eff_Ntime = GetNowCount() - this->eff_time;
 		if (combo < 10) { return; }
 		else if (combo < 100) { keta = 2; }
 		else if (combo < 1000) { keta = 3; }
 		else { keta = 4; }
 		drawX = winSizeX / 2 - (keta * COMBO_PIC_GAP / 2 + 15) * size;
-		if (combo < 200) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(10, 255, 200, 0, combo));
- 			this->pic.green.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(10, 0, 200, 255, combo));
-			this->pic.cyan.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		}
-		else if (combo < 450) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(200, 255, 450, 0, combo));
-			this->pic.cyan.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(200, 0, 450, 255, combo));
-			this->pic.blue.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		}
-		else if (combo < 1000) {
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(450, 255, 1000, 0, combo));
-			this->pic.blue.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, lins(450, 0, 1000, 255, combo));
-			this->pic.purple.DrawNum(drawX, 200, size, combo);
-			SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-		}
-		else {
-			this->pic.purple.DrawNum(drawX, 200, size, combo);
-		}
+		this->drawNum(drawX, 200, size, 255, combo);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, pals(0, 63, 60000 / this->BPM, 0, std::fmod(Ntime - this->Stime, 60000 / this->BPM)));
 		this->pic.white.DrawNum(drawX, 200, size, combo);
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
+		if (eff_Ntime < 250) {
+			int    effX =       lins(  0, drawX, 250, drawX - keta * 22, eff_Ntime);
+			int    effY =       lins(  0,   200, 250,   200 -        40, eff_Ntime);
+			double effS =       lins(  0,  size, 250,        size * 1.4, eff_Ntime);
+			double effA = lins_scale(125,   255, 250,                 0, eff_Ntime);
+			this->drawNum(effX, effY, effS, effA, combo);
+		}
 	}
 
 	void SetStime(DxTime_t time) {
@@ -2251,6 +2294,7 @@ public:
 		this->bonusClass.update();
 		this->runnerClass.updateHiteff();
 		this->runnerClass.addHitPose(keyhold.GetHitPushCount());
+		this->comboPicClass.update(this->userpal.Ncombo);
 
 		if (optiondata.backbright != 0) {
 			this->backpic.update(recfp.mapeff, this->cameraClass, this->cameraSkyClass);
@@ -2315,7 +2359,7 @@ public:
 		this->runnerClass.ViewRunner(recfp.mapeff, this->lanePos, this->cameraClass, recfp.time.now);
 		this->runnerClass.drawHiteff(this->cameraClass, this->lanePos);
 		//コンボ表示
-		this->comboPicClass.draw(1280, this->userpal.Ncombo, recfp.time.now);
+		this->comboPicClass.draw(1280, recfp.time.now);
 		//判定表示
 		this->judgepicClass.draw(this->cameraClass, &this->lanePos, this->runnerClass.getCharaPos());
 		/* 音符表示 */
@@ -2353,23 +2397,21 @@ public:
 /* main action */
 
 /**
- * @param[out] ret_map_det map_detail の受け皿
- * @param[out] ret_userpal userpal の受け皿
- * @param[out] ret_nameset nameset の受け皿
- * @param[in] folderPath フォルダーパス
+ * @param[out] toResult result用パラメータの受け皿
+ * @param[in] ps プレイする譜面の情報
  * @param[in] rrsPath 譜面パス
- * @param[in] HighScore ハイスコア
- * @param[in] AutoFlag オートプレイフラグ
  * @return now_scene_t 次のシーン
  */
-now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_userpal,
-	rec_play_nameset_t *ret_nameset, const TCHAR *folderPath, const TCHAR *rrsPath, int HighScore,
-	int AutoFlag)
-{
+static now_scene_t RecPlayMain(
+	rec_to_result_st &toResult, const rec_to_play_set_t &ps, const tstring &rrsPath
+) {
 	int holdG = 0;
 	int StopFrag = -1;
 	short LineMoveN[3] = { 0,0,0 };
 	int Stime = 0;
+	int HighScore = GetHighScore(ps);
+
+	tstring folderPath; RecGetMusicFolderPath(folderPath, ps.packNo, ps.musicNo);
 
 	rec_score_file_t recfp;
 	rec_play_allset_c allsetClass;
@@ -2404,63 +2446,50 @@ now_scene_t RecPlayMain(rec_map_detail_t *ret_map_det, rec_play_userpal_t *ret_u
 		//キー入力
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		RecPlayStepAllNum(&recfp, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
-		RecPlayGetKeyhold(&recfp, keyhold, &holdG, AutoFlag);
-		RecPlayActSubKey(&recfp, AutoFlag, &StopFrag, LineMoveN);
+		RecPlayGetKeyhold(&recfp, keyhold, &holdG, ps.autoFg);
+		RecPlayActSubKey(&recfp, ps.autoFg, &StopFrag, LineMoveN);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			rec_bgm_system_g.Stop();
 			return SCENE_SELECT;
 		}
 
-		allsetClass.UpdateAll(Stime, AutoFlag, StopFrag, recfp, keyhold, snd_set_class);
+		allsetClass.UpdateAll(Stime, ps.autoFg, StopFrag, recfp, keyhold, snd_set_class);
 		ClearDrawScreen(); /* 描画エリアここから */
-		allsetClass.DrawAllUI(recfp, holdG, HighScore, AutoFlag, LineMoveN, keyhold);
+		allsetClass.DrawAllUI(recfp, holdG, HighScore, ps.autoFg, LineMoveN, keyhold);
 		ScreenFlip(); /* 描画エリアここまで */
 
 		//ウェイト
 		WaitTimer(WAIT_TIME_ON_GAMELOOP);
 	}
 
-	*ret_map_det = recfp.mapdata;
-	*ret_userpal = allsetClass.userpal;
-	*ret_nameset = recfp.nameset;
+	toResult.map_detail = recfp.mapdata;
+	toResult.userpal    = allsetClass.userpal;
+	toResult.nameset    = recfp.nameset;
 
-	return AutoFlag == 1 ? SCENE_SELECT : SCENE_RESULT;
+	return ps.autoFg == 1 ? SCENE_SELECT : SCENE_RESULT;
 }
 
 /**
  * @brief プレイシーンの実行
  * @param[in] ps プレイする譜面の情報
- * @return 次のシーン
+ * @return now_scene_t 次のシーン
  */
 now_scene_t play3(const rec_to_play_set_t &ps) {
 	rec_error_t status = REC_ERROR_NONE;
-	int HighScore = 0;
-	tstring mapPath = _T("");
-	tstring fileName = _T("");
-	tstring folderPath = _T("");
-	rec_map_detail_t map_detail;
-	rec_play_userpal_t userpal;
-	rec_play_nameset_t nameset;
 	now_scene_t ret = SCENE_EXIT;
-	FILE *fp = NULL;
+	tstring mapPath;
+	rec_to_result_st toResult;
 
 	status = RecGetMusicMapRrsPath(mapPath, ps.packNo, ps.musicNo, (rec_dif_t)ps.dif);
 	if (status != REC_ERROR_NONE) { return SCENE_SELECT; }
 
-	/* rrsデータが無い、または作成の指示があれば作る */
-	if (ps.shift == 0) { _wfopen_s(&fp, mapPath.c_str(), L"rb"); } /* TODO: IsExist()関数とかあっていいかも */
-
-	if (fp == NULL) {
+	if (RecPlayMakeRssCheck(mapPath, ps.shift)) {
 		RecordLoad2(ps.packNo, ps.musicNo, ps.dif);
 		cal_ddif_3(mapPath.c_str());
 	}
-	else { fclose(fp); }
 
-	RecGetMusicFolderName(fileName, ps.packNo, ps.musicNo);
-	HighScore = GetHighScore(fileName.c_str(), (rec_dif_t)ps.dif);
-	RecGetMusicFolderPath(folderPath, ps.packNo, ps.musicNo);
-	ret = RecPlayMain(&map_detail, &userpal, &nameset, folderPath.c_str(), mapPath.c_str(), HighScore, ps.autoFg);
+	ret = RecPlayMain(toResult, ps, mapPath);
 
 	if (ret != SCENE_RESULT) { return ret; }
-	else { return result(map_detail, userpal, nameset, (rec_dif_t)ps.dif, fileName.c_str()); }
+	else { return result(toResult, ps); }
 }

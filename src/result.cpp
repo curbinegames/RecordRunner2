@@ -19,6 +19,7 @@
 #include <strcur.h>
 #include <dxcur.h>
 #include <RecSystem.h>
+#include <result.h>
 
 /* TODO: クリア状況はcleartype、スコア評価はscorerateに改名しよう */
 
@@ -547,21 +548,22 @@ static void SaveScore(const rec_play_userpal_t &userpal, const tstring &songN, r
 	return;
 }
 
-now_scene_t result(const rec_map_detail_t &map_detail, const rec_play_userpal_t &userpal,
-	const rec_play_nameset_t &nameset, rec_dif_t dif, const tstring &songN)
-{
+now_scene_t result(const rec_to_result_st &toResult, const rec_to_play_set_t &ps) {
 	rec_result_pal_t result_pal;
+	tstring fileName;
+
+	RecGetMusicFolderName(fileName, ps.packNo, ps.musicNo);
 
 	/* セーブ前作業 */
 	result_pal.oldRate = RecSaveGetFullRunnerRate() * 100;
 
 	/* セーブ作業 */
-	RecSaveUpdateUserPlay(&userpal);
-	SaveScore(userpal, songN, dif, map_detail.notes);
+	RecSaveUpdateUserPlay(&toResult.userpal);
+	SaveScore(toResult.userpal, fileName, (rec_dif_t)ps.dif, toResult.map_detail.notes);
 	RecSaveUpdateCharaPlay((rec_chara_et)optiondata.chara);
-	RecSaveUpdateRunnerRate(songN, (double)CalPlayRate(userpal.judgeCount, map_detail) / 100.0);
+	RecSaveUpdateRunnerRate(fileName, (double)CalPlayRate(toResult.userpal.judgeCount, toResult.map_detail) / 100.0);
 
 	/* リザルト表示 */
-	RecResultCalParameter(result_pal, userpal, nameset, dif, map_detail.notes);
+	RecResultCalParameter(result_pal, toResult.userpal, toResult.nameset, (rec_dif_t)ps.dif, toResult.map_detail.notes);
 	return ViewResult(result_pal);
 }
