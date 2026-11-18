@@ -587,39 +587,39 @@ static void RecResetPlayPartNum(short LineMoveN[]) {
 	return;
 }
 
-static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t *mapeff) {
-	mapeff->camera.resetNo();
-	mapeff->scrool.resetNo();
-	mapeff->carrow.resetNo();
-	mapeff->move.y[0].resetNo();
-	mapeff->move.y[1].resetNo();
-	mapeff->move.y[2].resetNo();
-	mapeff->move.y[3].resetNo();
-	mapeff->move.y[4].resetNo();
-	mapeff->move.x[0].resetNo();
-	mapeff->move.x[1].resetNo();
-	mapeff->move.x[2].resetNo();
-	mapeff->chamo[0].resetNo();
-	mapeff->chamo[1].resetNo();
-	mapeff->chamo[2].resetNo();
-	mapeff->fall.resetNo();
-	mapeff->lock.x.resetNo();
-	mapeff->lock.y.resetNo();
-	mapeff->viewT.resetNo();
-	mapeff->speedt[0].resetNo();
-	mapeff->speedt[1].resetNo();
-	mapeff->speedt[2].resetNo();
-	mapeff->speedt[3].resetNo();
-	mapeff->speedt[4].resetNo();
-	mapeff->Movie.resetNo();
-	mapeff->viewLine.resetNo();
+static void RecResetPlayRecfpMapeffNum(rec_map_eff_data_t &mapeff) {
+	mapeff.camera.resetNo();
+	mapeff.scrool.resetNo();
+	mapeff.carrow.resetNo();
+	mapeff.move.y[0].resetNo();
+	mapeff.move.y[1].resetNo();
+	mapeff.move.y[2].resetNo();
+	mapeff.move.y[3].resetNo();
+	mapeff.move.y[4].resetNo();
+	mapeff.move.x[0].resetNo();
+	mapeff.move.x[1].resetNo();
+	mapeff.move.x[2].resetNo();
+	mapeff.chamo[0].resetNo();
+	mapeff.chamo[1].resetNo();
+	mapeff.chamo[2].resetNo();
+	mapeff.fall.resetNo();
+	mapeff.lock.x.resetNo();
+	mapeff.lock.y.resetNo();
+	mapeff.viewT.resetNo();
+	mapeff.speedt[0].resetNo();
+	mapeff.speedt[1].resetNo();
+	mapeff.speedt[2].resetNo();
+	mapeff.speedt[3].resetNo();
+	mapeff.speedt[4].resetNo();
+	mapeff.Movie.resetNo();
+	mapeff.viewLine.resetNo();
 	return;
 }
 
-static void RecResetPlayObjectNum(rec_score_file_t *recfp) {
-	recfp->mapdata.note[0].resetNo();
-	recfp->mapdata.note[1].resetNo();
-	recfp->mapdata.note[2].resetNo();
+static void RecResetPlayObjectNum(rec_score_file_t &recfp) {
+	recfp.mapdata.note[0].resetNo();
+	recfp.mapdata.note[1].resetNo();
+	recfp.mapdata.note[2].resetNo();
 	return;
 }
 
@@ -642,9 +642,53 @@ static void recSetLine(int line[], cvec<rec_mapeff_move_st> move[], int Ntime, i
 	}
 }
 
+class rec_play_item_c {
+	std::vector<DxPic_t> vec;
+
+public:
+	rec_play_item_c(void) = default;
+
+	rec_play_item_c(const tstring &folderPath) {
+		this->reload(folderPath);
+	}
+
+	~rec_play_item_c() {
+		this->clear();
+	}
+
+	void reload(const tstring &folderPath) {
+		DxPic_t handbuf;
+		tstring strbuf;
+		this->clear();
+		for (size_t i = 0; i < 1000; i++) {
+			strbuf = folderPath;
+			Getxxxpng(strbuf, i);
+			handbuf = LoadGraph(strbuf.c_str());
+			if (handbuf == -1) { break; }
+			this->vec.push_back(handbuf);
+		}
+	}
+
+	void clear(void) {
+		for (size_t i = 0; i < this->vec.size(); i++) {
+			DeleteGraph(this->vec[i]);
+		}
+		this->vec.clear();
+	}
+
+	const std::vector<DxPic_t> &GetItemList(void) const {
+		return vec;
+	}
+
+	DxPic_t handle(size_t index) const {
+		if (this->vec.size() <= index) { return DXLIB_PIC_NULL; }
+		return this->vec[index];
+	}
+};
+
 static void PlayDrawItem(
-	const rec_map_eff_data_t *mapeff, int Ntime, int Xmidline,
-	const dxcur_camera_c &camera_c, const std::vector<DxPic_t> &item
+	const rec_map_eff_data_t &mapeff, int Ntime, int Xmidline,
+	const dxcur_camera_c &camera_c, const rec_play_item_c &item
 ) {
 	int drawA;
 	int drawX;
@@ -654,51 +698,51 @@ static void PlayDrawItem(
 	rec_play_xy_set_t camera;
 	camera.x = camera_c.getX();
 	camera.y = camera_c.getY();
-	for (size_t i = mapeff->Movie.nowNo(); i < mapeff->Movie.size(); i++) {
-		const item_box *pMovie = &mapeff->Movie.at(i);
-		if ((Ntime < pMovie->starttime) || (pMovie->endtime < Ntime)) { continue; }
+	for (size_t i = mapeff.Movie.nowNo(); i < mapeff.Movie.size(); i++) {
+		const item_box &pMovie = mapeff.Movie.at(i);
+		if ((Ntime < pMovie.starttime) || (pMovie.endtime < Ntime)) { continue; }
 		//base setting
-		drawA = (int)movecal(pMovie->movemode,
-			pMovie->starttime, pMovie->startalpha,
-			pMovie->endtime, pMovie->endalpha, Ntime);
-		drawX = (int)movecal(pMovie->movemode,
-			pMovie->starttime, pMovie->startXpos,
-			pMovie->endtime, pMovie->endXpos, Ntime);
-		drawY = (int)movecal(pMovie->movemode,
-			pMovie->starttime, pMovie->startYpos,
-			pMovie->endtime, pMovie->endYpos, Ntime);
-		drawS = (int)movecal(pMovie->movemode,
-			pMovie->starttime, pMovie->startsize,
-			pMovie->endtime, pMovie->endsize, Ntime);
-		drawR = (int)movecal(pMovie->movemode,
-			pMovie->starttime, pMovie->startrot,
-			pMovie->endtime, pMovie->endrot, Ntime);
+		drawA = (int)movecal(pMovie.movemode,
+			pMovie.starttime, pMovie.startalpha,
+			pMovie.endtime, pMovie.endalpha, Ntime);
+		drawX = (int)movecal(pMovie.movemode,
+			pMovie.starttime, pMovie.startXpos,
+			pMovie.endtime, pMovie.endXpos, Ntime);
+		drawY = (int)movecal(pMovie.movemode,
+			pMovie.starttime, pMovie.startYpos,
+			pMovie.endtime, pMovie.endYpos, Ntime);
+		drawS = (int)movecal(pMovie.movemode,
+			pMovie.starttime, pMovie.startsize,
+			pMovie.endtime, pMovie.endsize, Ntime);
+		drawR = (int)movecal(pMovie.movemode,
+			pMovie.starttime, pMovie.startrot,
+			pMovie.endtime, pMovie.endrot, Ntime);
 		//material setting
-		if (pMovie->eff.lock == 1) { drawY -= 25; }
-		if (pMovie->eff.bpm_alphr == 1) {
-			drawA = lins(0, drawA, 60000 / mapeff->v_BPM.nowData(), 0,
-				(Ntime - mapeff->v_BPM.nowDataTime()) % (int)(60000 / mapeff->v_BPM.nowData()));
+		if (pMovie.eff.lock == 1) { drawY -= 25; }
+		if (pMovie.eff.bpm_alphr == 1) {
+			drawA = lins(0, drawA, 60000 / mapeff.v_BPM.nowData(), 0,
+				(Ntime - mapeff.v_BPM.nowDataTime()) % (int)(60000 / mapeff.v_BPM.nowData()));
 		}
-		if (pMovie->eff.chara_alphr == 1) {
+		if (pMovie.eff.chara_alphr == 1) {
 			drawA = lins(320, drawA, 60, 0, betweens(60, abss(Xmidline, drawX), 320));
 		}
-		if (pMovie->eff.bpm_size == 1) {
-			drawS = pals(60000 / mapeff->v_BPM.nowData(), drawS / 2.0, 0, drawS,
-				(Ntime - mapeff->v_BPM.nowDataTime()) % (int)(60000 / mapeff->v_BPM.nowData()));
+		if (pMovie.eff.bpm_size == 1) {
+			drawS = pals(60000 / mapeff.v_BPM.nowData(), drawS / 2.0, 0, drawS,
+				(Ntime - mapeff.v_BPM.nowDataTime()) % (int)(60000 / mapeff.v_BPM.nowData()));
 		}
-		if (pMovie->eff.edge_size == 1) {
+		if (pMovie.eff.edge_size == 1) {
 			drawS = betweens(0, lins(540, drawS, 640, 0, drawX), drawS);
 			drawS = betweens(0, lins(100, drawS, 0, 0, drawX), drawS);
 		}
 		//drawing
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, drawA);
-		if (pMovie->eff.lock == 1) {
+		if (pMovie.eff.lock == 1) {
 			RecRescaleDrawDeformationPic(
-				drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item[pMovie->ID]
+				drawX, drawY, drawS / 100.0, drawS / 100.0, drawR, item.handle(pMovie.ID)
 			);
 		}
 		else {
-			camera_c.drawpicDeformationDeg(drawX, drawY, drawS / 100.0, drawR, item[pMovie->ID]);
+			camera_c.drawpicDeformationDeg(drawX, drawY, drawS / 100.0, drawR, item.handle(pMovie.ID));
 		}
 		SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
 	}
@@ -748,57 +792,57 @@ static void RecPlayStepMoveNum(cvec<rec_mapeff_move_st> &move, DxTime_t Ntime) {
 	while (!move.isEndNo() && move.nowData().Etime <= Ntime) { move.stepNo(); }
 }
 
-static void RecPlayStepAllNum(rec_score_file_t *recfp, short *guideN) {
-	recfp->mapeff.gnote.stepNoTime(recfp->time.now);
+static void RecPlayStepAllNum(rec_score_file_t &recfp, short *guideN) {
+	recfp.mapeff.gnote.stepNoTime(recfp.time.now);
 
 	/* chamo */
-	recfp->mapeff.chamo[0].stepNoTime(recfp->time.now);
-	recfp->mapeff.chamo[1].stepNoTime(recfp->time.now);
-	recfp->mapeff.chamo[2].stepNoTime(recfp->time.now);
+	recfp.mapeff.chamo[0].stepNoTime(recfp.time.now);
+	recfp.mapeff.chamo[1].stepNoTime(recfp.time.now);
+	recfp.mapeff.chamo[2].stepNoTime(recfp.time.now);
 
 	/* speedt */
-	recfp->mapeff.speedt[0].stepNoTime(recfp->time.now);
-	recfp->mapeff.speedt[1].stepNoTime(recfp->time.now);
-	recfp->mapeff.speedt[2].stepNoTime(recfp->time.now);
+	recfp.mapeff.speedt[0].stepNoTime(recfp.time.now);
+	recfp.mapeff.speedt[1].stepNoTime(recfp.time.now);
+	recfp.mapeff.speedt[2].stepNoTime(recfp.time.now);
 
-	recfp->mapeff.v_BPM.stepNoTime(recfp->time.now);
-	RecPlayStepCameraNum(recfp->mapeff.camera, recfp->time.now);
-	recfp->mapeff.scrool.stepNoTime(recfp->time.now);
-	RecPlayStepMovieNum(recfp->mapeff.Movie, recfp->time.now);
-	RecPlayStepGuideLineNum(guideN, recfp->mapeff.move.y, recfp->time.now);
-	recfp->mapeff.carrow.stepNoTime(recfp->time.now);
-	recfp->mapeff.lock.x.stepNoTime(recfp->time.now);
-	recfp->mapeff.lock.y.stepNoTime(recfp->time.now);
-	recfp->mapeff.viewT.stepNoTime(recfp->time.now);
-	recfp->mapeff.viewLine.stepNoTime(recfp->time.now);
-	RecPlayStepMoveNum(recfp->mapeff.move.y[0], recfp->time.now);
-	RecPlayStepMoveNum(recfp->mapeff.move.y[1], recfp->time.now);
-	RecPlayStepMoveNum(recfp->mapeff.move.y[2], recfp->time.now);
-	RecPlayStepMoveNum(recfp->mapeff.move.x[0], recfp->time.now);
-	RecPlayStepMoveNum(recfp->mapeff.move.x[1], recfp->time.now);
-	RecPlayStepMoveNum(recfp->mapeff.move.x[2], recfp->time.now);
+	recfp.mapeff.v_BPM.stepNoTime(recfp.time.now);
+	RecPlayStepCameraNum(recfp.mapeff.camera, recfp.time.now);
+	recfp.mapeff.scrool.stepNoTime(recfp.time.now);
+	RecPlayStepMovieNum(recfp.mapeff.Movie, recfp.time.now);
+	RecPlayStepGuideLineNum(guideN, recfp.mapeff.move.y, recfp.time.now);
+	recfp.mapeff.carrow.stepNoTime(recfp.time.now);
+	recfp.mapeff.lock.x.stepNoTime(recfp.time.now);
+	recfp.mapeff.lock.y.stepNoTime(recfp.time.now);
+	recfp.mapeff.viewT.stepNoTime(recfp.time.now);
+	recfp.mapeff.viewLine.stepNoTime(recfp.time.now);
+	RecPlayStepMoveNum(recfp.mapeff.move.y[0], recfp.time.now);
+	RecPlayStepMoveNum(recfp.mapeff.move.y[1], recfp.time.now);
+	RecPlayStepMoveNum(recfp.mapeff.move.y[2], recfp.time.now);
+	RecPlayStepMoveNum(recfp.mapeff.move.x[0], recfp.time.now);
+	RecPlayStepMoveNum(recfp.mapeff.move.x[1], recfp.time.now);
+	RecPlayStepMoveNum(recfp.mapeff.move.x[2], recfp.time.now);
 
 	if (optiondata.backbright != 0) {
-		recfp->mapeff.speedt[3].stepNoTime(recfp->time.now);
-		recfp->mapeff.fall.stepNoTime(recfp->time.now);
-		RecPlayStepMoveNum(recfp->mapeff.move.y[3], recfp->time.now);
-		RecPlayStepMoveNum(recfp->mapeff.move.y[4], recfp->time.now);
+		recfp.mapeff.speedt[3].stepNoTime(recfp.time.now);
+		recfp.mapeff.fall.stepNoTime(recfp.time.now);
+		RecPlayStepMoveNum(recfp.mapeff.move.y[3], recfp.time.now);
+		RecPlayStepMoveNum(recfp.mapeff.move.y[4], recfp.time.now);
 	}
 	return;
 }
 
 /* キー入力 */
 static void RecPlayActSubKey(
-	rec_score_file_t *recfp, int AutoFlag, int *StopFrag, short LineMoveN[]
+	rec_score_file_t &recfp, int AutoFlag, int &StopFrag, short LineMoveN[]
 ) {
 	InputAllKeyHold();
 	if (AutoFlag == 1) {
 		switch (GetKeyPushOnce()) {
 		case KEY_INPUT_SPACE:
-			(*StopFrag) *= -1;
-			if (*StopFrag == 1) { rec_bgm_system_g.Stop(); }
+			(StopFrag) *= -1;
+			if (StopFrag == 1) { rec_bgm_system_g.Stop(); }
 			else {
-				rec_bgm_system_g.SetCurrentPosition((int)((double)recfp->time.now / 1000.0 * 44100.0));
+				rec_bgm_system_g.SetCurrentPosition((int)((double)recfp.time.now / 1000.0 * 44100.0));
 				rec_bgm_system_g.Play(true, false, false);
 			}
 			break;
@@ -807,29 +851,29 @@ static void RecPlayActSubKey(
 		}
 	}
 
-	if (*StopFrag != 1) { return; }
+	if (StopFrag != 1) { return; }
 
 	switch (GetKeyPushOnce()) {
 	case KEY_INPUT_LEFT:
-		recfp->time.now = maxs_2(recfp->time.now - 10000, 0);
+		recfp.time.now = maxs_2(recfp.time.now - 10000, 0);
 		RecResetPlayObjectNum(recfp);
-		RecResetPlayRecfpMapeffNum(&recfp->mapeff);
+		RecResetPlayRecfpMapeffNum(recfp.mapeff);
 		RecResetPlayPartNum(LineMoveN);
 		for (int iLane = 0; iLane < 3; iLane++) {
-			while (recfp->mapdata.note[iLane].nowData().hittime < recfp->time.now &&
-				(recfp->mapdata.note[iLane].nowNo() + 1) < recfp->mapdata.note[iLane].size())
+			while (recfp.mapdata.note[iLane].nowData().hittime < recfp.time.now &&
+				(recfp.mapdata.note[iLane].nowNo() + 1) < recfp.mapdata.note[iLane].size())
 			{
-				recfp->mapdata.note[iLane].stepNo();
+				recfp.mapdata.note[iLane].stepNo();
 			}
 		}
 		break;
 	case KEY_INPUT_RIGHT:
-		recfp->time.now += 10000;
+		recfp.time.now += 10000;
 		for (int iLane = 0; iLane < 3; iLane++) {
-			while (recfp->mapdata.note[iLane].nowData().hittime < recfp->time.now &&
-				(recfp->mapdata.note[iLane].nowNo() + 1) < recfp->mapdata.note[iLane].size())
+			while (recfp.mapdata.note[iLane].nowData().hittime < recfp.time.now &&
+				(recfp.mapdata.note[iLane].nowNo() + 1) < recfp.mapdata.note[iLane].size())
 			{
-				recfp->mapdata.note[iLane].stepNo();
+				recfp.mapdata.note[iLane].stepNo();
 			}
 		}
 		break;
@@ -1185,10 +1229,6 @@ static int PlayShowGuideLine(const rec_score_file_t *recfp, const rec_play_lanep
 	const cvec<rec_mapeff_move_st> &Ymove = recfp->mapeff.move.y[Line];
 	const rec_map_eff_data_t *mapeff = &recfp->mapeff;
 
-	int drawLeft = 0;
-	int drawRight = 0;
-	int drawY1 = 0;
-	int drawY2 = 0;
 	int drawC = 0;
 
 	const bool viewEn = recfp->mapeff.viewLine.searchDataFront(Ymove[iDraw].Stime);
@@ -1468,75 +1508,79 @@ public:
 /* TODO: そもそもスコアフリップいる? */
 static class rec_play_score_calculator_c {
 private:
-	void CalScore(rec_play_userpal_t *userpal, int notes)
+	void CalScore(rec_play_userpal_t &userpal, int notes)
 	{
-		rec_play_score_t *score = &userpal->score;
-		const rec_play_judge_t *judge = &userpal->judgeCount;
-		int MaxCombo = userpal->Mcombo;
-		score->normal = (judge->just * 90000 + judge->good * 86667 + judge->safe * 45000) / notes;
-		score->combo = MaxCombo * 10000 / notes;
-		if (score->normal + score->combo - score->loss == 100000) {
-			score->pjust = maxs_2(maxs_2(100 - (notes - judge->pjust), (judge->pjust * 100 / (double)notes) - 65), 0);
+		rec_play_score_t &score = userpal.score;
+		const rec_play_judge_t &judge = userpal.judgeCount;
+		int MaxCombo = userpal.Mcombo;
+		score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
+		score.combo = MaxCombo * 10000 / notes;
+		if (score.normal + score.combo - score.loss == 100000) {
+			score.pjust = maxs_2(maxs_2(100 - (notes - judge.pjust), (judge.pjust * 100 / (double)notes) - 65), 0);
 		}
 		else {
-			score->pjust = 0;
+			score.pjust = 0;
 		}
-		score->sum = score->normal + score->combo - score->loss + score->pjust;
+		score.sum = score.normal + score.combo - score.loss + score.pjust;
 		return;
 	}
 
+	void CalDistans(rec_play_userpal_t &userpal, const rec_play_time_set_t &time) {
+		switch (userpal.status) {
+		case REC_PLAY_STATUS_PLAYING:
+			userpal.Dscore.now_dis = maxs_2(time.now - time.offset, 0);
+			userpal.Dscore.add_save = userpal.Dscore.add;
+			break;
+		case REC_PLAY_STATUS_CLEARED:
+			userpal.Dscore.now_dis = time.end - time.offset;
+			userpal.Dscore.add_save = userpal.Dscore.add;
+			break;
+		case REC_PLAY_STATUS_DROPED:
+			userpal.Dscore.now_dis = userpal.Dscore.dis_save;
+			break;
+		}
+	}
+
 public:
-	void RecPlayCalUserPal(rec_play_userpal_t *userpal, short notes, rec_play_time_set_t *time, int AutoFg) {
-		userpal->Mcombo = maxs_2(userpal->Mcombo, userpal->Ncombo);
+	void RecPlayCalUserPal(rec_play_userpal_t &userpal, short notes, rec_play_time_set_t &time, int AutoFg) {
+		userpal.Mcombo = maxs_2(userpal.Mcombo, userpal.Ncombo);
 		//ライフが0未満の時、1毎に減点スコアを20増やす。
-		if (userpal->life < 0) {
-			userpal->score.loss = mins_2(userpal->score.loss - userpal->life * 20, userpal->score.normal + userpal->score.combo);
-			userpal->life = 0;
+		if (userpal.life < 0) {
+			userpal.score.loss = mins_2(userpal.score.loss - userpal.life * 20, userpal.score.normal + userpal.score.combo);
+			userpal.life = 0;
 		}
 		//ライフ上限
-		userpal->life = mins_2(userpal->life, 500);
-		userpal->Exlife = mins_2(userpal->Exlife, 500);
+		userpal.life = mins_2(userpal.life, 500);
+		userpal.Exlife = mins_2(userpal.Exlife, 500);
 		//スコア計算
 		this->CalScore(userpal, notes);
 		//ステータス
-		if (userpal->life <= 0 && userpal->status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
-			userpal->status = REC_PLAY_STATUS_DROPED;
-			userpal->Dscore.add_save = userpal->Dscore.add;
-			userpal->Dscore.dis_save = maxs_2(time->now - time->offset, 0);
+		if (userpal.life <= 0 && userpal.status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
+			userpal.status = REC_PLAY_STATUS_DROPED;
+			userpal.Dscore.add_save = userpal.Dscore.add;
+			userpal.Dscore.dis_save = maxs_2(time.now - time.offset, 0);
 		}
-		else if (userpal->status != REC_PLAY_STATUS_DROPED &&
-			maxs_2(time->now - time->offset, 0) > time->end - time->offset)
+		else if (userpal.status != REC_PLAY_STATUS_DROPED &&
+			maxs_2(time.now - time.offset, 0) > time.end - time.offset)
 		{ //CLEARED
-			userpal->status = REC_PLAY_STATUS_CLEARED;
+			userpal.status = REC_PLAY_STATUS_CLEARED;
 		}
 		//距離計算
-		switch (userpal->status) {
-		case REC_PLAY_STATUS_PLAYING:
-			userpal->Dscore.now_dis = maxs_2(time->now - time->offset, 0);
-			userpal->Dscore.add_save = userpal->Dscore.add;
-			break;
-		case REC_PLAY_STATUS_CLEARED:
-			userpal->Dscore.now_dis = time->end - time->offset;
-			userpal->Dscore.add_save = userpal->Dscore.add;
-			break;
-		case REC_PLAY_STATUS_DROPED:
-			userpal->Dscore.now_dis = userpal->Dscore.dis_save;
-			break;
-		}
-		userpal->Dscore.point = (int)(userpal->Dscore.now_dis / 100.0 + userpal->Dscore.add_save);
+		this->CalDistans(userpal, time);
+		userpal.Dscore.point = (int)(userpal.Dscore.now_dis / 100.0 + userpal.Dscore.add_save);
 		return;
 	}
 };
 
 static class rec_play_draw_back_c {
 private:
-	void DrawFallBack(int Yline, const std::vector<DxPic_t> &item, int itemNo) {
+	void DrawFallBack(int Yline, const rec_play_item_c &item, int itemNo) {
 		static int baseX = 0;
 		static int baseY = 0;
 		for (int ix = 0; ix < 2; ix++) {
 			for (int iy = 0; iy < 3; iy++) {
 				RecRescaleDrawGraph(baseX + ix * 640, baseY + Yline - iy * 480,
-					item[itemNo], TRUE);
+					item.handle(itemNo), TRUE);
 			}
 		}
 		baseX -= 5;
@@ -1548,10 +1592,10 @@ private:
 public:
 	//落ち物背景表示
 	void PlayDrawBackGround(
-		const rec_map_eff_data_t *mapeff, const int Yline[], const std::vector<DxPic_t> &item
+		const rec_map_eff_data_t &mapeff, const int Yline[], const rec_play_item_c &item
 	) {
-		if (mapeff->fall.nowData() >= 0) {
-			DrawFallBack(Yline[3], item, mapeff->fall.nowData());
+		if (mapeff.fall.nowData() >= 0) {
+			DrawFallBack(Yline[3], item, mapeff.fall.nowData());
 		}
 	}
 };
@@ -2060,10 +2104,9 @@ private:
 
 public:
 	rec_play_keyview_c(void) {
-		if (this->enable) {
-			this->KeyViewimg[0].reload(_T("picture/play/KeyViewOff.png"));
-			this->KeyViewimg[1].reload(_T("picture/play/KeyViewOn.png"));
-		}
+		if (!this->enable) { return; }
+		this->KeyViewimg[0].reload(_T("picture/play/KeyViewOff.png"));
+		this->KeyViewimg[1].reload(_T("picture/play/KeyViewOn.png"));
 	}
 
 	void update(const rec_play_key_hold_c &keyhold) {
@@ -2078,68 +2121,28 @@ public:
 	}
 
 	void ViewKeyview(const rec_play_key_hold_c &keyhold) const {
-		if (this->enable) {
-			RecRescaleDrawGraph(  5, 445, this->KeyViewimg[mins_2(keyhold.z,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph( 40, 445, this->KeyViewimg[mins_2(keyhold.x,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph( 75, 445, this->KeyViewimg[mins_2(keyhold.c,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
-			RecRescaleDrawGraph(570, 410, this->KeyViewimg[mins_2(keyhold.up,    1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(570, 445, this->KeyViewimg[mins_2(keyhold.down,  1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(535, 445, this->KeyViewimg[mins_2(keyhold.left,  1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
-			RecRescaleDrawGraph(605, 445, this->KeyViewimg[mins_2(keyhold.right, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
-			if (this->count[0] == 0) { RecRescaleAnchorDrawString(10, 450, L"Z", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
-			else { RecRescaleAnchorDrawFormatString(10, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[0] % 100); }
-			if (this->count[1] == 0) { RecRescaleAnchorDrawString(45, 450, L"X", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
-			else { RecRescaleAnchorDrawFormatString(45, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[1] % 100); }
-			if (this->count[2] == 0) { RecRescaleAnchorDrawString(80, 450, L"C", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
-			else { RecRescaleAnchorDrawFormatString(80, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[2] % 100); }
-			if (this->count[3] == 0) { RecRescaleAnchorDrawString(575, 415, L"↑", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
-			else { RecRescaleAnchorDrawFormatString(575, 415, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[3] % 100); }
-			if (this->count[4] == 0) { RecRescaleAnchorDrawString(575, 450, L"↓", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
-			else { RecRescaleAnchorDrawFormatString(575, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[4] % 100); }
-			if (this->count[5] == 0) { RecRescaleAnchorDrawString(540, 450, L"←", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
-			else { RecRescaleAnchorDrawFormatString(540, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[5] % 100); }
-			if (this->count[6] == 0) { RecRescaleAnchorDrawString(610, 450, L"→", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
-			else { RecRescaleAnchorDrawFormatString(610, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[6] % 100); }
-		}
-	}
-};
-
-class rec_play_item_c {
-	std::vector<DxPic_t> vec;
-
-public:
-	rec_play_item_c(void) = default;
-
-	rec_play_item_c(const tstring &folderPath) {
-		this->reload(folderPath);
-	}
-
-	~rec_play_item_c() {
-		this->clear();
-	}
-
-	void reload(const tstring &folderPath) {
-		DxPic_t handbuf;
-		tstring strbuf;
-		this->clear();
-		for (size_t i = 0; i < 1000; i++) {
-			strbuf = folderPath;
-			Getxxxpng(strbuf, i);
-			handbuf = LoadGraph(strbuf.c_str());
-			if (handbuf == -1) { break; }
-			this->vec.push_back(handbuf);
-		}
-	}
-
-	void clear(void) {
-		for (size_t i = 0; i < this->vec.size(); i++) {
-			DeleteGraph(this->vec[i]);
-		}
-		this->vec.clear();
-	}
-
-	const std::vector<DxPic_t> &GetItemList(void) const {
-		return vec;
+		if (!this->enable) { return; }
+		RecRescaleDrawGraph(  5, 445, this->KeyViewimg[mins_2(keyhold.z,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+		RecRescaleDrawGraph( 40, 445, this->KeyViewimg[mins_2(keyhold.x,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+		RecRescaleDrawGraph( 75, 445, this->KeyViewimg[mins_2(keyhold.c,     1)].handle(), REC_RESCALE_BOTTOM_LEFT);
+		RecRescaleDrawGraph(570, 410, this->KeyViewimg[mins_2(keyhold.up,    1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+		RecRescaleDrawGraph(570, 445, this->KeyViewimg[mins_2(keyhold.down,  1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+		RecRescaleDrawGraph(535, 445, this->KeyViewimg[mins_2(keyhold.left,  1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+		RecRescaleDrawGraph(605, 445, this->KeyViewimg[mins_2(keyhold.right, 1)].handle(), REC_RESCALE_BOTTOM_RIGHT);
+		if (this->count[0] == 0) { RecRescaleAnchorDrawString(10, 450, L"Z", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
+		else { RecRescaleAnchorDrawFormatString(10, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[0] % 100); }
+		if (this->count[1] == 0) { RecRescaleAnchorDrawString(45, 450, L"X", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
+		else { RecRescaleAnchorDrawFormatString(45, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[1] % 100); }
+		if (this->count[2] == 0) { RecRescaleAnchorDrawString(80, 450, L"C", COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT); }
+		else { RecRescaleAnchorDrawFormatString(80, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_LEFT, L"%2d", this->count[2] % 100); }
+		if (this->count[3] == 0) { RecRescaleAnchorDrawString(575, 415, L"↑", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
+		else { RecRescaleAnchorDrawFormatString(575, 415, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[3] % 100); }
+		if (this->count[4] == 0) { RecRescaleAnchorDrawString(575, 450, L"↓", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
+		else { RecRescaleAnchorDrawFormatString(575, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[4] % 100); }
+		if (this->count[5] == 0) { RecRescaleAnchorDrawString(540, 450, L"←", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
+		else { RecRescaleAnchorDrawFormatString(540, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[5] % 100); }
+		if (this->count[6] == 0) { RecRescaleAnchorDrawString(610, 450, L"→", COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT); }
+		else { RecRescaleAnchorDrawFormatString(610, 450, COLOR_WHITE, REC_RESCALE_BOTTOM_RIGHT, L"%2d", this->count[6] % 100); }
 	}
 };
 
@@ -2277,7 +2280,7 @@ public:
 		}
 		/* スコア計算 */ {
 			rec_play_score_calculator_c action;
-			action.RecPlayCalUserPal(&this->userpal, recfp.mapdata.notes, &recfp.time, AutoFlag);
+			action.RecPlayCalUserPal(this->userpal, recfp.mapdata.notes, recfp.time, AutoFlag);
 		}
 		//ノーツが全部なくなった瞬間の時間を記録
 		if (GetRemainNotes(this->userpal.judgeCount, recfp.mapdata.notes) == 0 && this->AllNotesHitTime < 0) {
@@ -2332,7 +2335,7 @@ public:
 		if (optiondata.backbright != 0) {
 			rec_play_draw_back_c action;
 			this->backpic.draw(this->lanePos.y, this->cameraClass, this->cameraSkyClass);
-			action.PlayDrawBackGround(&recfp.mapeff, this->lanePos.y, this->itemClass.GetItemList());
+			action.PlayDrawBackGround(recfp.mapeff, this->lanePos.y, this->itemClass);
 		}
 		//フィルター表示
 		switch (optiondata.backbright) {
@@ -2349,8 +2352,8 @@ public:
 		}
 		//アイテム表示
 		if (optiondata.backbright != 0) {
-			PlayDrawItem(&recfp.mapeff, recfp.time.now, this->lanePos.x[1],
-				this->cameraClass, this->itemClass.GetItemList());
+			PlayDrawItem(recfp.mapeff, recfp.time.now, this->lanePos.x[1],
+				this->cameraClass, this->itemClass);
 		}
 		// view line
 		PlayShowAllGuideLine(&recfp, &this->lanePos, this->cameraClass, LineMoveN);
@@ -2427,7 +2430,7 @@ static now_scene_t RecPlayMain(
 	recfp.mapdata.notes = notzero(recfp.mapdata.notes);
 	allsetClass.comboPicClass.SetBPM(recfp.mapdata.bpm);
 	allsetClass.comboPicClass.SetStime(recfp.time.offset);
-	RecResetPlayObjectNum(&recfp);
+	RecResetPlayObjectNum(recfp);
 	rec_bgm_system_g.SetMem(recfp.nameset.mp3FN);
 	rec_bgm_system_g.Play(true, false, true);
 	WaitTimer(WAIT_TIME_AFTER_MUSICPLAY);
@@ -2445,9 +2448,9 @@ static now_scene_t RecPlayMain(
 
 		//キー入力
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
-		RecPlayStepAllNum(&recfp, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
+		RecPlayStepAllNum(recfp, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
 		RecPlayGetKeyhold(&recfp, keyhold, &holdG, ps.autoFg);
-		RecPlayActSubKey(&recfp, ps.autoFg, &StopFrag, LineMoveN);
+		RecPlayActSubKey(recfp, ps.autoFg, StopFrag, LineMoveN);
 		if (CheckHitKey(KEY_INPUT_ESCAPE)) {
 			rec_bgm_system_g.Stop();
 			return SCENE_SELECT;
