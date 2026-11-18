@@ -52,16 +52,6 @@ typedef struct judge_box {
 	int miss = 0;
 } rec_play_judge_t;
 
-typedef struct rec_play_score_s {
-	int normal = 0;
-	int combo = 0;
-	int loss = 0;
-	int sum = 0;
-	int pjust = 0;
-	int before = 0;
-	int time = 0;
-} rec_play_score_t;
-
 typedef struct rec_play_xy_set_s {
 	int x;
 	int y;
@@ -80,8 +70,29 @@ typedef struct rec_play_chara_hit_attack_s {
 	int time = -1000;
 } rec_play_chara_hit_attack_t;
 
+class rec_play_score_c {
+private:
+	int normal = 0; /* 判定によるスコア */
+	int combo = 0; /* コンボによるスコア */
+	int loss = 0; /* 減点分のスコア。総得点がマイナスにならないように調整される */
+	int pjust = 0; /* pjustによるスコア。パフェ時のみ総合点に反映 */
+
+	int before = 0;
+	int time = 0;
+
+public:
+	void SetScoreFlip(int Ntime);
+	void SetJudgeScore(const rec_play_judge_t &judge, int note_count);
+	void SetComboScore(int max_combo, int note_count);
+	void SetPjustScore(int pjust_count, int note_count);
+	void AddLoss(int val);
+	int GetJudgeScore(void) const;
+	int GetAllScore(void) const;
+	int GetViewScore(int Ntime) const;
+};
+
 typedef struct rec_play_userpal_s {
-	rec_play_score_t score;
+	rec_play_score_c score;
 	distance_score_t Dscore;
 	rec_play_status_t status = REC_PLAY_STATUS_PLAYING;
 	int Ncombo = 0;

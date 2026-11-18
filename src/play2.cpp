@@ -1508,21 +1508,10 @@ public:
 /* TODO: そもそもスコアフリップいる? */
 static class rec_play_score_calculator_c {
 private:
-	void CalScore(rec_play_userpal_t &userpal, int notes)
-	{
-		rec_play_score_t &score = userpal.score;
-		const rec_play_judge_t &judge = userpal.judgeCount;
-		int MaxCombo = userpal.Mcombo;
-		score.normal = (judge.just * 90000 + judge.good * 86667 + judge.safe * 45000) / notes;
-		score.combo = MaxCombo * 10000 / notes;
-		if (score.normal + score.combo - score.loss == 100000) {
-			score.pjust = maxs_2(maxs_2(100 - (notes - judge.pjust), (judge.pjust * 100 / (double)notes) - 65), 0);
-		}
-		else {
-			score.pjust = 0;
-		}
-		score.sum = score.normal + score.combo - score.loss + score.pjust;
-		return;
+	void CalScore(rec_play_userpal_t &userpal, int notes) {
+		userpal.score.SetJudgeScore(userpal.judgeCount, notes);
+		userpal.score.SetComboScore(userpal.Mcombo, notes);
+		userpal.score.SetPjustScore(userpal.judgeCount.pjust, notes);
 	}
 
 	void CalDistans(rec_play_userpal_t &userpal, const rec_play_time_set_t &time) {
@@ -1546,7 +1535,7 @@ public:
 		userpal.Mcombo = maxs_2(userpal.Mcombo, userpal.Ncombo);
 		//ライフが0未満の時、1毎に減点スコアを20増やす。
 		if (userpal.life < 0) {
-			userpal.score.loss = mins_2(userpal.score.loss - userpal.life * 20, userpal.score.normal + userpal.score.combo);
+			userpal.score.AddLoss(-(userpal.life * 20));
 			userpal.life = 0;
 		}
 		//ライフ上限
@@ -1929,9 +1918,9 @@ private:
 	dxcur_pic_c sbbarimg = dxcur_pic_c(_T("picture/play/scoreber2.png"));
 
 private:
-	int CalPosScore(rec_play_score_t score, int RemainNotes, int Notes, int combo, int MaxCombo) const {
+	int CalPosScore(const rec_play_score_c &score, int RemainNotes, int Notes, int combo, int MaxCombo) const {
 		int PosCombo = maxs_2(combo + RemainNotes, MaxCombo);
-		return score.normal + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
+		return score.GetJudgeScore() + 90000 * RemainNotes / Notes + 10000 * PosCombo / Notes;
 	}
 
 	void RunningStats(rec_play_judge_t judge, int PosScore, int HighScore) const {
@@ -1969,17 +1958,11 @@ private:
 		}
 	}
 
-	void ViewScore(rec_play_score_t score, int Hscore, int time) const {
-		DxColor_t Cr = GetColor(255, 255, 255);
-		int s_score = score.sum;
-
-		if (time - score.time < 500) {
-			s_score = pals(500, score.sum, 0, score.before, time - score.time);
-		}
-		if (Hscore <= s_score) {
-			Cr = GetColor(255, 255, 0);
-		}
-		RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", s_score);
+	void ViewScore(const rec_play_score_c &score, int Hscore, int Ntime) const {
+		DxColor_t Cr = COLOR_WHITE;
+		int view_score = score.GetViewScore(Ntime);
+		if (Hscore <= view_score) { Cr = COLOR_YELLOW; }
+		RecRescaleDrawFormatString(490, 20, Cr, L"SCORE:%d", view_score);
 	}
 
 	void ViewLife(int life, int Exlife) const {

@@ -505,16 +505,16 @@ static void RecResultCalParameter(rec_result_pal_t &result_pal, const rec_play_u
 	const rec_play_nameset_t &nameset, rec_dif_t dif, short noteCount)
 {
 	const rec_clear_rank_t Clear = JudgeClearRank(userpal);
-	const rec_score_rate_t rank  = CalScoreRank(userpal.score.sum);
+	const rec_score_rate_t rank  = CalScoreRank(userpal.score.GetAllScore());
 
 	result_pal.acc             = CAL_ACC(userpal.judgeCount, noteCount);
 	result_pal.gap             = userpal.gap.GetAverage();
 	result_pal.width           = userpal.gap.GetDeviation();
-	result_pal.score           = userpal.score.sum;
+	result_pal.score           = userpal.score.GetAllScore();
 	result_pal.judge           = userpal.judgeCount;
 	result_pal.Mcombo          = userpal.Mcombo;
 	result_pal.noteCount       = noteCount;
-	result_pal.floatRank       = GetFloatRank(userpal.score.sum, userpal.judgeCount.miss, noteCount, rank) / 1000;
+	result_pal.floatRank       = GetFloatRank(userpal.score.GetAllScore(), userpal.judgeCount.miss, noteCount, rank) / 1000;
 	result_pal.newRate         = RecSaveGetFullRunnerRate() * 100;
 	result_pal.subRate         = result_pal.newRate - result_pal.oldRate; /* oldRateÇÕÉåÅ[Égï€ë∂ëOÇ…ë„ì¸ÇµÇƒÇ¢ÇÈ */
 
@@ -539,8 +539,8 @@ static void SaveScore(const rec_play_userpal_t &userpal, const tstring &songN, r
 	rec_save_score_t buf;
 
 	buf.clearRank = JudgeClearRank(userpal);
-	buf.scoreRate = CalScoreRank(userpal.score.sum);
-	buf.score     = userpal.score.sum;
+	buf.scoreRate = CalScoreRank(userpal.score.GetAllScore());
+	buf.score     = userpal.score.GetAllScore();
 	buf.dist      = userpal.Dscore.point;
 	buf.acc       = CAL_ACC(userpal.judgeCount, noteCount);
 

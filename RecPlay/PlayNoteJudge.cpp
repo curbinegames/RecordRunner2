@@ -238,18 +238,17 @@ static void SetHitPosByHit(rec_hitatk_event_ec &hitatk, const char hitflag) {
  * userpalの値を更新します
  * @param[out] userpal  更新するuserpalへのポインタ
  * @param[in] Ntime     Ntimeの値
- * @param[in] setBscore trueを入れるとBscoreを更新します
+ * @param[in] scoreFlip trueを入れるとスコアフリップを発生させます
  * @param[in] PjustFg   pjustであるかをtrue/falseで入力してください
  * @param[in] addLife   増減するlifeの値
  * @param[in] addExLife 増減するExlifeの値
  * @param[in] addDscore 増減するDscoreの値
  * @param[in] addCombo  増減するcomboの値、0未満を入れるとコンボが0になります
  */
-static void RecJudgeSetUserpal(userpal_t *userpal, bool setBscore, bool PjustFg,
+static void RecJudgeSetUserpal(userpal_t *userpal, bool scoreFlip, bool PjustFg,
 	int addLife, int addExLife, int addDscore, int addCombo)
 {
-	if (setBscore) { userpal->score.before = pals(500, userpal->score.sum, 0, userpal->score.before, mins_2(s_Ntime - userpal->score.time, 500)); }
-	userpal->score.time = s_Ntime;
+	if (scoreFlip) { userpal->score.SetScoreFlip(s_Ntime); }
 	if (PjustFg) { (userpal->judgeCount.pjust)++; }
 	(userpal->life) += addLife;
 	if (0 < userpal->Exlife) { (userpal->Exlife) += addExLife; }
