@@ -25,6 +25,12 @@ void rec_play_score_c::SetPjustScore(int pjust_count, int note_count) {
     this->pjust = maxs_2(maxs_2(gap_point, acc_point), 0);
 }
 
+void rec_play_score_c::SetScore(const rec_play_judge_t &judge, int max_combo, int note_count) {
+    this->SetJudgeScore(judge, note_count);
+    this->SetComboScore(max_combo, note_count);
+    this->SetPjustScore(judge.pjust, note_count);
+}
+
 void rec_play_score_c::AddLoss(int val) {
     this->loss = mins_2(this->loss + val, this->normal + this->combo);
 }

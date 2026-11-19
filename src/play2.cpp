@@ -1504,16 +1504,8 @@ public:
 	}
 };
 
-/* TODO: miss判定でもスコアスリップが発生する */
-/* TODO: そもそもスコアフリップいる? */
 static class rec_play_score_calculator_c {
 private:
-	void CalScore(rec_play_userpal_t &userpal, int notes) {
-		userpal.score.SetJudgeScore(userpal.judgeCount, notes);
-		userpal.score.SetComboScore(userpal.Mcombo, notes);
-		userpal.score.SetPjustScore(userpal.judgeCount.pjust, notes);
-	}
-
 	void CalDistans(rec_play_userpal_t &userpal, const rec_play_time_set_t &time) {
 		switch (userpal.status) {
 		case REC_PLAY_STATUS_PLAYING:
@@ -1538,7 +1530,7 @@ public:
 			userpal.life.resetLoss();
 		}
 		//スコア計算
-		this->CalScore(userpal, notes);
+		userpal.score.SetScore(userpal.judgeCount, userpal.Mcombo, notes);
 		//ステータス
 		if (
 			(userpal.life.getLife() <= 0) &&
@@ -2297,8 +2289,6 @@ public:
 			this->cutin.SetCutTipFg(CUTIN_TIPS_NONE);
 			this->cutin.SetIo(CUT_FRAG_IN);
 		}
-
-		keyviewClass.update(keyhold);
 
 		this->keyviewClass.update(keyhold);
 	}

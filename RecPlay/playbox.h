@@ -77,6 +77,7 @@ public:
 	void SetJudgeScore(const rec_play_judge_t &judge, int note_count);
 	void SetComboScore(int max_combo, int note_count);
 	void SetPjustScore(int pjust_count, int note_count);
+	void SetScore(const rec_play_judge_t &judge, int max_combo, int note_count);
 	void AddLoss(int val);
 	int GetJudgeScore(void) const;
 	int GetAllScore(void) const;
