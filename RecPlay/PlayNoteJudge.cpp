@@ -240,18 +240,14 @@ static void SetHitPosByHit(rec_hitatk_event_ec &hitatk, const char hitflag) {
  * @param[in] Ntime     Ntimeの値
  * @param[in] scoreFlip trueを入れるとスコアフリップを発生させます
  * @param[in] PjustFg   pjustであるかをtrue/falseで入力してください
- * @param[in] addLife   増減するlifeの値
- * @param[in] addExLife 増減するExlifeの値
  * @param[in] addDscore 増減するDscoreの値
  * @param[in] addCombo  増減するcomboの値、0未満を入れるとコンボが0になります
  */
-static void RecJudgeSetUserpal(userpal_t *userpal, bool scoreFlip, bool PjustFg,
-	int addLife, int addExLife, int addDscore, int addCombo)
+static void RecJudgeSetUserpal(userpal_t *userpal,
+	bool scoreFlip, bool PjustFg, int addDscore, int addCombo)
 {
 	if (scoreFlip) { userpal->score.SetScoreFlip(s_Ntime); }
 	if (PjustFg) { (userpal->judgeCount.pjust)++; }
-	(userpal->life) += addLife;
-	if (0 < userpal->Exlife) { (userpal->Exlife) += addExLife; }
 	userpal->Dscore.AddDist(addDscore);
 	if (addCombo < 0) { userpal->Ncombo = 0; }
 	else { (userpal->Ncombo) += addCombo; }
@@ -261,41 +257,34 @@ static void RecJudgeSetUserpal(userpal_t *userpal, bool scoreFlip, bool PjustFg,
 static void note_judge_event(note_judge judge, userpal_t *userpal) {
 	switch (judge) {
 	case NOTE_JUDGE_PJUST:
+		(userpal->judgeCount.just)++;
+		RecJudgeSetUserpal(userpal,  true,  true, 2,  1);
+		userpal->life.applyPJust();
+		userpal->Exlife.applyPJust();
+		break;
 	case NOTE_JUDGE_JUST:
 		(userpal->judgeCount.just)++;
+		RecJudgeSetUserpal(userpal,  true, false, 2,  1);
+		userpal->life.applyJust();
+		userpal->Exlife.applyJust();
 		break;
 	case NOTE_JUDGE_GOOD:
 		(userpal->judgeCount.good)++;
+		RecJudgeSetUserpal(userpal,  true, false, 1,  1);
+		userpal->life.applyGood();
+		userpal->Exlife.applyGood();
 		break;
 	case NOTE_JUDGE_SAFE:
 		(userpal->judgeCount.safe)++;
+		RecJudgeSetUserpal(userpal,  true, false, 0,  0);
+		userpal->life.applySafe();
+		userpal->Exlife.applySafe();
 		break;
 	case NOTE_JUDGE_MISS:
 		(userpal->judgeCount.miss)++;
-		break;
-	}
-
-	switch (judge) {
-	/*      userpal, setBscore, Pjust, +Life, +ExLife, +Dscore, +Combo); */
-	case NOTE_JUDGE_PJUST:
-		RecJudgeSetUserpal(
-			userpal,      true,  true,     2,       2,       2,      1);
-		break;
-	case NOTE_JUDGE_JUST:
-		RecJudgeSetUserpal(
-			userpal,      true, false,     2,       1,       2,      1);
-		break;
-	case NOTE_JUDGE_GOOD:
-		RecJudgeSetUserpal(
-			userpal,      true, false,     1,       0,       1,      1);
-		break;
-	case NOTE_JUDGE_SAFE:
-		RecJudgeSetUserpal(
-			userpal,      true, false,     0,      -1,       0,      0);
-		break;
-	case NOTE_JUDGE_MISS:
-		RecJudgeSetUserpal(
-			userpal,     false, false,   -20,    -100,       0,     -1);
+		RecJudgeSetUserpal(userpal, false, false, 0, -1);
+		userpal->life.applyMiss();
+		userpal->Exlife.applyMiss();
 		break;
 	}
 

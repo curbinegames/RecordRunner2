@@ -71,6 +71,65 @@ void distance_score_c::SetDrop(void) {
 
 #pragma endregion distance_score_c
 
+#pragma region rec_play_life_c
+
+void rec_play_life_c::fixLife(void) {
+    if (this->life < 0) {
+        this->loss += -(this->life);
+        this->life = 0;
+    }
+    if (500 < this->life) { this->life = 500; }
+}
+
+void rec_play_life_c::addBase(int val) {
+    if (val < 0 || 0 < this->life || this->recover) {
+        this->life += val;
+        this->fixLife();
+    }
+}
+
+void rec_play_life_c::setPoint(int pjust, int just, int good, int safe, int miss) {
+    this->pjust_point = pjust;
+    this->just_point  = just;
+    this->good_point  = good;
+    this->safe_point  = safe;
+    this->miss_point  = miss;
+}
+
+void rec_play_life_c::applyPJust(void) {
+    this->addBase(this->pjust_point);
+}
+
+void rec_play_life_c::applyJust(void) {
+    this->addBase(this->just_point);
+}
+
+void rec_play_life_c::applyGood(void) {
+    this->addBase(this->good_point);
+}
+
+void rec_play_life_c::applySafe(void) {
+    this->addBase(this->safe_point);
+}
+
+void rec_play_life_c::applyMiss(void) {
+    this->addBase(this->miss_point);
+}
+
+int rec_play_life_c::getLife(void) const {
+    return this->life;
+}
+
+int rec_play_life_c::getLoss(void) const {
+    return this->loss;
+}
+
+void rec_play_life_c::resetLoss(void) {
+    this->loss = 0;
+}
+
+#pragma endregion rec_play_life_c
+
 #pragma region rec_play_key_hold_c
 
 int rec_play_key_hold_c::GetHitPushCount(void) const {

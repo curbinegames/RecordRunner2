@@ -1528,20 +1528,22 @@ private:
 	}
 
 public:
-	void RecPlayCalUserPal(rec_play_userpal_t &userpal, short notes, rec_play_time_set_t &time, int AutoFg) {
+	void RecPlayCalUserPal(
+		rec_play_userpal_t &userpal, short notes, rec_play_time_set_t &time, int AutoFg
+	) {
 		userpal.Mcombo = maxs_2(userpal.Mcombo, userpal.Ncombo);
 		//ライフが0未満の時、1毎に減点スコアを20増やす。
-		if (userpal.life < 0) {
-			userpal.score.AddLoss(-(userpal.life * 20));
-			userpal.life = 0;
+		if (0 < userpal.life.getLoss()) {
+			userpal.score.AddLoss(userpal.life.getLoss() * 20);
+			userpal.life.resetLoss();
 		}
-		//ライフ上限
-		userpal.life = mins_2(userpal.life, 500);
-		userpal.Exlife = mins_2(userpal.Exlife, 500);
 		//スコア計算
 		this->CalScore(userpal, notes);
 		//ステータス
-		if (userpal.life <= 0 && userpal.status == REC_PLAY_STATUS_PLAYING && AutoFg == 0) {
+		if (
+			(userpal.life.getLife() <= 0) &&
+			userpal.status == REC_PLAY_STATUS_PLAYING && AutoFg == 0
+		) {
 			userpal.status = REC_PLAY_STATUS_DROPED;
 			userpal.Dscore.SetDrop();
 		}
@@ -2045,7 +2047,7 @@ public:
 	{
 		RecRescaleDrawGraph(0, 0, this->baseImg.handle(), TRUE);
 		this->ViewScore(userpal->score, Hscore, time->now);
-		this->ViewLife(userpal->life, userpal->Exlife);
+		this->ViewLife(userpal->life.getLife(), userpal->Exlife.getLife());
 		this->ViewDist(userpal->status, &userpal->Dscore, time, &mapdata->mpal.time, holdG);
 		RecRescaleDrawGraph(0, 0, this->sbbarimg.handle(), TRUE);
 		this->ViewRunStatus(userpal, mapdata->notes, Hscore);
@@ -2366,7 +2368,7 @@ public:
 		RECR_DEBUG(2, RecPlayDebug[2]);
 
 		if (this->userpal.status == REC_PLAY_STATUS_DROPED) { RecRescaleDrawGraph(0, 0, this->dropimg.handle(), TRUE); }
-		else if (this->userpal.life <= 100) { RecRescaleDrawGraph(0, 0, this->dangerimg.handle(), TRUE); }
+		else if (this->userpal.life.getLife() <= 100) { RecRescaleDrawGraph(0, 0, this->dangerimg.handle(), TRUE); }
 		this->bonusClass.draw();
 		this->cutin.DrawCut();
 	}

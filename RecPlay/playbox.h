@@ -97,6 +97,39 @@ public:
 	void SetDrop(void);
 };
 
+class rec_play_life_c {
+private:
+	int life = 500; /* ç°ÇÃÉâÉCÉt */
+	int loss =   0; /* å∏ì_ï™ */
+
+	int pjust_point =   2;
+	int  just_point =   2;
+	int  good_point =   1;
+	int  safe_point =   0;
+	int  miss_point = -20;
+
+	bool recover    = true; /* 0Ç…Ç»Ç¡ÇΩå„Ç‡âÒïúÇ∑ÇÈÇ© */
+
+	void fixLife(void);
+	void addBase(int val);
+
+public:
+	rec_play_life_c(void) = default;
+	rec_play_life_c(int pjust, int just, int good, int safe, int miss, bool recover) :
+		pjust_point(pjust), just_point(just), good_point(good), safe_point(safe), miss_point(miss), recover(recover) {};
+
+	void setPoint(int pjust, int just, int good, int safe, int miss);
+	void applyPJust(void);
+	void applyJust(void);
+	void applyGood(void);
+	void applySafe(void);
+	void applyMiss(void);
+	int getLife(void) const;
+	int getLoss(void) const;
+	void resetLoss(void);
+	bool IsActive(void) const;
+};
+
 typedef struct rec_play_userpal_s {
 	rec_play_score_c score;
 	distance_score_c Dscore;
@@ -104,8 +137,8 @@ typedef struct rec_play_userpal_s {
 	int Ncombo = 0;
 	int Mcombo = 0;
 	rec_play_judge_t judgeCount;
-	int life = 500;
-	int Exlife = 500;
+	rec_play_life_c life  { 2, 2, 1,  0,  -20,  true };
+	rec_play_life_c Exlife{ 2, 1, 0, -1, -100, false };
 	cur_deviation_c gap;
 } rec_play_userpal_t;
 
