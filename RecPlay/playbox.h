@@ -128,7 +128,6 @@ public:
 	int getLife(void) const;
 	int getLoss(void) const;
 	void resetLoss(void);
-	bool IsActive(void) const;
 };
 
 typedef struct rec_play_userpal_s {

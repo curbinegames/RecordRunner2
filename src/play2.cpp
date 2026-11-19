@@ -37,6 +37,14 @@
 
 #endif /* define group */
 
+// #define REC_PLAY_DEBUG_ENABLE
+
+#ifdef REC_PLAY_DEBUG_ENABLE
+static int s_debug_num_1 = 0;
+static int s_debug_num_2 = 0;
+static int s_debug_num_3 = 0;
+#endif
+
 typedef rec_map_eff_data_t mapeff_t;
 
 class rec_play_notepic_c {
@@ -275,7 +283,7 @@ public:
 	}
 };
 
-#if 1 /* ボーナス系 */
+#pragma region ボーナス系
 
 class rec_play_bonus_cover_c {
 private:
@@ -576,9 +584,9 @@ public:
 	}
 };
 
-#endif /* ボーナス系 */
+#pragma endregion ボーナス系
 
-#if 1 /* sub action */
+#pragma region sub action
 
 static void RecResetPlayPartNum(short LineMoveN[]) {
 	LineMoveN[0] = 0;
@@ -938,14 +946,18 @@ static bool RecPlayMakeRssCheck(const tstring &mapPath, int shift) {
 	return false;
 }
 
-#endif /* sub action */
+#pragma endregion sub action
 
 #if 1 /* Guide Line */
 
+/**
+ * moveのデータ内の時間timeにおける位置を取得する
+ */
 static int RecMapGetPosFromMove(const cvec<rec_mapeff_move_st> &move, int time) {
 	int ret = 0;
 	int offset = 1;
 
+	/* offsetを計算 */
 	while (
 		offset + 1 < move.size() &&
 		IS_BETWEEN(0, move.at(offset).Etime, time)
@@ -953,10 +965,12 @@ static int RecMapGetPosFromMove(const cvec<rec_mapeff_move_st> &move, int time) 
 		offset++;
 	}
 
+	/* 最初のStimeに達していなかったら初期値を帰す */
 	if (move.at(offset).Stime < 0) {
 		return move.at(offset - 1).pos;
 	}
 
+	/* offsetのEtimeとStimeが逆転してて、NtimeがStimeに達していなかったら一つ前のposを取る */
 	if (move.at(offset).Etime <= move.at(offset).Stime) {
 		if (time < move.at(offset).Stime) {
 			return move.at(offset - 1).pos;
@@ -966,16 +980,21 @@ static int RecMapGetPosFromMove(const cvec<rec_mapeff_move_st> &move, int time) 
 		}
 	}
 
+	/* move中ならその区間の位置を返す */
 	if (IS_BETWEEN(0, move.at(offset).Stime, time) && move.at(offset).Etime > time) {
-		ret = movecal(move.at(offset).mode,
+		return movecal(move.at(offset).mode,
 			move.at(offset).Stime,
 			move.at(offset - 1).pos,
 			move.at(offset).Etime, move.at(offset).pos,
 			time);
 	}
-	else {
-		ret = move.at(offset - 1).pos;
+
+	/* 末尾に達していたら末尾のposを返す */
+	if (offset + 1 == move.size() && move.at(offset).Etime <= time) {
+		return move.at(offset).pos;
 	}
+
+	return move.at(offset - 1).pos;
 
 	return ret;
 }
@@ -1096,7 +1115,7 @@ static int PlayShowLastGuideLine(const rec_map_eff_data_t *mapeff, const cvec<re
 	int drawRight = 0;
 	int drawY1 = 0;
 	int drawY2 = 0;
-	RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, lanePos, Line, Ntime, Ymove[iDraw - 1].Etime);
+	RecPlayGetTimeLanePos(&drawLeft, &drawY1, mapeff, lanePos, Line, Ntime, Ymove.lastData().Etime);
 	drawRight = 1280 - camera_c.getX();
 	drawY2    = drawY1;
 	if (960 < drawLeft) { return RET_FINISH; }
@@ -1246,8 +1265,8 @@ static int PlayShowGuideLine(const rec_score_file_t *recfp, const rec_play_lanep
 		break;
 	}
 
-	/* TODO: ラストだけ表示バグってる! */
 	if (iDraw + 1 == Ymove.size()) {
+		PlayShowGuideLineStandard(mapeff, Ymove, lanePos, camera_c, Line, iDraw, drawC, Ntime, viewEn);
 		return PlayShowLastGuideLineGroup(mapeff, Ymove, lanePos, camera_c, Line, iDraw, drawC, Ntime, viewEn);
 	}
 
@@ -2325,14 +2344,14 @@ public:
 			PlayDrawItem(recfp.mapeff, recfp.time.now, this->lanePos.x[1],
 				this->cameraClass, this->itemClass);
 		}
+		//コンボ表示
+		this->comboPicClass.draw(1280, recfp.time.now);
 		// view line
 		PlayShowAllGuideLine(&recfp, &this->lanePos, this->cameraClass, LineMoveN);
 		RecPlayDrawGuideBorder(&recfp, this->cameraClass, &this->lanePos);
 		/* キャラ周り表示 */
 		this->runnerClass.ViewRunner(recfp.mapeff, this->lanePos, this->cameraClass, recfp.time.now);
 		this->runnerClass.drawHiteff(this->cameraClass, this->lanePos);
-		//コンボ表示
-		this->comboPicClass.draw(1280, recfp.time.now);
 		//判定表示
 		this->judgepicClass.draw(this->cameraClass, &this->lanePos, this->runnerClass.getCharaPos());
 		/* 音符表示 */
@@ -2416,6 +2435,12 @@ static now_scene_t RecPlayMain(
 			break;
 		}
 
+#ifdef REC_PLAY_DEBUG_ENABLE
+		s_debug_num_1 = 0;
+		s_debug_num_2 = 0;
+		s_debug_num_3 = 0;
+#endif
+
 		//キー入力
 		if (GetWindowUserCloseFlag(TRUE)) { return SCENE_EXIT; }
 		RecPlayStepAllNum(recfp, LineMoveN); /* RecPlayGetKeyhold()よりも先に実行しなければならない */
@@ -2429,6 +2454,11 @@ static now_scene_t RecPlayMain(
 		allsetClass.UpdateAll(Stime, ps.autoFg, StopFrag, recfp, keyhold, snd_set_class);
 		ClearDrawScreen(); /* 描画エリアここから */
 		allsetClass.DrawAllUI(recfp, holdG, HighScore, ps.autoFg, LineMoveN, keyhold);
+#ifdef REC_PLAY_DEBUG_ENABLE
+		DrawFormatString(500, 100, COLOR_WHITE, _T("debug1: %d"), s_debug_num_1);
+		DrawFormatString(500, 120, COLOR_WHITE, _T("debug2: %d"), s_debug_num_2);
+		DrawFormatString(500, 140, COLOR_WHITE, _T("debug3: %d"), s_debug_num_3);
+#endif
 		ScreenFlip(); /* 描画エリアここまで */
 
 		//ウェイト
