@@ -108,6 +108,30 @@ public:
 	}
 };
 
+class rec_result_charfont_c {
+private:
+	dxcur_alphabet_pic_c pic[1] = {
+		dxcur_alphabet_pic_c(_T("picture/result/font.png"))
+	};
+
+public:
+	rec_result_charfont_c(void) {
+		for (int i = 0; i < 1; i++) {
+			this->pic[i].SetPicSizeAll(24);
+		}
+	}
+
+	void DrawString(int x, int y, double size, const tstring &str, int cr) const {
+		this->pic[cr].DrawString(x, y, size, str);
+	}
+
+	void RescaleDrawString(int x, int y, double size, const tstring &str, int cr) const {
+		int drawX = lins(0, 0, OLD_WINDOW_SIZE_X, WINDOW_SIZE_X, x);
+		int drawY = lins(0, 0, OLD_WINDOW_SIZE_Y, WINDOW_SIZE_Y, y);
+		this->DrawString(drawX, drawY, size * WINDOW_SIZE_Y / (double)OLD_WINDOW_SIZE_Y, str, cr);
+	}
+};
+
 class rec_result_cleartype_pic_c {
 private:
 	dxcur_pic_c pic;
@@ -240,13 +264,13 @@ public:
 	rec_result_chara_pic_c(void) {
 	switch (optiondata.chara) {
 		case REC_CHARA_PICKER:
-			this->pic.reload(L"picture/RePicker.png");
+			this->pic.reload(L"picture/result/Picker.png");
 			break;
 		case REC_CHARA_GATOR:
-			this->pic.reload(L"picture/ReGator.png");
+			this->pic.reload(L"picture/result/Gator.png");
 			break;
 		case REC_CHARA_TAYLOR:
-			this->pic.reload(L"picture/ReTaylor.png");
+			this->pic.reload(L"picture/result/Taylor.png");
 			break;
 		default:
 			this->pic.reload(_T(""));
@@ -287,9 +311,8 @@ typedef struct rec_result_pal_s {
 } rec_result_pal_t;
 
 static now_scene_t ViewResult(const rec_result_pal_t &val) {
-	/* typedef */
-	dxcur_pic_c resultimg = dxcur_pic_c(_T("picture/result.png"));
-	/* class */
+	dxcur_pic_c resultimg = dxcur_pic_c(_T("picture/result/back.png"));
+	rec_result_charfont_c char_font;
 	rec_result_numfont_c num_font;
 	rec_cutin_c cutin;
 
@@ -307,12 +330,17 @@ static now_scene_t ViewResult(const rec_result_pal_t &val) {
 		RecRescaleDrawString(100, 13, val.songN.c_str(), COLOR_WHITE);
 
 		/* 判定周り */
-		num_font.RescaleDrawNum(140,  52, 30 / 64.0, val.judge.just, CUR_FONT_COLOR_BLUE);
-		num_font.RescaleDrawNum(140,  93, 30 / 64.0, val.judge.good, CUR_FONT_COLOR_YELLOW);
-		num_font.RescaleDrawNum(140, 134, 30 / 64.0, val.judge.safe, CUR_FONT_COLOR_GREEN);
-		num_font.RescaleDrawNum(140, 175, 30 / 64.0, val.judge.miss, CUR_FONT_COLOR_RED);
-		num_font.RescaleDrawNum(155, 215, 30 / 64.0, val.Mcombo,     CUR_FONT_COLOR_BLUE);
-		num_font.RescaleDrawNum(265, 215, 30 / 64.0, val.noteCount,  CUR_FONT_COLOR_PURPLE);
+		char_font.RescaleDrawString( 20,  50, 60 / 64.0, _T("JUST:"), 0);
+		num_font.RescaleDrawNum(    140,  52, 30 / 64.0, val.judge.just, CUR_FONT_COLOR_BLUE);
+		char_font.RescaleDrawString( 20,  93, 60 / 64.0, _T("GOOD:"), 0);
+		num_font.RescaleDrawNum(    140,  93, 30 / 64.0, val.judge.good, CUR_FONT_COLOR_YELLOW);
+		char_font.RescaleDrawString( 20, 134, 60 / 64.0, _T("SAFE:"), 0);
+		num_font.RescaleDrawNum(    140, 134, 30 / 64.0, val.judge.safe, CUR_FONT_COLOR_GREEN);
+		char_font.RescaleDrawString( 20, 175, 60 / 64.0, _T("MISS:"), 0);
+		num_font.RescaleDrawNum(    140, 175, 30 / 64.0, val.judge.miss, CUR_FONT_COLOR_RED);
+		char_font.RescaleDrawString( 20, 215, 60 / 64.0, _T("COMBO:"), 0);
+		num_font.RescaleDrawNum(    155, 215, 30 / 64.0, val.Mcombo,     CUR_FONT_COLOR_BLUE);
+		num_font.RescaleDrawNum(    265, 215, 30 / 64.0, val.noteCount,  CUR_FONT_COLOR_PURPLE);
 
 		/* レート周り */
 		RecRescaleDrawFormatString(10, 320, COLOR_WHITE, L"%d.%02d", val.newRate / 100, val.newRate % 100);
@@ -320,15 +348,20 @@ static now_scene_t ViewResult(const rec_result_pal_t &val) {
 		else { RecRescaleDrawString(10, 340, L"not rise", COLOR_WHITE); }
 
 		/* スコア周り */
-		num_font.RescaleDrawNum(  310,  75, 55 / 64.0, val.score, val.mat.fontNo);
-		num_font.RescaleDrawFloat(430, 150, 30 / 64.0, val.acc,   val.mat.fontNo, 2);
-		num_font.RescaleDrawFloat(510, 205, 20 / 64.0, val.gap,   CUR_FONT_COLOR_MONO, 2);
-		num_font.RescaleDrawFloat(500, 230, 20 / 64.0, val.width, CUR_FONT_COLOR_MONO, 2);
+		char_font.RescaleDrawString(280,  40, 60 / 64.0, _T("SCORE:"), 0);
+		num_font.RescaleDrawNum(    310,  75, 55 / 64.0, val.score, val.mat.fontNo);
+		char_font.RescaleDrawString(300, 150, 60 / 64.0, _T("ACC:"), 0);
+		num_font.RescaleDrawFloat(  430, 150, 30 / 64.0, val.acc,   val.mat.fontNo, 2);
+		char_font.RescaleDrawString(400, 205, 40 / 64.0, _T("GAP:"), 0);
+		num_font.RescaleDrawFloat(  490, 205, 20 / 64.0, val.gap,   CUR_FONT_COLOR_MONO, 2);
+		char_font.RescaleDrawString(400, 230, 40 / 64.0, _T("WIDTH:"), 0);
+		num_font.RescaleDrawFloat(  500, 230, 20 / 64.0, val.width, CUR_FONT_COLOR_MONO, 2);
 
 		/* ランク周り */
-		RecRescaleDrawGraph(140, 260, val.mat.rank.handle(),      TRUE);
-		RecRescaleDrawGraph(5,   420, val.mat.clearRate.handle(), TRUE);
-		RecRescaleDrawGraph(336, 252, val.mat.chara.handle(),     TRUE);
+		char_font.RescaleDrawString( 20, 260, 90 / 64.0, _T("RANK:"), 0);
+		RecRescaleDrawGraph(        140, 260, val.mat.rank.handle(),      TRUE);
+		RecRescaleDrawGraph(          5, 420, val.mat.clearRate.handle(), TRUE);
+		RecRescaleDrawGraph(        336, 252, val.mat.chara.handle(),     TRUE);
 		num_font.RescaleDrawUnderFloat(280, 390, 30 / 64.0, val.floatRank, val.mat.floatfontNo, 3);
 
 		cutin.DrawCut();
