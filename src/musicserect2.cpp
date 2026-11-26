@@ -61,7 +61,8 @@ typedef enum rec_select_key_e {
 	REC_SELECT_KEY_LEFT   = 5,
 	REC_SELECT_KEY_RIGHT  = 6,
 	REC_SELECT_KEY_SORT   = 7,
-	REC_SELECT_KEY_RELORD = 8
+	REC_SELECT_KEY_RELORD = 8,
+	REC_SELECT_KEY_ESC    = 9
 } rec_select_key_et;
 
 enum class rec_select_sorttype_ec {
@@ -104,8 +105,10 @@ typedef struct music_box_2 {
 } MUSIC_BOX_2;
 
 typedef struct rec_select_command_s {
-	int music = 0;
-	int dif   = 1;
+	int music  = 0;
+	int dif    = 1;
+	int folder = 0; /* 0=フォルダ選択, 1=曲選択 */
+	int folderNo = 0; /* 選択中のフォルダ */
 } rec_select_command_st;
 
 class rec_select_musiclist_c {
@@ -265,6 +268,7 @@ public:
 	rec_select_musiclist_c detail;
 	std::vector<uint> sort;
 	rec_select_sorttype_ec sortMode = rec_select_sorttype_ec::DEFAULT;
+	bool (*last_used_filter_func)(const MUSIC_BOX_2 &detail, int view_dif) = nullptr;
 
 public: /* 並び替え系 */
 	/**
@@ -325,10 +329,12 @@ public: /* 絞り込み系 */
 		if (filter_func == nullptr) { return; }
 		this->sort.clear();
 		for (size_t i = 0; i < detail.size(); i++) {
+			if (this->detail[i].LvType == 5) { continue; }
 			if (filter_func(this->detail[i], view_dif)) {
 				this->sort.push_back(i);
 			}
 		}
+		last_used_filter_func = filter_func;
 	}
 
 public: /* 番地検索系 */
@@ -351,6 +357,176 @@ public: /* 番地検索系 */
 	}
 };
 typedef rec_serect_music_set_c songdata_set_t;
+
+#pragma region music filter
+
+typedef struct rec_select_folder_s {
+	tstring folderName = _T("");
+	bool dif_select = true;
+	bool (*filter_func)(const MUSIC_BOX_2 &detail, int view_dif) = nullptr;
+} rec_select_folder_st;
+
+bool rec_select_filter_all(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.LvType == view_dif); /* 難易度フィルタのみ */
+}
+
+bool rec_select_filter_lv0(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 0);
+}
+
+bool rec_select_filter_lv1(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 1);
+}
+
+bool rec_select_filter_lv2(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 2);
+}
+
+bool rec_select_filter_lv3(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 3);
+}
+
+bool rec_select_filter_lv4(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 4);
+}
+
+bool rec_select_filter_lv5(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 5);
+}
+
+bool rec_select_filter_lv6(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 6);
+}
+
+bool rec_select_filter_lv7(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 7);
+}
+
+bool rec_select_filter_lv8(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 8);
+}
+
+bool rec_select_filter_lv9(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 9);
+}
+
+bool rec_select_filter_lv10(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level == 10);
+}
+
+bool rec_select_filter_lv11(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.level >= 11);
+}
+
+bool rec_select_filter_scoreD(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.Hscore < RED_SCORE_C_BORDER );
+}
+
+bool rec_select_filter_scoreC(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (IS_BETWEEN_RIGHT_LESS(RED_SCORE_C_BORDER, detail.Hscore, RED_SCORE_B_BORDER));
+}
+
+bool rec_select_filter_scoreB(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (IS_BETWEEN_RIGHT_LESS(RED_SCORE_B_BORDER, detail.Hscore, RED_SCORE_A_BORDER));
+}
+
+bool rec_select_filter_scoreA(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (IS_BETWEEN_RIGHT_LESS(RED_SCORE_A_BORDER, detail.Hscore, RED_SCORE_S_BORDER));
+}
+
+bool rec_select_filter_scoreS(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (IS_BETWEEN_RIGHT_LESS(RED_SCORE_S_BORDER, detail.Hscore, RED_SCORE_RC_BORDER));
+}
+
+bool rec_select_filter_scoreRC(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (RED_SCORE_RC_BORDER <= detail.Hscore);
+}
+
+bool rec_select_filter_typeNP(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.ClearRank == REC_CLEAR_RANK_NO_PLAY);
+}
+
+bool rec_select_filter_typeDP(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.ClearRank == REC_CLEAR_RANK_DROPED);
+}
+
+bool rec_select_filter_typeCL(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.ClearRank == REC_CLEAR_RANK_CLEARED);
+}
+
+bool rec_select_filter_typeNM(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.ClearRank == REC_CLEAR_RANK_NOMISS);
+}
+
+bool rec_select_filter_typeFC(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.ClearRank == REC_CLEAR_RANK_FULLCOMBO);
+}
+
+bool rec_select_filter_typePF(const MUSIC_BOX_2 &detail, int view_dif) {
+	return (detail.ClearRank == REC_CLEAR_RANK_PERFECT);
+}
+
+bool rec_select_filter_original(const MUSIC_BOX_2 &detail, int view_dif) {
+	if (detail.LvType != view_dif) { return false; }
+	if (detail.packName == _T("Curbine Original 1")) { return true; }
+	if (detail.packName == _T("Curbine Original 2")) { return true; }
+	if (detail.packName == _T("Curbine Original 3")) { return true; }
+	return false;
+}
+
+bool rec_select_filter_freem(const MUSIC_BOX_2 &detail, int view_dif) {
+	if (detail.LvType != view_dif) { return false; }
+	return detail.packName == _T("From Free Music");
+}
+
+bool rec_select_filter_nature(const MUSIC_BOX_2 &detail, int view_dif) {
+	if (detail.LvType != view_dif) { return false; }
+	return detail.packName == _T("Nature Prhysm Collection");
+}
+
+bool rec_select_filter_without(const MUSIC_BOX_2 &detail, int view_dif) {
+	if (detail.LvType != view_dif) { return false; }
+	return detail.packName == _T("without Permission");
+}
+
+bool rec_select_filter_spthanks(const MUSIC_BOX_2 &detail, int view_dif) {
+	if (detail.LvType != view_dif) { return false; }
+	return detail.packName == _T("special thanks");
+}
+
+static std::vector<rec_select_folder_st> s_folder_list = {
+	{ _T("ALL"),                       true, rec_select_filter_all      },
+	{ _T("LEVEL 0"),                  false, rec_select_filter_lv0      },
+	{ _T("LEVEL 1"),                  false, rec_select_filter_lv1      },
+	{ _T("LEVEL 2"),                  false, rec_select_filter_lv2      },
+	{ _T("LEVEL 3"),                  false, rec_select_filter_lv3      },
+	{ _T("LEVEL 4"),                  false, rec_select_filter_lv4      },
+	{ _T("LEVEL 5"),                  false, rec_select_filter_lv5      },
+	{ _T("LEVEL 6"),                  false, rec_select_filter_lv6      },
+	{ _T("LEVEL 7"),                  false, rec_select_filter_lv7      },
+	{ _T("LEVEL 8"),                  false, rec_select_filter_lv8      },
+	{ _T("LEVEL 9"),                  false, rec_select_filter_lv9      },
+	{ _T("LEVEL 10"),                 false, rec_select_filter_lv10     },
+	{ _T("LEVEL 11+"),                false, rec_select_filter_lv11     },
+	{ _T("SCORE D"),                  false, rec_select_filter_scoreD   },
+	{ _T("SCORE C"),                  false, rec_select_filter_scoreC   },
+	{ _T("SCORE B"),                  false, rec_select_filter_scoreB   },
+	{ _T("SCORE A"),                  false, rec_select_filter_scoreA   },
+	{ _T("SCORE S"),                  false, rec_select_filter_scoreS   },
+	{ _T("SCORE RC"),                 false, rec_select_filter_scoreRC  },
+	{ _T("No Play"),                  false, rec_select_filter_typeNP   },
+	{ _T("Dropped"),                  false, rec_select_filter_typeDP   },
+	{ _T("Cleared"),                  false, rec_select_filter_typeCL   },
+	{ _T("No Miss"),                  false, rec_select_filter_typeNM   },
+	{ _T("Full Combo"),               false, rec_select_filter_typeFC   },
+	{ _T("Perfect"),                  false, rec_select_filter_typePF   },
+	{ _T("From Free Music"),           true, rec_select_filter_freem    },
+	{ _T("Nature Prhysm Collection"),  true, rec_select_filter_nature   },
+	{ _T("without Permission"),        true, rec_select_filter_without  },
+	{ _T("special thanks"),            true, rec_select_filter_spthanks }
+};
+
+#pragma endregion music filter
 
 #if 1 /* all relord */
 
@@ -458,6 +634,9 @@ static rec_select_key_et RecSerectKeyCheck() {
 	case KEY_INPUT_F5:
 		ret = REC_SELECT_KEY_RELORD;
 		break;
+	case KEY_INPUT_ESCAPE:
+		ret = REC_SELECT_KEY_ESC;
+		break;
 	default:
 		break;
 	}
@@ -525,8 +704,8 @@ static bool Rec_Select_DifFilter(const MUSIC_BOX_2 &detail, int view_dif) {
  * @param[in] dif 難易度
  * TODO: songdata_set_tの中に入れる。
  */
-static void SortSong(songdata_set_t &songdata, int dif) {
-	songdata.Search(Rec_Select_DifFilter, dif);
+static void SortSong(songdata_set_t &songdata, int dif, int folderNo) {
+	songdata.Search(s_folder_list[folderNo].filter_func, dif);
 	songdata.SortByNowMode();
 }
 
@@ -537,11 +716,15 @@ static void SortSong(songdata_set_t &songdata, int dif) {
  * @param[in] dif 難易度
  * @param[out] cmd commandの格納場所
  */
-static void SortSongWithSave(songdata_set_t &songdata, int dif, int &cmd) {
+static void SortSongWithSave(songdata_set_t &songdata, int dif, int &cmd, int folderNo) {
 	tstring save;
-
+	if (songdata.sizeSort() == 0) {
+		cmd = 0;
+		SortSong(songdata, dif, folderNo);
+		return;
+	}
 	save = songdata[betweens(0, cmd, songdata.sizeSort() - 1)].musicName.get_str();
-	SortSong(songdata, dif);
+	SortSong(songdata, dif, folderNo);
 	for (int i = 0; i < songdata.sizeSort(); i++) {
 		if (save == songdata[i].musicName.get_str()) {
 			cmd = i;
@@ -763,12 +946,20 @@ public:
 		this->startC = GetNowCount();
 	}
 
-	void DrawAll(int Ypos, const rec_select_command_st &cmd, const songdata_set_t &songdata, bool is_folder) const {
+	void DrawMusic(int Ypos, const rec_select_command_st &cmd, const songdata_set_t &songdata) const {
 		int BasePosX = 0;
 		int BasePosY = 0;
 		int slide = 0;
 		int picsong = 0;
 		int moveC = 0;
+
+		if (songdata.sizeSort() == 0) {
+			slide = pals(0, 0, 250, this->UD * 80, moveC);
+			BasePosY = slide + 4 * 80 + Ypos - 170 + lins(5, 180, 7, 100, VIEW_COUNT);
+			BasePosX = lins(480, 80, 240, 40, BasePosY);
+			this->DrawMainFolderOne(cmd.dif, BasePosX, BasePosY, _T("該当する曲が存在しません"));
+			return;
+		}
 
 		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
 		picsong = (cmd.music + songdata.sizeSort() - (VIEW_COUNT / 2)) % songdata.sizeSort();
@@ -785,23 +976,45 @@ public:
 			BasePosX = lins(480, 80, 240, 40, BasePosY);
 
 			if (count == (VIEW_COUNT / 2)) {
-				if (is_folder) {
-					this->DrawMainFolderOne(cmd.dif, BasePosX, BasePosY, this->folder_str[picsong]);
-				}
-				else {
-					this->DrawMainOne(cmd.dif, BasePosX, BasePosY, songdata[picsong]);
-				}
+				this->DrawMainOne(cmd.dif, BasePosX, BasePosY, songdata[picsong]);
 			}
 			else {
-				if (is_folder) {
-					this->DrawSubFolderOne(cmd.dif, BasePosX, BasePosY, this->folder_str[picsong]);
-				}
-				else {
-					this->DrawSubOne(cmd.dif, BasePosX, BasePosY, songdata[picsong]);
-				}
+				this->DrawSubOne(cmd.dif, BasePosX, BasePosY, songdata[picsong]);
 			}
 
 			picsong = (picsong + 1) % songdata.sizeSort();
+		}
+	}
+
+	void DrawFolder(int Ypos, const rec_select_command_st &cmd) const {
+		int BasePosX = 0;
+		int BasePosY = 0;
+		int slide = 0;
+		int picsong = 0;
+		int moveC = 0;
+
+		moveC = maxs_2(-1 * (GetNowCount() - this->startC) + MUSE_FADTM, 0);
+		picsong = (cmd.music + s_folder_list.size() - (VIEW_COUNT / 2)) % s_folder_list.size();
+
+		for (int count = 0; count < VIEW_COUNT; count++) {
+			slide = pals(0, 0, 250, this->UD * 80, moveC);
+			BasePosY = slide + count * 80 + Ypos - 170;
+			if (count <= (VIEW_COUNT / 2)) {
+				BasePosY += lins(5, 180, 7, 100, VIEW_COUNT);
+			}
+			else {
+				BasePosY += lins(5, 220, 7, 140, VIEW_COUNT);
+			}
+			BasePosX = lins(480, 80, 240, 40, BasePosY);
+
+			if (count == (VIEW_COUNT / 2)) {
+				this->DrawMainFolderOne(cmd.dif, BasePosX, BasePosY, s_folder_list[picsong].folderName);
+			}
+			else {
+				this->DrawSubFolderOne(cmd.dif, BasePosX, BasePosY, s_folder_list[picsong].folderName);
+			}
+
+			picsong = (picsong + 1) % s_folder_list.size();
 		}
 	}
 
@@ -1137,33 +1350,57 @@ public:
 		this->previewSnd.StartSnd();
 	}
 
-	void Update4th(const tstring &jacketName) {
-		jacket.UpdateJacket(jacketName);
-		previewSnd.SetPresc(GetNowCount());
+	void Update4th(const tstring &jacketName, int cmd_folder) {
+		if (cmd_folder == 1) {
+			jacket.UpdateJacket(jacketName);
+			previewSnd.SetPresc(GetNowCount());
+		}
 		snd.PlaySnd();
 	}
 
-	void UpdateUD(const MUSIC_BOX_2 &songdata, int dif, int vect) {
-		this->detail.FetchDifPic(songdata.difP);
+	void UpdateUD(const MUSIC_BOX_2 &songdata, int vect, int cmd_folder) {
+		if (cmd_folder == 1) {
+			this->detail.FetchDifPic(songdata.difP);
+		}
 		this->musicbar.SlideBar(vect);
 		this->disk.SlideDisk(vect);
-		this->Update4th(songdata.jacketPath);
+		this->Update4th(songdata.jacketPath, cmd_folder);
 	}
 
-	void UpdateLR(songdata_set_t &songdata, int *cmd, int dif, int vect) {
+	void UpdateLR(songdata_set_t &songdata, int *cmd, int dif, int vect, int cmd_folder, int cmd_folderNo) {
 		this->detail.SlideDif(vect);
-		SortSongWithSave(songdata, dif, *cmd);
-		this->Update4th(songdata[*cmd].jacketPath);
+		SortSongWithSave(songdata, dif, *cmd, cmd_folderNo);
+		if (songdata.sizeSort() == 0) {
+			MUSIC_BOX_2 buf;
+			this->Update4th(buf.jacketPath, cmd_folder);
+		}
+		else {
+			this->Update4th(songdata[*cmd].jacketPath, cmd_folder);
+		}
 	}
 
 	void DrawUi(const rec_select_command_st &cmd, songdata_set_t &songdata) {
-		this->backpic.DrawBackPic();
-		this->jacket.DrawJacket(380, 85, 500);
-		this->musicbar.DrawAll(300, cmd, songdata, false);
-		this->disk.DrawDiskSet(-30, 25, songdata.sortMode);
-		this->detail.DrawDetailAll(20, 60, songdata[cmd.music], cmd.dif);
-		this->previewSnd.CheckTime();
-		this->previewSnd.CheckSnd(songdata[cmd.music], cmd.dif);
+		if (cmd.folder == 0) {
+			this->backpic.DrawBackPic();
+			this->musicbar.DrawFolder(300, cmd);
+			this->disk.DrawDiskSet(-30, 25, songdata.sortMode);
+			this->previewSnd.CheckTime();
+		}
+		else if (songdata.sizeSort() == 0) {
+			this->backpic.DrawBackPic();
+			this->musicbar.DrawMusic(300, cmd, songdata);
+			this->disk.DrawDiskSet(-30, 25, songdata.sortMode);
+			this->previewSnd.CheckTime();
+		}
+		else {
+			this->backpic.DrawBackPic();
+			this->jacket.DrawJacket(380, 85, 500);
+			this->musicbar.DrawMusic(300, cmd, songdata);
+			this->disk.DrawDiskSet(-30, 25, songdata.sortMode);
+			this->detail.DrawDetailAll(20, 60, songdata[cmd.music], cmd.dif);
+			this->previewSnd.CheckTime();
+			this->previewSnd.CheckSnd(songdata[cmd.music], cmd.dif);
+		}
 		this->help.DrawHelp(rec_helpbar_type_ec::SELECT);
 		this->cutin.DrawCut();
 	}
@@ -1176,6 +1413,7 @@ public:
 static void RecSerectKeyActLR(rec_select_command_st &cmd, int vect,
 	rec_serect_ui_c &uiClass, songdata_set_t &songdata)
 {
+	if (s_folder_list[cmd.folderNo].dif_select == false) { return; }
 	switch (vect) {
 	case REC_SELECT_VECT_LEFT:
 		cmd.dif--;
@@ -1195,7 +1433,7 @@ static void RecSerectKeyActLR(rec_select_command_st &cmd, int vect,
 		return;
 	}
 
-	uiClass.UpdateLR(songdata, &cmd.music, cmd.dif, vect);
+	uiClass.UpdateLR(songdata, &cmd.music, cmd.dif, vect, cmd.folder, cmd.folderNo);
 
 	return;
 }
@@ -1203,26 +1441,48 @@ static void RecSerectKeyActLR(rec_select_command_st &cmd, int vect,
 static void RecSerectKeyActUD(rec_select_command_st &cmd, int vect,
 	rec_serect_ui_c &uiClass, songdata_set_t &songdata)
 {
+	size_t list_size = 0;
+	if (cmd.folder == 1 && songdata.sizeSort() == 0) { return; }
+
+	switch (cmd.folder) {
+	case 0:
+		list_size = s_folder_list.size();
+		break;
+	case 1:
+		list_size = songdata.sizeSort();
+		break;
+	}
+
 	switch (vect) {
 	case REC_SELECT_VECT_UP:
 		cmd.music--;
-		if (cmd.music < 0) { cmd.music = songdata.sizeSort() - 1; }
+		if (cmd.music < 0) { cmd.music = list_size - 1; }
 		break;
 	case REC_SELECT_VECT_DOWN:
 		cmd.music++;
-		if (cmd.music >= songdata.sizeSort()) { cmd.music = 0; }
+		if (cmd.music >= list_size) { cmd.music = 0; }
 		break;
 	default:
 		return;
 	}
 
-	uiClass.UpdateUD(songdata[cmd.music], cmd.dif, vect);
+	if ((cmd.folder == 1) && (s_folder_list[cmd.folderNo].dif_select == false)) {
+		cmd.dif = songdata[cmd.music].LvType;
+	}
+
+	if (cmd.folder == 0) {
+		MUSIC_BOX_2 buf;
+		uiClass.UpdateUD(buf, vect, cmd.folder);
+	}
+	else {
+		uiClass.UpdateUD(songdata[cmd.music], vect, cmd.folder);
+	}
 
 	return;
 }
 
 static void RecSerectKeyActAll(now_scene_t &next, rec_to_play_set_t &toPlay,
-	rec_select_command_st &cmd, int &CutTime, rec_serect_ui_c &uiClass, songdata_set_t &songdata)
+	rec_select_command_st &cmd, rec_serect_ui_c &uiClass, songdata_set_t &songdata)
 {
 	rec_select_key_et key = REC_SELECT_KEY_NONE;
 
@@ -1233,20 +1493,28 @@ static void RecSerectKeyActAll(now_scene_t &next, rec_to_play_set_t &toPlay,
 	/* 動作 */
 	switch (key) {
 	case REC_SELECT_KEY_RETURN:
-		// 選択できる曲であるかどうか (Lvが0以上であるかで判定)
-		if (songdata[cmd.music].level < 0) { break; }
-		RecSerectSetToPlay(toPlay, cmd, songdata);
-		next = SCENE_MUSIC;
-		uiClass.cutin.SetCutTipFg(CUTIN_TIPS_SONG);
-		uiClass.cutin.SetCutSong(songdata[cmd.music].musicName.get_str(),
-			songdata[cmd.music].jacketPath);
-		uiClass.cutin.SetIo(CUT_FRAG_IN);
+		if (cmd.folder == 0) {
+			cmd.folder = 1;
+			cmd.folderNo = cmd.music;
+			songdata.Search(s_folder_list[cmd.music].filter_func, cmd.dif);
+			SortSongWithSave(songdata, cmd.dif, cmd.music, cmd.folderNo);
+		}
+		else {
+			// 選択できる曲であるかどうか (Lvが0以上であるかで判定)
+			if (songdata[cmd.music].level < 0) { break; }
+			RecSerectSetToPlay(toPlay, cmd, songdata);
+			next = SCENE_MUSIC;
+			uiClass.cutin.SetCutTipFg(CUTIN_TIPS_SONG);
+			uiClass.cutin.SetCutSong(songdata[cmd.music].musicName.get_str(),
+				songdata[cmd.music].jacketPath);
+			uiClass.cutin.SetIo(CUT_FRAG_IN);
+		}
 		break;
 	case REC_SELECT_KEY_BACK:
-		next = SCENE_MENU;
-		uiClass.cutin.SetTipNo();
-		uiClass.cutin.SetCutTipFg(CUTIN_TIPS_ON);
-		uiClass.cutin.SetIo(CUT_FRAG_IN);
+		if (cmd.folder == 1) {
+			cmd.folder = 0;
+			cmd.music = cmd.folderNo;
+		}
 		break;
 	case REC_SELECT_KEY_UP:
 		RecSerectKeyActUD(cmd, REC_SELECT_VECT_UP,    uiClass, songdata);
@@ -1262,10 +1530,16 @@ static void RecSerectKeyActAll(now_scene_t &next, rec_to_play_set_t &toPlay,
 		break;
 	case REC_SELECT_KEY_SORT:
 		++songdata.sortMode;
-		SortSongWithSave(songdata, cmd.dif, cmd.music);
+		SortSongWithSave(songdata, cmd.dif, cmd.music, cmd.folderNo);
 		break;
 	case REC_SELECT_KEY_RELORD:
 		next = SCENE_RELOAD;
+		break;
+	case REC_SELECT_KEY_ESC:
+		next = SCENE_MENU;
+		uiClass.cutin.SetTipNo();
+		uiClass.cutin.SetCutTipFg(CUTIN_TIPS_ON);
+		uiClass.cutin.SetIo(CUT_FRAG_IN);
 		break;
 	default:
 		break;
@@ -1279,8 +1553,6 @@ static void RecSerectKeyActAll(now_scene_t &next, rec_to_play_set_t &toPlay,
 static now_scene_t musicselect2(rec_to_play_set_t &toPlay) {
 	/* int */
 	rec_select_command_st cmd;
-	int buf = 0;
-	int CutTime = 0;
 
 	/* typedef */
 	now_scene_t next = SCENE_EXIT;
@@ -1290,7 +1562,9 @@ static now_scene_t musicselect2(rec_to_play_set_t &toPlay) {
 	rec_serect_ui_c uiClass;
 
 	RecSerectLoadBefCmd(cmd, songdata.sortMode);
-	SortSong(songdata, cmd.dif);
+	cmd.music = betweens(0, cmd.music, s_folder_list.size() - 1);
+	cmd.dif = betweens(0, cmd.dif, 4);
+	SortSong(songdata, cmd.dif, cmd.folderNo);
 	uiClass.InitUi(songdata[cmd.music], cmd.dif);
 	GetMouseWheelRotVol();
 	while (GetMouseInputLog2(NULL, NULL, NULL, NULL, true) == 0) {}
@@ -1300,7 +1574,7 @@ static now_scene_t musicselect2(rec_to_play_set_t &toPlay) {
 		ClearDrawScreen();
 		uiClass.DrawUi(cmd, songdata);
 		ScreenFlip();
-		RecSerectKeyActAll(next, toPlay, cmd, CutTime, uiClass, songdata);
+		RecSerectKeyActAll(next, toPlay, cmd, uiClass, songdata);
 		if (next == SCENE_RELOAD) { return SCENE_RELOAD; }
 		if (uiClass.cutin.IsEndAnim()) { break; }
 		if (GetWindowUserCloseFlag(TRUE)) {
@@ -1311,8 +1585,6 @@ static now_scene_t musicselect2(rec_to_play_set_t &toPlay) {
 	}
 
 	RecSerectSaveBefCmd(cmd, songdata.sortMode);
-
-	INIT_SND();
 
 	return next;
 }

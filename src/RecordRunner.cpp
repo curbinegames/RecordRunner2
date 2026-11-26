@@ -25,7 +25,6 @@
 static void GameMain() {
 	now_scene_t next = SCENE_TITLE;
 	rec_to_play_set_t ps;
-	INIT_SND();
 	RecOpenOptionFile2(&optiondata);
 	upgrade_rate_f(); // レートのセーブデータ更新(Ver.1.04 -> Ver.1.05)
 	fix10501to10502(); // セーブデータバグのfix(Ver.1.05.1 -> Ver.1.05.2)

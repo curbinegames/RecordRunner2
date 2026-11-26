@@ -19,7 +19,11 @@
 
 #define REC_DEFAULT_MUSIC_SAMPLE_RATE 44100 /* デフォルトの音楽ファイルのサンプルレート */
 
-#define INIT_SND() InitSoundMem()
+#define RED_SCORE_RC_BORDER 98000
+#define RED_SCORE_S_BORDER  95000
+#define RED_SCORE_A_BORDER  90000
+#define RED_SCORE_B_BORDER  85000
+#define RED_SCORE_C_BORDER  80000
 
 /* debug */
 #if 0

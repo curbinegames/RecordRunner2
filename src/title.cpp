@@ -144,10 +144,7 @@ now_scene_t title(void) {
 			cutin.SetIo(CUT_FRAG_IN);
 		}
 
-		if (cutin.IsEndAnim()) {
-			INIT_SND();
-			break;
-		}
+		if (cutin.IsEndAnim()) { break; }
 
 		if (GetWindowUserCloseFlag(TRUE)) {
 			return SCENE_EXIT;

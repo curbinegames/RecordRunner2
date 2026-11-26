@@ -387,11 +387,11 @@ static now_scene_t ViewResult(const rec_result_pal_t &val) {
 #if 1 /* RecResultCalParameter */
 
 static rec_score_rate_t CalScoreRank(int score) {
-	if (score >= 98000) { return REC_SCORE_RATE_EX; }
-	if (score >= 95000) { return REC_SCORE_RATE_S; }
-	if (score >= 90000) { return REC_SCORE_RATE_A; }
-	if (score >= 85000) { return REC_SCORE_RATE_B; }
-	if (score >= 80000) { return REC_SCORE_RATE_C; }
+	if (score >= RED_SCORE_RC_BORDER) { return REC_SCORE_RATE_EX; }
+	if (score >= RED_SCORE_S_BORDER ) { return REC_SCORE_RATE_S; }
+	if (score >= RED_SCORE_A_BORDER ) { return REC_SCORE_RATE_A; }
+	if (score >= RED_SCORE_B_BORDER ) { return REC_SCORE_RATE_B; }
+	if (score >= RED_SCORE_C_BORDER ) { return REC_SCORE_RATE_C; }
 	if (score > 0) { return REC_SCORE_RATE_D; }
 	return REC_SCORE_RATE_F;
 }
